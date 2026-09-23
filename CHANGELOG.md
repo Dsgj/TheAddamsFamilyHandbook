@@ -40,5 +40,5 @@ First milestone: everything the prototype did, rebuilt as an installable static 
 
 ### Not done / open
 
-- No GitHub repository created and nothing pushed (owner decision pending, copyrighted scans).
+- Deployed to https://dsgj.github.io/TheAddamsFamilyHandbook/ from the public repo Dsgj/TheAddamsFamilyHandbook (owner chose public).
 - Docker image not test-built locally.
