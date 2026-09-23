@@ -23,8 +23,8 @@ export default defineConfig({
       scope,
       includeAssets: ['fonts/*.woff2', 'icons/*.svg'],
       manifest: {
-        name: 'Valvet — The Addams Family service',
-        short_name: 'Valvet',
+        name: 'The Addams Family Handbook',
+        short_name: 'TAF Handbook',
         description: 'Offline service companion for a Bally The Addams Family pinball machine.',
         lang: 'en',
         start_url: scope,
@@ -53,7 +53,7 @@ export default defineConfig({
             urlPattern: ({ url }) => url.pathname.includes('/assets/pages/'),
             handler: 'CacheFirst',
             options: {
-              cacheName: 'valvet-scans',
+              cacheName: 'tafh-scans',
               expiration: { maxEntries: 600, maxAgeSeconds: 60 * 60 * 24 * 365 },
               cacheableResponse: { statuses: [0, 200] },
             },

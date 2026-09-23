@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Renamed the app from Valvet to **The Addams Family Handbook** (PWA short name "TAF Handbook").
+  Header, page titles, manifest and package name updated. Device status and theme keys moved to
+  `tafh:*`; the old `valvet:*` values are read as a fallback so nothing is lost.
+- README rebuilt: logo, screenshots (`docs/readme`), feature table, palette and roadmap.
+
 ## M1 — Foundation and parity (2026-09-23)
 
 First milestone: everything the prototype did, rebuilt as an installable static site.

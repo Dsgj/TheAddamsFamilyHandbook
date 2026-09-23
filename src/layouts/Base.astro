@@ -37,7 +37,7 @@ const NAV: [string, string, string][] = [
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>{title} · Valvet</title>
+    <title>{title} · The Addams Family Handbook</title>
     <meta name="description" content={description} />
     <meta name="theme-color" content="#0E0B10" media="(prefers-color-scheme: dark)" />
     <meta name="theme-color" content="#EFE9DA" media="(prefers-color-scheme: light)" />
@@ -46,7 +46,7 @@ const NAV: [string, string, string][] = [
     {pwaInfo && <Fragment set:html={pwaInfo.webManifest.linkTag} />}
     <script is:inline>
       try {
-        const t = localStorage.getItem('valvet:theme');
+        const t = localStorage.getItem('tafh:theme') ?? localStorage.getItem('valvet:theme');
         if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
       } catch {}
     </script>
@@ -56,10 +56,10 @@ const NAV: [string, string, string][] = [
     <a class="sr-only" href="#main">Skip to content</a>
     <header class="top">
       <div class="top-row">
-        <a class="brand" href={href('')} aria-label="Valvet home">
-          <span class="brand-mark" aria-hidden="true">V</span>
-          <span class="brand-name">Valvet</span>
-          <span class="brand-sub">The Addams Family</span>
+        <a class="brand" href={href('')} aria-label="The Addams Family Handbook home">
+          <span class="brand-mark" aria-hidden="true">A</span>
+          <span class="brand-name">The Addams Family</span>
+          <span class="brand-sub">Handbook</span>
         </a>
         <QuickSearch client:idle />
         <button class="btn small theme" id="theme-toggle" type="button" aria-label="Toggle theme">
@@ -81,7 +81,7 @@ const NAV: [string, string, string][] = [
     </main>
     <footer class="foot wrap muted small">
       <p>
-        Valvet is a private service tool for one machine. Manual text and scans are © Williams
+        The Addams Family Handbook is a private service tool for one machine. Manual text and scans are © Williams
         Electronics Games / Midway; hints marked as such are the owner's own experience.
       </p>
       <p id="sw-status" hidden></p>
@@ -97,7 +97,7 @@ const NAV: [string, string, string][] = [
           const next = current === 'light' ? 'dark' : 'light';
           root.dataset.theme = next;
           try {
-            localStorage.setItem('valvet:theme', next);
+            localStorage.setItem('tafh:theme', next);
           } catch {}
         });
       })();
