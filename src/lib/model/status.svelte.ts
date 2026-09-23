@@ -4,12 +4,13 @@ import type { ComponentStatus, Kind, StatusValue } from './types';
  * Per-component test status, local to this device (M1: localStorage; M2 moves it behind a
  * StorageAdapter on Dexie). Reactive via Svelte 5 runes so every island sees the same state.
  */
-const KEY = 'valvet:status';
+const KEY = 'tafh:status';
+const LEGACY_KEY = 'valvet:status';
 
 function load(): Record<string, ComponentStatus> {
   if (typeof localStorage === 'undefined') return {};
   try {
-    const raw = localStorage.getItem(KEY);
+    const raw = localStorage.getItem(KEY) ?? localStorage.getItem(LEGACY_KEY);
     return raw ? (JSON.parse(raw) as Record<string, ComponentStatus>) : {};
   } catch {
     return {};

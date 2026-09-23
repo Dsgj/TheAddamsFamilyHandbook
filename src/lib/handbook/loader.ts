@@ -21,7 +21,7 @@ export interface HandbookEntry {
  */
 export function handbookLoader(dir = 'src/content/handbook'): Loader {
   return {
-    name: 'valvet-handbook',
+    name: 'handbook',
     async load({ store, parseData, logger, config, watcher }) {
       const root = join(fileURLToPath(config.root), dir);
       watcher?.add(root);

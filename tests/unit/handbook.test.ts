@@ -38,9 +38,9 @@ describe('handbook rendering', () => {
     const a2 = findHeading(idx, 'A.2');
     expect(a2?.page).toBeGreaterThanOrEqual(38);
     const p17 = pages.find((p) => p.page === 17)!;
-    const html = finish(p17, idx, '/valvet');
+    const html = finish(p17, idx, '/TheAddamsFamilyHandbook');
     expect(html).not.toContain('#find:');
-    expect(html).toContain('href="/valvet/handbook/tests#');
+    expect(html).toContain('href="/TheAddamsFamilyHandbook/handbook/tests#');
     expect(html).not.toContain('#goto:');
   });
 
