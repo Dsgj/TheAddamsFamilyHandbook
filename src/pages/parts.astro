@@ -1,0 +1,15 @@
+---
+import Base from '~/layouts/Base.astro';
+import PartsList from '~/components/PartsList.svelte';
+import { manualHref } from '~/lib/url';
+---
+
+<Base title="Parts" nav="parts" wide>
+  <h1>Parts list</h1>
+  <p class="muted">
+    All rows of the Operations Manual parts list (section 2), with the assembly each part belongs
+    to. Scans start at <a href={manualHref('ops', 59)}>p. 2-1</a>. Descriptions are OCR from the
+    original and may have small errors.
+  </p>
+  <PartsList client:load />
+</Base>

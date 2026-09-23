@@ -1,0 +1,19 @@
+services:
+  valvet:
+    build:
+      context: .
+      args:
+        BASE_PATH: /
+    ports:
+      - '8080:80'
+
+  # Optional sync backend (M2+). Uncomment when a shared log is wanted.
+  # pocketbase:
+  #   image: ghcr.io/muchobien/pocketbase:latest
+  #   ports:
+  #     - '8090:8090'
+  #   volumes:
+  #     - pb_data:/pb_data
+  #
+  # volumes:
+  #   pb_data:

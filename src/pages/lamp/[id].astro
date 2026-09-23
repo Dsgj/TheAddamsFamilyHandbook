@@ -1,0 +1,11 @@
+---
+import ComponentPage from '~/layouts/ComponentPage.astro';
+import { DATA } from '~/lib/data/components';
+
+export function getStaticPaths() {
+  return DATA.lamps.map((item) => ({ params: { id: item.id }, props: { item } }));
+}
+const { item } = Astro.props;
+---
+
+<ComponentPage kind="lamp" {item} list={DATA.lamps} />

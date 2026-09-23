@@ -1,0 +1,103 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '~/layouts/Base.astro';
+import HandbookToc from '~/components/HandbookToc.svelte';
+import { SECTIONS } from '~/lib/handbook/sections';
+import { handbookToc } from '~/lib/handbook/toc';
+import { href, manualHref } from '~/lib/url';
+
+export async function getStaticPaths() {
+  return SECTIONS.map((s) => ({ params: { section: s.key }, props: { section: s } }));
+}
+const { section } = Astro.props;
+const entries = (await getCollection('handbook', (e) => e.data.section === section.key)).sort(
+  (a, b) => a.data.order - b.data.order,
+);
+const toc = await handbookToc();
+const i = SECTIONS.indexOf(section);
+const prev = SECTIONS[i - 1];
+const next = SECTIONS[i + 1];
+const UNVERIFIED = new Set([26, 27, 28]);
+---
+
+<Base title={section.title} nav="handbook">
+  <div class="hb">
+    <aside class="side">
+      <details class="card" open>
+        <summary>Contents</summary>
+        <HandbookToc client:load items={toc} current={section.key} />
+      </details>
+    </aside>
+    <article class="prose">
+      <h1>{section.title}</h1>
+      {
+        entries.map((e) => (
+          <section id={`pg-${e.data.page}`}>
+            <div class="pg-bar">
+              <span class="mono">
+                {e.data.label ? `p. ${e.data.label}` : `PDF page ${e.data.page}`}
+              </span>
+              {UNVERIFIED.has(e.data.page) && (
+                <span class="st-untested">transcription not verified</span>
+              )}
+              <a class="btn small" href={manualHref('ops', e.data.page)}>
+                Scan
+              </a>
+            </div>
+            <Fragment set:html={e.rendered?.html ?? ''} />
+          </section>
+        ))
+      }
+      <nav class="pn">
+        {
+          prev ? (
+            <a class="btn" href={href(`handbook/${prev.key}`)}>
+              ‹ {prev.title}
+            </a>
+          ) : (
+            <span />
+          )
+        }
+        {
+          next ? (
+            <a class="btn" href={href(`handbook/${next.key}`)}>
+              {next.title} ›
+            </a>
+          ) : (
+            <span />
+          )
+        }
+      </nav>
+    </article>
+  </div>
+</Base>
+
+<style>
+  .hb {
+    display: grid;
+    gap: var(--gap);
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 960px) {
+    .hb {
+      grid-template-columns: 300px minmax(0, 1fr);
+    }
+    .side {
+      position: sticky;
+      top: calc(var(--nav-h) + 40px);
+      align-self: start;
+    }
+  }
+  summary {
+    cursor: pointer;
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+  }
+  .pn {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 32px;
+    flex-wrap: wrap;
+  }
+</style>

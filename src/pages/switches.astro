@@ -1,0 +1,88 @@
+---
+import Base from '~/layouts/Base.astro';
+import Matrix from '~/components/Matrix.svelte';
+import WireChip from '~/components/WireChip.svelte';
+import { DATA } from '~/lib/data/components';
+import { componentHref, manualHref } from '~/lib/url';
+
+const matrix = DATA.switches
+  .filter((s) => s.col !== null && s.row !== null)
+  .map((s) => ({ id: s.id, name: s.name, col: s.col!, row: s.row!, unused: s.unused }));
+const ded = DATA.switches.filter((s) => s.kind === 'ded');
+const flip = DATA.switches.filter((s) => s.kind === 'flip');
+---
+
+<Base title="Switches" nav="switches" wide>
+  <h1>Switch matrix</h1>
+  <p class="muted">
+    Columns are driven from CPU J206/J207 through U20, rows read on J208/J209 through U18. Source:
+    <a href={manualHref('ops', 106)}>Switch Matrix p. 3-4</a>. Use the arrow keys to move between
+    cells.
+  </p>
+  <Matrix client:load kind="switch" cells={matrix} cols={DATA.swCols} rows={DATA.swRows} />
+
+  <div class="grid-2 tables">
+    <section class="card">
+      <h2>Dedicated switches (J205)</h2>
+      <div class="scroll-x">
+        <table class="t">
+          <thead><tr><th>#</th><th>Name</th><th>Wire</th><th>Pin</th></tr></thead>
+          <tbody>
+            {
+              ded.map((s) => (
+                <tr>
+                  <td>
+                    <a class="mono" href={componentHref('switch', s.id)}>
+                      {s.id}
+                    </a>
+                  </td>
+                  <td>{s.name}</td>
+                  <td>
+                    <WireChip colour={s.wireEn ?? ''} />
+                  </td>
+                  <td class="mono">{s.pin}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <section class="card">
+      <h2>Flipper switches (Fliptronics J806)</h2>
+      <div class="scroll-x">
+        <table class="t">
+          <thead><tr><th>#</th><th>Name</th><th>Wire</th><th>Pin</th></tr></thead>
+          <tbody>
+            {
+              flip.map((s) => (
+                <tr>
+                  <td>
+                    <a class="mono" href={componentHref('switch', s.id)}>
+                      {s.id}
+                    </a>
+                  </td>
+                  <td>{s.name}</td>
+                  <td>
+                    <WireChip colour={s.wireEn ?? ''} />
+                  </td>
+                  <td class="mono">{s.pin}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+      <p class="prov">
+        EOS switch part numbers differ between the flipper page and the parts list (SW-1A-193 vs
+        SW-1A-194). Both are recorded on each switch.
+      </p>
+    </section>
+  </div>
+</Base>
+
+<style>
+  .tables {
+    margin-top: var(--gap);
+  }
+</style>

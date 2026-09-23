@@ -1,0 +1,39 @@
+---
+import Base from '~/layouts/Base.astro';
+import Diagnose from '~/components/Diagnose.svelte';
+import { href } from '~/lib/url';
+---
+
+<Base title="Diagnose" nav="diagnose">
+  <h1>Diagnose</h1>
+  <p class="muted">
+    Type the numbers from the Test Report (T.1 Switch Edges, T.2 Switch Levels) or a message from
+    the display, and get each component with wiring, location and a shared-cause check.
+  </p>
+  <Diagnose client:load />
+  <section class="quick">
+    <h2>Quick links</h2>
+    <ul>
+      <li>
+        <a href={href('handbook/tests')}>Test menu T.1–T.13</a> · how to run switch, solenoid and lamp
+        tests
+      </li>
+      <li><a href={href('handbook/errors')}>Check Switch messages and error codes</a></li>
+      <li><a href={href('fuses')}>Fuses, LEDs and jumpers</a></li>
+      <li>
+        <a href={href('map?layer=sw')}>Switch location map</a> · <a href={href('map?layer=lamp')}
+          >lamps</a
+        > · <a href={href('map?layer=coil')}>solenoids</a>
+      </li>
+    </ul>
+  </section>
+</Base>
+
+<style>
+  .quick {
+    margin-top: 24px;
+  }
+  .quick ul {
+    padding-left: 1.2em;
+  }
+</style>

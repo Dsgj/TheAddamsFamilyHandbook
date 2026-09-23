@@ -1,0 +1,61 @@
+---
+import Base from './Base.astro';
+import ComponentCard from '~/components/ComponentCard.svelte';
+import type { AnyComponent } from '~/lib/data/components';
+import { DATA, KIND_LABEL, MAP_LAYER } from '~/lib/data/components';
+import type { Kind } from '~/lib/model/types';
+import { componentHref, href } from '~/lib/url';
+
+interface Props {
+  kind: Kind;
+  item: AnyComponent;
+  list: AnyComponent[];
+}
+const { kind, item, list } = Astro.props;
+const i = list.findIndex((x) => x.id === item.id);
+const prev = list[i - 1];
+const next = list[i + 1];
+const listPath = kind === 'switch' ? 'switches' : kind === 'lamp' ? 'lamps' : 'coils';
+const layer = MAP_LAYER[kind];
+---
+
+<Base title={`${KIND_LABEL[kind]} ${item.id} ${item.name}`} nav={listPath}>
+  <div class="crumbs small muted">
+    <a href={href(listPath)}>{KIND_LABEL[kind]}s</a> › <span class="mono">{item.id}</span>
+  </div>
+  <ComponentCard client:load {kind} {item} mapMeta={DATA.maps[layer]} linkTitle={false} />
+  <nav class="pn">
+    {
+      prev ? (
+        <a class="btn" href={componentHref(kind, prev.id)}>
+          ‹ {prev.id} {prev.name}
+        </a>
+      ) : (
+        <span />
+      )
+    }
+    <a class="btn" href={href(`map?layer=${layer}&id=${item.id}`)}>Show on map</a>
+    {
+      next ? (
+        <a class="btn" href={componentHref(kind, next.id)}>
+          {next.id} {next.name} ›
+        </a>
+      ) : (
+        <span />
+      )
+    }
+  </nav>
+</Base>
+
+<style>
+  .crumbs {
+    margin-bottom: 8px;
+  }
+  .pn {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: var(--gap);
+    flex-wrap: wrap;
+  }
+</style>
