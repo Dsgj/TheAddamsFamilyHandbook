@@ -2,7 +2,7 @@
 import Base from '~/layouts/Base.astro';
 import Matrix from '~/components/Matrix.svelte';
 import { DATA } from '~/lib/data/components';
-import { manualHref } from '~/lib/url';
+import { componentHref, href, manualHref } from '~/lib/url';
 
 const cells = DATA.lamps.map((l) => ({
   id: l.id,
@@ -21,4 +21,58 @@ const cells = DATA.lamps.map((l) => ({
     panel, not on the playfield.
   </p>
   <Matrix client:load kind="lamp" cells={cells} cols={DATA.lCols} rows={DATA.lRows} />
+
+  <section class="card lamps">
+    <h2>All lamps</h2>
+    <p class="muted small">
+      Tick Broken to mark a lamp Fault on this device; it turns red in the matrix and on the map and
+      lands on the <a href={href('shopping')}>shopping list</a> with its bulb type.
+    </p>
+    <div class="scroll-x">
+      <table class="t">
+        <thead>
+          <tr><th>#</th><th>Name</th><th>Bulb</th><th>Part</th><th>Assembly</th><th>Broken</th></tr>
+        </thead>
+        <tbody>
+          {
+            DATA.lamps.map((l) => (
+              <tr class:list={[{ muted: l.unused }]}>
+                <td>
+                  <a class="mono" href={componentHref('lamp', l.id)}>
+                    {l.id}
+                  </a>
+                </td>
+                <td>
+                  {l.name}
+                  {l.speaker && <span class="muted small"> · speaker panel</span>}
+                </td>
+                <td class="mono">{l.bulb}</td>
+                <td class="mono">{l.bulbPart}</td>
+                <td class="mono">{l.assy}</td>
+                <td class="chk">
+                  <input
+                    type="checkbox"
+                    class="fault-check"
+                    data-kind="lamp"
+                    data-id={l.id}
+                    aria-label={`Broken: ${l.name}`}
+                  />
+                </td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
 </Base>
+
+<script>
+  import '~/lib/fault-check';
+</script>
+
+<style>
+  .lamps {
+    margin-top: var(--gap);
+  }
+</style>
