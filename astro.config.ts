@@ -45,6 +45,7 @@ export default defineConfig({
           'data/*.json',
           'assets/maps/*.png',
           'assets/figures/*.png',
+          'brand/*.webp',
         ],
         globIgnores: ['**/node_modules/**', 'assets/pages/**'],
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,

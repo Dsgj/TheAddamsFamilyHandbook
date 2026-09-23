@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/assets/figures/TheAddamsFamily.png" width="520" alt="The Addams Family logo">
+  <img src="docs/readme/addams-family-logo.png" width="520" alt="The Addams Family logo">
 </p>
 
 <h1 align="center">The Addams Family Handbook</h1>
@@ -127,7 +127,7 @@ src/
 ├── pages/        diagnose (index), map, switches, lamps, coils, fuses, parts, handbook, manual
 ├── styles/       tokens.css (palette, type, spacing), base.css
 └── content/      handbook pages (synced from the kit)
-public/           data, assets, fonts, icons (synced or generated)
+public/           data, assets, fonts, icons (synced or generated), brand/logo.webp
 scripts/          sync-kit, copy-fonts, icons, thumbnails
 tests/            vitest + Playwright e2e
 kit-docs/         build prompt, machine notes, known issues (synced from the kit)

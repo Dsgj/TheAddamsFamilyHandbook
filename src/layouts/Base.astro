@@ -57,8 +57,14 @@ const NAV: [string, string, string][] = [
     <header class="top">
       <div class="top-row">
         <a class="brand" href={href('')} aria-label="The Addams Family Handbook home">
-          <span class="brand-mark" aria-hidden="true">A</span>
-          <span class="brand-name">The Addams Family</span>
+          <img
+            class="brand-logo"
+            src={href('brand/logo.webp')}
+            alt="The Addams Family"
+            width="800"
+            height="406"
+            decoding="async"
+          />
           <span class="brand-sub">Handbook</span>
         </a>
         <QuickSearch client:idle />
@@ -124,7 +130,7 @@ const NAV: [string, string, string][] = [
   }
   .brand {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     gap: 8px;
     color: var(--ink);
     text-decoration: none;
@@ -133,16 +139,10 @@ const NAV: [string, string, string][] = [
   .brand:hover {
     text-decoration: none;
   }
-  .brand-mark {
-    font-family: var(--font-display);
-    font-size: 1.6rem;
-    color: var(--amber);
-    text-shadow: 0 0 10px var(--amber-glow);
-    line-height: 1;
-  }
-  .brand-name {
-    font-family: var(--font-display);
-    font-size: 1.25rem;
+  .brand-logo {
+    height: 40px;
+    width: auto;
+    filter: drop-shadow(0 0 8px var(--amber-glow));
   }
   .brand-sub {
     color: var(--muted);
@@ -150,6 +150,9 @@ const NAV: [string, string, string][] = [
     display: none;
   }
   @media (min-width: 700px) {
+    .brand-logo {
+      height: 44px;
+    }
     .brand-sub {
       display: inline;
     }
