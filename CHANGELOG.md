@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+- **Machine setup** page (nav: Setup). Presets, free play, standard adjustments, high score table,
+  the six H-4-only adjustments and the post-move utilities as a six-step guide with the suggested
+  value, the reason, a link to the Handbook heading, a field for what the machine is actually set
+  to and a Done tick. Values live on the device (`tafh:setup`) and travel in the backup file. The
+  advice is data in `src/data/setup.ts`.
+
+- **Shared cause for lamps.** Two or more lamps in one matrix column or row now get the same
+  warning card as switches, naming the driver transistor and connector (`lampSharedCauses`).
+- **Paste the whole Test Report.** The Diagnose field is a textarea; headings, names and prose in a
+  multi-line paste are dropped and only the codes stay. `switch 32`, `lamp 55`, `solenoid 7` and
+  `Check Switch 32 and 68` parse. A bare digit is no longer read as a solenoid.
+- **Service log per component.** Every status change is appended to a short history (last 10)
+  shown under the note on the card; a Fixed component keeps its log.
+- **Device data** section on the Shopping list page: download all status as JSON, read a backup
+  back (merge, newer wins, or replace), clear everything with a two-tap confirm.
+- **Verify** page: the open questions from `kit-docs/KNOWN-ISSUES.md` as a checklist with links to
+  the affected cards, maps and scans. Ticks are stored on the device with a date.
+- Print stylesheet: nav, buttons and fields hidden, light palette, cards kept on one page.
+- Tests: parser edge cases, lamp shared causes, status import/export, and e2e for the above.
+
 - Renamed the app from Valvet to **The Addams Family Handbook** (PWA short name "TAF Handbook").
   Header, page titles, manifest and package name updated. Device status and theme keys moved to
   `tafh:*`; the old `valvet:*` values are read as a fallback so nothing is lost.

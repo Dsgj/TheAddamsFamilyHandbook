@@ -1,8 +1,8 @@
 <script lang="ts">
   import { DATA, find, KIND_LABEL } from '~/lib/data/components';
   import { parseCodes, type ParsedCode } from '~/lib/codes';
-  import { sharedCauses } from '~/lib/shared-cause';
-  import type { Switch } from '~/lib/model/types';
+  import { lampSharedCauses, sharedCauses } from '~/lib/shared-cause';
+  import type { Lamp, Switch } from '~/lib/model/types';
   import { href } from '~/lib/url';
   import ComponentCard from './ComponentCard.svelte';
 
@@ -21,32 +21,37 @@
   const found = $derived(resolved.filter((r) => r.item));
   const missing = $derived(resolved.filter((r) => !r.item));
   const switches = $derived(found.filter((r) => r.kind === 'switch').map((r) => r.item as Switch));
-  const causes = $derived(sharedCauses(switches, DATA.swCols, DATA.swRows));
+  const lamps = $derived(found.filter((r) => r.kind === 'lamp').map((r) => r.item as Lamp));
+  const causes = $derived([
+    ...sharedCauses(switches, DATA.swCols, DATA.swRows),
+    ...lampSharedCauses(lamps, DATA.lCols, DATA.lRows),
+  ]);
+  const shownMissing = $derived(missing.slice(0, 6));
 
-  const examples = ['32 68 F1 F3', 'Check Switch 32', 'L55', 'SOL 7'];
+  const examples = ['32 68 F1 F3', 'Check Switch 32', 'L11 L12 L13', 'SOL 7'];
   const label = (p: ParsedCode) => (p.kind === 'unknown' ? p.raw : `${KIND_LABEL[p.kind]} ${p.id}`);
 </script>
 
 <section class="diag">
   <label class="lbl" for="codes">Test report or display message</label>
   <div class="row">
-    <input
+    <textarea
       id="codes"
       class="field mono"
-      type="text"
+      rows="1"
       autocomplete="off"
       autocapitalize="characters"
       spellcheck="false"
       placeholder="32 68 F1 F3"
       bind:value={input}
-    />
+    ></textarea>
     {#if input}
       <button class="btn" type="button" onclick={() => (input = '')}>Clear</button>
     {/if}
   </div>
   <p class="muted small">
     Switch numbers as printed in T.1/T.2 or in a Check Switch message, L55 for a lamp, SOL 7 or C07
-    for a solenoid. Try:
+    for a solenoid. A whole Test Report can be pasted as is. Try:
     {#each examples as e, i (e)}
       <button class="link" type="button" onclick={() => (input = e)}>{e}</button>{i <
       examples.length - 1
@@ -57,8 +62,11 @@
 
   {#if missing.length}
     <p class="prov">
-      Not recognised: {missing.map((m) => label(m)).join(', ')}. Matrix switches are 11–88,
-      dedicated D1–D8, flipper F1–F8.
+      Not recognised: {shownMissing.map((m) => label(m)).join(', ')}{missing.length >
+      shownMissing.length
+        ? ` and ${missing.length - shownMissing.length} more`
+        : ''}. Matrix switches are 11–88, dedicated D1–D8, flipper F1–F8, lamps L11–L88, solenoids
+      SOL 1–28.
     </p>
   {/if}
 
@@ -66,14 +74,16 @@
     <div class="card causes">
       <h2>Shared cause?</h2>
       <ul>
-        {#each causes as c (c.kind + c.key)}
+        {#each causes as c (c.matrix + c.kind + c.key)}
           <li class:eos={c.eos}>
             <span class="dmd small"
-              >{c.kind === 'independent' ? 'INDEPENDENT' : `${c.kind} ${c.key}`}</span
+              >{c.kind === 'independent'
+                ? `${c.matrix === 'lamp' ? 'LAMPS ' : ''}INDEPENDENT`
+                : `${c.matrix === 'lamp' ? 'lamp ' : ''}${c.kind} ${c.key}`}</span
             >
             {c.text}
             {#if c.kind === 'column' || c.kind === 'row'}
-              · <a href={href('switches')}>matrix</a>
+              · <a href={href(c.matrix === 'lamp' ? 'lamps' : 'switches')}>matrix</a>
             {/if}
           </li>
         {/each}
@@ -107,6 +117,11 @@
   .row .field {
     font-size: 1.15rem;
     letter-spacing: 0.06em;
+    flex: 1;
+    resize: vertical;
+    min-height: var(--touch);
+    field-sizing: content;
+    max-height: 40vh;
   }
   .link {
     background: none;

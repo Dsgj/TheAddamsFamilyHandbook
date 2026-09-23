@@ -148,10 +148,24 @@ export interface ComponentRef {
 }
 
 export type StatusValue = 'ok' | 'fault' | 'untested';
+/** One status change, kept per component as a short service log. */
+export interface StatusEvent {
+  status: StatusValue | '';
+  at: string;
+}
 export interface ComponentStatus {
   /** `${kind}:${id}` */
   id: string;
   status: StatusValue | '';
   note: string;
+  at: string;
+  /** Newest last, capped at HISTORY_MAX entries (see status-io.ts). */
+  history?: StatusEvent[];
+}
+
+/** What the machine is set to for one setup item (src/data/setup.ts), on this device. */
+export interface SetupEntry {
+  value: string;
+  done: boolean;
   at: string;
 }

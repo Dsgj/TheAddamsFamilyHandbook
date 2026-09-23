@@ -1,6 +1,7 @@
 ---
 import Base from '~/layouts/Base.astro';
 import ShoppingList from '~/components/ShoppingList.svelte';
+import DeviceData from '~/components/DeviceData.svelte';
 import { DATA } from '~/lib/data/components';
 import type { ShoppingItem } from '~/lib/shopping';
 
@@ -44,4 +45,5 @@ const items: ShoppingItem[] = [
     when a part has been replaced.
   </p>
   <ShoppingList client:load items={items} />
+  <DeviceData client:load />
 </Base>
