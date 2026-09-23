@@ -103,8 +103,9 @@ export const SETUP_STEPS: SetupStep[] = [
       {
         id: 'A.1 25',
         name: 'Allow Dim Illumination',
-        suggested: 'YES',
-        why: 'Keeps the GI lighting effects.',
+        suggested: 'NO',
+        why: 'The machine has an LED kit. WPC dims the GI by chopping the mains half-waves, and LEDs flicker at the dim levels. NO keeps the GI steady.',
+        alt: 'With incandescent bulbs YES keeps the GI lighting effects.',
       },
       {
         id: 'A.1 26',
@@ -129,6 +130,7 @@ export const SETUP_STEPS: SetupStep[] = [
         name: 'GI Power Saver',
         suggested: '15 minutes',
         why: 'Dims the lamps when nobody has played for a while.',
+        alt: 'With LEDs the saving is small and the dimmed GI may flicker. OFF is fine if it bothers anyone.',
       },
       {
         id: 'A.1 30',
@@ -270,6 +272,52 @@ export const SETUP_STEPS: SetupStep[] = [
         find: '',
       },
     ],
+  },
+  {
+    id: 'upkeep',
+    title: 'Upgrades and upkeep',
+    menu: 'Power off, playfield up',
+    intro:
+      'Not menu settings, but the same kind of note: tick when done and the date is kept on this device. The first round of parts was ordered in September 2026.',
+    items: [
+      {
+        id: 'led-kit',
+        name: 'LED kit fitted, playfield and backbox',
+        suggested: '',
+        why: 'Then set A.1 25 Allow Dim Illumination to NO in step 3 so the GI does not flicker.',
+        find: '',
+      },
+      {
+        id: 'flipper-links',
+        name: 'Flipper plungers and links replaced, A-10656 × 4',
+        suggested: '',
+        why: 'One per flipper: lower left, lower right, upper left, upper right. Check the coil stops and bushings while the flippers are open.',
+        find: '',
+      },
+      {
+        id: 'rubber-kit',
+        name: 'Rubber kit fitted, red flipper rubbers and black rings',
+        suggested: '',
+        why: '',
+        find: '',
+      },
+      {
+        id: 'ramp-decals',
+        name: 'Ramp covers, bookcase decals and Thing decal fitted',
+        suggested: '',
+        why: 'The ramp covers protect the plastic flaps at the ramp entrances, which crack first on this game.',
+        find: '',
+      },
+      {
+        id: 'batteries',
+        name: 'Three AA batteries on the CPU board replaced',
+        suggested: '',
+        why: 'Fresh batteries hold the settings on this page for a few years, but replace them yearly and look at the holder for corrosion. NVRAM only if it starts to corrode. Tick again each time; the date shows here.',
+        find: '',
+      },
+    ],
+    after:
+      'Later, only if needed: pinballs (a six-pack is about 300 kr; the four magnets magnetise them and they pick up grit), NVRAM if the battery holder corrodes, hole protectors at the Chair and Swamp kickouts if the wear there grows.',
   },
 ];
 

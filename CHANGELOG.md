@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- **Setup guide: LED kit and upkeep.** A.1 25 Allow Dim Illumination is now suggested NO because
+  the machine gets an LED kit (WPC dims the GI by chopping the mains and LEDs flicker); the GI
+  Power Saver item notes the same. A seventh step, Upgrades and upkeep, records the first parts
+  round (LED kit, flipper plungers and links, rubber kit, ramp covers and decals) and the CPU
+  battery change as dated ticks, with a "later, only if needed" list for balls, NVRAM and hole
+  protectors.
+
 - **Machine setup** page (nav: Setup). Presets, free play, standard adjustments, high score table,
   the six H-4-only adjustments and the post-move utilities as a six-step guide with the suggested
   value, the reason, a link to the Handbook heading, a field for what the machine is actually set
