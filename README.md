@@ -49,8 +49,9 @@ Handbook pages are rendered by a custom content loader (`src/lib/handbook/loader
 - Astro 7 is used instead of the Astro 5 the prompt mentions (the kit's dependency policy pins nothing
   older). `pnpm-workspace.yaml` sets `minimumReleaseAge: 0` so current releases install.
 - Fonts are self-hosted from `public/fonts` so they work under any base path.
-- No GitHub repository has been created and nothing has been pushed: the scans are Williams/Midway
-  copyright material and the owner decides where they are published.
+- Repo: https://github.com/Dsgj/TheAddamsFamilyHandbook (public, owner decision). Live site:
+  https://dsgj.github.io/TheAddamsFamilyHandbook/. The scans are Williams/Midway
+  copyright material; the owner accepted publishing them.
 - Per-component status (OK / Fault / Not tested + note) lives in `localStorage` under `valvet:status`
   until M2 introduces the storage adapter.
 
