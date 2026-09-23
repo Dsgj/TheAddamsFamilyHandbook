@@ -1,0 +1,10 @@
+dist
+node_modules
+.astro
+public/assets
+public/data
+src/data/kit
+src/content/handbook
+kit-docs
+tools
+pnpm-lock.yaml

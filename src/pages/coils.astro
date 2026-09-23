@@ -1,0 +1,146 @@
+---
+import Base from '~/layouts/Base.astro';
+import WireChip from '~/components/WireChip.svelte';
+import { DATA } from '~/lib/data/components';
+import { COIL_NOTE, t, wireEn } from '~/lib/data/en';
+import { componentHref, manualHref } from '~/lib/url';
+
+const groups = ['High Power', 'Low Power', 'Flasher'] as const;
+---
+
+<Base title="Solenoids" nav="coils" wide>
+  <h1>Solenoids &amp; flashers</h1>
+  <p class="muted">
+    Source: <a href={manualHref('ops', 108)}>Solenoid/Flasher Table p. 3-6</a> and
+    <a href={manualHref('ops', 2)}>p. ii</a>. The fuse column is derived from the fuse list on p.
+    1-47, not printed per coil. The table lists 14 flashers; the display test counts 15. The kit has
+    not resolved which one is missing.
+  </p>
+
+  {
+    groups.map((g) => (
+      <section class="card grp">
+        <h2>{g}</h2>
+        <div class="scroll-x">
+          <table class="t">
+            <thead>
+              <tr>
+                <>
+                  <th>#</th>
+                  <th>Name</th>
+                  <th>Wire</th>
+                  <th>Pin</th>
+                  <th>Driver</th>
+                  <th>Coil</th>
+                  <th>Fuse</th>
+                  <th />
+                </>
+              </tr>
+            </thead>
+            <tbody>
+              {DATA.coils
+                .filter((c) => c.type === g)
+                .map((c) => (
+                  <tr>
+                    <td>
+                      <a class="mono" href={componentHref('coil', c.id)}>
+                        {c.id}
+                      </a>
+                    </td>
+                    <td>
+                      {c.name}
+                      {c.note && <span class="muted small"> · {t(COIL_NOTE, c.note)}</span>}
+                    </td>
+                    <td>
+                      <WireChip colour={c.wireEn} />
+                    </td>
+                    <td class="mono">{c.pin}</td>
+                    <td class="mono">{c.driver}</td>
+                    <td class="mono">{c.part}</td>
+                    <td class="mono small">{c.fuse}</td>
+                    <td class="muted small">{c.cabinet ? 'cabinet' : c.under ? 'under' : ''}</td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    ))
+  }
+
+  <div class="grid-2">
+    <section class="card">
+      <h2>Flipper coils</h2>
+      <div class="scroll-x">
+        <table class="t">
+          <thead
+            ><tr
+              ><th>#</th><th>Name</th><th>Wire</th><th>Pin</th><th>Coil</th><th>Assembly</th><th
+                >Fuse</th
+              ></tr
+            ></thead
+          >
+          <tbody>
+            {
+              DATA.flippers.map((f) => (
+                <tr>
+                  <td class="mono">{f.id}</td>
+                  <td>{f.name}</td>
+                  <td>
+                    <WireChip colour={wireEn(f.wire)} />
+                  </td>
+                  <td class="mono">{f.pin}</td>
+                  <td class="mono">{f.coil}</td>
+                  <td class="mono">{f.assy}</td>
+                  <td class="small">{f.fuse}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+      <p class="prov">
+        Upper flippers are fed by the Extra Flipper Supply Board (F901/F902). Source: <a
+          href={manualHref('ops', 112)}>p. 3-10</a
+        >.
+      </p>
+    </section>
+    <section class="card">
+      <h2>General illumination</h2>
+      <div class="scroll-x">
+        <table class="t">
+          <thead
+            ><tr
+              ><th>String</th><th>Name</th><th>Wire</th><th>Pin</th><th>Triac</th><th>Bulb</th><th
+                >Fuse</th
+              ></tr
+            ></thead
+          >
+          <tbody>
+            {
+              DATA.gi.map((g) => (
+                <tr>
+                  <td class="mono">{g.id}</td>
+                  <td>{g.name}</td>
+                  <td>
+                    <WireChip colour={wireEn(g.wire)} />
+                  </td>
+                  <td class="mono">{g.pin}</td>
+                  <td class="mono">{g.driver}</td>
+                  <td class="mono">{g.bulb}</td>
+                  <td class="small">{g.fuse}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</Base>
+
+<style>
+  .grp {
+    margin-bottom: var(--gap);
+  }
+</style>

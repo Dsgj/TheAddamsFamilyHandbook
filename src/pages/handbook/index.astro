@@ -1,0 +1,55 @@
+---
+import Base from '~/layouts/Base.astro';
+import HandbookToc from '~/components/HandbookToc.svelte';
+import { handbookToc } from '~/lib/handbook/toc';
+import { SECTIONS } from '~/lib/handbook/sections';
+import { href, manualHref } from '~/lib/url';
+
+const toc = await handbookToc();
+---
+
+<Base title="Handbook" nav="handbook">
+  <h1>Handbook</h1>
+  <p class="muted">
+    The Operations Manual's operator section (pages 1-1 to 1-48), transcribed and readable on a
+    phone. Every page links to its scan. Pages 1-16 to 1-18 (T.4–T.13) are transcribed from a poor
+    scan and not yet verified.
+  </p>
+  <div class="grid-2 wide-first">
+    <section class="card">
+      <h2>Sections</h2>
+      <ol class="secs">
+        {
+          SECTIONS.map((s) => (
+            <li>
+              <a href={href(`handbook/${s.key}`)}>{s.title}</a>
+              <span class="muted small mono">
+                {' '}
+                p. {s.pages[0]! - 10 > 0 ? `1-${s.pages[0]! - 10}` : s.pages[0]}–
+                {s.pages.at(-1)! - 10 > 0 ? `1-${s.pages.at(-1)! - 10}` : s.pages.at(-1)}
+              </span>
+            </li>
+          ))
+        }
+      </ol>
+      <p class="prov">
+        Parts (section 2) and schematics (section 3) are not transcribed; open them in <a
+          href={manualHref('ops', 59)}>the manual viewer</a
+        >.
+      </p>
+    </section>
+    <section class="card">
+      <h2>Find a heading</h2>
+      <HandbookToc client:load items={toc} />
+    </section>
+  </div>
+</Base>
+
+<style>
+  .secs {
+    padding-left: 1.4em;
+  }
+  .secs li {
+    margin: 6px 0;
+  }
+</style>

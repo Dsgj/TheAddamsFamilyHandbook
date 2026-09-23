@@ -1,0 +1,99 @@
+---
+import Base from '~/layouts/Base.astro';
+import { DATA } from '~/lib/data/components';
+import { BOARD, FUSE_CIRCUIT, LED_NORMAL, LED_WHAT, t } from '~/lib/data/en';
+import { href, manualHref } from '~/lib/url';
+
+const boards = [...new Set(DATA.fuses.map((f) => f.board))];
+---
+
+<Base title="Fuses, LEDs & jumpers" nav="fuses">
+  <h1>Fuses, LEDs &amp; jumpers</h1>
+
+  <section class="card">
+    <h2 id="fuses">Fuses</h2>
+    <p class="muted small">
+      Source: <a href={manualHref('ops', 57)}>Fuse List p. 1-47</a>. Always replace with the same
+      rating and type (S.B. = slow blow).
+    </p>
+    {
+      boards.map((b) => (
+        <div class="board">
+          <h3>{t(BOARD, b)}</h3>
+          <div class="scroll-x">
+            <table class="t">
+              <thead>
+                <tr>
+                  <>
+                    <th>Fuse</th>
+                    <th>Circuit</th>
+                    <th>Rating</th>
+                  </>
+                </tr>
+              </thead>
+              <tbody>
+                {DATA.fuses
+                  .filter((f) => f.board === b)
+                  .map((f) => (
+                    <tr id={f.id}>
+                      <td class="mono">{f.id}</td>
+                      <td>{t(FUSE_CIRCUIT, f.circuit)}</td>
+                      <td class="mono">{f.rating}</td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ))
+    }
+  </section>
+
+  <section class="card">
+    <h2 id="leds">Diagnostic LEDs</h2>
+    <p class="muted small">
+      Source: <a href={manualHref('ops', 56)}>LED List p. 1-46</a>. Blink codes for the CPU LED are
+      on <a href={href('handbook/errors')}>the error code page</a>.
+    </p>
+    <div class="scroll-x">
+      <table class="t">
+        <thead><tr><th>LED</th><th>What</th><th>Normal</th></tr></thead>
+        <tbody>
+          {
+            DATA.leds.map((l) => (
+              <tr>
+                <td class="mono">{l.id}</td>
+                <td>{t(LED_WHAT, l.what)}</td>
+                <td>{t(LED_NORMAL, l.normal)}</td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2 id="jumpers">Jumper charts</h2>
+    <p class="muted small">
+      Transcribed on <a href={href('handbook/quick')}>the quick-reference page</a>; scan on <a
+        href={manualHref('ops', 2)}>p. ii</a
+      >.
+    </p>
+  </section>
+</Base>
+
+<style>
+  .card {
+    margin-bottom: var(--gap);
+  }
+  .board {
+    margin-top: 12px;
+  }
+  .board h3 {
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--muted);
+  }
+</style>

@@ -1,0 +1,5 @@
+allowBuilds:
+  esbuild: true
+  sharp: true
+# pnpm 12 defaults to a 24 h release-age quarantine; astro 7.3.4 is younger than that.
+minimumReleaseAge: 0

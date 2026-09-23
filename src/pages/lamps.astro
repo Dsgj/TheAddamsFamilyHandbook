@@ -1,0 +1,24 @@
+---
+import Base from '~/layouts/Base.astro';
+import Matrix from '~/components/Matrix.svelte';
+import { DATA } from '~/lib/data/components';
+import { manualHref } from '~/lib/url';
+
+const cells = DATA.lamps.map((l) => ({
+  id: l.id,
+  name: l.name,
+  col: l.col,
+  row: l.row,
+  unused: l.unused,
+}));
+---
+
+<Base title="Lamps" nav="lamps" wide>
+  <h1>Lamp matrix</h1>
+  <p class="muted">
+    Columns from J137/J138 (Q90–Q98), rows from J133/J134 (Q80–Q88). Source:
+    <a href={manualHref('ops', 104)}>Lamp Matrix p. 3-2</a>. Lamps marked speaker sit in the speaker
+    panel, not on the playfield.
+  </p>
+  <Matrix client:load kind="lamp" cells={cells} cols={DATA.lCols} rows={DATA.lRows} />
+</Base>

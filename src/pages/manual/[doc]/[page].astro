@@ -1,0 +1,56 @@
+---
+import Base from '~/layouts/Base.astro';
+import PageViewer from '~/components/PageViewer.svelte';
+import ManualSearch from '~/components/ManualSearch.svelte';
+import ocr from '~/data/kit/ocr-text.json';
+import type { DocId } from '~/lib/model/types';
+import { DOC_NAME, DOCS, PAGES, pageCount, pageLabel, tocTitle } from '~/lib/pages';
+import { sectionOfPage } from '~/lib/handbook/sections';
+import { href, manualHref } from '~/lib/url';
+
+export function getStaticPaths() {
+  return DOCS.flatMap((doc) =>
+    PAGES[doc].map((meta) => ({ params: { doc, page: String(meta[0]) }, props: { doc, meta } })),
+  );
+}
+const { doc, meta } = Astro.props as { doc: DocId; meta: (typeof PAGES)['ops'][number] };
+const page = meta[0];
+const text = (ocr as Record<DocId, string[]>)[doc][page - 1] ?? '';
+const label = pageLabel(doc, page);
+const title = tocTitle(doc, page);
+const sec = doc === 'ops' ? sectionOfPage(page) : undefined;
+---
+
+<Base title={`${DOC_NAME[doc]} ${label ? 'p. ' + label : '#' + page}`} nav="manual" wide>
+  <div class="crumbs small">
+    <a href={href('manual')}>Manuals</a> › <a href={manualHref(doc, 1)}>{DOC_NAME[doc]}</a> ›
+    <span class="mono">{label ? `p. ${label}` : `#${page}`}</span>
+    {
+      sec && (
+        <span>
+          {' '}
+          · <a href={href(`handbook/${sec.key}#pg-${page}`)}>read the transcription</a>
+        </span>
+      )
+    }
+  </div>
+  <PageViewer client:load {doc} {page} {meta} count={pageCount(doc)} {text} {title} />
+  <details class="srch">
+    <summary>Search all scans</summary>
+    <ManualSearch client:visible doc={doc} />
+  </details>
+</Base>
+
+<style>
+  .crumbs {
+    margin-bottom: 8px;
+    color: var(--muted);
+  }
+  .srch {
+    margin-top: 16px;
+  }
+  summary {
+    cursor: pointer;
+    color: var(--amber);
+  }
+</style>

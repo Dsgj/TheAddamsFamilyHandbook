@@ -1,0 +1,63 @@
+---
+import Base from '~/layouts/Base.astro';
+import ManualSearch from '~/components/ManualSearch.svelte';
+import { DOCS, DOC_NAME, DOC_UNIT, pageCount, pageLabel, TOC } from '~/lib/pages';
+import { manualHref } from '~/lib/url';
+---
+
+<Base title="Manuals" nav="manual">
+  <h1>Manuals</h1>
+  <p class="muted">
+    Page scans of the three documents that came with the machine, with OCR text for searching.
+  </p>
+  <ManualSearch client:load />
+  <div class="docs">
+    {
+      DOCS.map((d) => (
+        <section class="card">
+          <h2>
+            <a href={manualHref(d, 1)}>{DOC_NAME[d]}</a>{' '}
+            <span class="muted small">
+              {pageCount(d)} {DOC_UNIT[d]}
+            </span>
+          </h2>
+          <ul class="toc">
+            {TOC[d].map(([p, name]) => (
+              <li>
+                <a href={manualHref(d, p)}>{name}</a>
+                <span class="mono muted small">{pageLabel(d, p) || `#${p}`}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))
+    }
+  </div>
+</Base>
+
+<style>
+  .docs {
+    display: grid;
+    gap: var(--gap);
+    margin-top: var(--gap);
+  }
+  @media (min-width: 900px) {
+    .docs {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+  }
+  .toc {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    columns: 1;
+  }
+  .toc li {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 3px 0;
+    border-bottom: 1px dashed var(--line);
+    font-size: 0.9rem;
+  }
+</style>

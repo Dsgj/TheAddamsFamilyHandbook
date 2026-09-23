@@ -1,0 +1,215 @@
+---
+import '~/styles/tokens.css';
+import '~/styles/base.css';
+import { pwaInfo } from 'virtual:pwa-info';
+import { href } from '~/lib/url';
+import QuickSearch from '~/components/QuickSearch.svelte';
+
+interface Props {
+  title: string;
+  description?: string;
+  /** Active nav key. */
+  nav?: string;
+  wide?: boolean;
+}
+const {
+  title,
+  description = 'Offline service companion for The Addams Family pinball.',
+  nav,
+  wide,
+} = Astro.props;
+
+const NAV: [string, string, string][] = [
+  ['diagnose', 'Diagnose', ''],
+  ['map', 'Map', 'map'],
+  ['switches', 'Switches', 'switches'],
+  ['lamps', 'Lamps', 'lamps'],
+  ['coils', 'Solenoids', 'coils'],
+  ['fuses', 'Fuses', 'fuses'],
+  ['handbook', 'Handbook', 'handbook'],
+  ['manual', 'Manuals', 'manual'],
+  ['parts', 'Parts', 'parts'],
+];
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{title} · Valvet</title>
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#0E0B10" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#EFE9DA" media="(prefers-color-scheme: light)" />
+    <link rel="icon" href={href('icons/icon.svg')} type="image/svg+xml" />
+    <link rel="apple-touch-icon" href={href('icons/icon-192.png')} />
+    {pwaInfo && <Fragment set:html={pwaInfo.webManifest.linkTag} />}
+    <script is:inline>
+      try {
+        const t = localStorage.getItem('valvet:theme');
+        if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+      } catch {}
+    </script>
+    <script src="~/pwa.ts"></script>
+  </head>
+  <body>
+    <a class="sr-only" href="#main">Skip to content</a>
+    <header class="top">
+      <div class="top-row">
+        <a class="brand" href={href('')} aria-label="Valvet home">
+          <span class="brand-mark" aria-hidden="true">V</span>
+          <span class="brand-name">Valvet</span>
+          <span class="brand-sub">The Addams Family</span>
+        </a>
+        <QuickSearch client:idle />
+        <button class="btn small theme" id="theme-toggle" type="button" aria-label="Toggle theme">
+          <span class="dark-only">Light</span><span class="light-only">Dark</span>
+        </button>
+      </div>
+      <nav class="nav" aria-label="Sections">
+        {
+          NAV.map(([key, label, path]) => (
+            <a href={href(path)} aria-current={nav === key ? 'page' : undefined}>
+              {label}
+            </a>
+          ))
+        }
+      </nav>
+    </header>
+    <main id="main" class:list={['wrap', { wide }]}>
+      <slot />
+    </main>
+    <footer class="foot wrap muted small">
+      <p>
+        Valvet is a private service tool for one machine. Manual text and scans are © Williams
+        Electronics Games / Midway; hints marked as such are the owner's own experience.
+      </p>
+      <p id="sw-status" hidden></p>
+    </footer>
+    <script is:inline>
+      (function () {
+        const b = document.getElementById('theme-toggle');
+        if (!b) return;
+        b.addEventListener('click', function () {
+          const root = document.documentElement;
+          const prefersLight = matchMedia('(prefers-color-scheme: light)').matches;
+          const current = root.dataset.theme || (prefersLight ? 'light' : 'dark');
+          const next = current === 'light' ? 'dark' : 'light';
+          root.dataset.theme = next;
+          try {
+            localStorage.setItem('valvet:theme', next);
+          } catch {}
+        });
+      })();
+    </script>
+  </body>
+</html>
+
+<style>
+  .top {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: color-mix(in srgb, var(--ground) 92%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line);
+  }
+  .top-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px var(--pad);
+    max-width: 1120px;
+    margin: 0 auto;
+  }
+  .brand {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    color: var(--ink);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .brand:hover {
+    text-decoration: none;
+  }
+  .brand-mark {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    color: var(--amber);
+    text-shadow: 0 0 10px var(--amber-glow);
+    line-height: 1;
+  }
+  .brand-name {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+  }
+  .brand-sub {
+    color: var(--muted);
+    font-size: 0.8rem;
+    display: none;
+  }
+  @media (min-width: 700px) {
+    .brand-sub {
+      display: inline;
+    }
+  }
+  .theme {
+    margin-left: auto;
+  }
+  .light-only {
+    display: none;
+  }
+  :global(:root[data-theme='light']) .light-only {
+    display: inline;
+  }
+  :global(:root[data-theme='light']) .dark-only {
+    display: none;
+  }
+  @media (prefers-color-scheme: light) {
+    :global(:root:not([data-theme='dark'])) .light-only {
+      display: inline;
+    }
+    :global(:root:not([data-theme='dark'])) .dark-only {
+      display: none;
+    }
+  }
+  .nav {
+    display: flex;
+    gap: 2px;
+    overflow-x: auto;
+    padding: 0 calc(var(--pad) - 6px) 4px;
+    max-width: 1120px;
+    margin: 0 auto;
+    scrollbar-width: none;
+  }
+  .nav::-webkit-scrollbar {
+    display: none;
+  }
+  .nav a {
+    flex: 0 0 auto;
+    padding: 6px 10px;
+    border-radius: var(--r);
+    color: var(--muted);
+    font-size: 0.9rem;
+    min-height: 34px;
+    display: inline-flex;
+    align-items: center;
+  }
+  .nav a:hover {
+    color: var(--ink);
+    text-decoration: none;
+    background: var(--sunk);
+  }
+  .nav a[aria-current='page'] {
+    color: var(--amber);
+    background: var(--sunk);
+  }
+  main.wide {
+    max-width: 1400px;
+  }
+  .foot {
+    border-top: 1px solid var(--line);
+    margin-top: 32px;
+  }
+</style>
