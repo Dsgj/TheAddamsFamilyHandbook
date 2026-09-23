@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { DATA, SWITCHES } from '~/lib/data/components';
-import { sharedCauses } from '~/lib/shared-cause';
+import { DATA, LAMPS, SWITCHES } from '~/lib/data/components';
+import { lampSharedCauses, sharedCauses } from '~/lib/shared-cause';
 
 const sw = (id: string) => {
   const s = SWITCHES.get(id);
@@ -26,5 +26,31 @@ describe('sharedCauses', () => {
   });
   it('says nothing for a single switch', () => {
     expect(sharedCauses([sw('32')], DATA.swCols, DATA.swRows)).toEqual([]);
+  });
+});
+
+describe('lampSharedCauses', () => {
+  const lamp = (id: string) => {
+    const l = LAMPS.get(id);
+    if (!l) throw new Error(`no lamp ${id}`);
+    return l;
+  };
+  it('finds a shared lamp column and names the column driver', () => {
+    const c = lampSharedCauses([lamp('11'), lamp('12')], DATA.lCols, DATA.lRows);
+    expect(c.map((x) => x.kind)).toEqual(['column']);
+    expect(c[0]).toMatchObject({ key: '1', pin: 'J137-1', driver: 'Q98', matrix: 'lamp' });
+    expect(c[0]?.text).toContain('Q98');
+  });
+  it('finds a shared lamp row', () => {
+    const c = lampSharedCauses([lamp('11'), lamp('21')], DATA.lCols, DATA.lRows);
+    expect(c.map((x) => x.kind)).toEqual(['row']);
+    expect(c[0]).toMatchObject({ key: '1', driver: 'Q90' });
+  });
+  it('reports independent lamp faults', () => {
+    const c = lampSharedCauses([lamp('11'), lamp('22')], DATA.lCols, DATA.lRows);
+    expect(c).toEqual([expect.objectContaining({ kind: 'independent', matrix: 'lamp' })]);
+  });
+  it('says nothing for a single lamp', () => {
+    expect(lampSharedCauses([lamp('11')], DATA.lCols, DATA.lRows)).toEqual([]);
   });
 });

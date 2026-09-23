@@ -1,11 +1,19 @@
 <script lang="ts">
   import type { Kind, StatusValue } from '~/lib/model/types';
-  import { getStatus, setNote, setStatus, STATUS_LABEL } from '~/lib/model/status.svelte';
+  import {
+    getStatus,
+    setNote,
+    setStatus,
+    shortDate,
+    STATUS_LABEL,
+  } from '~/lib/model/status.svelte';
 
   let { kind, id }: { kind: Kind; id: string } = $props();
   const current = $derived(getStatus(kind, id));
   const options: StatusValue[] = ['ok', 'fault', 'untested'];
   let note = $derived(current?.note ?? '');
+  const log = $derived((current?.history ?? []).slice().reverse());
+  const eventLabel = (st: StatusValue | '') => (st ? STATUS_LABEL[st] : 'Cleared');
 </script>
 
 <div class="status" role="group" aria-label="Test status">
@@ -27,6 +35,13 @@
     bind:value={note}
     onchange={() => setNote(kind, id, note)}
   />
+  {#if log.length}
+    <ol class="log muted small" aria-label="Service log">
+      {#each log as e (e.at)}
+        <li><span class="mono">{shortDate(e.at)}</span> {eventLabel(e.status)}</li>
+      {/each}
+    </ol>
+  {/if}
 </div>
 
 <style>
@@ -35,6 +50,15 @@
     flex-wrap: wrap;
     gap: 6px;
     align-items: center;
+  }
+  .log {
+    flex: 1 1 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+    margin: 2px 0 0;
+    padding: 0;
+    list-style: none;
   }
   .note {
     flex: 1 1 160px;

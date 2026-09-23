@@ -1,0 +1,185 @@
+---
+import Base from '~/layouts/Base.astro';
+import { componentHref, href, manualHref } from '~/lib/url';
+
+/**
+ * Open questions from kit-docs/KNOWN-ISSUES.md as a checklist. Ticks are stored on the device
+ * (tafh:verify) by src/lib/verify-check.ts. When one is settled for good, fix the data and remove it
+ * here and in KNOWN-ISSUES.md.
+ */
+interface Item {
+  id: string;
+  group: string;
+  text: string;
+  links: [label: string, href: string][];
+}
+
+const ITEMS: Item[] = [
+  {
+    id: 'flasher-count',
+    group: 'Component data',
+    text: 'Count the flashers in the machine. The solenoid table (3-6) gives 6 flasher circuits with 14 bulbs; the parts list sums to 15 × #906, three of them on top of the backbox.',
+    links: [
+      ['Solenoids', href('coils')],
+      ['p. 3-6', manualHref('ops', 108)],
+    ],
+  },
+  {
+    id: 'eos-type',
+    group: 'Component data',
+    text: 'Check the EOS switch type on the lower and upper flippers. The parts list says SW-1A-194 (make) lower and SW-1A-193 upper; flipper page 2-16 lists only SW-1A-193 for base model A-15205-R.',
+    links: [
+      ['F1 card', componentHref('switch', 'F1')],
+      ['F2 card', componentHref('switch', 'F2')],
+    ],
+  },
+  {
+    id: 'coil-fuses',
+    group: 'Component data',
+    text: 'The fuse on solenoids 01–28 is derived from the fuse list (F105 = solenoids 1–8 and so on), not printed per coil. Spot-check one coil per fuse against the wiring.',
+    links: [
+      ['Fuses', href('fuses')],
+      ['Solenoids', href('coils')],
+    ],
+  },
+  {
+    id: 'lamp-13-71',
+    group: 'Maps',
+    text: 'Lamp 13 and lamp 71 are placed by hand on the map, not snapped to a callout in the scan. Compare their markers with the machine.',
+    links: [
+      ['L13 on the map', href('map?layer=lamp&id=13')],
+      ['L71 on the map', href('map?layer=lamp&id=71')],
+    ],
+  },
+  {
+    id: 'cousin-it',
+    group: 'Maps',
+    text: 'Cousin It (44a/44b) has four markers in the original callout drawing. Confirm which two are the switch positions.',
+    links: [['44 on the map', href('map?layer=sw&id=44')]],
+  },
+  {
+    id: 'pages-26-28',
+    group: 'Transcription',
+    text: 'Test menu pages 1-16 to 1-18 (PDF 26–28) were typed from OCR and never read against the scans. Read them once against the images.',
+    links: [
+      ['Transcription', href('handbook/tests')],
+      ['Scan p. 26', manualHref('ops', 26)],
+    ],
+  },
+  {
+    id: 'dense-tables',
+    group: 'Transcription',
+    text: 'Spot-check the figures in the difficulty and pricing tables (PDF 32–36 and 50); single digits in dense tables are the most likely transcription slips.',
+    links: [
+      ['Presets', href('handbook/presets')],
+      ['Scan p. 32', manualHref('ops', 32)],
+      ['Scan p. 50', manualHref('ops', 50)],
+    ],
+  },
+  {
+    id: 'h4-adjustments',
+    group: 'Adjustments',
+    text: 'H-4 adjustments beyond A.2 26 (A-MODE SOUND, A-MODE MUSIC, GAMEOVER KICKOUT, SPOT GREED/BALL, FREEPLAY MESSAGE, SPOT T-H-I-N-G) come from the ROM string table. Verify number, order and options in the machine menu.',
+    links: [
+      ['Setup step 5', href('setup#step-h4')],
+      ['Adjustments', href('handbook/adjustments')],
+    ],
+  },
+  {
+    id: 'custom-message',
+    group: 'Adjustments',
+    text: 'The custom message format (2 rows × 16 characters per frame) comes from the owner’s machine, not the manual. Count how many frames the menu accepts.',
+    links: [
+      ['Setup step 6', href('setup#step-utilities')],
+      ['Adjustments', href('handbook/adjustments')],
+    ],
+  },
+];
+const groups = [...new Set(ITEMS.map((i) => i.group))];
+---
+
+<Base
+  title="Verify"
+  nav="verify"
+  description="Open questions in the data that need a look at the real machine, as a checklist."
+>
+  <h1>Verify in the machine</h1>
+  <p class="muted">
+    Places where the manual, the parts list and the scans disagree, or where the data was placed by
+    hand. Tick an item when you have checked it on the machine. Ticks stay on this device.
+    <span class="mono" data-verify-count></span>
+  </p>
+  {
+    groups.map((g) => (
+      <section class="card">
+        <h2>{g}</h2>
+        <ul class="checks">
+          {ITEMS.filter((i) => i.group === g).map((i) => (
+            <li>
+              <label>
+                <input type="checkbox" class="verify-check" data-id={i.id} />
+                <span class="text">{i.text}</span>
+              </label>
+              <p class="links small">
+                {i.links.map(([label, url]) => (
+                  <a href={url}>{label}</a>
+                ))}
+                <span class="when muted" />
+              </p>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))
+  }
+  <p class="muted small">
+    Source: <code>kit-docs/KNOWN-ISSUES.md</code>. When an item is settled, correct the data and
+    remove it there and here.
+  </p>
+</Base>
+
+<style>
+  .card {
+    margin-top: var(--gap);
+  }
+  .checks {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .checks li {
+    padding: 10px 0;
+    border-top: 1px solid var(--line);
+  }
+  .checks li:first-child {
+    border-top: 0;
+  }
+  .checks label {
+    display: grid;
+    grid-template-columns: var(--touch) 1fr;
+    align-items: start;
+    gap: 4px;
+    cursor: pointer;
+  }
+  .checks input {
+    width: 22px;
+    height: 22px;
+    margin: 2px auto;
+    accent-color: var(--ok);
+  }
+  .checks li.done .text {
+    color: var(--muted);
+    text-decoration: line-through;
+    text-decoration-color: var(--ok);
+  }
+  .links {
+    margin: 4px 0 0 var(--touch);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+  }
+</style>
+
+<script>
+  import '~/lib/verify-check';
+</script>
