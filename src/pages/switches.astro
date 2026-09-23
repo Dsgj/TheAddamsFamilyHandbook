@@ -26,7 +26,7 @@ const flip = DATA.switches.filter((s) => s.kind === 'flip');
       <h2>Dedicated switches (J205)</h2>
       <div class="scroll-x">
         <table class="t">
-          <thead><tr><th>#</th><th>Name</th><th>Wire</th><th>Pin</th></tr></thead>
+          <thead><tr><th>#</th><th>Name</th><th>Wire</th><th>Pin</th><th>Broken</th></tr></thead>
           <tbody>
             {
               ded.map((s) => (
@@ -41,6 +41,15 @@ const flip = DATA.switches.filter((s) => s.kind === 'flip');
                     <WireChip colour={s.wireEn ?? ''} />
                   </td>
                   <td class="mono">{s.pin}</td>
+                  <td class="chk">
+                    <input
+                      type="checkbox"
+                      class="fault-check"
+                      data-kind="switch"
+                      data-id={s.id}
+                      aria-label={`Broken: ${s.name}`}
+                    />
+                  </td>
                 </tr>
               ))
             }
@@ -52,7 +61,7 @@ const flip = DATA.switches.filter((s) => s.kind === 'flip');
       <h2>Flipper switches (Fliptronics J806)</h2>
       <div class="scroll-x">
         <table class="t">
-          <thead><tr><th>#</th><th>Name</th><th>Wire</th><th>Pin</th></tr></thead>
+          <thead><tr><th>#</th><th>Name</th><th>Wire</th><th>Pin</th><th>Broken</th></tr></thead>
           <tbody>
             {
               flip.map((s) => (
@@ -67,6 +76,15 @@ const flip = DATA.switches.filter((s) => s.kind === 'flip');
                     <WireChip colour={s.wireEn ?? ''} />
                   </td>
                   <td class="mono">{s.pin}</td>
+                  <td class="chk">
+                    <input
+                      type="checkbox"
+                      class="fault-check"
+                      data-kind="switch"
+                      data-id={s.id}
+                      aria-label={`Broken: ${s.name}`}
+                    />
+                  </td>
                 </tr>
               ))
             }
@@ -80,6 +98,10 @@ const flip = DATA.switches.filter((s) => s.kind === 'flip');
     </section>
   </div>
 </Base>
+
+<script>
+  import '~/lib/fault-check';
+</script>
 
 <style>
   .tables {

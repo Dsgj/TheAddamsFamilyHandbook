@@ -337,3 +337,19 @@ table.t tbody tr:hover {
   margin-right: 6px;
   font-size: 0.85em;
 }
+
+/* Broken tick in the component tables */
+table.t td.chk {
+  text-align: center;
+  width: 1%;
+}
+.fault-check {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--bad);
+  cursor: pointer;
+}
+table.t tr.row-fault td:first-child a,
+table.t tr.row-fault td:first-child {
+  color: var(--bad);
+}
