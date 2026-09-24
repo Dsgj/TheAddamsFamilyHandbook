@@ -38,7 +38,7 @@ One object with these keys.
 | `colPin` | string | CPU board connector pin for the column (e.g. `J206-3`) | 3-4 |
 | `colIc` | string | CPU board IC pin driving the column (e.g. `U20-16`) | 3-4 |
 | `rowWire`, `rowWireEn`, `rowPin`, `rowIc` | string | Same for the row (e.g. `Vit-röd`, `J208-2`, `U18-9`) | 3-4 |
-| `wire`, `wireEn`, `pin`, `kind` | string | **Dedicated/flipper switches only**: single wire colour, connector pin, and `kind: "ded" | "flip"`. Flipper pins are on the Fliptronics board (`J806-x` EOS, `J805-x`buttons); dedicated pins on the CPU board (`J205-x`). | handbook p9 |
+| `wire`, `wireEn`, `pin`, `kind` | string | **Dedicated/flipper switches only**: single wire colour, connector pin, and `kind` set to `"ded"` or `"flip"`. Flipper pins are on the Fliptronics board (`J806-x` EOS, `J805-x`buttons); dedicated pins on the CPU board (`J205-x`). | handbook p9 |
 | `under` | bool | Printed with † = located on the underside of the playfield | 2-39 |
 | `notShown` | bool | Printed with * = not shown on the diagram (cabinet/coin door) | 2-39 |
 | `unused` | bool | `"Not Used"` | |

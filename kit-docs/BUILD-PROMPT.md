@@ -20,6 +20,7 @@ Do not invent data. Every component number, wire color, connector, transistor, f
 **Mission:** when something is wrong with the machine, the owner opens the app, tells it what the display says or what he sees, and is guided to the component, its location, its wiring, the exact test in the game's built-in test menu, and the fix — and what he did is remembered.
 
 **Users:**
+
 - The owner (technical, reads schematics, owns a multimeter and a soldering iron).
 - Colleagues at the office where the machine stands (non-technical; they play, report faults, and may start a guided service session or read the log).
 
@@ -41,7 +42,7 @@ Do not invent data. Every component number, wire color, connector, transistor, f
 ## 3. Tech stack (decided — do not relitigate)
 
 | Layer | Choice | Why |
-|---|---|---|
+| --- | --- | --- |
 | Framework | **Astro 5 + TypeScript**, static output | The app is 80 % content (a transcribed manual, tables, images) and 20 % interactive tools. Astro's content collections turn `content/handbook/*.md` into typed, static pages with zero JS by default; interactive parts are islands. |
 | Islands | **Svelte 5** (runes) | Small, fast, readable components for the map, matrices, guided service wizard, log forms and search. No React: nothing here needs its ecosystem or bundle. |
 | Styling | **Hand-written CSS** with design tokens (custom properties), container queries, one `tokens.css` and one `base.css`; component styles scoped in Svelte/Astro | The theme is bespoke. No Tailwind or component library — they pull toward a generic look. |
@@ -62,7 +63,7 @@ Why not Rust or a full backend: the app is content and small records. A Go binar
 
 ## 4. Architecture
 
-```
+```text
 src/
   content/handbook/          ← the kit's content/handbook/*.md (Astro content collection)
   data/                      ← the kit's data/*.json, imported at build time; also copied to public/data for runtime
@@ -216,7 +217,7 @@ Static (build-time) data: everything in `data/*.json` and the adjustments catalo
 **Palette (tokens; define light equivalents; check AA on every pair):**
 
 | Token | Dark | Light (parchment) | Use |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `--ground` | `#0E0B10` | `#EFE9DA` | page |
 | `--surface` | `#1A161D` | `#F8F4EA` | cards, tables |
 | `--sunk` | `#242028` | `#E4DDCB` | inputs, wells |
@@ -230,6 +231,7 @@ Static (build-time) data: everything in `data/*.json` and the adjustments catalo
 | `--ok` / `--bad` / `--warn` | `#6FCB8B` / `#F0857B` / `#E3B557` | `#2F7D46` / `#B8322A` / `#A5720B` | status only, never decoration |
 
 **Type (self-host from Google Fonts, with real fallbacks):**
+
 - Display: **IM Fell English SC** for section titles and the app name (a real 17th-century face; period, not costume). Use sparingly, never for body or table text.
 - UI/body: **IBM Plex Sans**.
 - Data: **IBM Plex Mono** with `font-variant-numeric: tabular-nums` for every number column.
@@ -285,7 +287,7 @@ If you cannot get answers, proceed with the defaults above and note the assumpti
 
 Input on 2026-09-22 (see `docs/MACHINE.md`): the display's Test Report says `Check Switch 32`, `68`, `F1`, `F3`.
 
-**Plan the app should produce**
+### Plan the app should produce
 
 1. *Vid myntdörren* — `T.1 Switch Edges` open. (One step: enter the test.)
 2. *Gemensam orsak* — F1 och F3 delar kontakt **J806** på Fliptronics och är båda EOS på de nedre flipprarna, medan F5/F7 inte är flaggade → "Kolla mekaniken på båda nedre flipprarna innan du felsöker elektriskt" (guide 1, punkt 3–6). Shown once, not per switch.
@@ -294,7 +296,7 @@ Input on 2026-09-22 (see `docs/MACHINE.md`): the display's Test Report says `Che
 5. *Under spelplanen* — **F3 L. Flipper EOS**: lyft bladet för hand → förvänta `F3`. Fel → gap 0,062″, kontakter, bumper plug 23-6577, rebuild-kit. Then **F1** the same. Because the owner already found the lower-left bumper plug loose (MACHINE.md), the step should surface that log entry: "Förra gången: bumper plug lossnat här".
 6. *Avslut* — summary; parts suggested: bumper plug ×2 / rebuild-kit ×2 → shopping list as `att köpa`; log entry `session` with four `StepResult`s and the shared-cause note; component statuses updated.
 
-**What the test asserts**
+### What the test asserts
 
 - Steps are grouped by location in the order: myntdörr → spelplan → under spelplanen.
 - Exactly one shared-cause step exists and it references both F1 and F3 and connector J806.

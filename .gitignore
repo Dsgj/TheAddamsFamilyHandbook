@@ -8,3 +8,7 @@ playwright-report/
 .DS_Store
 .env
 .env.*
+
+# Python (tools/ pipeline)
+.venv/
+__pycache__/

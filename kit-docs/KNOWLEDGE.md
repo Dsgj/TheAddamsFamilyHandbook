@@ -7,6 +7,7 @@ Innehåll till appen. Allt märkt **[manual]** kommer från ägarens manualer (s
 ## 1. Så hänger maskinen ihop
 
 **Kort i backboxen** [manual 1-46, 1-47, sektion 2]
+
 - **CPU Board** (A-12742-20017): spel-ROM U6, RAM U8, ASIC U9, tre AA-batterier B1–B3 för CMOS-minnet, LED D19/D20/D21. *Denna maskin: U6 = L-4 på M27C2001, U8 = anyPin NVRAM, inga batterier [observerat 2026-09-24, foto].* Läser switchmatrisen (kolumner ut via U20, rader in via U18/U19) och de dedikerade switcharna (J205).
 - **Power Driver Board** (A-12697): alla säkringar F101–F116, drivtransistorer för solenoider (Q20–Q82), lampmatris (rader Q83–Q90, kolumner Q91–Q98), GI-triacs (Q10–Q18), LED 1–7.
 - **Fliptronics I** (Flipper Controller): flipperknappar (J805) och EOS-switchar (J806), driver de fyra flipperspolarna.
@@ -15,6 +16,7 @@ Innehåll till appen. Allt märkt **[manual]** kommer från ägarens manualer (s
 - **Dot Matrix Controller** (A-14039): displayens högspänning, säkringar F601/F602.
 
 **Kretsar** [manual sektion 3, erfarenhet för spänningsvärdena]
+
 - **Switchmatris** 8×8: kolumn = grön-X tråd från J206, rad = vit-X tråd till J208. Varje switch har en 1N4148-diod. Switchnummer = kolumn·10 + rad (32 = kolumn 3, rad 2). Flipperswitchar F1–F8 och dedikerade D1–D8 ligger utanför matrisen.
 - **Lampmatris** 8×8: kolumn = gul-X (B+), rad = röd-X. Lampnummer på samma sätt. Matrisen skannas kolumn för kolumn; en LED syns på den läckström som en glödlampa inte märker (ghosting).
 - **Solenoider**: 01–08 high power (50 V), 09–16 low power, 17–24 flasherkrets (20 V), 25–28 motorer/spolar på flasherdrivare. Varje spole har en diod över lindningen. Jordsidan styrs av en transistor på Power Driver; en kortsluten transistor = spolen "på" hela tiden och blir varm.
@@ -28,7 +30,7 @@ Innehåll till appen. Allt märkt **[manual]** kommer från ägarens manualer (s
 ## 2. Displayens meddelanden och vad de betyder [manual 1-44, 1-45]
 
 | Meddelande | Betyder | Första åtgärd |
-|---|---|---|
+| --- | --- | --- |
 | **Check Switch ##** | Switchen satt fast "på" vid start, eller har inte aktiverats på 90 bollar (30 spel). Spelet kompenserar reglerna tills den lagas. | T.1 Switch Edges med en boll. Reagerar den är det falsklarm som försvinner efter några spel. Annars guide 8. |
 | **Pinball Missing** | Spelet har två bollar men hittar bara en. Boll fast någonstans, eller trough-/shooter-switch felar. | Leta bollen (Thing-lådan, swamp-låset, under ramper). Lägg tillbaka via outhole. Sedan guide 3. |
 | **xxxxx Sw. is Stuck On** | En switch som normalt är öppen är sluten vid start (myntswitch, slam tilt, plumb bob). | T.2 Switch Levels visar vilka som är slutna. Rätta mekaniskt. |
@@ -62,6 +64,7 @@ Berör: F1/F3 (nedre EOS), F5/F7 (övre EOS), F2/F4/F6/F8 (knappar), spolar FL-1
 ### Guide 2. Spelet startar om, fryser eller "Factory Settings Restored" vid spolslag
 
 [erfarenhet; LED-normalvärden manual 1-46]
+
 1. Titta på **Power Driver LED 4 (+5 V)** och **CPU D21** under spel. Blinkar de till när en spole slår är 5 V-matningen svag.
 2. Klassiska orsaker i ordning: **bryggliksriktaren BR2** och **kondensatorn C5** på Power Driver-kortet (5 V-kretsen), kalla lödningar på BR2:s ben, **kontakten J101/J114** mellan Power Driver och CPU. Byt BR2 och C5 tillsammans, löd om headerpinnarna.
 3. Mät +5 V på CPU-kortet (t.ex. U8 pin 28 mot jord): ska vara 4,9–5,1 V och inte dippa under 4,75 V när flipprarna slår.
@@ -72,6 +75,7 @@ Berör: F1/F3 (nedre EOS), F5/F7 (övre EOS), F2/F4/F6/F8 (knappar), spolar FL-1
 ### Guide 3. Boll saknas, "Pinball Missing", eller spelet matar inte fram bollar
 
 Berör: trough 15/16/17, outhole 18, shooter lane 51/27, Ball Release sol 04, Outhole sol 05, Thing kickout 77, Swamp lock 71–73, Lockup kickout 74. [manual 2-35, 2-18, 2-19]
+
 1. **Räkna bollarna.** Spelet har två. Leta i Thing-lådan, swamp-låset (tre lägen), under ramperna och vid bokhyllan. Lägg tillbaka via outhole.
 2. **T.2 Switch Levels** med bollarna i trough: 15 och 16 (eller motsvarande) ska vara slutna. En trough-switch som inte sluts med boll = spelet tror bollen är borta. Justera bladet / mikroswitchen. [manual 1-15]
 3. **T.4 Solenoid Test**: 04 Ball Release ska lyfta en boll till shooter lane, 05 Outhole ska kicka bollen från outhole till trough. Svagt slag: hylsa/plunger, guide 9. [manual 1-16]
@@ -82,6 +86,7 @@ Berör: trough 15/16/17, outhole 18, shooter lane 51/27, Ball Release sol 04, Ou
 ### Guide 4. Thing tar inte bollen, tappar den, eller står still
 
 Berör: sol 25 Thing Motor, 06 Thing Magnet, 07 Thing Kickout, switchar 84 Thing Down Opto, 85 Thing Up Opto, 87 Thing Eject Hole, 77 Thing Kickout, 63 Thing Eject Lane; sammanställning A-14711 Hand Drive. [manual 2-27, 1-19, B]
+
 1. **T.12 01 Motor Test**: motorn ska gå och nedersta displayraden visa optostatus växla mellan upp och ned. Går inte motorn: sol 25 i T.4, säkring F103, kontakt J122-1. [manual 1-19]
 2. **Optostatus ändras inte**: opto 84/85 (A-15285). Optos behöver +12 V och jord; rengör sändare/mottagare, kolla att flaggan bryter strålen. [manual 1-44]
 3. **T.12 02 Operation Test** med boll i eject hole: handen ska hämta bollen, lyfta den, släppa i lådan. Tappar den bollen: **magneten** (sol 06, A-12158-1) – mät att den drar, kolla dioden och kontakt J130-7. Handen kommer fel: mekanisk justering av armen/kammen. [manual 2-27]
@@ -92,6 +97,7 @@ Berör: sol 25 Thing Motor, 06 Thing Magnet, 07 Thing Kickout, switchar 84 Thing
 ### Guide 5. Bokhyllan öppnar eller stänger inte
 
 Berör: sol 27 Bookcase Motor, switchar 81 Open, 82 Closed, optos 53–56 (bokhyllans lägen), sammanställning A-14970. [manual 2-28, 2-29, 1-19]
+
 1. **T.13 Bookcase Test**: Enter startar/stoppar motorn, displayen visar gränslägesswitcharna. [manual 1-19]
 2. Motorn går inte: sol 27 (14-7969 12 V) i T.4, säkring F103, kontakt J122-3.
 3. Motorn går men stannar fel: switch 81/82 (5647-12693-08) – justera armarna, kolla i T.1.
@@ -101,6 +107,7 @@ Berör: sol 27 Bookcase Motor, switchar 81 Open, 82 Closed, optos 53–56 (bokhy
 ### Guide 6. En GI-sträng är död eller flimrar
 
 Berör: GI 1–5, säkringar F106–F110, kontakter J120/J121, triacs Q10–Q18. [manual 1-47, 3-19, 1-17]
+
 1. **T.6 General Illumination** tänder strängarna en i taget; se vilken som är död. [manual 1-17]
 2. **Säkring**: GI1 F110, GI2 F106, GI3 F107, GI4 F109 (ej använd), GI5 F108. 5 A trög. Går den igen: kortsluten sockel eller skavd kabel i strängen.
 3. **Kontakten J120/J121 på Power Driver**: missfärgade eller bruna pinnar = bränd header. Byt både header och honkontakt med nya krympstift; löd inte bara om. Det här är den vanligaste GI-orsaken på WPC. [erfarenhet]
@@ -110,6 +117,7 @@ Berör: GI 1–5, säkringar F106–F110, kontakter J120/J121, triacs Q10–Q18.
 ### Guide 7. Lampa, hel rad eller hel kolumn i matrisen död (eller alltid tänd)
 
 Berör: lampmatrisen, J133/J137, Q83–Q98. [manual 3-2, 3-3, 1-18]
+
 1. **T.9 All Lamps**: se mönstret. En lampa = glödlampa/sockel. En **rad** (samma sista siffra, t.ex. x2) = radtransistor Q83–Q90 eller tråd röd-X/J133. En **kolumn** (samma första siffra) = kolumntransistor Q91–Q98 eller tråd gul-X/J137. [manual 1-18]
 2. **En lampa**: byt glödlampan, böj sockelns kontakter, kolla lödningarna på lamp-PCB:n (A-15110 m.fl.).
 3. **Rad/kolumn alltid tänd**: kortsluten transistor. Alltid släckt: öppen transistor, kontakt eller tråd. Mät på Power Driver mot tabellen. [erfarenhet]
@@ -118,6 +126,7 @@ Berör: lampmatrisen, J133/J137, Q83–Q98. [manual 3-2, 3-3, 1-18]
 ### Guide 8. Switch registrerar inte, eller en hel rad/kolumn saknas
 
 Berör: switchmatrisen, J206/J208, U20 (kolumner), U18/U19 (rader). [manual 3-4, 3-5, 1-15, 1-16]
+
 1. **T.1 Switch Edges**: aktivera med en boll (inte fingret) för att efterlikna spel. [manual 1-44]
 2. **T.3 Single Switch → Start** visar tråd, kontakt och säkring för switchen. [manual 1-16]
 3. **En switch**: bladgap/arm, smuts, lös tråd, **dioden 1N4148** på switchen (utan diod fungerar switchen men "spökar" i andra positioner). [erfarenhet]
@@ -128,6 +137,7 @@ Berör: switchmatrisen, J206/J208, U20 (kolumner), U18/U19 (rader). [manual 3-4,
 ### Guide 9. Spole går inte, slår svagt, låser sig, eller säkringen går
 
 Berör: valfri solenoid 01–28, dess drivtransistor, säkringar F103/F104/F105/F111. [manual 3-6, 3-7, 1-16, 2-20 … 2-26]
+
 1. **T.4 Solenoid Test**, Repeat-läge, jämför med en likadan spole (alla jets har AE-26-1200, båda slingshots AE-27-1200). **Start** visar tråd, transistor, kontakt, säkring. [manual 1-16]
 2. **Slår inte alls**: säkringen (01–08 F105, 09–16 F104, 17–24 F111, 25–28 F103), sedan spolens diod, sedan transistorn.
 3. **Svagt slag**: mekaniken. Spolhylsa (coil sleeve) sliten eller smält, svampad plunger, sliten länk/yoke, utsliten coil stop, lösa skruvar. Jet bumper: ringens stag har glidit ur armaturlänken (01-5492/01-5493), bakelitlänk sprucken. [manual 2-20]
@@ -147,6 +157,7 @@ Berör: valfri solenoid 01–28, dess drivtransistor, säkringar F103/F104/F105/
 ### Guide 11. Ghosting eller flimmer efter LED-byte
 
 [erfarenhet]
+
 1. Kör **T.8** i halvmörker: glöder släckta lampor svagt = ghosting. Berör bara lampmatrisen, inte GI.
 2. Byt till **non-ghosting-LEDs** i de positioner som glöder (ofta bara vissa rader/kolumner).
 3. DIY: ett motstånd parallellt **över lampan** i sockeln (inte över sockelns diod): börja med 1 kΩ ¼ W, gå ner till 680/470 Ω. Flashers: 2,2 kΩ ½ W, ner till 1 kΩ 1 W.
@@ -156,6 +167,7 @@ Berör: valfri solenoid 01–28, dess drivtransistor, säkringar F103/F104/F105/
 ### Guide 12. Thing Flips missar för ofta
 
 [manual sida B]
+
 1. Rätt kalibrerad träffar den 50–60 %. Efter flytt: **U.12 New Location** (nollställer inlärningen) eller U.8 (nollställer allt, undvik).
 2. Kontrollera switcharna kalibreringen bygger på: **57 Bumper Lane Opto** (över övre vänstra miniflippern), **45/47/48 Swamp-målen**, **71 Swamp Lock Upper**, samt övre vänstra flippern.
 3. Snabbkalibrering med glaset av: 4 kast upp för sidorampen (Super Jackpot); sedan rollover i vänster returbana ("Lite Thing Flips") följt av mittrampen, minst 30 gånger. Flera hundra skott för full precision.
@@ -175,6 +187,7 @@ Berör: valfri solenoid 01–28, dess drivtransistor, säkringar F103/F104/F105/
 ### Guide 14. Inget ljud, brummar, eller pip vid start
 
 [manual 1-45, 1-17]
+
 1. Räkna pipen vid start: 1 = OK; 2 = U9 RAM; 3 = U18; 4 = U15; 5 = U14 på ljudkortet. Sätt om/byt kretsen.
 2. Säkringar F501 (−25 V) och F502 (+25 V) på ljudkortet.
 3. **A.1 28 Minimum Volume Control**: står den på YES kan volymen vara nedvriden till av. Volym upp med myntdörrsknappen.
@@ -184,6 +197,7 @@ Berör: valfri solenoid 01–28, dess drivtransistor, säkringar F103/F104/F105/
 ### Guide 15. Displayen är svart, har döda rader eller darrar
 
 [manual 1-47, 1-19, erfarenhet]
+
 1. F601 (+80 V) och F602 (+100 V) på Dot Matrix Controller (3/8 A trög). **Högspänning: låt kortet stå avslaget en stund innan du rör det.**
 2. T.11 Display Test visar mönster; döda rader/kolumner = flatkabel eller displayglaset.
 3. Kalla lödningar på högspänningsdelen av DMD-kortet är vanligt. Displayen är en slitdel (dimmar med åren).
@@ -197,7 +211,7 @@ Ordning: presets först (de skriver över enskilda värden), sedan justeringar. 
 ### Presets (U. Utilities → U.9)
 
 | Preset | Varför |
-|---|---|
+| --- | --- |
 | **U.9 02 Install Easy** | Snällare för sällanspelare (fler extra bollar, lättare lås, Million Plus sparas). Alternativ: **U.9 03 Install Medium** = fabrik. |
 | **U.9 10 Install Novelty** | Tar bort gratisspelsbelöningar (replay, match, high score-credits) som är meningslösa på free play. Special ger poäng. |
 | *(alternativ)* **U.9 08 Install Add-A-Ball** | Replays och specials ger extra boll i stället. Roligare, men längre spel om det är kö. |
@@ -205,13 +219,13 @@ Ordning: presets först (de skriver över enskilda värden), sedan justeringar. 
 ### A.3 Pricing
 
 | Inställning | Värde |
-|---|---|
+| --- | --- |
 | **A.3 17 Free Play** | **YES** |
 
 ### A.1 Standard Adjustments
 
 | Inställning | Förslag | Motiv |
-|---|---|---|
+| --- | --- | --- |
 | A.1 01 Balls Per Game | 3 | lagom vid kö |
 | A.1 02 Tilt Warnings | 3 | |
 | A.1 19 Match Feature | OFF | Novelty sätter det |
@@ -233,10 +247,10 @@ Lämna enligt presetet. Kontrollera **A.2 20 Disable THING = NO** och **A.2 21 D
 
 **Finns bara i ROM H-4/6.0H, ej i manualen** [hämtat ur ROM-filen]: `A-MODE SOUND`, `A-MODE MUSIC` (stäng av på kontor), `GAMEOVER KICKOUT`, `SPOT GREED/BALL`, `FREEPLAY MESSAGE` (visar "FREE PLAY" i attract mode), `SPOT T-H-I-N-G`. De ligger efter A.2 26 i menyn. Exakt nummer och beskrivning måste läsas av på displayen.
 
-### A.4 H.S.T.D.
+### A.4 H.S.T.D
 
 | Inställning | Förslag |
-|---|---|
+| --- | --- |
 | A.4 01 Highest Scores | ON |
 | A.4 03 Champion H.S.T.D. | ON |
 | A.4 04–08 Credits | 00 (Novelty) |
@@ -248,7 +262,7 @@ Kör sedan **U.3 Reset H.S.T.D.**
 ### Utilities efter flytt
 
 | Funktion | Varför |
-|---|---|
+| --- | --- |
 | U.4 Set Time & Date | |
 | U.5 Custom Message | se §9 |
 | U.12 New Location | nollställer Thing Flips-kalibreringen |
@@ -264,6 +278,7 @@ Kör sedan **U.3 Reset H.S.T.D.**
 **Filen** `ADDAM_H4.ROM`: 524 288 byte (512 KB) → **27C040** (4 Mbit). MD5 `2157560764b827af26d41d2d2efef949`. Innehåller strängarna `REV. H-4`, `EPROM H-4`, `PROGR. H-4`. Checksumman i ROM:en är korrekt: 16-bitars summa av alla byte = `$FB06` = ordet på `$FFEE`; `$FFEC` är utjämningsordet. Koden ligger i bank 0E–1F (288 KB); bank 00–0D är tomma (`$FF`), så filen kan inte krympas till 27C020.
 
 **Byte av U6** [manual p2 för byglar, 1-45 för checksumfel; övrigt erfarenhet]
+
 1. Anteckna alla inställningar först (appens inställningssida). Byte nollställer justeringar, bokföring och topplista.
 2. Ström av, sladden ur. Notera skårans riktning. Bänd U6 jämnt från båda ändar.
 3. Byglar: **W1 in, W2 ut** för 1M/2M/4M EPROM (27C040). Landsbyglar: European = W16 ut, övriga in; American = alla in.
@@ -279,7 +294,7 @@ Kör sedan **U.3 Reset H.S.T.D.**
 ## 6. Flipprar [manual 2-16, 2-17]
 
 | Flipper | Sammanst. | Spole | EOS (reservdelslista) | Säkring |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | Nedre vänster | A-15205-L-4 | FL-15411 (orange) | SW-1A-194 | F101 3A S.B. |
 | Nedre höger | A-15205-R-4 | FL-15411 (orange) | SW-1A-194 | F102 3A S.B. |
 | Övre vänster (mini) | A-15205-L-1 | FL-11753 (gul) | SW-1A-193 | F901 3A S.B. |
@@ -301,7 +316,7 @@ Kör sedan **U.3 Reset H.S.T.D.**
 **Antal glödlampor i spelet** [reservdelslistan + manual 2-40]
 
 | Var | Typ | Antal |
-|---|---|---|
+| --- | --- | --- |
 | Inserts, lampmatris | #555 | 37 (+7 "Thing"-lampor i högtalarpanelen = 44) |
 | Inserts, lampmatris | #44 | 19 |
 | GI spelplan | #44 | 21 |
@@ -312,6 +327,7 @@ Kör sedan **U.3 Reset H.S.T.D.**
 Glödlampsartiklar: #555 = 24-8768, #44 = 24-6549, #455 = 24-6591, #906 = 24-8802.
 
 **Vid LED-byte** [erfarenhet]
+
 - Matrisen: **non-ghosting** krävs. Riktade ("top view"/Super Flux) under inserts.
 - GI: vanliga 6,3 V AC/DC non-polar räcker; **varmvit** (3000–3500 K) för originalkänsla. Spelets GI-fade försvinner med de flesta LEDs; många ägare behåller glödlampor i GI.
 - Flashers: 20 V-krets. Dedikerade pinball-flashers märkta "12–13 V" är gjorda för det. Bil-LED 12 V blir varm om flashern hålls tänd; 24 V-version blir dimmare (25–65 % beroende på konstruktion). Rundstrålande (5× Super Flux / 8 SMD) under kupoler.
