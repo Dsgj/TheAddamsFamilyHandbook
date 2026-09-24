@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Coil, Lamp, Switch, Kind, MapMeta } from '~/lib/model/types';
   import { KIND_LABEL, MAP_LAYER } from '~/lib/data/components';
+  import { positions } from '~/lib/data/positions';
   import { COIL_NOTE, HINT, t } from '~/lib/data/en';
   import { componentHref, href, manualHref } from '~/lib/url';
   import MiniMap from './MiniMap.svelte';
@@ -22,6 +23,7 @@
   const layer = $derived(MAP_LAYER[kind]);
   const callouts = $derived(item.loc.map((l) => l.l).join(', '));
   const mapPage = $derived(mapMeta.page);
+  const pos = $derived(positions(kind, item.id));
   const isMatrix = $derived(!!sw && sw.col !== null);
 </script>
 
@@ -55,7 +57,7 @@
       href={href(`map?layer=${layer}&id=${item.id}`)}
       aria-label="Open on the map"
     >
-      <MiniMap {layer} meta={mapMeta} loc={item.loc} />
+      <MiniMap {pos} />
     </a>
     <dl>
       {#if sw}

@@ -2,6 +2,7 @@
 import { getCollection } from 'astro:content';
 import Base from '~/layouts/Base.astro';
 import HandbookToc from '~/components/HandbookToc.svelte';
+import PlayfieldMap from '~/components/PlayfieldMap.svelte';
 import { SECTIONS, isAppendixPage } from '~/lib/handbook/sections';
 import { handbookToc } from '~/lib/handbook/toc';
 import { href, manualHref } from '~/lib/url';
@@ -64,6 +65,15 @@ const UNVERIFIED = new Set([26, 27, 28]);
               )}
             </div>
             <Fragment set:html={e.rendered?.html ?? ''} />
+            {e.data.page === 9 && (
+              <div class="shot-map">
+                <p class="small muted">
+                  Both shot maps (pages 9 and 10) on one drawing. Tap a letter; switch on the other
+                  layers to see the switches, lamps and coils under each shot.
+                </p>
+                <PlayfieldMap client:visible layer="shot" />
+              </div>
+            )}
             {!isAppendixPage(e.data.page) &&
               OWNER_NOTES[e.data.page]?.map((n) => (
                 <aside class="owner-note small">

@@ -72,3 +72,28 @@ test('theme toggle switches to the other palette', async ({ page }) => {
   const after = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
   expect(after).not.toBe(before);
 });
+
+test('layers combine and the shot layer opens a shot card', async ({ page }) => {
+  await gotoHydrated(page, '/map?layer=shot');
+  await expect(page.locator('.marker.k-shot')).toHaveCount(17);
+  await expect(page.locator('.marker.k-sw')).toHaveCount(0);
+  await page
+    .getByRole('button', { name: /^K Bookcase/ })
+    .first()
+    .click();
+  await expect(page.locator('aside article.shot-card[data-id="K"]')).toBeVisible();
+  await page
+    .getByRole('group', { name: 'Layers' })
+    .getByRole('button', { name: 'Switches' })
+    .click();
+  await expect(page.locator('.marker.k-sw').first()).toBeVisible();
+  await expect(page).toHaveURL(/layer=sw,shot/);
+  await expect(page).toHaveURL(/id=K/);
+});
+
+test('handbook rules section embeds the shot map after page 9', async ({ page }) => {
+  await gotoHydrated(page, '/handbook/rules');
+  const embed = page.locator('#pg-9 .shot-map');
+  await embed.scrollIntoViewIfNeeded();
+  await expect(embed.locator('.marker.k-shot')).toHaveCount(17);
+});
