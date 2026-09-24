@@ -5,7 +5,7 @@ Every file in `data/`, `content/` and `assets/`, field by field. All of it was p
 Mapping PDF page → printed label for the Operations Manual:
 
 | PDF pages | Printed label | Content |
-|---|---|---|
+| --- | --- | --- |
 | 1 | cover | |
 | 2 | (none) | jumper charts + solenoid/flasher table |
 | 3–4 | (none) | table of contents |
@@ -28,7 +28,7 @@ One object with these keys.
 ### `switches[]` (80 entries: 64 matrix positions incl. unused, 8 dedicated `D1–D8`, 8 flipper `F1–F8`)
 
 | Field | Type | Meaning | Source |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `id` | `"11"…"88"`, `"D1"…"D8"`, `"F1"…"F8"` | Switch number as the game displays it. Matrix id = column×10 + row. | 2-39, 3-4, handbook p9 |
 | `name` | string | Name as printed (e.g. `Upper Right Jet`). `"Not Used"` for empty positions. | 2-39 |
 | `part` | string | Switch part number (e.g. `SW-11A-37`, `5647-12693-19`); empty if not printed | 2-39 |
@@ -38,7 +38,7 @@ One object with these keys.
 | `colPin` | string | CPU board connector pin for the column (e.g. `J206-3`) | 3-4 |
 | `colIc` | string | CPU board IC pin driving the column (e.g. `U20-16`) | 3-4 |
 | `rowWire`, `rowWireEn`, `rowPin`, `rowIc` | string | Same for the row (e.g. `Vit-röd`, `J208-2`, `U18-9`) | 3-4 |
-| `wire`, `wireEn`, `pin`, `kind` | string | **Dedicated/flipper switches only**: single wire colour, connector pin, and `kind: "ded"|"flip"`. Flipper pins are on the Fliptronics board (`J806-x` EOS, `J805-x` buttons); dedicated pins on the CPU board (`J205-x`). | handbook p9 |
+| `wire`, `wireEn`, `pin`, `kind` | string | **Dedicated/flipper switches only**: single wire colour, connector pin, and `kind: "ded" | "flip"`. Flipper pins are on the Fliptronics board (`J806-x` EOS, `J805-x`buttons); dedicated pins on the CPU board (`J205-x`). | handbook p9 |
 | `under` | bool | Printed with † = located on the underside of the playfield | 2-39 |
 | `notShown` | bool | Printed with * = not shown on the diagram (cabinet/coin door) | 2-39 |
 | `unused` | bool | `"Not Used"` | |
@@ -50,7 +50,7 @@ Column/row header data: `swCols` and `swRows` — objects keyed `"1"…"8"` → 
 ### `lamps[]` (64 entries)
 
 | Field | Meaning | Source |
-|---|---|---|
+| --- | --- | --- |
 | `id` | `"11"…"88"` (column×10 + row) | 3-2 |
 | `name` | as printed (e.g. `G-R-E-E-D "E"-1`) | 2-40 |
 | `bulbPart` | `24-8768` (#555) or `24-6549` (#44) | 2-40 |
@@ -68,7 +68,7 @@ Headers: `lCols`, `lRows` → `[wireSv, wireEn, connectorPin, transistor]`.
 ### `coils[]` (28 entries: solenoids 01–28 incl. flashers)
 
 | Field | Meaning | Source |
-|---|---|---|
+| --- | --- | --- |
 | `id` | `"01"…"28"` | 3-6 / p2 |
 | `name` | function as printed | 3-6 |
 | `type` | `High Power` / `Low Power` / `Flasher` (the *circuit* type — 25–28 are motors/coils on flasher-type drivers) | 3-6 |
@@ -107,9 +107,9 @@ The same callout positions **before cropping**, keyed by PDF page (`"97"`, `"98"
 
 Array of rows from `source/Parts_List.txt` (the factory indented bill of materials), each:
 
-```
-[item:number, level:number, partNo:string, description:string, used:string, parentIndex:number|null]
-```
+    ```
+    [item:number, level:number, partNo:string, description:string, used:string, parentIndex:number|null]
+    ```
 
 `level` 1 = top level of the machine; `parentIndex` is the array index of the enclosing assembly (follow it up to build the "sits in" path). `used` is the quantity **within its parent** (multiply up the chain for totals). Descriptions are the factory's abbreviations (`flpr stop brkt`).
 
@@ -143,14 +143,14 @@ One Markdown file per transcribed Operations Manual page (PDF pages 2, 3, 5–10
 - `##` = a main heading on that page; `###` = an item (`### A.1 20 Custom Message`, `### T.4 Solenoid Test`, `### B.1 01 Total Earnings`). Adjustment headings follow the pattern `### A.<group> <NN> <Name>` — parse these to build the adjustments catalogue. Test items: `### T.<n> <Name>`. Utilities: `### U.<n> <Name>` and `U.9 NN` presets.
 - Every list of choices/settings is a GFM table, usually `| Choice | Meaning |`, sometimes with `| Range | … |` / `| Settings | … |` rows, or wide preset tables. Difficulty/preset tables (pages 32–36) and the pricing table (50) are complete.
 - Figures: `![caption](fig/ops12.png)` — paths are relative to the prototype; map them to `assets/figures/`. Remaining un-cropped figures appear as `*[Figure: caption]*`.
-- Internal links: `[1-15](#goto:ops:25)` = open PDF page 25 of the Operations Manual (used on the TOC page). `[…](#find:T.4)` = jump to the heading that starts with `T.4 ` (used in the menu map on `ops017.md`, which contains raw HTML: `<div class="mmap">…` and `<div class="mkeys">…` — restyle freely).
+- Internal links: `[1-15](#goto:ops:25)` = open PDF page 25 of the Operations Manual (used on the TOC page). `[…](#find:T.4)` = jump to the heading that starts with `T.4` (used in the menu map on `ops017.md`, which contains raw HTML: `<div class="mmap">…` and `<div class="mkeys">…` — restyle freely).
 - Pages 9 and 10 contain only the shot-map figures; page 5 is the rules cover.
 - Original spelling and typos are kept on purpose (`Single Switchs`, `more then one`, `Jumper Bumper`). Do not "fix" them.
 
 Section grouping used by the prototype (`tools/build_reader.py` → `SECTIONS`):
 
 | Key | Swedish title | Pages |
-|---|---|---|
+| --- | --- | --- |
 | snabb | Snabbreferens och innehåll | 2, 3 |
 | regler | Regler och shot maps | 5–10 |
 | drift | Montering och drift | 11–16 |

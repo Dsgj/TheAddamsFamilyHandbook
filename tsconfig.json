@@ -1,8 +1,7 @@
 {
   "extends": "astro/tsconfigs/strictest",
   "compilerOptions": {
-    "baseUrl": ".",
-    "paths": { "~/*": ["src/*"] },
+    "paths": { "~/*": ["./src/*"] },
     "types": ["vite-plugin-pwa/client"],
     "resolveJsonModule": true,
     "noUncheckedIndexedAccess": true,

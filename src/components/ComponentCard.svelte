@@ -1,8 +1,8 @@
 <script lang="ts">
-  import type { Coil, Lamp, Switch, Kind, MapMeta } from '~/lib/model/types';
   import { KIND_LABEL, MAP_LAYER } from '~/lib/data/components';
-  import { positions } from '~/lib/data/positions';
   import { COIL_NOTE, HINT, t } from '~/lib/data/en';
+  import { positions } from '~/lib/data/positions';
+  import type { Coil, Kind, Lamp, MapMeta, Switch } from '~/lib/model/types';
   import { componentHref, href, manualHref } from '~/lib/url';
   import MiniMap from './MiniMap.svelte';
   import StatusRow from './StatusRow.svelte';

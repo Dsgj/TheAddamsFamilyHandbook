@@ -1,6 +1,7 @@
 <script lang="ts">
-  import type { Kind, MatrixHeaders } from '~/lib/model/types';
+  import { untrack } from 'svelte';
   import { getStatus } from '~/lib/model/status.svelte';
+  import type { Kind, MatrixHeaders } from '~/lib/model/types';
   import { componentHref } from '~/lib/url';
   import WireChip from './WireChip.svelte';
 
@@ -27,7 +28,7 @@
 
   const N = [1, 2, 3, 4, 5, 6, 7, 8];
   const grid = $derived(new Map(cells.map((c) => [`${c.col}${c.row}`, c])));
-  let focus = $state<string>(highlight || '11');
+  let focus = $state<string>(untrack(() => highlight) || '11');
   let hoverCol = $state(0);
   let hoverRow = $state(0);
 
@@ -113,6 +114,7 @@
                   <span class="nm">{cell.name}</span>
                 </a>
               {:else}
+                <!-- svelte-ignore a11y_no_noninteractive_tabindex (roving focus target for arrow-key navigation) -->
                 <span class="empty" data-cell={id} tabindex={focus === id ? 0 : -1}>{id}</span>
               {/if}
             </td>

@@ -1,14 +1,15 @@
 <script lang="ts">
-  import { DATA, find, KIND_LABEL } from '~/lib/data/components';
-  import { parseCodes, type ParsedCode } from '~/lib/codes';
-  import { lampSharedCauses, sharedCauses } from '~/lib/shared-cause';
-  import type { Lamp, Switch } from '~/lib/model/types';
-  import { href } from '~/lib/url';
   import { appendixAnchor } from '~/data/appendix';
+  import { parseCodes, type ParsedCode } from '~/lib/codes';
+  import { DATA, find, KIND_LABEL } from '~/lib/data/components';
+  import type { Lamp, Switch } from '~/lib/model/types';
+  import { lampSharedCauses, sharedCauses } from '~/lib/shared-cause';
+  import { href } from '~/lib/url';
+  import { untrack } from 'svelte';
   import ComponentCard from './ComponentCard.svelte';
 
   let { initial = '' }: { initial?: string } = $props();
-  let input = $state(initial);
+  let input = $state(untrack(() => initial));
 
   $effect(() => {
     const q = new URLSearchParams(location.search).get('q');

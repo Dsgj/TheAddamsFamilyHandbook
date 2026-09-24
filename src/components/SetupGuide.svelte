@@ -19,7 +19,7 @@
     noun?: string;
   } = $props();
 
-  const ids = steps.flatMap((s) => s.items.map((i) => i.id));
+  const ids = $derived(steps.flatMap((s) => s.items.map((i) => i.id)));
   const done = $derived(doneCount(ids));
   const isCode = (id: string) => /^[AU]\.\d/.test(id);
   const isTask = (i: SetupItem) => !i.suggested;

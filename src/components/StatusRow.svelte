@@ -1,5 +1,4 @@
 <script lang="ts">
-  import type { Kind, StatusValue } from '~/lib/model/types';
   import {
     getStatus,
     setNote,
@@ -7,6 +6,7 @@
     shortDate,
     STATUS_LABEL,
   } from '~/lib/model/status.svelte';
+  import type { Kind, StatusValue } from '~/lib/model/types';
 
   let { kind, id }: { kind: Kind; id: string } = $props();
   const current = $derived(getStatus(kind, id));

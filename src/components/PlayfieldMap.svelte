@@ -1,4 +1,9 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
+  import { SvelteSet } from 'svelte/reactivity';
+  import overlaysRaw from '~/data/overlays.json';
+  import { SHOTS } from '~/data/shots';
+  import type { AnyComponent } from '~/lib/data/components';
   import {
     DATA,
     itemsOf,
@@ -8,16 +13,11 @@
     MAP_LAYER,
     type Layer,
   } from '~/lib/data/components';
-  import type { AnyComponent } from '~/lib/data/components';
-  import { allPositions, PLAYFIELD, positions, posKey } from '~/lib/data/positions';
   import type { PosKind } from '~/lib/data/positions';
-  import { SvelteSet } from 'svelte/reactivity';
-  import { untrack } from 'svelte';
+  import { allPositions, PLAYFIELD, positions, posKey } from '~/lib/data/positions';
   import { getStatus } from '~/lib/model/status.svelte';
   import type { Loc } from '~/lib/model/types';
   import { href, manualHref } from '~/lib/url';
-  import { SHOTS } from '~/data/shots';
-  import overlaysRaw from '~/data/overlays.json';
   import ComponentCard from './ComponentCard.svelte';
 
   /** Component layers plus the manual's lettered shots. Any combination can be shown. */
@@ -65,7 +65,7 @@
   const layerOf = (kind: PosKind): MapLayer => (kind === 'shot' ? 'shot' : MAP_LAYER[kind]);
   const kindOf = (l: MapLayer): PosKind => (l === 'shot' ? 'shot' : LAYER_KIND[l]);
 
-  const on = new SvelteSet<MapLayer>(parseLayers(initialLayer));
+  const on = new SvelteSet<MapLayer>(parseLayers(untrack(() => initialLayer)));
   function setOn(layers: MapLayer[]) {
     untrack(() => {
       on.clear();

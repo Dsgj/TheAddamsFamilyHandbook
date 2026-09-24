@@ -63,8 +63,9 @@
     } else if (e.key === 'ArrowUp') {
       active = Math.max(0, active - 1);
       e.preventDefault();
-    } else if (e.key === 'Enter' && hits[active]) {
-      location.href = hits[active].url;
+    } else if (e.key === 'Enter') {
+      const hit = hits[active];
+      if (hit) location.href = hit.url;
     } else if (e.key === 'Escape') {
       open = false;
     }
