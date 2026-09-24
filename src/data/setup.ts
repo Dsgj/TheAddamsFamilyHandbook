@@ -101,6 +101,12 @@ export const SETUP_STEPS: SetupStep[] = [
       { id: 'A.1 22', name: 'Clock Style', suggested: '24 Hours', why: '' },
       { id: 'A.1 23', name: 'Date Style', suggested: 'Date/Month/Year', why: '' },
       {
+        id: 'A.1 24',
+        name: 'Show Date and Time',
+        suggested: 'NO',
+        why: 'This machine has an NVRAM module at U8 and no batteries (observed 2026-09-24, photo), so the clock only runs while the game is on and lags after every power-off. Shown, it would be wrong.',
+      },
+      {
         id: 'A.1 25',
         name: 'Allow Dim Illumination',
         suggested: 'NO',
@@ -180,7 +186,7 @@ export const SETUP_STEPS: SetupStep[] = [
     title: 'H-4 ROM adjustments',
     menu: 'A. Adjustments → A.2 Feature Adjustments, after A.2 26',
     intro:
-      'The manual lists A.2 01–26 for an older ROM. H-4 has six more, found in the ROM string table; their numbers are not printed anywhere, so look them up on the display after A.2 26 and note the number you find in the field.',
+      'This machine runs L-4 on an ST M27C2001 (256 KB) at U6 until the H-4 swap (observed 2026-09-24, photo); the jumpers W1 in / W2 out stay as they are for the 27C040. The manual lists A.2 01–26 for an older ROM. H-4 has six more, found in the ROM string table; their numbers are not printed anywhere, so look them up on the display after A.2 26 and note the number you find in the field.',
     items: [
       {
         id: 'h4-amode-sound',
@@ -317,14 +323,14 @@ export const SETUP_STEPS: SetupStep[] = [
       },
       {
         id: 'batteries',
-        name: 'Three AA batteries on the CPU board replaced',
+        name: 'CPU board memory checked: NVRAM at U8, no batteries fitted',
         suggested: '',
-        why: 'Fresh batteries hold the settings on this page for a few years, but replace them yearly and look at the holder for corrosion. NVRAM only if it starts to corrode. Tick again each time; the date shows here. Three AA alkaline in the holder on the CPU board, game on so the settings survive the swap. Any white or green crust on the holder or the board around it is leaked electrolyte: clean with vinegar and water, dry, and move the holder off the board on a lead if it comes back.',
+        why: 'This machine has an anyPin NVRAM Battery Eliminator at U8 (observed 2026-09-24, photo), so no batteries are needed and none should be fitted. Tick when you have confirmed that no old cells remain in or under the holder below the module and looked once at the board around it for leakage from before the swap. Settings survive without a battery; only the clock stops when the game is off, so A.1 24 Show Date and Time is NO in step 3.',
         find: 'A5',
       },
     ],
     after:
-      'Later, only if needed: pinballs (a six-pack is about 300 kr; the four magnets magnetise them and they pick up grit), NVRAM if the battery holder corrodes, hole protectors at the Chair and Swamp kickouts if the wear there grows.',
+      'Later, only if needed: pinballs (a six-pack is about 300 kr; the four magnets magnetise them and they pick up grit), hole protectors at the Chair and Swamp kickouts if the wear there grows.',
   },
 ];
 

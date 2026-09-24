@@ -12,7 +12,7 @@ test('care ticks keep their date and share the battery tick with setup', async (
   await expect(balls).toContainText('done');
   await expect(page.getByRole('status')).toContainText('1 /');
 
-  await page.locator('.item', { hasText: 'Three AA batteries' }).getByRole('checkbox').check();
+  await page.locator('.item', { hasText: 'no batteries fitted' }).getByRole('checkbox').check();
   await expect(page.getByRole('status')).toContainText('2 /');
 
   await page.reload();
@@ -20,7 +20,7 @@ test('care ticks keep their date and share the battery tick with setup', async (
 
   await gotoHydrated(page, '/setup');
   await expect(
-    page.locator('.item', { hasText: 'Three AA batteries' }).getByRole('checkbox'),
+    page.locator('.item', { hasText: 'no batteries fitted' }).getByRole('checkbox'),
   ).toBeChecked();
 
   await gotoHydrated(page, '/care');

@@ -50,7 +50,7 @@ export const OWNER_NOTES: Record<number, OwnerNote[]> = {
     },
     {
       code: 'A5',
-      text: 'Reset, lost settings and a Factory Settings Restored message at power-up point at the batteries and the holder on the CPU board first, then the 5 V rail and its test point on the driver board.',
+      text: 'On this machine U8 holds an NVRAM module and there are no batteries (observed 2026-09-24, photo), so reset, lost settings and a Factory Settings Restored message point at the 5 V rail (BR2 and C5 on the driver board, the J101/J114 connectors) or at the module’s seating, not at batteries. The clock stopping while the game is off is normal here.',
     },
   ],
   57: [

@@ -158,9 +158,9 @@ export const CARE_STEPS: SetupStep[] = [
     items: [
       {
         id: 'care-battery-area',
-        name: 'Inspect the CPU board battery holder and the board around it for leakage',
+        name: 'Inspect the CPU board around U8 and the old battery holder position for leakage',
         suggested: '',
-        why: 'Priority 1. Alkaline leakage creeps under the solder mask and eats traces, vias and the reset circuit next to the holder. White or green crust, dark copper or eaten component leads means a corrosion repair, not a spray: neutralise, clean, repair, then think about a remote holder or NVRAM. Appendix A5 has the steps.',
+        why: 'Priority 1. This machine has an NVRAM module at U8 and no batteries (observed 2026-09-24, photo), so this is a look for leakage from before the swap, not a battery check. Alkaline leakage creeps under the solder mask and eats traces, vias and the reset circuit next to the holder. White or green crust, dark copper or eaten component leads means a corrosion repair, not a spray: neutralise, clean, repair, then think about a remote holder or NVRAM. Appendix A5 has the steps.',
         find: 'A5',
       },
       {
@@ -188,9 +188,9 @@ export const CARE_STEPS: SetupStep[] = [
       },
       {
         id: 'batteries',
-        name: 'Three AA batteries on the CPU board replaced',
+        name: 'NVRAM module at U8 seated, no batteries fitted',
         suggested: '',
-        why: 'Same tick as Setup step 7. Look at the holder for corrosion while the batteries are out; NVRAM only if it starts.',
+        why: 'Same tick as Setup step 7. This machine has no batteries to replace (observed 2026-09-24, photo); check that the NVRAM module sits square in U8 and that no old cells have found their way into the holder.',
         find: '',
       },
       {

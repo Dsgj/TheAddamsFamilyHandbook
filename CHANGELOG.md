@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- **Backbox inspection folded in (observed 2026-09-24, photo).** The machine
+  card and knowledge bank in kit-docs record: game ROM L-4 on an ST M27C2001 at
+  U6 (H-4 swap still worthwhile, jumpers W1 in / W2 out unchanged), an anyPin
+  NVRAM module at U8 with no batteries, the Fliptronics TIP102 row replaced in
+  1999, board part numbers and 1992 date codes, taped connectors from earlier
+  service. In the app: A.1 24 Show Date and Time suggested NO; the batteries
+  step in Setup and Care is now an NVRAM check; the Problem Analysis owner's
+  note, A5 and A6 carry the machine-specific facts; Verify has a "This machine"
+  group (old cells, W16, serial, A.1 24).
 - **Thing Knocker coil missing.** The coil 02 card, the A2 resistance table and
   a new Setup step under Upgrades and upkeep record that this machine has the
   A-15267 bracket and rubber pad but no AE-23-800 coil, with what to buy and

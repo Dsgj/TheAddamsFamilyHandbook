@@ -7,7 +7,7 @@ Innehåll till appen. Allt märkt **[manual]** kommer från ägarens manualer (s
 ## 1. Så hänger maskinen ihop
 
 **Kort i backboxen** [manual 1-46, 1-47, sektion 2]
-- **CPU Board** (A-12742-20017): spel-ROM U6, RAM U8, ASIC U9, tre AA-batterier B1–B3 för CMOS-minnet, LED D19/D20/D21. Läser switchmatrisen (kolumner ut via U20, rader in via U18/U19) och de dedikerade switcharna (J205).
+- **CPU Board** (A-12742-20017): spel-ROM U6, RAM U8, ASIC U9, tre AA-batterier B1–B3 för CMOS-minnet, LED D19/D20/D21. *Denna maskin: U6 = L-4 på M27C2001, U8 = anyPin NVRAM, inga batterier [observerat 2026-09-24, foto].* Läser switchmatrisen (kolumner ut via U20, rader in via U18/U19) och de dedikerade switcharna (J205).
 - **Power Driver Board** (A-12697): alla säkringar F101–F116, drivtransistorer för solenoider (Q20–Q82), lampmatris (rader Q83–Q90, kolumner Q91–Q98), GI-triacs (Q10–Q18), LED 1–7.
 - **Fliptronics I** (Flipper Controller): flipperknappar (J805) och EOS-switchar (J806), driver de fyra flipperspolarna.
 - **Extra Flipper Supply Board** (A-15416): matar de övre flipprarna, säkringar F901/F902.
@@ -33,9 +33,9 @@ Innehåll till appen. Allt märkt **[manual]** kommer från ägarens manualer (s
 | **Pinball Missing** | Spelet har två bollar men hittar bara en. Boll fast någonstans, eller trough-/shooter-switch felar. | Leta bollen (Thing-lådan, swamp-låset, under ramper). Lägg tillbaka via outhole. Sedan guide 3. |
 | **xxxxx Sw. is Stuck On** | En switch som normalt är öppen är sluten vid start (myntswitch, slam tilt, plumb bob). | T.2 Switch Levels visar vilka som är slutna. Rätta mekaniskt. |
 | **Ground Short Row-N, Wht-xxx** | En hel rad kortsluten mot jord: slam tilt-switch mot myntdörren, bladswitch mot jordad del, skadad kabel, eller alla switchar i raden slutna samtidigt. | T.2 Switch Levels. Lossa misstänkta kontakter en i taget. |
-| **Factory Settings Restored** | CMOS-minnet tappat: batterier, hållare, dioderna D1/D2 på CPU-kortet. U8 pin 26 och 28 ska ha +5 V på, minst +4 V av. | Byt batterier, rengör hållaren. Upprepas det: D1 (0 Ω fram, oändligt bak), D2 (15 Ω fram). Överväg NVRAM. Guide 13. |
+| **Factory Settings Restored** | CMOS-minnet tappat: batterier, hållare, dioderna D1/D2 på CPU-kortet. U8 pin 26 och 28 ska ha +5 V på, minst +4 V av. | Byt batterier, rengör hållaren. Upprepas det: D1 (0 Ω fram, oändligt bak), D2 (15 Ω fram). Överväg NVRAM. Guide 13. **Gäller inte denna maskin: NVRAM på U8, inga batterier** [observerat 2026-09-24, foto]; här pekar meddelandet på 5 V-matningen (guide 2) eller på att modulen sitter dåligt i sockeln. |
 | **U6 Checksum Error** | Spel-ROM:en ogiltig. | Byt/bränn om U6. Se §5. |
-| **Time and Date Not Set** | Klockan går inte. | U.4 Set Time & Date. Återkommer det: batterier. |
+| **Time and Date Not Set** | Klockan går inte. | U.4 Set Time & Date. Återkommer det: batterier. Denna maskin: klockan står när spelet är av (NVRAM utan batteri), det är normalt; sätt A.1 24 = NO [observerat 2026-09-24, foto]. |
 | **CPU-LED blinkar 1 / 2 / 3 gånger** | ROM U6 / RAM U8 / ASIC U9 | Vid start ska D19 och D21 tändas, sedan D19 släckas och D20 blinka. |
 | **Ljudkortet piper 1 / 2 / 3 / 4 / 5** | OK / U9 RAM / U18 ROM / U15 ROM / U14 ROM | Byt eller sätt om den utpekade kretsen. |
 
@@ -57,6 +57,7 @@ Berör: F1/F3 (nedre EOS), F5/F7 (övre EOS), F2/F4/F6/F8 (knappar), spolar FL-1
 6. **Efter bumper plug-byte: justera flipperns viloläge** (lossa vevarmen på axeln, ställ bladet mot justermärket, dra åt). [manual 2-16]
 7. **Spolen.** Mät resistansen (strömmen av) och jämför vänster/höger. FL-15411 har två lindningar (kraft + håll); en brun/bränd spole eller avvikande värde byts. Dioden på spolen: blå tråd till bandänden. [manual 2-16]
 8. **Fortfarande svag med allt ovan OK:** transistor på Fliptronics-kortet, eller kontakterna J905/J906 – vanligare på övre flipprarna som drivs via Extra Flipper Supply Board. [erfarenhet]
+9. **Denna maskin:** hela TIP102-raden på Fliptronics bär datumkod 9910 (bytt tillsammans 1999) medan TIP36C är original 9208. Kortet har alltså lagats förr; inspektera de lödningarna och pinnarna när F1/F3 jagas. [observerat 2026-09-24, foto]
 
 ### Guide 2. Spelet startar om, fryser eller "Factory Settings Restored" vid spolslag
 
@@ -66,6 +67,7 @@ Berör: F1/F3 (nedre EOS), F5/F7 (övre EOS), F2/F4/F6/F8 (knappar), spolar FL-1
 3. Mät +5 V på CPU-kortet (t.ex. U8 pin 28 mot jord): ska vara 4,9–5,1 V och inte dippa under 4,75 V när flipprarna slår.
 4. Batteriläckage på CPU-kortet ger också konstiga resets: inspektera runt B1–B3.
 5. Uteslut enkelt fel först: nätsäkringen och nätsladdens kontakt i strömboxen, lös jordfläta.
+6. **Denna maskin:** Power Driver A-12697-1 ser original ut (IC 9212, LM323K, stora kondensatorer utan byten synliga), så BR2 och C5 är fortfarande första misstänkta vid nästa service. Batteriläckage (punkt 4) gäller inte: NVRAM på U8. [observerat 2026-09-24, foto]
 
 ### Guide 3. Boll saknas, "Pinball Missing", eller spelet matar inte fram bollar
 
@@ -162,6 +164,8 @@ Berör: valfri solenoid 01–28, dess drivtransistor, säkringar F103/F104/F105/
 ### Guide 13. Klockan/inställningar tappas, "Factory Settings Restored"
 
 [manual 1-45, erfarenhet]
+**Gäller inte denna maskin** [observerat 2026-09-24, foto]: U8 har en anyPin NVRAM Battery Eliminator och inga batterier sitter i. Tappas inställningar ändå: guide 2 (5 V-matningen) eller modulens sockel. Att klockan står med spelet av är normalt utan batteri; sätt A.1 24 = NO. Stegen nedan är för originalarrangemanget.
+
 1. Byt de tre AA-batterierna (strömmen **på** under bytet behåller inställningarna, om man vågar; annars anteckna inställningarna först via appens inställningssida).
 2. Rengör hållaren; grönt/vitt pulver = läckage, rengör kortet med ättika/isopropanol och inspektera ledningsbanorna intill.
 3. Mät U8 pin 28 mot jord: ≥ +4 V med strömmen av.
@@ -215,7 +219,7 @@ Ordning: presets först (de skriver över enskilda värden), sedan justeringar. 
 | A.1 21 Language | English | |
 | A.1 22 Clock Style | 24 Hours | |
 | A.1 23 Date Style | Date/Month/Year | |
-| A.1 24 Show Date and Time | valfritt | |
+| A.1 24 Show Date and Time | NO | klockan går bara med spelet på (NVRAM utan batteri på U8), tiden släpar efter varje avstängning [observerat 2026-09-24, foto] |
 | A.1 25 Allow Dim Illumination | YES | behåller GI-effekterna |
 | A.1 26 Tournament Play | YES | multiball/jackpots förs inte över mellan spelare |
 | A.1 27 Euro. Scr. Format | YES | 1.000.000 |
@@ -255,6 +259,8 @@ Kör sedan **U.3 Reset H.S.T.D.**
 
 **Versioner** [ROM-historik från ipdb/community]: L-1 (jan 1992) … L-5 (dec 1992, sista rena operatörsversionen), L-6 (bara Tyskland, trasig buy-in), H-3 (maj 1993, Home-inställningar + ny slam tilt-hantering), **H-4 (maj 1994, rekommenderad)**, 6.0H (feb 1995, = H-4 med ny numrering). L-2 fixade trasig Thing-hand, L-3 Tunnel Hunt-logik.
 
+**Nuvarande** [observerat 2026-09-24, foto]: **L-4** på ST M27C2001-12F1 (2 Mbit = 256 KB) i U6, fabriksetikett "ADDAMS FAMILY U6 ROM 1 ©1991 MIDWAY", röd lapp "L-4". Byglarna W1 in / W2 ut ändras inte vid byte till 27C040 (manual s. 2, samma läge för 2M och 4M). L-4 → H-4 ger: L-5:s Thing-award-fix, H-3:s slam tilt-hantering, alla Home-inställningar (U.9 INSTALL HOME, A-MODE SOUND/MUSIC, GAMEOVER KICKOUT m.fl.) och H-4:s egna rättningar.
+
 **Filen** `ADDAM_H4.ROM`: 524 288 byte (512 KB) → **27C040** (4 Mbit). MD5 `2157560764b827af26d41d2d2efef949`. Innehåller strängarna `REV. H-4`, `EPROM H-4`, `PROGR. H-4`. Checksumman i ROM:en är korrekt: 16-bitars summa av alla byte = `$FB06` = ordet på `$FFEE`; `$FFEC` är utjämningsordet. Koden ligger i bank 0E–1F (288 KB); bank 00–0D är tomma (`$FF`), så filen kan inte krympas till 27C020.
 
 **Byte av U6** [manual p2 för byglar, 1-45 för checksumfel; övrigt erfarenhet]
@@ -264,7 +270,7 @@ Kör sedan **U.3 Reset H.S.T.D.**
 4. Nytt chip: ST **M27C4001**-10F1 (UV-raderbart, fönster) eller AT27C040 (OTP). Programmerare: **XGecu T48** (Xgpro på Windows, `minipro` på Linux). Vpp 12,75 V. Blank check → Program → Verify. Etikett + ljusskydd över fönstret.
 5. Starta: spelet upptäcker ny kod och återställer fabriksinställningar. Kör **U.9 INSTALL HOME**-presetet (finns i H-versionerna) och lägg tillbaka inställningarna.
 6. Ljud-ROM (U14/U15/U18 på ljudkortet) berörs inte. Sound-ROM L-1 är den enda versionen.
-7. Passa på: batterihållaren/NVRAM, GI-kontakter.
+7. Passa på: GI-kontakter. NVRAM sitter redan i U8 [observerat 2026-09-24, foto].
 
 **Att modifiera ROM:en** är tekniskt möjligt (6809-assembler, bankväxlad, PinMAME för test, checksum måste räknas om) men ett stort projekt, och koden är Williams/Planetary Pinballs upphovsrätt. Ändringar bör stanna i den egna maskinen. De flesta önskemål (free play, svårighet, ball save-liknande) finns redan som justeringar i H-4.
 
