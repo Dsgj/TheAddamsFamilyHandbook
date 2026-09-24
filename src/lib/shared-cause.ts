@@ -13,6 +13,8 @@ export interface SharedCause {
   driver?: string | undefined;
   /** All switches involved are flipper EOS switches on the lower flippers. */
   eos?: boolean;
+  /** Owner appendix (A3 switches, A4 lamps, A6 flippers) with the plain-text background. */
+  appendix?: string;
   text: string;
 }
 
@@ -62,6 +64,7 @@ function matrixCauses(
         wire: h?.[1],
         pin: h?.[2],
         driver: h?.[3],
+        appendix: matrix === 'lamp' ? 'A4' : 'A3',
         text: text(axis, key, ids, h),
       });
     }
@@ -80,8 +83,8 @@ export function sharedCauses(
 ): SharedCause[] {
   const out = matrixCauses('switch', switches, cols, rows, (axis, key, ids, h) =>
     axis === 'column'
-      ? `${ids.join(', ')} share column ${key} (${h?.[1] ?? ''}, ${h?.[2] ?? ''}). Check the common column wire and connector before adjusting the switches.`
-      : `${ids.join(', ')} share row ${key} (${h?.[1] ?? ''}, ${h?.[2] ?? ''}). Check the row wire and ${h?.[2]?.split('-')[0] ?? 'J208'} first.`,
+      ? `${ids.join(', ')} share column ${key} (${h?.[1] ?? ''}, ${h?.[2] ?? ''}). Check the common column wire and connector before adjusting the switches. Columns are driven by ${h?.[3] ?? 'U20'} on the CPU board; a whole column dead with good wiring is that driver, and one shorted switch diode in the column makes the others misread.`
+      : `${ids.join(', ')} share row ${key} (${h?.[1] ?? ''}, ${h?.[2] ?? ''}). Check the row wire and ${h?.[2]?.split('-')[0] ?? 'J208'} first. Rows are read by ${h?.[3] ?? 'the LM339 comparator'} on the CPU board; a whole row stuck is the comparator or a shorted diode on one switch in the row.`,
   );
   const byPin = groupBy(
     switches.filter((s) => s.pin),
@@ -100,6 +103,7 @@ export function sharedCauses(
       key: p,
       pin: p,
       eos: eos && lower,
+      appendix: flip ? 'A6' : 'A3',
       text:
         `${ids.join(', ')} both go to connector ${p} on the ${flip ? 'Fliptronics' : 'CPU'} board.` +
         (eos && lower
@@ -133,8 +137,8 @@ export function lampSharedCauses(
     const q = h?.[3] ?? '';
     const pin = h?.[2] ?? '';
     return axis === 'column'
-      ? `${list} share lamp column ${key} (${h?.[1] ?? ''}, ${pin}, driver ${q}). A whole column out points at ${q} on the CPU board or the ${pin.split('-')[0] ?? 'J137'} connector, not at the bulbs. Check with the lamp column test before replacing anything.`
-      : `${list} share lamp row ${key} (${h?.[1] ?? ''}, ${pin}, driver ${q}). A whole row out points at ${q} on the CPU board or the ${pin.split('-')[0] ?? 'J133'} connector, not at the bulbs. Check with the lamp row test before replacing anything.`;
+      ? `${list} share lamp column ${key} (${h?.[1] ?? ''}, ${pin}, driver ${q}). A whole column out points at ${q} on the CPU board or the ${pin.split('-')[0] ?? 'J137'} connector, not at the bulbs. A column driver that shorts leaves the column on all the time, one that opens leaves it dark. Check with the lamp column test before replacing anything.`
+      : `${list} share lamp row ${key} (${h?.[1] ?? ''}, ${pin}, driver ${q}). A whole row out points at ${q} on the CPU board or the ${pin.split('-')[0] ?? 'J133'} connector, not at the bulbs. With LEDs a row that glows faintly when it should be off is matrix ghosting, not a fault. Check with the lamp row test before replacing anything.`;
   });
   if (lamps.length > 1 && out.length === 0) {
     out.push({

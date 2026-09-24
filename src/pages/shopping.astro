@@ -2,6 +2,8 @@
 import Base from '~/layouts/Base.astro';
 import ShoppingList from '~/components/ShoppingList.svelte';
 import DeviceData from '~/components/DeviceData.svelte';
+import { appendixAnchor } from '~/data/appendix';
+import { href } from '~/lib/url';
 import { DATA } from '~/lib/data/components';
 import type { ShoppingItem } from '~/lib/shopping';
 
@@ -45,5 +47,52 @@ const items: ShoppingItem[] = [
     when a part has been replaced.
   </p>
   <ShoppingList client:load items={items} />
+  <section class="kit">
+    <h2>Service kit</h2>
+    <p class="muted small">
+      What the yearly round and the appendices assume is on the bench. Same for every device, so it
+      is not tracked here.
+    </p>
+    <ul class="small">
+      <li>
+        <strong>Multimeter</strong> with a resistance range that reads below 10 Ω cleanly, for coils across
+        the lugs, fuses, and the 5 V, 12 V, 20 V and 50 V test points.
+      </li>
+      <li>
+        <strong>Trifurcon crimp terminals</strong>, .156 inch for the driver board power and lamp
+        connectors and .100 inch for the switch and logic connectors, with matching housings and
+        square-pin headers, and a ratchet crimp tool made for them. A browned or loose connector is
+        replaced, never sprayed.
+      </li>
+      <li>
+        <strong>Contact cleaner</strong>: DeoxIT D5 spray, or the European one-can equivalent
+        Kontakt 60 PLUS. Plain Kontakt 60 only with the WL rinse and 61 protectant its maker calls
+        for. For intact, merely dirty connectors only.
+      </li>
+      <li>
+        <strong>DeoxIT D100L</strong> or another liquid deoxidizer, for the edge connectors and pin headers
+        you can brush.
+      </li>
+      <li>
+        <strong>Isopropyl alcohol</strong> and lint-free wipes, for boards and playfield plastics.
+      </li>
+      <li>
+        <strong>Card stock</strong> for switch contacts: close the switch on it and pull it through. No
+        files, no sandpaper, no spray on switches.
+      </li>
+      <li>
+        <strong>Soldering iron</strong> with a fine tip, 60/40 or 63/37 leaded solder, desoldering braid,
+        and a header pin extractor for the driver board's IDC connectors.
+      </li>
+      <li>
+        <strong>Spares</strong> that pay for themselves: a set of fuses in every rating on the Fuse List,
+        #44 or #47 lamps, #906 flashers, flipper links, a coil sleeve or two, and a 1N4004 diode strip.
+      </li>
+    </ul>
+    <p class="small">
+      Why each one, and what not to buy, is in
+      <a href={href(`handbook/appendix#${appendixAnchor('A7')}`)}>A7 Connectors and cleaning</a>.
+    </p>
+  </section>
   <DeviceData client:load />
 </Base>

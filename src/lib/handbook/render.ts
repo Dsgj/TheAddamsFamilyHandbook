@@ -65,7 +65,7 @@ export function renderPage(page: number, body: string, label: string): RenderedP
   html = html.replace(
     /<p><img\s+src="fig\/([^"]+)"\s+alt="([^"]*)"\s*\/?>\s*<\/p>/g,
     (_m, file: string, alt: string) =>
-      `<figure class="fig"><img src="assets/figures/${file}" alt="${alt}" loading="lazy" decoding="async"><figcaption>${alt}</figcaption></figure>`,
+      `<figure class="${/\.jpe?g$/i.test(file) ? 'fig photo' : 'fig'}"><img src="assets/figures/${file}" alt="${alt}" loading="lazy" decoding="async"><figcaption>${alt}</figcaption></figure>`,
   );
   html = html.replace(
     /<p><em>\[Figure:\s*([\s\S]*?)\]<\/em><\/p>/g,

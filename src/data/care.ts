@@ -4,8 +4,9 @@
  * next time.
  *
  * Sources: the manual's Maintenance Information page (Handbook → LEDs, fuses & maintenance) for
- * lubrication points, switch contacts and cleaners; the rest is common practice for a Diamond
- * Plate playfield. Edit this file when the advice changes.
+ * lubrication points, switch contacts and cleaners; the yearly inspection order and the
+ * connector rules from the owner's service brief (Handbook appendix A7); the rest is common
+ * practice for a Diamond Plate playfield. Edit this file when the advice changes.
  */
 import type { SetupStep } from './setup';
 
@@ -13,7 +14,7 @@ export const CARE_INTRO =
   'Clean, dry, and look while you are in there. Tick an item when done; the date stays on this device so the next person sees when it was last done. Untick and tick again next time.';
 
 export const CARE_WARNING =
-  'Never oil or grease a coil plunger, coil sleeve or flipper. No WD-40 or 5-56 anywhere in the machine; the film attracts dust and gums up. The only grease is a dab on the slingshot arm pivots and the ball shooter lane feeder pivots, see Twice a year. Power off before touching connectors or boards.';
+  'Never oil or grease a coil plunger, coil sleeve or flipper. No WD-40 or 5-56 anywhere in the machine; the film attracts dust and gums up. The only grease is a dab on the slingshot arm pivots and the ball shooter lane feeder pivots, see Twice a year. Power off before touching connectors or boards. Contact cleaner is for intact contacts that are dirty; a browned, loose or melted connector is replaced, never sprayed. Look and measure first, clean second: Handbook appendix A7.';
 
 export const CARE_STEPS: SetupStep[] = [
   {
@@ -92,7 +93,7 @@ export const CARE_STEPS: SetupStep[] = [
         id: 'care-switch-test',
         name: 'Run T.1 Switch Edges and walk every switch',
         suggested: '',
-        why: 'Roll a ball over the rollovers, press the targets, wave a finger through the optos. A dirty or bent switch shows up here before the game reports Check Switch.',
+        why: 'Roll a ball over the rollovers, press the targets, wave a finger through the optos. A dirty or bent switch shows up here before the game reports Check Switch. A contact that misses gets card stock pulled through the closed switch, never a file or spray; a gap that is wrong gets bent at the blade, not at the contact. Optos are cleaned with a dry brush and a phone camera shows their LED glowing.',
         find: 'T.1',
       },
     ],
@@ -101,7 +102,8 @@ export const CARE_STEPS: SetupStep[] = [
     id: 'halfyear',
     title: 'Twice a year',
     menu: 'Playfield up, power off',
-    intro: 'Wax, wear parts and the only two places that get grease.',
+    intro:
+      'Wax, wear parts and the only two places that get grease. When cleaning around the plastics is no longer enough, the full strip-down is Handbook appendix A8.',
     items: [
       {
         id: 'care-wax',
@@ -114,8 +116,8 @@ export const CARE_STEPS: SetupStep[] = [
         id: 'care-sleeves',
         name: 'Check the coil sleeves and plungers, flippers first',
         suggested: '',
-        why: 'Pull the plunger and look. A grey, gritty sleeve or a mushroomed plunger tip gets replaced, never lubricated. Flippers first, then slingshots and jet bumpers; they fire most.',
-        find: '',
+        why: 'Pull the plunger and look. A grey, gritty sleeve or a mushroomed plunger tip gets replaced, never lubricated. Flippers first, then slingshots and jet bumpers; they fire most. On the flippers, also look at the coil stop and the link: a worn stop lets the plunger over-travel and cracks the link, and a cracked link is a weak flipper before it is a dead one.',
+        find: 'A6',
       },
       {
         id: 'care-pivots',
@@ -151,15 +153,38 @@ export const CARE_STEPS: SetupStep[] = [
     id: 'yearly',
     title: 'Every year',
     menu: 'Power off, backbox open',
-    intro: 'Connectors, contacts and the annual look at the boards.',
+    intro:
+      'Inspection first, in this order, cleaning last. Each item is ordered by how expensive the fault is if missed. Appendix A7 in the Handbook has the connector rules and the products.',
     items: [
       {
-        id: 'care-connectors',
-        name: 'Reseat the board connectors with contact cleaner on the pins',
+        id: 'care-battery-area',
+        name: 'Inspect the CPU board battery holder and the board around it for leakage',
         suggested: '',
-        why: 'Pull each connector, a short burst of DeoxIT D5 (or another contact cleaner that says it leaves no film) on the pins, push it back. Look at J115–J121 on the power driver board for browned pins: that is the GI connectors burning and needs a new header and housing, not spray.',
-        alt: 'Do not spray the leaf switches or the optos. The manual cleans blade switch contacts by closing them on a clean business card and pulling it through about 2 inches, then setting a 1/16-inch gap. Never file them.',
-        find: '',
+        why: 'Priority 1. Alkaline leakage creeps under the solder mask and eats traces, vias and the reset circuit next to the holder. White or green crust, dark copper or eaten component leads means a corrosion repair, not a spray: neutralise, clean, repair, then think about a remote holder or NVRAM. Appendix A5 has the steps.',
+        find: 'A5',
+      },
+      {
+        id: 'care-tieback',
+        name: 'Inspect J122 and both diode tieback groups, then continuity-test them',
+        suggested: '',
+        why: 'Priority 2. J122 feeds the Thing motor, Thing eject, bookcase motor and swamp release. Their flyback diodes tie back in two pairs: gray-yellow on pins 5 and 8 (25 and 27), violet-green on pins 6 and 9 (26 and 28), manual schematic 3-17. A lost tieback kills the driver transistor and can lock the load on. Look at the housing, the IDC terminals, the header pins, the board solder and the wire ends at the loads. Power off, J122 unplugged: the tieback wire itself reads close to 0 Ω pin to load; a reading through a winding is several ohms and is fine. Run the solenoid test on all four afterwards.',
+        alt: 'A doubtful IDC terminal or a browned pin is replaced with a crimped Trifurcon terminal and a new header, not cleaned.',
+        find: 'A2',
+      },
+      {
+        id: 'care-gi',
+        name: 'Inspect the GI connectors J115, J120 and J121 for heat',
+        suggested: '',
+        why: 'Priority 3. The 6.3 V AC strings pull amps through these three connectors and they brown with age. Look for a discoloured or melted housing, dark pins, weak terminal tension, a poor crimp, cracked solder at the header and heat marks on the board. Heat damage means both sides are replaced, terminals and header. Clean and tight means leave it alone.',
+        find: 'A4',
+      },
+      {
+        id: 'care-connectors',
+        name: 'Look over the other connectors and every board, then clean and treat only what passed',
+        suggested: '',
+        why: 'Priorities 4 to 7. First the other high-current connectors: solenoid J122–J130, the flipper connectors, the power input, their headers and solder. Then every board for cracked solder, overheated components, corrosion, damaged traces and earlier repairs. Only the connectors that are intact, tight and merely dirty get pulled, a short burst of DeoxIT D5 or Kontakt 60 PLUS on the pins, and pushed back. Verify the circuit afterwards.',
+        alt: 'Never spray the leaf switches, the EOS switches or the optos. Contacts are cleaned by closing them on clean card stock and pulling it through; IPA on the card if needed; gap 1/16 inch; never a file.',
+        find: 'A7',
       },
       {
         id: 'batteries',

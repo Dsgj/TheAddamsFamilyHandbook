@@ -4,6 +4,7 @@
   import { lampSharedCauses, sharedCauses } from '~/lib/shared-cause';
   import type { Lamp, Switch } from '~/lib/model/types';
   import { href } from '~/lib/url';
+  import { appendixAnchor } from '~/data/appendix';
   import ComponentCard from './ComponentCard.svelte';
 
   let { initial = '' }: { initial?: string } = $props();
@@ -84,6 +85,9 @@
             {c.text}
             {#if c.kind === 'column' || c.kind === 'row'}
               · <a href={href(c.matrix === 'lamp' ? 'lamps' : 'switches')}>matrix</a>
+            {/if}
+            {#if c.appendix}
+              · <a href={href(`handbook/appendix#${appendixAnchor(c.appendix)}`)}>{c.appendix}</a>
             {/if}
           </li>
         {/each}

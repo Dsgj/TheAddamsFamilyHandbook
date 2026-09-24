@@ -24,9 +24,8 @@ describe('handbook rendering', () => {
       expect(sectionOfPage(p.page), `page ${p.page}`).toBeDefined();
       if (p.label) expect(p.label).toBe(pageLabel('ops', p.page));
     }
-    expect(SECTIONS.flatMap((s) => s.pages).sort((a, b) => a - b)).toEqual(
-      pages.map((p) => p.page),
-    );
+    const manual = SECTIONS.filter((s) => s.key !== 'appendix');
+    expect(manual.flatMap((s) => s.pages).sort((a, b) => a - b)).toEqual(pages.map((p) => p.page));
   });
 
   it('produces stable heading ids and resolves menu-map links', async () => {

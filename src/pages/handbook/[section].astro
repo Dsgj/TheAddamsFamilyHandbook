@@ -2,9 +2,11 @@
 import { getCollection } from 'astro:content';
 import Base from '~/layouts/Base.astro';
 import HandbookToc from '~/components/HandbookToc.svelte';
-import { SECTIONS } from '~/lib/handbook/sections';
+import { SECTIONS, isAppendixPage } from '~/lib/handbook/sections';
 import { handbookToc } from '~/lib/handbook/toc';
 import { href, manualHref } from '~/lib/url';
+import { APPENDICES, appendixAnchor } from '~/data/appendix';
+import { OWNER_NOTES } from '~/data/ownerNotes';
 
 export async function getStaticPaths() {
   return SECTIONS.map((s) => ({ params: { section: s.key }, props: { section: s } }));
@@ -31,20 +33,46 @@ const UNVERIFIED = new Set([26, 27, 28]);
     <article class="prose">
       <h1>{section.title}</h1>
       {
+        section.key === 'appendix' && (
+          <p class="prov warn">
+            These pages are the owner's own notes, not manual text. Each one names its sources.
+            Values marked forum come from one thread and are not verified; measure before you trust
+            them.
+          </p>
+        )
+      }
+      {
         entries.map((e) => (
           <section id={`pg-${e.data.page}`}>
             <div class="pg-bar">
               <span class="mono">
-                {e.data.label ? `p. ${e.data.label}` : `PDF page ${e.data.page}`}
+                {isAppendixPage(e.data.page)
+                  ? `Appendix ${e.data.label}`
+                  : e.data.label
+                    ? `p. ${e.data.label}`
+                    : `PDF page ${e.data.page}`}
               </span>
               {UNVERIFIED.has(e.data.page) && (
                 <span class="st-untested">transcription not verified</span>
               )}
-              <a class="btn small" href={manualHref('ops', e.data.page)}>
-                Scan
-              </a>
+              {isAppendixPage(e.data.page) ? (
+                <span class="small muted">owner's note</span>
+              ) : (
+                <a class="btn small" href={manualHref('ops', e.data.page)}>
+                  Scan
+                </a>
+              )}
             </div>
             <Fragment set:html={e.rendered?.html ?? ''} />
+            {!isAppendixPage(e.data.page) &&
+              OWNER_NOTES[e.data.page]?.map((n) => (
+                <aside class="owner-note small">
+                  <span class="muted">Owner's note:</span> {n.text}{' '}
+                  <a href={href(`handbook/appendix#${appendixAnchor(n.code)}`)}>
+                    {n.code} {APPENDICES[n.code]}
+                  </a>
+                </aside>
+              ))}
           </section>
         ))
       }
@@ -73,6 +101,11 @@ const UNVERIFIED = new Set([26, 27, 28]);
 </Base>
 
 <style>
+  .owner-note {
+    border-left: 2px solid var(--brass);
+    padding-left: 10px;
+    margin: 8px 0 12px;
+  }
   .hb {
     display: grid;
     gap: var(--gap);

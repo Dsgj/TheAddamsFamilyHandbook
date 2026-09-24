@@ -16,7 +16,8 @@ export interface HandbookEntry {
 }
 
 /**
- * Loads `src/content/handbook/opsNNN.md`, renders with marked and resolves cross-page links.
+ * Loads `src/content/handbook/opsNNN.md` (manual pages) and `appNNN.md` (owner appendices, pages
+ * 101+), renders with marked and resolves cross-page links.
  * Entry id = `ops25`; `rendered.html` is the final page HTML.
  */
 export function handbookLoader(dir = 'src/content/handbook'): Loader {
@@ -25,7 +26,7 @@ export function handbookLoader(dir = 'src/content/handbook'): Loader {
     async load({ store, parseData, logger, config, watcher }) {
       const root = join(fileURLToPath(config.root), dir);
       watcher?.add(root);
-      const files = (await readdir(root)).filter((f) => /^ops\d+\.md$/.test(f)).sort();
+      const files = (await readdir(root)).filter((f) => /^(ops|app)\d+\.md$/.test(f)).sort();
       const base = (config.base ?? '/').replace(/\/$/, '');
       const rendered = [];
       for (const f of files) {

@@ -5,6 +5,9 @@ import type { AnyComponent } from '~/lib/data/components';
 import { DATA, KIND_LABEL, MAP_LAYER } from '~/lib/data/components';
 import type { Kind } from '~/lib/model/types';
 import { componentHref, href } from '~/lib/url';
+import { appendixFor, APPENDICES, serviceNotes } from '~/data/appendix';
+import { findHeading, type HeadingIndex } from '~/lib/handbook/render';
+import { handbookToc } from '~/lib/handbook/toc';
 
 interface Props {
   kind: Kind;
@@ -17,6 +20,20 @@ const prev = list[i - 1];
 const next = list[i + 1];
 const listPath = kind === 'switch' ? 'switches' : kind === 'lamp' ? 'lamps' : 'coils';
 const layer = MAP_LAYER[kind];
+
+/** Owner appendices that apply to this component, resolved to their Handbook headings. */
+const toc = await handbookToc();
+const idx: HeadingIndex = new Map(
+  toc
+    .filter((t) => t.level > 1)
+    .map((t) => [t.id, { id: t.id, level: t.level === 2 ? 2 : 3, text: t.text, page: t.page }]),
+);
+const notes = appendixFor(kind, item)
+  .map((code) => ({ code, title: APPENDICES[code], h: findHeading(idx, code) }))
+  .filter((n) => n.h);
+const svc = serviceNotes(kind, item)
+  .map((n) => ({ ...n, h: findHeading(idx, n.code) }))
+  .filter((n) => n.h);
 ---
 
 <Base title={`${KIND_LABEL[kind]} ${item.id} ${item.name}`} nav={listPath}>
@@ -24,6 +41,28 @@ const layer = MAP_LAYER[kind];
     <a href={href(listPath)}>{KIND_LABEL[kind]}s</a> › <span class="mono">{item.id}</span>
   </div>
   <ComponentCard client:load {kind} {item} mapMeta={DATA.maps[layer]} linkTitle={false} />
+  {
+    notes.length > 0 && (
+      <div class="notes small">
+        {svc.map((n) => (
+          <p class="svc">
+            <span class="muted">Service notes:</span> {n.text}{' '}
+            <a href={href(`handbook/appendix#${n.h!.id}`)}>
+              {n.code} {APPENDICES[n.code]}
+            </a>
+          </p>
+        ))}
+        <p class="links">
+          <span class="muted">Appendices:</span>
+          {notes.map((n) => (
+            <a href={href(`handbook/appendix#${n.h!.id}`)}>
+              {n.code} {n.title}
+            </a>
+          ))}
+        </p>
+      </div>
+    )
+  }
   <nav class="pn">
     {
       prev ? (
@@ -48,6 +87,19 @@ const layer = MAP_LAYER[kind];
 </Base>
 
 <style>
+  .notes {
+    margin: 8px 0 0;
+    border-left: 2px solid var(--brass);
+    padding-left: 10px;
+  }
+  .notes p {
+    margin: 0 0 4px;
+  }
+  .notes .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+  }
   .crumbs {
     margin-bottom: 8px;
   }
