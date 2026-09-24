@@ -24,16 +24,16 @@ the wiring, the location on the playfield, the manual page and a note about what
 usually goes wrong. It is a static Astro site with Svelte islands, installable
 as a PWA and fully usable offline under the playfield glass.
 
-|      Diagnose       | Playfield map | Switch matrix |
-| :-----------------: | :-----------: | :-----------: |
-|   ![Diagnose][s1]   |  ![Map][s2]   | ![Matrix][s3] |
-| paste `32 68 F1 F3` | switch layer  | 8×8 + tables  |
+|      Diagnose       |       Playfield map       | Switch matrix |
+| :-----------------: | :-----------------------: | :-----------: |
+|   ![Diagnose][s1]   |        ![Map][s2]         | ![Matrix][s3] |
+| paste `32 68 F1 F3` | switch layer, one drawing | 8×8 + tables  |
 
 [s1]: docs/readme/phone-diagnose.png
 [s2]: docs/readme/phone-map.png
 [s3]: docs/readme/phone-switches.png
 
-![Desktop light theme: playfield map with the component card for switch 32 Upper Right Jet](docs/readme/desktop-map.png)
+![Desktop light theme: playfield map on the clean drawing, all three component layers on, with the card for switch 32 Upper Right Jet](docs/readme/desktop-map.png)
 
 _Dark on the phone in the workshop, light on the desk. The toggle lives in the
 header._
@@ -41,14 +41,19 @@ header._
 ## Features
 
 - **Diagnose.** Paste a Test Report line, a whole report or a display message.
-  One card per component with wiring chips, mini-map, callout link, status +
-  note, and a shared-cause check across switch and lamp columns and rows,
+  One card per component with wiring chips, a mini-map on the playfield
+  drawing, callout link, status + note, and a shared-cause check across switch and lamp columns and rows,
   connectors and EOS mechanics.
-- **Playfield map.** One clean drawing with switch, lamp, solenoid and shot
-  layers, any combination, at three zoom levels; the selected part pulses and the
-  rest dims. `?calib=1` lets you drag markers over a frame-aligned overlay of the original scan and copy the JSON.
-  Markers take the colour of their status. `?layer&id` in the URL, so a link
-  opens the same view.
+- **Playfield map.** One clean line drawing of the playfield with switch,
+  lamp, solenoid and shot layers (the manual's lettered shots A–S), any
+  combination, at three zoom levels. The selected part pulses and the rest
+  dims; markers take the colour of their status. Positions were remapped from
+  the manual's three location maps and two shot maps, then placed by hand by
+  the owner against the original scans. `?layer=sw,shot&id=K` in the URL, so a
+  link opens the same view, and the rules section of the handbook embeds the
+  map with the shots on. `?calib=1` is the calibration mode: drag or arrow-key
+  markers over a frame-aligned overlay of the original scan and copy the JSON
+  into `src/data/positions.json`.
 - **Matrices & tables.** 8×8 switch and lamp matrices with keyboard navigation.
   Dedicated tables for J205, Fliptronics J806, solenoids, flashers, flipper
   coils, GI, fuses by board, LEDs and the jumper pointer.
@@ -82,8 +87,9 @@ header._
   component page as "Service notes".
 - **Device data.** Download every status as a JSON backup and read it back on
   another phone, merge or replace.
-- **Offline.** Manifest, icons, precached shell, data, maps and figures. Scans
-  are cached on first view.
+- **Offline.** Manifest, icons, precached shell, data, the playfield drawing
+  and figures. Scans (manual pages and calibration overlays) are cached on
+  first view.
 
 ## Quick start
 
@@ -136,19 +142,33 @@ Handbook pages are rendered by a custom content loader
 the source data are mapped to the English UI in
 [`src/lib/data/en.ts`](src/lib/data/en.ts).
 
+Three things are this repo's own and not synced from the kit:
+
+- [`src/data/positions.json`](src/data/positions.json): marker positions on
+  the clean drawing `public/assets/maps/playfield.png`, keyed `kind:id`
+  (`switch`, `lamp`, `coil`, `shot`), normalised 0–1. Seeded from the kit's
+  `loc` callouts and the shot-map arrow tips, then calibrated by hand in
+  `/map?calib=1`. The kit's `loc` stays untouched; the three scanned location
+  maps it refers to are kept only as calibration overlays.
+- [`src/data/shots.ts`](src/data/shots.ts): the lettered shots A–S with their
+  manual page.
+- [`src/data/overlays.json`](src/data/overlays.json): where each scan sits over
+  the drawing so its playfield frame lines up (computed once by frame detection).
+
 ## Project layout
 
 ```text
 src/
 ├── components/   Svelte islands: Diagnose, PlayfieldMap, Matrix, PageViewer, …
-├── lib/          codes, shared cause, handbook loader, data mapping, status
+├── data/         kit/ (synced), positions.json, shots.ts, overlays.json, owner data
+├── lib/          codes, shared cause, handbook loader, data mapping, positions, status
 ├── pages/        diagnose (index), map, matrices, parts, handbook, manual
 ├── styles/       tokens.css (palette, type, spacing), base.css
 └── content/      handbook pages (synced from the kit)
 public/           data, assets, fonts, icons (synced or generated), brand/logo.webp
 scripts/          sync-kit, copy-fonts, icons, thumbnails
 tests/            vitest + Playwright e2e
-kit-docs/         build prompt, machine notes, known issues (synced from the kit)
+kit-docs/         build prompt, data schema, machine notes, knowledge bank, known issues
 ```
 
 ## Design
@@ -182,6 +202,10 @@ Recorded from the owner (§10 of the build prompt):
   adapter.
 - The project lives in the sibling folder `../valvet`; the kit is read-only
   source.
+- One clean playfield drawing with combinable layers instead of the prompt's
+  three location diagrams with markers at the printed callouts. The manual's
+  callouts remain in the kit data; the app's positions were calibrated by the
+  owner on 2026-09-24.
 - Astro 7 instead of the Astro 5 the prompt mentions. `pnpm-workspace.yaml` sets
   `minimumReleaseAge: 0` so current releases install.
 - Repo

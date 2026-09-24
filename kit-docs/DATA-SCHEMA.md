@@ -93,6 +93,8 @@ Headers: `lCols`, `lRows` → `[wireSv, wireEn, connectorPin, transistor]`.
 
 `{ sw: {w, h, page}, lamp: {...}, coil: {...} }` — pixel size of each map image in `assets/maps/` and the PDF page it was cropped from (97, 98, 99). `loc` coordinates are normalised to these images.
 
+> **App note (valvet repo, 2026-09-24).** The app no longer draws markers on these three scans. It keeps its own `src/data/positions.json` (keys `switch:ID`, `lamp:ID`, `coil:ID`, `shot:LETTER`, normalised to the clean drawing `assets/maps/playfield.png`, 1246×2702), seeded from `loc` and the shot-map arrow tips and then calibrated by hand by the owner. `loc` and `maps` stay as the manual's record; the scans are used only as calibration overlays (`src/data/overlays.json`).
+
 ---
 
 ## `data/callouts-page-relative.json`
@@ -126,7 +128,7 @@ Array of rows from `source/Parts_List.txt` (the factory indented bill of materia
 ## `assets/`
 
 - `assets/pages/ops/N.png` (N = 1…124; page 1 is `1.jpg`, the colour cover), `assets/pages/hb/N.png` (1…12), `assets/pages/wpc/1.png` + tiles. All greyscale PNGs quantised to 4 levels (2-bit), 180 dpi for ops/hb, 150 dpi for wpc.
-- `assets/maps/{sw,lamp,coil}.png` — the three location diagrams, cropped at 250 dpi.
+- `assets/maps/{sw,lamp,coil}.png` — the three location diagrams, cropped at 250 dpi. In the app they serve as calibration overlays under `/map?calib=1`; the map itself draws on `playfield.png` (app-side, not in the kit).
 - `assets/figures/ops9.png, ops10.png` (shot maps A–S), `ops12.png` (leg leveler/pitch), `ops14.png` (coin door buttons), `ops17.png` (menu tree — superseded by the HTML menu map in `ops017.md`, kept for reference), `ops56a.png` (CPU board LEDs), `ops56b.png` (Power Driver LEDs/fuses), `ops57.png` (fuse locations, all boards).
 
 In dark theme the prototype inverts scans with `filter: invert(.9) hue-rotate(180deg)`; do the same or better.

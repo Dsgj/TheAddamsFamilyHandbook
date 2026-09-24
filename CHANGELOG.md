@@ -8,8 +8,11 @@
   status; the selected part pulses and the others dim, and all three kinds can
   be shown at once. Positions live in `src/data/positions.json`, seeded by
   remapping the manual's callouts and corrected by hand in the new calibration
-  mode (`/map?calib=1`: drag or arrow-key a marker, copy the JSON). The manual's
-  callout coordinates stay untouched in the kit data.
+  mode (`/map?calib=1`: drag or arrow-key a marker, copy the JSON). The owner
+  calibrated all 17 shots and 95 component markers against the overlays on
+  2026-09-24; only off-playfield parts (Start button, THING and credit lamps)
+  sit on the edge. The manual's callout coordinates stay untouched in the kit
+  data.
 - **Shots layer and combinable layers.** The manual's two shot maps (PDF pages 9
   and 10, letters A–S) become a fourth layer on the drawing, seeded from the
   arrow tips of the figures. The layer buttons now toggle, so any combination
