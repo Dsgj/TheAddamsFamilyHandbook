@@ -79,6 +79,33 @@ const ITEMS: Item[] = [
     ],
   },
   {
+    id: 'no-old-cells',
+    group: 'This machine',
+    text: 'The backbox photos of 2026-09-24 show an anyPin NVRAM module at U8 and a black block below it that looks like the battery holder, covered or removed. Confirm that no old cells remain in or under it.',
+    links: [
+      ['Setup step 7', href('setup#step-upkeep')],
+      ['A5 Power driver board', href(`handbook/appendix#${appendixAnchor('A5')}`)],
+    ],
+  },
+  {
+    id: 'w16',
+    group: 'This machine',
+    text: 'The jumper row W11–W18 next to J204 on the CPU board is visible in the photos but not readable. A European game should have W16 out and the others in; read them and note it here.',
+    links: [['Manual page 2', manualHref('ops', 2)]],
+  },
+  {
+    id: 'serial',
+    group: 'This machine',
+    text: 'The machine label on the backbox reads "20017 …" in the photos; read the full serial number and record it in the machine card (kit-docs/MACHINE.md).',
+    links: [],
+  },
+  {
+    id: 'a1-24',
+    group: 'This machine',
+    text: 'Set A.1 24 Show Date and Time to NO: with NVRAM at U8 and no battery the clock only runs while the game is on, so the displayed time is wrong after every power-off.',
+    links: [['Setup step 3', href('setup#step-standard')]],
+  },
+  {
     id: 'h4-adjustments',
     group: 'Adjustments',
     text: 'H-4 adjustments beyond A.2 26 (A-MODE SOUND, A-MODE MUSIC, GAMEOVER KICKOUT, SPOT GREED/BALL, FREEPLAY MESSAGE, SPOT T-H-I-N-G) come from the ROM string table. Verify number, order and options in the machine menu.',
