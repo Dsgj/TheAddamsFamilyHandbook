@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- **Care** page (nav: Care). Cleaning and upkeep by interval, weekly to yearly, as dated ticks on
+  the device: balls, glass, playfield (Novus 1, no ammonia or solvents), plastics, rubbers, wax
+  (carnauba, no silicone), coil sleeves, the manual's two grease points, connectors (DeoxIT on
+  pins, paper through switch contacts, never spray on switches or optos), fuses, level and pitch,
+  the yearly Test Report. Same component and storage as the setup guide (`SetupGuide` gained a
+  `noun` prop); the battery tick is shared with Setup step 7. Data in `src/data/care.ts`.
+
 - **Setup guide: LED kit and upkeep.** A.1 25 Allow Dim Illumination is now suggested NO because
   the machine gets an LED kit (WPC dims the GI by chopping the mains and LEDs flicker); the GI
   Power Saver item notes the same. A seventh step, Upgrades and upkeep, records the first parts

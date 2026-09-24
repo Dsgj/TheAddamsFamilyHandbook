@@ -8,12 +8,15 @@
     links,
     intro,
     warning,
+    noun = 'settings',
   }: {
     steps: SetupStep[];
     /** Item id → handbook href, resolved at build time. */
     links: Record<string, string>;
     intro: string;
     warning: string;
+    /** What the ticks count, for the progress line. */
+    noun?: string;
   } = $props();
 
   const ids = steps.flatMap((s) => s.items.map((i) => i.id));
@@ -26,8 +29,8 @@
 <p class="muted">{intro}</p>
 <p class="progress" role="status">
   <span class="dmd small">{done} / {ids.length}</span>
-  <span class="muted">settings done</span>
-  <progress max={ids.length} value={done} aria-label="Setup progress"></progress>
+  <span class="muted">{noun} done</span>
+  <progress max={ids.length} value={done} aria-label="Progress"></progress>
 </p>
 <p class="prov warn">{warning}</p>
 
