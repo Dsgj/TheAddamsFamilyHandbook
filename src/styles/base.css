@@ -270,6 +270,11 @@ table.t tbody tr:hover {
   filter: var(--scan-filter);
   background: #fff;
 }
+.prose figure.fig.photo img {
+  filter: none;
+  background: transparent;
+  max-width: 100%;
+}
 .prose figcaption,
 .prose .fig-note {
   font-size: 0.85rem;

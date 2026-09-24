@@ -1,6 +1,7 @@
 ---
 import Base from '~/layouts/Base.astro';
 import { componentHref, href, manualHref } from '~/lib/url';
+import { appendixAnchor } from '~/data/appendix';
 
 /**
  * Open questions from kit-docs/KNOWN-ISSUES.md as a checklist. Ticks are stored on the device
@@ -27,10 +28,11 @@ const ITEMS: Item[] = [
   {
     id: 'eos-type',
     group: 'Component data',
-    text: 'Check the EOS switch type on the lower and upper flippers. The parts list says SW-1A-194 (make) lower and SW-1A-193 upper; flipper page 2-16 lists only SW-1A-193 for base model A-15205-R.',
+    text: 'Check the EOS switch type on the lower and upper flippers. The parts list says SW-1A-194 (make) lower and SW-1A-193 upper; flipper page 2-16 lists only SW-1A-193 for base model A-15205-R, and its assembly note describes contacts that open at end of stroke, which is the opposite of a make switch. Look at the switch at rest with the coil unpowered: contacts apart means normally open (make), contacts touching means normally closed. Write down what each flipper has.',
     links: [
       ['F1 card', componentHref('switch', 'F1')],
       ['F2 card', componentHref('switch', 'F2')],
+      ['A6 Flippers', href(`handbook/appendix#${appendixAnchor('A6')}`)],
     ],
   },
   {
