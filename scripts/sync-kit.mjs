@@ -12,7 +12,7 @@ const copies = [
   ['data', 'src/data/kit'],
   ['data', 'public/data'],
   ['content/handbook', 'src/content/handbook'],
-  ['assets/maps', 'public/assets/maps'],
+  ['assets/maps', 'public/assets/maps'], // the three scans feed the map's calibration overlay
   ['assets/figures', 'public/assets/figures'],
   ['assets/pages', 'public/assets/pages'],
   ['tools', 'tools'],

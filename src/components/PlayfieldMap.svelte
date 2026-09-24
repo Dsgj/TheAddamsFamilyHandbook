@@ -382,9 +382,9 @@
           <h2>Playfield</h2>
           <p class="muted">Tap a marker on the drawing, or pick from the list.</p>
           <p class="prov">
-            Positions are remapped from the manual's location maps (pages 2-39 to 2-41) and shot
-            maps (PDF pages 9–10). A marker that still sits beside its part is where the printed
-            callout was.
+            Positions were remapped from the manual's location maps (pages 2-39 to 2-41) and shot
+            maps (PDF pages 9–10), then placed by hand over the original scans. Off-playfield parts
+            (Start button, THING and credit lamps) sit on the nearest edge.
           </p>
         </div>
       {/if}
