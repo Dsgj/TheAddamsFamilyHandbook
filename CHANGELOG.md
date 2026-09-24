@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+- **One playfield drawing instead of three scanned maps.** The map and the
+  mini-maps now draw on a clean line drawing of the playfield
+  (`assets/maps/playfield.png`, 169 KB) with markers coloured by kind and by
+  status; the selected part pulses and the others dim, and all three kinds can
+  be shown at once. Positions live in `src/data/positions.json`, seeded by
+  remapping the manual's callouts and corrected by hand in the new calibration
+  mode (`/map?calib=1`: drag or arrow-key a marker, copy the JSON). The manual's
+  callout coordinates stay untouched in the kit data.
+- **Shots layer and combinable layers.** The manual's two shot maps (PDF pages 9
+  and 10, letters A–S) become a fourth layer on the drawing, seeded from the
+  arrow tips of the figures. The layer buttons now toggle, so any combination
+  can be shown, and the rules section of the handbook embeds the map after
+  page 9 with the shots on. Start page gets a "shots" quick link.
+- **Calibration overlay.** `?calib=1` can lay the original manual scan (switch,
+  lamp or solenoid map, or either shot page) over the drawing, frame-aligned and
+  with adjustable opacity, so markers can be matched against the print.
 - **Backbox inspection folded in (observed 2026-09-24, photo).** The machine
   card and knowledge bank in kit-docs record: game ROM L-4 on an ST M27C2001 at
   U6 (H-4 swap still worthwhile, jumpers W1 in / W2 out unchanged), an anyPin

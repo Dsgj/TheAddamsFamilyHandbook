@@ -43,7 +43,7 @@ export default defineConfig({
         globPatterns: [
           '**/*.{html,js,css,woff2,svg,webmanifest}',
           'data/*.json',
-          'assets/maps/*.png',
+          'assets/maps/playfield.png',
           'assets/figures/*.png',
           'brand/*.webp',
         ],

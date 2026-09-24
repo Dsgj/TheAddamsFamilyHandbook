@@ -1,0 +1,37 @@
+{
+  "sw": {
+    "src": "assets/maps/sw.png",
+    "left": -1.905,
+    "top": -0.143,
+    "width": 105.838,
+    "height": 102.794
+  },
+  "lamp": {
+    "src": "assets/maps/lamp.png",
+    "left": -1.774,
+    "top": -3.122,
+    "width": 101.429,
+    "height": 106.83
+  },
+  "coil": {
+    "src": "assets/maps/coil.png",
+    "left": -5.432,
+    "top": 0.063,
+    "width": 105.618,
+    "height": 99.652
+  },
+  "shot9": {
+    "src": "assets/figures/ops9.png",
+    "left": -17.486,
+    "top": -9.142,
+    "width": 190.706,
+    "height": 111.16
+  },
+  "shot10": {
+    "src": "assets/figures/ops10.png",
+    "left": -10.145,
+    "top": -9.919,
+    "width": 190.319,
+    "height": 111.211
+  }
+}

@@ -44,7 +44,9 @@ header._
   One card per component with wiring chips, mini-map, callout link, status +
   note, and a shared-cause check across switch and lamp columns and rows,
   connectors and EOS mechanics.
-- **Playfield map.** Switch, lamp and solenoid layers at three zoom levels.
+- **Playfield map.** One clean drawing with switch, lamp, solenoid and shot
+  layers, any combination, at three zoom levels; the selected part pulses and the
+  rest dims. `?calib=1` lets you drag markers over a frame-aligned overlay of the original scan and copy the JSON.
   Markers take the colour of their status. `?layer&id` in the URL, so a link
   opens the same view.
 - **Matrices & tables.** 8×8 switch and lamp matrices with keyboard navigation.
