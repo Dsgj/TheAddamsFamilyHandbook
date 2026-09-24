@@ -1,0 +1,7 @@
+# Python deps for the offline data pipeline in tools/ (not part of the app runtime).
+# python -m venv .venv && .venv/Scripts/pip install -r tools/requirements.txt
+opencv-python
+numpy
+pillow
+pytesseract
+markdown
