@@ -27,7 +27,7 @@ export const appendixAnchor = (code: string): string => `p${100 + Number(code.sl
  * are power / hold winding. Values marked forum are one thread's and wait for the owner's meter.
  */
 export const COIL_OHMS: Record<string, { ohms: string; mark: 'measured' | 'vendor' | 'forum' }> = {
-  'AE-23-800': { ohms: '4.2', mark: 'forum' },
+  'AE-23-800': { ohms: '4.7–4.8', mark: 'measured' },
   'AE-26-1200': { ohms: '10.5–10.8', mark: 'vendor' },
   'AE-26-1500': { ohms: '14.5', mark: 'forum' },
   'AE-27-1200': { ohms: '12.5', mark: 'forum' },
@@ -121,7 +121,7 @@ function switchNote(s: Switch): ServiceNote {
   if (/flipper button/i.test(s.name)) {
     return {
       code: 'A6',
-      text: `An opto board in the cabinet side with a metal flag on the button, read by the Fliptronics board through ${s.pin ?? 'J806'}. A dead or intermittent button is the flag, the opto board and its connector before anything on the playfield.`,
+      text: `A leaf switch pair behind the cabinet button (button assembly B-12273-6), read by the Fliptronics board through ${s.pin ?? 'J805'} with the orange switch ground on J805-6; the connector at the button carries three wires. A dead or intermittent button is the blade gap, dirty contacts (card stock, never a file) or that three-pin connector before anything on the playfield.`,
     };
   }
   if (s.kind === 'ded' || s.col === null || s.row === null) {

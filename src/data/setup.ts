@@ -295,6 +295,13 @@ export const SETUP_STEPS: SetupStep[] = [
         find: 'A6',
       },
       {
+        id: 'thing-knocker',
+        name: 'Thing Knocker coil AE-23-800 fitted (missing on this machine)',
+        suggested: 'AE-23-800',
+        why: 'The A-15267 bracket and the rubber pad are in the cabinet, the coil is not; the game plays without it. Buy an AE-23-800 with its sleeve and a 1N4004 diode. Fit the diode across the lugs with the band toward the 50 V lug (the one without the violet-red driver wire), or the driver Q80 dies on the first fire. The violet-red wire from J132-2 goes to the other lug. Then T.4 Solenoid Test, coil 02, with the glass off and the coin door open: one clean knock. The Thing Kickout uses the same coil and measured 4.7–4.8 Ω across the lugs on this machine (4.9 on the meter, leads subtracted), so a new one should read about that.',
+        find: 'A2',
+      },
+      {
         id: 'rubber-kit',
         name: 'Rubber kit fitted, red flipper rubbers and black rings',
         suggested: '',

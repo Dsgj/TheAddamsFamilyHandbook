@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- **Thing Knocker coil missing.** The coil 02 card, the A2 resistance table and
+  a new Setup step under Upgrades and upkeep record that this machine has the
+  A-15267 bracket and rubber pad but no AE-23-800 coil, with what to buy and
+  how to fit and test it.
+- **Flipper buttons are leaf switches.** A6 and the F2/F4/F6/F8 service notes said
+  optos; the cabinet parts list and the Fliptronics wiring (button assembly
+  B-12273-6, orange switch ground on J805-6) say stacked leaf switches with a
+  three-wire connector per button.
+- **First measured coil value.** AE-23-800 reads 4.7–4.8 Ω on this machine's Thing
+  Kickout (4.9 on the meter, 0.1–0.2 Ω leads, now A1 rule 8); the A2 table and the coil cards now say measured instead of forum.
 - **Appendices applied in the guides, in plain text.** Every component page
   carries a service note written for that part (coil resistance from the A2/A6
   tables with its source mark, driver transistor, fuse, tieback; switch column
