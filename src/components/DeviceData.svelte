@@ -1,11 +1,11 @@
 <script lang="ts">
+  import { clearSetup, setupItems } from '~/lib/model/setup.svelte';
   import {
     allStatuses,
     clearStatuses,
     exportStatuses,
     importStatuses,
   } from '~/lib/model/status.svelte';
-  import { clearSetup, setupItems } from '~/lib/model/setup.svelte';
 
   const count = $derived(allStatuses().filter((s) => s.status || s.note).length);
   const settings = $derived(Object.keys(setupItems()).length);

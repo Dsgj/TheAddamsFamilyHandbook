@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
   import type { DocId, PageMeta } from '~/lib/model/types';
   import { href, manualHref } from '~/lib/url';
 
@@ -18,7 +19,7 @@
     title?: string;
   } = $props();
 
-  const [, W, H, tiled] = meta;
+  const [, W, H, tiled] = $derived(meta);
   let mode = $state<'image' | 'text'>('image');
   let rot = $state(0);
   let scale = $state(0); // 0 = fit width
@@ -79,7 +80,7 @@
   }
 
   // Drag to pan with a mouse (touch already pans via overflow scroll).
-  let drag: { x: number; y: number; l: number; t: number } | null = null;
+  let drag = $state<{ x: number; y: number; l: number; t: number } | null>(null);
   function down(e: PointerEvent) {
     if (e.pointerType !== 'mouse' || !stage) return;
     drag = { x: e.clientX, y: e.clientY, l: stage.scrollLeft, t: stage.scrollTop };
@@ -93,7 +94,7 @@
   function up() {
     drag = null;
   }
-  let jump = $state(String(page));
+  let jump = $state(untrack(() => String(page)));
 </script>
 
 <svelte:window onkeydown={onKey} />
@@ -154,6 +155,7 @@
       {/if}
     </div>
   {:else}
+    <!-- svelte-ignore a11y_no_static_element_interactions (mouse drag-to-pan; keyboard and touch use scroll) -->
     <div
       class="stage"
       bind:this={stage}

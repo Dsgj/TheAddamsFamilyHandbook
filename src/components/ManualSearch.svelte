@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
   import type { DocId } from '~/lib/model/types';
   import { DOC_NAME, pageLabel, tocTitle } from '~/lib/pages';
   import { href, manualHref } from '~/lib/url';
@@ -8,7 +9,7 @@
   let q = $state('');
   let data = $state<Record<DocId, string[]> | null>(null);
   let loading = $state(false);
-  let only = $state<DocId | ''>(doc);
+  let only = $state<DocId | ''>(untrack(() => doc));
 
   async function ensure() {
     if (data || loading) return;
