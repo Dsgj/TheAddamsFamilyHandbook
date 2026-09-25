@@ -17,16 +17,18 @@
 </script>
 
 <div class="status" role="group" aria-label="Test status">
-  {#each options as o (o)}
-    <button
-      type="button"
-      class="btn small st-{o}"
-      aria-pressed={current?.status === o}
-      onclick={() => setStatus(kind, id, current?.status === o ? '' : o)}
-    >
-      {STATUS_LABEL[o]}
-    </button>
-  {/each}
+  <div class="seg">
+    {#each options as o (o)}
+      <button
+        type="button"
+        class="st-{o}"
+        aria-pressed={current?.status === o}
+        onclick={() => setStatus(kind, id, current?.status === o ? '' : o)}
+      >
+        {STATUS_LABEL[o]}
+      </button>
+    {/each}
+  </div>
   <input
     class="field note"
     type="text"
@@ -62,25 +64,12 @@
   }
   .note {
     flex: 1 1 160px;
-    min-height: 34px;
+    min-height: 36px;
     padding: 4px 10px;
+    border-radius: 10px;
   }
-  .btn[aria-pressed='true'].st-ok {
-    border-color: var(--ok);
-    color: var(--ok);
-    box-shadow: 0 0 0 1px var(--ok) inset;
-  }
-  .btn[aria-pressed='true'].st-fault {
-    border-color: var(--bad);
-    color: var(--bad);
-    box-shadow: 0 0 0 1px var(--bad) inset;
-  }
-  .btn[aria-pressed='true'].st-untested {
-    border-color: var(--warn);
-    color: var(--warn);
-    box-shadow: 0 0 0 1px var(--warn) inset;
-  }
-  .btn:not([aria-pressed='true']) {
-    color: var(--muted);
+  .seg {
+    flex: 1 1 100%;
+    display: grid;
   }
 </style>

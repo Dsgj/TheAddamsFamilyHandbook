@@ -450,7 +450,19 @@ Some things open as sheets with no URL of their own: Show on map, Add to shoppin
   - The Phase 1 and Phase 2 map checks pass (fit, and no page scroll at the four sizes).
 - **Verify.** The gauntlet, plus `pnpm exec playwright test tests/e2e/shell.spec.ts tests/e2e/map.spec.ts tests/e2e/smoke.spec.ts tests/e2e/appendix.spec.ts`. New checks: the title collapse (scroll, then read the compact title's opacity), one h1, back links, anchor offsets, reduced motion.
 
-### [ ] Phase 6: Diagnose home, results and search (the entry point)
+### [x] Phase 6: Diagnose home, results and search (the entry point)
+
+**Done 2026-09-25.** Deviations and notes:
+- Q16 default: Recent keeps 8 entries under `tafh:recent`, recorded on Diagnose, Enter (one-line field) or blur, only when at least one code was recognised. The top entry's counts re-sync when a card is marked Fault while the same input stays in the field.
+- The "Recent reports" bar button clears the field and focuses the Recent/Try heading (via a `tafh:diag` document event from the page script).
+- Q20 default: Parts and the manuals' OCR text are searched too; the handbook TOC, OCR text and parts list are fetched lazily the first time the search state opens.
+- `QuickSearch.svelte` is deleted; `DiagnoseSearch.svelte` replaces it (chips All/Components/Handbook/Manuals/Parts, five rows per group in All with "Show all N").
+- The "1 of 4" chip counter is not implemented; the results bar shows "N codes" and the codes as chips below it.
+- Share results uses `navigator.share` when available, else copies the text to the clipboard.
+- The field docks low via flex on the home (`min-height` from the shell tokens) and floats sticky above the tab bar over results and search.
+- The §8.5 card anatomy was applied to `ComponentCard` globally (so the map panel and component pages carry it too). `StatusRow` is now a `.seg`; the global `.card` is `--cell`/r-md/inset hairline, with `.lifted` for the shadow. `MiniMap` gained `w`/`h` props (310×120 in cards).
+- `/handbook` still carries duplicate section links from the TOC widget; Phase 8 rebuilds that hub.
+- New e2e file `tests/e2e/diagnose.spec.ts` (242 e2e in total); it waits for the layout to settle before tapping Diagnose.
 
 - **Goal.** `/` becomes the Diagnose home, with the results and search states.
 - **Boards.** Main, MainLight, DiagnoseResults, DiagnoseResultsLight, DiagnoseSearch, Components (§06), Rationale (§03, §05).

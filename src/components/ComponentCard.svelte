@@ -8,6 +8,10 @@
   import StatusRow from './StatusRow.svelte';
   import WireChip from './WireChip.svelte';
 
+  /**
+   * The component card (spec §8.5): code chip, name and kind line, wiring, a mini-map, the status
+   * control, the actions and the owner's hint. Used by Diagnose, the component pages and the map.
+   */
   type Any = Switch | Lamp | Coil;
   let {
     kind,
@@ -25,11 +29,27 @@
   const mapPage = $derived(mapMeta.page);
   const pos = $derived(positions(kind, item.id));
   const isMatrix = $derived(!!sw && sw.col !== null);
+  const code = $derived(
+    kind === 'coil' ? `SOL ${item.id}` : kind === 'lamp' ? `L${item.id}` : item.id,
+  );
+  const kindLine = $derived.by(() => {
+    const parts = [KIND_LABEL[kind]];
+    if (sw && isMatrix) parts.push(`matrix column ${sw.col}, row ${sw.row}`);
+    if (sw?.kind === 'ded') parts.push('dedicated (CPU J205)');
+    if (sw?.kind === 'flip') parts.push('Fliptronics');
+    if (lamp) parts.push(`matrix column ${lamp.col}, row ${lamp.row}`);
+    if (coil) parts.push(coil.type);
+    if (lamp?.speaker) parts.push('speaker panel');
+    if ('unused' in item && item.unused) parts.push('not used');
+    if ('under' in item && item.under) parts.push('under the playfield');
+    if (coil?.cabinet) parts.push('cabinet');
+    return parts.join(' · ');
+  });
 </script>
 
 <article class="card comp" data-kind={kind} data-id={item.id}>
   <header>
-    <span class="dmd">{kind === 'coil' ? 'SOL ' : kind === 'lamp' ? 'L' : ''}{item.id}</span>
+    <span class="code lg dmd">{code}</span>
     <div class="head">
       <h2>
         {#if linkTitle}
@@ -38,131 +58,135 @@
           {item.name}
         {/if}
       </h2>
-      <p class="muted small">
-        {KIND_LABEL[kind]}
-        {#if sw?.kind === 'ded'}· dedicated (CPU J205){/if}
-        {#if sw?.kind === 'flip'}· Fliptronics{/if}
-        {#if coil}· {coil.type}{/if}
-        {#if lamp?.speaker}· speaker panel{/if}
-        {#if 'unused' in item && item.unused}· not used{/if}
-        {#if 'under' in item && item.under}· under the playfield{/if}
-        {#if coil?.cabinet}· cabinet{/if}
-      </p>
+      <p class="kind">{kindLine}</p>
     </div>
   </header>
 
-  <div class="body" class:compact>
+  <dl class="wiring" class:compact>
+    {#if sw}
+      {#if isMatrix}
+        <dt>Column {sw.col}</dt>
+        <dd>
+          <WireChip colour={sw.colWireEn ?? ''} />
+          <span class="mono">{sw.colPin} · {sw.colIc}</span>
+        </dd>
+        <dt>Row {sw.row}</dt>
+        <dd>
+          <WireChip colour={sw.rowWireEn ?? ''} />
+          <span class="mono">{sw.rowPin} · {sw.rowIc}</span>
+        </dd>
+      {:else}
+        <dt>Wire</dt>
+        <dd><WireChip colour={sw.wireEn ?? ''} /> <span class="mono">{sw.pin}</span></dd>
+      {/if}
+      {#if sw.part}<dt>Switch</dt>
+        <dd class="mono">{sw.part}</dd>{/if}
+      {#if sw.assy}<dt>Assembly</dt>
+        <dd class="mono">{sw.assy}</dd>{/if}
+    {:else if lamp}
+      <dt>Column {lamp.col}</dt>
+      <dd>
+        <WireChip colour={lamp.colWireEn} /> <span class="mono">{lamp.colPin} · {lamp.colQ}</span>
+      </dd>
+      <dt>Row {lamp.row}</dt>
+      <dd>
+        <WireChip colour={lamp.rowWireEn} /> <span class="mono">{lamp.rowPin} · {lamp.rowQ}</span>
+      </dd>
+      <dt>Bulb</dt>
+      <dd><span class="mono">{lamp.bulb}</span> · {lamp.bulbPart}</dd>
+      {#if lamp.assy}<dt>Assembly</dt>
+        <dd class="mono">{lamp.assy}</dd>{/if}
+    {:else if coil}
+      <dt>Wire</dt>
+      <dd>
+        <WireChip colour={coil.wireEn} /> <span class="mono">{coil.pin} · {coil.driver}</span>
+      </dd>
+      <dt>Coil</dt>
+      <dd class="mono">{coil.part}</dd>
+      {#if coil.assy}<dt>Assembly</dt>
+        <dd class="mono">{coil.assy}</dd>{/if}
+      <dt>Fuse</dt>
+      <dd>
+        {coil.fuse || '—'}
+        <span class="muted small">(derived from the fuse list, not printed per coil)</span>
+      </dd>
+    {/if}
+    <dt>Callout</dt>
+    <dd>
+      {#if callouts}
+        {callouts} on <a href={manualHref('ops', mapPage)}>p. 2-{mapPage - 58}</a>
+      {:else if sw?.notShown}
+        not shown on the location map
+      {:else}
+        —
+      {/if}
+    </dd>
+  </dl>
+
+  {#if !compact}
     <a
       class="map-link"
       href={href(`map?layer=${layer}&id=${item.id}`)}
       aria-label="Open on the map"
     >
-      <MiniMap {pos} />
+      <MiniMap {pos} w={310} h={120} />
     </a>
-    <dl>
-      {#if sw}
-        {#if isMatrix}
-          <dt>Column {sw.col}</dt>
-          <dd>
-            <WireChip colour={sw.colWireEn ?? ''} />
-            <span class="mono">{sw.colPin} · {sw.colIc}</span>
-          </dd>
-          <dt>Row {sw.row}</dt>
-          <dd>
-            <WireChip colour={sw.rowWireEn ?? ''} />
-            <span class="mono">{sw.rowPin} · {sw.rowIc}</span>
-          </dd>
-        {:else}
-          <dt>Wire</dt>
-          <dd><WireChip colour={sw.wireEn ?? ''} /> <span class="mono">{sw.pin}</span></dd>
-        {/if}
-        {#if sw.part}<dt>Switch</dt>
-          <dd class="mono">{sw.part}</dd>{/if}
-        {#if sw.assy}<dt>Assembly</dt>
-          <dd class="mono">{sw.assy}</dd>{/if}
-      {:else if lamp}
-        <dt>Column {lamp.col}</dt>
-        <dd>
-          <WireChip colour={lamp.colWireEn} /> <span class="mono">{lamp.colPin} · {lamp.colQ}</span>
-        </dd>
-        <dt>Row {lamp.row}</dt>
-        <dd>
-          <WireChip colour={lamp.rowWireEn} /> <span class="mono">{lamp.rowPin} · {lamp.rowQ}</span>
-        </dd>
-        <dt>Bulb</dt>
-        <dd><span class="mono">{lamp.bulb}</span> · {lamp.bulbPart}</dd>
-        {#if lamp.assy}<dt>Assembly</dt>
-          <dd class="mono">{lamp.assy}</dd>{/if}
-      {:else if coil}
-        <dt>Wire</dt>
-        <dd>
-          <WireChip colour={coil.wireEn} /> <span class="mono">{coil.pin} · {coil.driver}</span>
-        </dd>
-        <dt>Coil</dt>
-        <dd class="mono">{coil.part}</dd>
-        {#if coil.assy}<dt>Assembly</dt>
-          <dd class="mono">{coil.assy}</dd>{/if}
-        <dt>Fuse</dt>
-        <dd>
-          {coil.fuse || '—'}
-          <span class="muted small">(derived from the fuse list, not printed per coil)</span>
-        </dd>
-      {/if}
-      <dt>Callout</dt>
-      <dd>
-        {#if callouts}
-          {callouts} on <a href={manualHref('ops', mapPage)}>p. 2-{mapPage - 58}</a>
-        {:else if sw?.notShown}
-          not shown on the location map
-        {:else}
-          —
-        {/if}
-      </dd>
-    </dl>
-  </div>
-
-  {#if sw?.hint}
-    <p class="prov">{t(HINT, sw.hint)} <em>(owner's experience, not the manual)</em></p>
-  {/if}
-  {#if coil?.note}
-    <p class="prov">{t(COIL_NOTE, coil.note)}</p>
   {/if}
 
   <StatusRow {kind} id={item.id} />
+
+  <div class="acts">
+    <a class="btn sm" href={href(`map?layer=${layer}&id=${item.id}`)}>Show on map</a>
+    <a class="btn sm" href={manualHref('ops', mapPage)}>p. 2-{mapPage - 58}</a>
+    {#if linkTitle}
+      <a class="btn sm" href={componentHref(kind, item.id)}>Details</a>
+    {/if}
+  </div>
+
+  {#if sw?.hint}
+    <p class="hint">
+      <strong>Owner's hint</strong><br />
+      {t(HINT, sw.hint)} <em>(owner's experience, not the manual)</em>
+    </p>
+  {/if}
+  {#if coil?.note}
+    <p class="hint">{t(COIL_NOTE, coil.note)}</p>
+  {/if}
 </article>
 
 <style>
+  .comp {
+    display: grid;
+    gap: 14px;
+  }
   header {
     display: flex;
     gap: 12px;
     align-items: center;
-    margin-bottom: 10px;
+  }
+  .head {
+    min-width: 0;
   }
   .head h2 {
     margin: 0;
-    font-size: 1.25rem;
+    font: 400 22px/28px var(--font-display);
   }
-  .head p {
+  .head h2 a {
+    color: inherit;
+  }
+  .kind {
     margin: 0;
+    font-size: 15px;
+    line-height: 20px;
+    color: var(--muted);
   }
-  .body {
-    display: flex;
-    gap: 14px;
-    align-items: flex-start;
-    margin-bottom: 10px;
-  }
-  .map-link {
-    flex: 0 0 auto;
-    display: block;
-  }
-  dl {
+  .wiring {
     display: grid;
     grid-template-columns: max-content 1fr;
-    gap: 4px 12px;
+    gap: 6px 12px;
     margin: 0;
-    flex: 1 1 auto;
-    min-width: 0;
-    font-size: 0.92rem;
+    font-size: 15px;
+    line-height: 20px;
   }
   dt {
     color: var(--muted);
@@ -174,9 +198,33 @@
     gap: 4px 8px;
     align-items: center;
   }
-  @media (max-width: 480px) {
-    .body {
-      flex-direction: column;
-    }
+  dd .mono {
+    font-size: 12px;
+    line-height: 16px;
+  }
+  .map-link {
+    display: block;
+    max-width: 100%;
+  }
+  .acts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  /* Small buttons keep a 44 hit area (spec §8.7). */
+  .acts .btn {
+    position: relative;
+    text-decoration: none;
+    background: var(--tint);
+    border: 0;
+    color: var(--amber-ink);
+  }
+  .acts .btn::after {
+    content: '';
+    position: absolute;
+    inset: -4px 0;
+  }
+  .hint {
+    margin: 0;
   }
 </style>
