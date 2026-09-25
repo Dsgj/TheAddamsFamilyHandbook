@@ -87,6 +87,9 @@ textarea {
   max-width: 1120px;
   margin: 0 auto;
   padding: var(--pad);
+  /* Spec §11: the side gutter clears the notch in landscape. */
+  padding-left: max(var(--pad), env(safe-area-inset-left, 0px));
+  padding-right: max(var(--pad), env(safe-area-inset-right, 0px));
 }
 /* Full-bleed pages (the map): no gutter, no max-width, no footer (Base.astro `fullbleed`). */
 main.fullbleed {

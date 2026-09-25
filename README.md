@@ -132,7 +132,7 @@ kit/assets    ─►  public/assets                    │  pnpm sync-kit
 kit/handbook  ─►  src/content/handbook             │
 kit/docs      ─►  kit-docs                         ┘
 @fontsource   ─►  public/fonts                        pnpm fonts
-icon.svg      ─►  public/icons/*.png                  pnpm icons
+icon.svg      ─►  public/icons/*.png (+ iOS splash)    pnpm icons
 scans         ─►  page thumbnails (optional)          pnpm thumbs
 ```
 
