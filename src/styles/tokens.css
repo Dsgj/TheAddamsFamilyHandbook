@@ -67,6 +67,35 @@
   --scan-filter: invert(0.9) hue-rotate(180deg);
   --shadow: 0 1px 0 rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
 
+  /* App redesign, spec §1.1: surfaces, tints and elevation. */
+  --raised: #221d26;
+  --cell: #1a161d;
+  --sheet: #1c1720;
+  --sheet-cell: #28222c;
+  --seg-track: #241f28;
+  --seg-thumb: #3b3542;
+  --grabber: #4a4450;
+  --faint: #857d8d;
+  --sep: #2c2731;
+  --amber-ink: #ff8a3d;
+  --amber-fill: #ff8a3d;
+  --on-amber: #1a0d05;
+  --tint: rgba(255, 138, 61, 0.14);
+  --violet-tint: rgba(201, 160, 220, 0.15);
+  --brass-tint: rgba(176, 141, 87, 0.18);
+  --ok-tint: rgba(111, 203, 139, 0.15);
+  --bad-tint: rgba(240, 133, 123, 0.16);
+  --warn-tint: rgba(227, 181, 87, 0.16);
+  --dmd-ink: #ff8a3d;
+  --dmd-dot: rgba(255, 138, 61, 0.13);
+  --bar: rgba(14, 11, 16, 0.82);
+  --scrim: rgba(5, 3, 6, 0.56);
+  --press: rgba(236, 230, 218, 0.07);
+  --wire-edge: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+  --shadow-1: 0 1px 0 rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow-2: 0 12px 40px rgba(0, 0, 0, 0.55);
+  --shadow-sheet: 0 -10px 40px rgba(0, 0, 0, 0.5);
+
   --font-display: 'IM Fell English SC', 'Times New Roman', serif;
   --font-body: 'IBM Plex Sans', system-ui, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
@@ -76,7 +105,47 @@
   --pad: 16px;
   --touch: 44px;
   --nav-h: 52px;
+
+  /* Spec §4: radii. --r stays until Phase 5. */
+  --r-xs: 6px;
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 20px;
+
+  /* Spec §1.3: layout. The safe areas fall back to 0 (viewport-fit=cover is set; Playwright has
+     no inset). --topbar-h is the phone value here; Base.astro publishes the measured height of
+     the interim sticky header until the Phase 5 top bar exists. --tabbar-h is 0 until the Phase 4
+     tab bar ships. */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bot: env(safe-area-inset-bottom, 0px);
+  --topbar-h: 44px;
+  --tabbar-h: 0px;
+  --sheet-peek: 96px;
+  --rail-w: 80px;
+  --sidebar-w: 256px;
+  --panel-w: 400px;
+
+  /* Spec §10: motion. "Lands = emphasized, leaves = exit, fades = standard." */
+  --dur-1: 120ms;
+  --dur-2: 200ms;
+  --dur-3: 300ms;
+  --dur-4: 350ms;
+  --dur-5: 420ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasized: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-exit: cubic-bezier(0.3, 0, 1, 1);
   color-scheme: dark;
+}
+@media (min-width: 600px) {
+  :root {
+    --topbar-h: 50px;
+  }
+}
+@media (min-width: 1280px) {
+  :root {
+    --topbar-h: 56px;
+    --panel-w: 420px;
+  }
 }
 
 :root[data-theme='light'] {
@@ -89,13 +158,40 @@
   --amber: #c9520f;
   --amber-glow: transparent;
   --violet: #6a2d80;
-  --brass: #8a6b3a;
-  --ok: #2f7d46;
+  --brass: #7d6033;
+  --ok: #2a7340;
   --bad: #b8322a;
-  --warn: #a5720b;
+  --warn: #875e06;
   --dmd-well: #17121a;
   --scan-filter: none;
   --shadow: 0 1px 0 rgba(28, 23, 32, 0.08), 0 6px 18px rgba(28, 23, 32, 0.12);
+  --raised: #fffcf5;
+  --cell: #fffcf5;
+  --sheet: #f3eee2;
+  --sheet-cell: #fffcf5;
+  --seg-track: #e4ddcb;
+  --seg-thumb: #fffcf5;
+  --grabber: #c9c0ad;
+  --faint: #6e6676;
+  --sep: #e3dccb;
+  --amber-ink: #a8440a;
+  --amber-fill: #a8440a;
+  --on-amber: #fff8f0;
+  --tint: rgba(201, 82, 15, 0.12);
+  --violet-tint: rgba(106, 45, 128, 0.1);
+  --brass-tint: rgba(138, 107, 58, 0.14);
+  --ok-tint: rgba(47, 125, 70, 0.12);
+  --bad-tint: rgba(184, 50, 42, 0.1);
+  --warn-tint: rgba(165, 114, 11, 0.12);
+  --dmd-ink: #ff8a3d;
+  --dmd-dot: rgba(255, 138, 61, 0.13);
+  --bar: rgba(239, 233, 218, 0.84);
+  --scrim: rgba(28, 23, 32, 0.32);
+  --press: rgba(28, 23, 32, 0.06);
+  --wire-edge: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+  --shadow-1: 0 1px 0 rgba(28, 23, 32, 0.08), 0 6px 18px rgba(28, 23, 32, 0.12);
+  --shadow-2: 0 12px 36px rgba(28, 23, 32, 0.2);
+  --shadow-sheet: 0 -8px 30px rgba(28, 23, 32, 0.16);
   color-scheme: light;
 }
 
@@ -110,13 +206,40 @@
     --amber: #c9520f;
     --amber-glow: transparent;
     --violet: #6a2d80;
-    --brass: #8a6b3a;
-    --ok: #2f7d46;
+    --brass: #7d6033;
+    --ok: #2a7340;
     --bad: #b8322a;
-    --warn: #a5720b;
+    --warn: #875e06;
     --dmd-well: #17121a;
     --scan-filter: none;
     --shadow: 0 1px 0 rgba(28, 23, 32, 0.08), 0 6px 18px rgba(28, 23, 32, 0.12);
+    --raised: #fffcf5;
+    --cell: #fffcf5;
+    --sheet: #f3eee2;
+    --sheet-cell: #fffcf5;
+    --seg-track: #e4ddcb;
+    --seg-thumb: #fffcf5;
+    --grabber: #c9c0ad;
+    --faint: #6e6676;
+    --sep: #e3dccb;
+    --amber-ink: #a8440a;
+    --amber-fill: #a8440a;
+    --on-amber: #fff8f0;
+    --tint: rgba(201, 82, 15, 0.12);
+    --violet-tint: rgba(106, 45, 128, 0.1);
+    --brass-tint: rgba(138, 107, 58, 0.14);
+    --ok-tint: rgba(47, 125, 70, 0.12);
+    --bad-tint: rgba(184, 50, 42, 0.1);
+    --warn-tint: rgba(165, 114, 11, 0.12);
+    --dmd-ink: #ff8a3d;
+    --dmd-dot: rgba(255, 138, 61, 0.13);
+    --bar: rgba(239, 233, 218, 0.84);
+    --scrim: rgba(28, 23, 32, 0.32);
+    --press: rgba(28, 23, 32, 0.06);
+    --wire-edge: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+    --shadow-1: 0 1px 0 rgba(28, 23, 32, 0.08), 0 6px 18px rgba(28, 23, 32, 0.12);
+    --shadow-2: 0 12px 36px rgba(28, 23, 32, 0.2);
+    --shadow-sheet: 0 -8px 30px rgba(28, 23, 32, 0.16);
     color-scheme: light;
   }
 }
