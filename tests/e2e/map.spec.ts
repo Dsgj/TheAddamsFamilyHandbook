@@ -307,14 +307,16 @@ test.describe('phone selection sheet', () => {
         );
       })
       .toBe(true);
-    const sheetTop = (await box(page, SHEET)).y;
-    expect(await centreY(page, '.marker.sel')).toBeLessThan(sheetTop);
+    // The sheet is still rising for its first 300 ms, so the column is measured against the
+    // sheet's live top, not a captured one.
     await expect
       .poll(async () => {
+        const s = await box(page, SHEET);
         const c = await box(page, '.map-controls .column');
-        return near(c.y + c.height, sheetTop - 12);
+        return near(c.y + c.height, s.y - 12);
       })
       .toBe(true);
+    expect(await centreY(page, '.marker.sel')).toBeLessThan((await box(page, SHEET)).y);
     // No page scroll and no stage scroll at 1×.
     const g = await geometry(page);
     expect(g.scrollHeight).toBeLessThanOrEqual(g.clientHeight + 1);

@@ -3,7 +3,10 @@ import '~/styles/tokens.css';
 import '~/styles/base.css';
 import { pwaInfo } from 'virtual:pwa-info';
 import { href } from '~/lib/url';
+import { TABS, tabFor } from '~/lib/nav';
+import { allShoppingItems } from '~/lib/shopping';
 import QuickSearch from '~/components/QuickSearch.svelte';
+import TabBadge from '~/components/TabBadge.svelte';
 
 interface Props {
   title: string;
@@ -22,23 +25,9 @@ const {
   fullbleed,
 } = Astro.props;
 
-const NAV: [string, string, string][] = [
-  ['diagnose', 'Diagnose', ''],
-  ['map', 'Map', 'map'],
-  ['tables', 'Tables', 'tables'],
-  ['switches', 'Switches', 'switches'],
-  ['lamps', 'Lamps', 'lamps'],
-  ['coils', 'Solenoids', 'coils'],
-  ['workshop', 'Workshop', 'workshop'],
-  ['shopping', 'Shopping list', 'shopping'],
-  ['verify', 'Verify', 'verify'],
-  ['setup', 'Setup', 'setup'],
-  ['care', 'Care', 'care'],
-  ['fuses', 'Fuses', 'fuses'],
-  ['handbook', 'Handbook', 'handbook'],
-  ['manual', 'Manuals', 'manual'],
-  ['parts', 'Parts', 'parts'],
-];
+const tab = tabFor(nav);
+/** The Shopping list's candidate keys, so the badge counts exactly what the list shows. */
+const shopKeys = allShoppingItems().map((i) => `${i.kind}:${i.id}`);
 ---
 
 <!doctype html>
@@ -63,6 +52,53 @@ const NAV: [string, string, string][] = [
   </head>
   <body>
     <a class="sr-only" href="#main">Skip to content</a>
+    <nav class="shell" aria-label="Sections">
+      <a class="shell-logo" href={href('')} aria-label="The Addams Family Handbook home">
+        <img
+          src={href('brand/logo.webp')}
+          alt="The Addams Family"
+          width="160"
+          height="81"
+          decoding="async"
+        />
+      </a>
+      <ul class="tabs">
+        {
+          TABS.map((t) => (
+            <li>
+              <a
+                class="tab"
+                href={href(t.path)}
+                data-tab={t.key}
+                aria-current={tab === t.key ? 'page' : undefined}
+              >
+                <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d={t.icon} />
+                </svg>
+                <span class="lbl">{t.label}</span>
+                {t.key === 'workshop' && <TabBadge client:load keys={shopKeys} />}
+              </a>
+              {t.subs.length > 0 && (
+                <ul class="subs">
+                  {t.subs.map((s) => (
+                    <li>
+                      <a
+                        class="sub"
+                        href={href(s.path)}
+                        aria-current={s.nav && nav === s.nav ? 'page' : undefined}
+                      >
+                        <span class="lbl">{s.label}</span>
+                        {s.count && <TabBadge client:load keys={shopKeys} pill />}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
     <header class="top">
       <div class="top-row">
         <a class="brand" href={href('')} aria-label="The Addams Family Handbook home">
@@ -78,15 +114,6 @@ const NAV: [string, string, string][] = [
         </a>
         <QuickSearch client:idle />
       </div>
-      <nav class="nav" aria-label="Sections">
-        {
-          NAV.map(([key, label, path]) => (
-            <a href={href(path)} aria-current={nav === key ? 'page' : undefined}>
-              {label}
-            </a>
-          ))
-        }
-      </nav>
     </header>
     <main id="main" class:list={[{ wrap: !fullbleed, wide, fullbleed }]}>
       <slot />
@@ -114,6 +141,25 @@ const NAV: [string, string, string][] = [
           };
           publish();
           new ResizeObserver(publish).observe(top);
+        }
+        // Reselecting the current tab (spec §6.1): on the tab's root it scrolls to the top and
+        // focuses the h1; on a pushed page the link itself goes to the root.
+        const norm = function (p) {
+          return p.replace(/\.html$/, '').replace(/\/index$/, '').replace(/\/$/, '');
+        };
+        const shell = document.querySelector('nav.shell');
+        if (shell) {
+          shell.addEventListener('click', function (e) {
+            const a = e.target.closest && e.target.closest('a.tab[aria-current="page"]');
+            if (!a || norm(location.pathname) !== norm(new URL(a.href).pathname)) return;
+            e.preventDefault();
+            window.scrollTo({ top: 0 });
+            const h1 = document.querySelector('h1');
+            if (h1) {
+              h1.tabIndex = -1;
+              h1.focus({ preventScroll: true });
+            }
+          });
         }
       })();
     </script>
@@ -166,36 +212,14 @@ const NAV: [string, string, string][] = [
       display: inline;
     }
   }
-  .nav {
-    display: flex;
-    gap: 2px;
-    overflow-x: auto;
-    padding: 0 calc(var(--pad) - 6px) 4px;
-    max-width: 1120px;
-    margin: 0 auto;
-    scrollbar-width: none;
-  }
-  .nav::-webkit-scrollbar {
-    display: none;
-  }
-  .nav a {
-    flex: 0 0 auto;
-    padding: 6px 10px;
-    border-radius: var(--r);
-    color: var(--muted);
-    font-size: 0.9rem;
-    min-height: 34px;
-    display: inline-flex;
-    align-items: center;
-  }
-  .nav a:hover {
-    color: var(--ink);
-    text-decoration: none;
-    background: var(--sunk);
-  }
-  .nav a[aria-current='page'] {
-    color: var(--amber);
-    background: var(--sunk);
+  /* From 1280 the sidebar carries the logo; the header keeps only the search until Phase 5. */
+  @media (min-width: 1280px) {
+    .brand {
+      display: none;
+    }
+    .top-row {
+      justify-content: flex-end;
+    }
   }
   main.wide {
     max-width: 1400px;

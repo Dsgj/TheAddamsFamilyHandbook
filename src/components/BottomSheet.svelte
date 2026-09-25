@@ -317,12 +317,13 @@
     background: var(--grabber);
   }
 
-  /* Map kind: absolute at the bottom of the stage, over the drawing (z 28 > controls 25). */
+  /* Map kind: absolute at the bottom of the stage (the tab bar sits below it), over the drawing
+     (z 28 > controls 25). */
   .map {
     position: absolute;
     left: 0;
     right: 0;
-    bottom: calc(-1 * var(--safe-bot));
+    bottom: 0;
     z-index: 28;
     transition: height var(--dur-4) var(--ease-emphasized);
     animation: rise var(--dur-3) var(--ease-emphasized);

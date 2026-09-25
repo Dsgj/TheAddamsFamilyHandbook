@@ -360,7 +360,16 @@ Some things open as sheets with no URL of their own: Show on map, Add to shoppin
   - No horizontal scroll at 390 wide. Both themes match the boards by eye.
 - **Verify.** The gauntlet, plus `pnpm exec playwright test tests/e2e/hubs.spec.ts tests/e2e/smoke.spec.ts tests/e2e/care.spec.ts tests/e2e/setup.spec.ts tests/e2e/features.spec.ts`. New checks: row heights, the badge count sources (status and verify), the theme persistence, the About dialog.
 
-### [ ] Phase 4: navigation shell (tab bar, rail, sidebar)
+### [x] Phase 4: navigation shell (tab bar, rail, sidebar)
+
+- **Done 2026-09-25** on `claude/app-redesign-phase-2`. Gauntlet green: check, lint, 49 unit tests, build, 138 e2e (shell.spec adds 15 per project), `data-find` 8, base-path build clean. Deviations from the steps above:
+  - One `nav.shell aria-label="Sections"` is rendered from `src/lib/nav.ts` and CSS gives it the three forms (tab bar < 600, rail 600–1279, sidebar ≥ 1280); the sidebar's sub-rows and logo exist in the DOM at every width but display only from 1280. One landmark, not three.
+  - New token `--shell-w` (0 / `--rail-w` / `--sidebar-w`) is the shell's left column; `body` pads by it and by `--tabbar-h + --safe-bot`, so every page and the fixed `#sw-status` clear the shell. `--tabbar-h` is 49 below 600, 0 from 600 and in print.
+  - The badge and the sidebar's count pill are one island, `TabBadge.svelte` (`pill` prop). It counts Fault rows among the Shopping list's candidate keys (Q6 default: rows, and "Add to list" still means mark Fault), renders nothing at 0, and sets the Workshop link's `aria-label` from inside the link. The sidebar hides the badge and shows the pill; the link still carries the count in its name.
+  - Q2 default: tab 5 is Workshop. Q7 default: Device data links to `/shopping#device-data`. Q9: `/404` stays inside the shell. Q10: the sidebar search field is left out until the owner answers; the header brand row and QuickSearch stay, but the header's brand hides from 1280 where the sidebar carries the logo.
+  - The map's phone calibration sheet is fixed at `left: --shell-w; bottom: --tabbar-h + --safe-bot`, and the map-kind BottomSheet sits at the stage bottom (`bottom: 0`, no longer `-safe-bot`) since the tab bar owns the safe area.
+  - map.spec's peek test measured the control column against a sheet top captured while the sheet was still rising; it now compares live values. The reselect test waits for `load` before the second click.
+  - Rail items are 80×64 with the current icon on a 56×32 `--tint` pill (done with padding on the SVG). Icon paths are stroked 24-grid glyphs drawn here; the boards' exact glyphs are not in the repo.
 
 - **Goal.** The 13-link strip is replaced by the five tabs at every width.
 - **Boards.** Components (§01), Rationale (§01–§04, §07), ShellTablet, ShellDesktop, Native (safe areas).
