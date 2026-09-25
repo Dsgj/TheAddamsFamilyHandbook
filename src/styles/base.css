@@ -15,7 +15,7 @@ body {
   min-height: 100dvh;
 }
 a {
-  color: var(--amber);
+  color: var(--amber-ink);
   text-decoration: none;
 }
 a:hover {
@@ -82,6 +82,54 @@ textarea {
   max-width: 1120px;
   margin: 0 auto;
   padding: var(--pad);
+}
+/* Full-bleed pages (the map): no gutter, no max-width, no footer (Base.astro `fullbleed`). */
+main.fullbleed {
+  padding: 0;
+  max-width: none;
+}
+/* Glass surfaces (spec §4): the map controls, hint pills, the zoom readout, the keyboard legend. */
+.glass {
+  background: var(--bar);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  backdrop-filter: blur(20px) saturate(1.5);
+  box-shadow:
+    var(--shadow-2),
+    inset 0 0 0 1px var(--sep);
+}
+/* The service-worker line (pwa.ts writes to it by id): a fixed toast-like line at the bottom of
+   every page, above the map controls, letting taps through except on its Reload button. */
+#sw-status {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(var(--tabbar-h) + var(--safe-bot) + 10px);
+  z-index: 40;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  width: max-content;
+  max-width: calc(100% - 24px);
+  margin: 0 auto;
+  padding: 10px 14px;
+  border-radius: var(--r-md);
+  background: var(--bar);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  backdrop-filter: blur(20px) saturate(1.5);
+  box-shadow:
+    var(--shadow-2),
+    inset 0 0 0 1px var(--sep);
+  color: var(--ink);
+  font-size: 0.9rem;
+  pointer-events: none;
+}
+#sw-status[hidden] {
+  display: none;
+}
+#sw-status .btn {
+  pointer-events: auto;
 }
 .grid-2 {
   display: grid;
@@ -369,7 +417,15 @@ table.t tr.row-fault td:first-child {
     --muted: #444;
     --line: #999;
     --amber: #000;
+    --amber-ink: #000;
     --shadow: none;
+    --shadow-1: none;
+    --shadow-2: none;
+    --shadow-sheet: none;
+    --raised: #fff;
+    --cell: #fff;
+    --sheet: #fff;
+    --bar: #fff;
   }
   body {
     background: #fff;
@@ -382,6 +438,7 @@ table.t tr.row-fault td:first-child {
   .foot,
   #theme-toggle,
   #sw-status,
+  .map-controls,
   .sr-only,
   .top astro-island,
   .no-print {
