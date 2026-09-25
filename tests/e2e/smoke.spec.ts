@@ -13,10 +13,14 @@ test('diagnose resolves a test-report line', async ({ page }) => {
 test('map marker opens the component card', async ({ page }) => {
   await gotoHydrated(page, '/map?layer=sw');
   await page
-    .getByRole('button', { name: /^32 Upper Right Jet/ })
+    .getByRole('button', { name: /^Switch 32, Upper Right Jet/ })
     .first()
     .click();
-  await expect(page.locator('aside article.comp[data-id="32"]')).toBeVisible();
+  await expect(
+    page.locator(
+      'aside article.comp[data-id="32"], section[aria-label^="Selected part"][data-id="32"]',
+    ),
+  ).toBeVisible();
   await expect(page).toHaveURL(/id=32/);
 });
 
@@ -78,10 +82,14 @@ test('layers combine and the shot layer opens a shot card', async ({ page }) => 
   await expect(page.locator('.marker.k-shot')).toHaveCount(17);
   await expect(page.locator('.marker.k-sw')).toHaveCount(0);
   await page
-    .getByRole('button', { name: /^K Bookcase/ })
+    .getByRole('button', { name: /^Shot K, Bookcase/ })
     .first()
     .click();
-  await expect(page.locator('aside article.shot-card[data-id="K"]')).toBeVisible();
+  await expect(
+    page.locator(
+      'aside article.shot-card[data-id="K"], section[aria-label^="Selected part"][data-id="K"]',
+    ),
+  ).toBeVisible();
   await page
     .getByRole('group', { name: 'Layers' })
     .getByRole('button', { name: 'Switches' })
