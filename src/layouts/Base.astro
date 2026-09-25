@@ -57,7 +57,14 @@ const hasActions = Astro.slots.has('actions');
     <meta name="theme-color" content="#0E0B10" media="(prefers-color-scheme: dark)" />
     <meta name="theme-color" content="#EFE9DA" media="(prefers-color-scheme: light)" />
     <link rel="icon" href={href('icons/icon.svg')} type="image/svg+xml" />
-    <link rel="apple-touch-icon" href={href('icons/icon-192.png')} />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="TAF Handbook" />
+    <link rel="apple-touch-icon" href={href('icons/icon-180.png')} />
+    <link
+      rel="apple-touch-startup-image"
+      href={href('icons/startup-1170x2532.png')}
+      media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+    />
     {pwaInfo && <Fragment set:html={pwaInfo.webManifest.linkTag} />}
     <script is:inline>
       try {
@@ -203,7 +210,10 @@ const hasActions = Astro.slots.has('actions');
         // Reselecting the current tab (spec §6.1): on the tab's root it scrolls to the top and
         // focuses the h1; on a pushed page the link itself goes to the root.
         const norm = function (p) {
-          return p.replace(/\.html$/, '').replace(/\/index$/, '').replace(/\/$/, '');
+          return p
+            .replace(/\.html$/, '')
+            .replace(/\/index$/, '')
+            .replace(/\/$/, '');
         };
         const shell = document.querySelector('nav.shell');
         if (shell) {

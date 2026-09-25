@@ -617,7 +617,9 @@ Done 2026-09-25. Deviations and decisions: Shopping list rows use the list vocab
   - Manual check on a phone, which the owner does: the swipe works one-handed with the thumb, a vertical scroll through the list never opens a row, and Copy / Share sit within thumb reach at the bottom of the list.
 - **Verify.** The gauntlet, plus `pnpm exec playwright test tests/e2e/shopping.spec.ts tests/e2e/care.spec.ts tests/e2e/setup.spec.ts tests/e2e/features.spec.ts`.
 
-### [ ] Phase 10: install surface (meta, icons, manifest, splash, standalone)
+### [x] Phase 10: install surface (meta, icons, manifest, splash, standalone)
+
+Done 2026-09-25. Both Apple meta tags, `icons/icon-180.png` and the 1170×2532 startup image with its media query are in the head (all through `href()`); the manifest has `orientation: any` and a separate `icons/maskable-512.png`. `scripts/icons.mjs` now renders icon-192/512 (as before), the opaque 180 square (the SVG's `rx` stripped), the maskable 512 (art in the centre 80%) and the startup image (icon 120 pt centred, the name 22 pt 16 pt below it in `--ink`). The name's outlines were converted once with fontkitten (already in node_modules, not a new dependency) into `scripts/splash-name.svg`; the script prints `opaque` for each PNG from `sharp().stats()`. Safe areas: the top bar and tab bar already used the tokens; `.wrap` now pads the sides with `max(var(--pad), env(safe-area-inset-left|right))`. The iPhone check (standalone, splash on 390×844, notch and home indicator, the white clock on the light theme) is the owner's; not done here. No test edits; e2e 284.
 
 - **Goal.** When installed it looks like an app: the right icons, the splash, the status bar, safe areas and orientation.
 - **Boards.** Native.
