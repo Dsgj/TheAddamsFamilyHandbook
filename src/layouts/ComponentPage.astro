@@ -1,6 +1,6 @@
 ---
 import Base from './Base.astro';
-import ComponentCard from '~/components/ComponentCard.svelte';
+import ComponentDetail, { type Related } from '~/components/ComponentDetail.svelte';
 import type { AnyComponent } from '~/lib/data/components';
 import { DATA, KIND_LABEL, MAP_LAYER } from '~/lib/data/components';
 import type { Kind } from '~/lib/model/types';
@@ -9,6 +9,10 @@ import { appendixFor, APPENDICES, serviceNotes } from '~/data/appendix';
 import { findHeading, type HeadingIndex } from '~/lib/handbook/render';
 import { handbookToc } from '~/lib/handbook/toc';
 
+/**
+ * The component detail page (spec §9.7). The island draws the anatomy; this layout adds the
+ * owner's service notes and appendix links (read by the tests) and the prev/next pager (Q18).
+ */
 interface Props {
   kind: Kind;
   item: AnyComponent;
@@ -22,6 +26,38 @@ const listPath = kind === 'switch' ? 'switches' : kind === 'lamp' ? 'lamps' : 'c
 /** The back link's label: the list page's name. */
 const listLabel = kind === 'switch' ? 'Switches' : kind === 'lamp' ? 'Lamps' : 'Solenoids';
 const layer = MAP_LAYER[kind];
+
+/** Related components: the same name (the lamp and coil of a jet bumper) or the same assembly. */
+const codeOf = (k: Kind, id: string) => (k === 'coil' ? `SOL ${id}` : k === 'lamp' ? `L${id}` : id);
+const subOf = (k: Kind, c: AnyComponent) => {
+  if (k === 'lamp' && 'bulb' in c) return `Lamp · bulb ${c.bulb}`;
+  if (k === 'coil' && 'type' in c) return `Solenoid · ${c.type}`;
+  if (k === 'switch' && 'col' in c && c.col !== null)
+    return `Switch · matrix column ${c.col}, row ${c.row}`;
+  return KIND_LABEL[k];
+};
+const name = item.name.trim().toLowerCase();
+const pool: [Kind, AnyComponent][] = [
+  ...DATA.switches.map((c): [Kind, AnyComponent] => ['switch', c]),
+  ...DATA.lamps.map((c): [Kind, AnyComponent] => ['lamp', c]),
+  ...DATA.coils.map((c): [Kind, AnyComponent] => ['coil', c]),
+];
+const sameName = ([, c]: [Kind, AnyComponent]) => c.name.trim().toLowerCase() === name;
+const related: Related[] = pool
+  .filter(
+    ([k, c]) =>
+      !(k === kind && c.id === item.id) &&
+      !('unused' in c && c.unused) &&
+      (sameName([k, c]) || (!!item.assy && c.assy === item.assy)),
+  )
+  .sort((a, b) => Number(sameName(b)) - Number(sameName(a)))
+  .slice(0, 8)
+  .map(([k, c]) => ({
+    href: componentHref(k, c.id),
+    code: codeOf(k, c.id),
+    name: c.name,
+    sub: subOf(k, c),
+  }));
 
 /** Owner appendices that apply to this component, resolved to their Handbook headings. */
 const toc = await handbookToc();
@@ -45,7 +81,7 @@ const svc = serviceNotes(kind, item)
   h1="bar"
   back={{ path: listPath, label: listLabel }}
 >
-  <ComponentCard client:load {kind} {item} mapMeta={DATA.maps[layer]} linkTitle={false} />
+  <ComponentDetail client:load {kind} {item} mapMeta={DATA.maps[layer]} {related} />
   {
     notes.length > 0 && (
       <div class="notes small">
@@ -68,20 +104,19 @@ const svc = serviceNotes(kind, item)
       </div>
     )
   }
-  <nav class="pn">
+  <nav class="pn" aria-label="Previous and next">
     {
       prev ? (
-        <a class="btn" href={componentHref(kind, prev.id)}>
+        <a class="btn sm" href={componentHref(kind, prev.id)}>
           ‹ {prev.id} {prev.name}
         </a>
       ) : (
         <span />
       )
     }
-    <a class="btn" href={href(`map?layer=${layer}&id=${item.id}`)}>Show on map</a>
     {
       next ? (
-        <a class="btn" href={componentHref(kind, next.id)}>
+        <a class="btn sm" href={componentHref(kind, next.id)}>
           {next.id} {next.name} ›
         </a>
       ) : (
@@ -93,7 +128,7 @@ const svc = serviceNotes(kind, item)
 
 <style>
   .notes {
-    margin: 8px 0 0;
+    margin: 18px 0 0;
     border-left: 2px solid var(--brass);
     padding-left: 10px;
   }
@@ -111,5 +146,8 @@ const svc = serviceNotes(kind, item)
     gap: 8px;
     margin-top: var(--gap);
     flex-wrap: wrap;
+  }
+  .pn .btn {
+    text-decoration: none;
   }
 </style>

@@ -2,7 +2,7 @@
   import { untrack } from 'svelte';
   import { getStatus } from '~/lib/model/status.svelte';
   import type { Kind, MatrixHeaders } from '~/lib/model/types';
-  import { componentHref } from '~/lib/url';
+  import { componentHref, href } from '~/lib/url';
   import WireChip from './WireChip.svelte';
 
   interface Cell {
@@ -29,6 +29,12 @@
   const N = [1, 2, 3, 4, 5, 6, 7, 8];
   const grid = $derived(new Map(cells.map((c) => [`${c.col}${c.row}`, c])));
   let focus = $state<string>(untrack(() => highlight) || '11');
+  /** The cell whose card shows below the grid (spec §9.6): the highlighted one, then any focused. */
+  let selected = $state<string>(untrack(() => highlight));
+  const sel = $derived(cells.find((c) => c.id === selected));
+  const layer = kind === 'switch' ? 'sw' : kind === 'lamp' ? 'lamp' : 'coil';
+  const label = kind === 'switch' ? 'Switch' : kind === 'lamp' ? 'Lamp' : 'Solenoid';
+  const code = (id: string) => (kind === 'lamp' ? `L${id}` : id);
   let hoverCol = $state(0);
   let hoverRow = $state(0);
 
@@ -98,6 +104,7 @@
                   class:target={highlight === cell.id}
                   onfocus={() => {
                     focus = id;
+                    selected = cell.id;
                     hoverCol = c;
                     hoverRow = r;
                   }}
@@ -124,6 +131,34 @@
     </tbody>
   </table>
 </div>
+
+{#if sel}
+  {@const ch = cols[String(sel.col)]}
+  {@const rh = rows[String(sel.row)]}
+  <div class="card cell" data-cell-card={sel.id}>
+    <header>
+      <span class="code lg dmd">{code(sel.id)}</span>
+      <div class="head">
+        <h2>{sel.name}</h2>
+        <p class="kind">{label} · matrix column {sel.col}, row {sel.row}</p>
+      </div>
+    </header>
+    <dl class="wiring">
+      <dt>Column {sel.col}</dt>
+      <dd>
+        {#if ch}<WireChip colour={ch[1]} /> <span class="mono">{ch[2]} · {ch[3]}</span>{/if}
+      </dd>
+      <dt>Row {sel.row}</dt>
+      <dd>
+        {#if rh}<WireChip colour={rh[1]} /> <span class="mono">{rh[2]} · {rh[3]}</span>{/if}
+      </dd>
+    </dl>
+    <div class="acts">
+      <a class="btn sm" href={componentHref(kind, sel.id)}>Open</a>
+      <a class="btn sm" href={href(`map?layer=${layer}&id=${sel.id}`)}>Show on map</a>
+    </div>
+  </div>
+{/if}
 
 <style>
   .matrix {
@@ -215,5 +250,59 @@
   .empty {
     color: var(--line);
     font-family: var(--font-mono);
+  }
+  .cell {
+    display: grid;
+    gap: 12px;
+    margin-top: var(--gap);
+    max-width: 480px;
+  }
+  .cell header {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  .cell h2 {
+    margin: 0;
+    font: 400 22px/28px var(--font-display);
+  }
+  .cell .kind {
+    margin: 0;
+    font-size: 15px;
+    line-height: 20px;
+    color: var(--muted);
+  }
+  .wiring {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 6px 12px;
+    margin: 0;
+    font-size: 15px;
+    line-height: 20px;
+  }
+  .wiring dt {
+    color: var(--muted);
+  }
+  .wiring dd {
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    align-items: center;
+  }
+  .wiring .mono {
+    font-size: 12px;
+    line-height: 16px;
+  }
+  .acts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .acts .btn {
+    text-decoration: none;
+    background: var(--tint);
+    border: 0;
+    color: var(--amber-ink);
   }
 </style>

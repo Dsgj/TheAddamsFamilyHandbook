@@ -5,23 +5,53 @@ import WireChip from '~/components/WireChip.svelte';
 import { DATA } from '~/lib/data/components';
 import { componentHref, manualHref } from '~/lib/url';
 
+/**
+ * The switch matrix (spec §9.6): a tablist "Switch matrix view" with Matrix / Dedicated J205 /
+ * Flipper J806. All three panels render at build time; the inactive ones carry `hidden`, so the
+ * "Broken" ticks in every panel load their stored state on import.
+ */
 const matrix = DATA.switches
   .filter((s) => s.col !== null && s.row !== null)
   .map((s) => ({ id: s.id, name: s.name, col: s.col!, row: s.row!, unused: s.unused }));
 const ded = DATA.switches.filter((s) => s.kind === 'ded');
 const flip = DATA.switches.filter((s) => s.kind === 'flip');
+
+const TABS = [
+  { id: 'matrix', label: 'Matrix' },
+  { id: 'j205', label: 'Dedicated J205' },
+  { id: 'j806', label: 'Flipper J806' },
+];
 ---
 
 <Base title="Switches" nav="switches" wide>
   <h1>Switch matrix</h1>
-  <p class="muted">
-    Columns are driven from CPU J206/J207 through U20, rows read on J208/J209 through U18. Source:
-    <a href={manualHref('ops', 106)}>Switch Matrix p. 3-4</a>. Use the arrow keys to move between
-    cells.
-  </p>
-  <Matrix client:load kind="switch" cells={matrix} cols={DATA.swCols} rows={DATA.swRows} />
+  <div class="seg tabs" role="tablist" aria-label="Switch matrix view">
+    {
+      TABS.map((t, i) => (
+        <button
+          type="button"
+          role="tab"
+          id={`tab-${t.id}`}
+          aria-selected={i === 0 ? 'true' : 'false'}
+          aria-controls={`panel-${t.id}`}
+          tabindex={i === 0 ? 0 : -1}
+        >
+          {t.label}
+        </button>
+      ))
+    }
+  </div>
 
-  <div class="grid-2 tables">
+  <div id="panel-matrix" role="tabpanel" aria-labelledby="tab-matrix" class="panel">
+    <p class="muted">
+      Columns are driven from CPU J206/J207 through U20, rows read on J208/J209 through U18. Source:
+      <a href={manualHref('ops', 106)}>Switch Matrix p. 3-4</a>. Use the arrow keys to move between
+      cells.
+    </p>
+    <Matrix client:load kind="switch" cells={matrix} cols={DATA.swCols} rows={DATA.swRows} />
+  </div>
+
+  <div id="panel-j205" role="tabpanel" aria-labelledby="tab-j205" class="panel" hidden>
     <section class="card">
       <h2>Dedicated switches (J205)</h2>
       <div class="scroll-x">
@@ -57,6 +87,9 @@ const flip = DATA.switches.filter((s) => s.kind === 'flip');
         </table>
       </div>
     </section>
+  </div>
+
+  <div id="panel-j806" role="tabpanel" aria-labelledby="tab-j806" class="panel" hidden>
     <section class="card">
       <h2>Flipper switches (Fliptronics J806)</h2>
       <div class="scroll-x">
@@ -101,10 +134,48 @@ const flip = DATA.switches.filter((s) => s.kind === 'flip');
 
 <script>
   import '~/lib/fault-check';
+
+  // The tablist (spec §8.3, tabs variant): a click or the arrow keys move aria-selected and show
+  // the matching panel; Home and End jump to the ends. `#j205` / `#j806` open that tab directly.
+  const list = document.querySelector<HTMLElement>('[role="tablist"]');
+  const tabs = list ? [...list.querySelectorAll<HTMLButtonElement>('[role="tab"]')] : [];
+  const select = (i: number, focus = false) => {
+    tabs.forEach((t, j) => {
+      const on = i === j;
+      t.setAttribute('aria-selected', String(on));
+      t.tabIndex = on ? 0 : -1;
+      const panel = document.getElementById(t.getAttribute('aria-controls') ?? '');
+      if (panel) panel.hidden = !on;
+    });
+    if (focus) tabs[i]?.focus();
+  };
+  tabs.forEach((t, i) => {
+    t.addEventListener('click', () => select(i));
+    t.addEventListener('keydown', (e) => {
+      const n = tabs.length;
+      let to = -1;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') to = (i + 1) % n;
+      else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') to = (i - 1 + n) % n;
+      else if (e.key === 'Home') to = 0;
+      else if (e.key === 'End') to = n - 1;
+      if (to < 0) return;
+      e.preventDefault();
+      select(to, true);
+    });
+  });
+  const wanted = tabs.findIndex(
+    (t) => t.getAttribute('aria-controls') === `panel-${location.hash.slice(1)}`,
+  );
+  if (wanted > 0) select(wanted);
 </script>
 
 <style>
-  .tables {
-    margin-top: var(--gap);
+  .tabs {
+    display: grid;
+    max-width: 480px;
+    margin: 0 0 var(--gap);
+  }
+  .panel > .card {
+    margin: 0;
   }
 </style>

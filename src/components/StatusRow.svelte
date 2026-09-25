@@ -8,7 +8,8 @@
   } from '~/lib/model/status.svelte';
   import type { Kind, StatusValue } from '~/lib/model/types';
 
-  let { kind, id }: { kind: Kind; id: string } = $props();
+  /** `log={false}` leaves the service log to the page (the detail page draws its own section). */
+  let { kind, id, log: showLog = true }: { kind: Kind; id: string; log?: boolean } = $props();
   const current = $derived(getStatus(kind, id));
   const options: StatusValue[] = ['ok', 'fault', 'untested'];
   let note = $derived(current?.note ?? '');
@@ -37,7 +38,7 @@
     bind:value={note}
     onchange={() => setNote(kind, id, note)}
   />
-  {#if log.length}
+  {#if showLog && log.length}
     <ol class="log muted small" aria-label="Service log">
       {#each log as e (e.at)}
         <li><span class="mono">{shortDate(e.at)}</span> {eventLabel(e.status)}</li>

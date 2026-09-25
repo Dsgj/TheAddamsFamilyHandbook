@@ -498,7 +498,19 @@ Some things open as sheets with no URL of their own: Show on map, Add to shoppin
   - smoke "diagnose resolves…" and features :4, :13, :22 pass unchanged.
 - **Verify.** The gauntlet, plus `pnpm exec playwright test tests/e2e/diagnose.spec.ts tests/e2e/features.spec.ts tests/e2e/smoke.spec.ts`.
 
-### [ ] Phase 7: Tables screens and component detail
+### [x] Phase 7: Tables screens and component detail
+
+**Done 2026-09-25.** Deviations and notes:
+- `/switches`: the tablist "Switch matrix view" (Matrix / Dedicated J205 / Flipper J806) with `aria-selected`, `aria-controls`, roving tabindex, arrow keys, Home/End; `#j205` / `#j806` open that tab. All three panels render at build time, inactive ones `hidden`, so every `input.fault-check` (16) loads its state. The Search ibtn of §9.6 is not drawn (Diagnose search covers it).
+- The matrix cell card shows for the highlighted cell and then for whichever cell has focus (keyboard); a tap on a cell still opens the page directly, so "Open" mainly serves keyboard and pointer users.
+- Component detail is a new island `ComponentDetail.svelte` (§9.7): header with the code, kind line and the live status word, the status `.seg` and Note, then Wiring, Parts (part + assembly), Location (Show on map, "Callout N on p. 2-NN", the hint), Related, Service log and the device note. `ComponentPage.astro` keeps the `.notes` block and the appendix links. No "More" button (nothing defined for it); the back link stays the list page (not "Results").
+- Q6 default: "Add to list" marks Fault and then turns into an "On the list" link to Shopping. No SwitchShop sheet.
+- Q18 open: the prev/next pager stays at the bottom of the page as two small buttons (the board omits it; one line to remove).
+- "Related" lists components with the same name first (the jet bumper's lamp L22 and coil SOL 10 for switch 32) and then those on the same assembly, capped at 8; the spec's "On the same jet bumper" heading is the generic "Related".
+- Show on map is a `BottomSheet` modal at the large detent: a responsive MiniMap crop (2.4× zoom, 46 px marker) with the neighbours of the same kind as labelled dots (new `others` and `ring` props), the callout line, "Open in Map" and "Manual page". Esc/Close return focus to the row; the rest of the page is inert.
+- `StatusRow` gained `log={false}` so the detail page draws its own Service log section (still `aria-label="Service log"`, one per page).
+- Recently viewed: a `tafh:viewed` list (8 entries) in `recent.svelte.ts`, recorded on mount of the detail page with the code, name and kind line; `/tables` fills `[data-recent]` from it in its page script and the search filter includes the group.
+- shopping.spec.ts: the one added tab click before ticking "Broken: Left Flipper Button". New `tests/e2e/tables.spec.ts` (258 e2e in total).
 
 - **Goal.** The switch matrix segments, the detail page anatomy, the Show-on-map sheet, the Add-to-list sheet (if Q6 says yes) and Recently viewed.
 - **Boards.** SwitchMatrix, SwitchMatrixLight, Switch, SwitchMapSheet, SwitchShop, Tables, Components (§04–§06).
