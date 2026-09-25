@@ -25,9 +25,11 @@ const {
 const NAV: [string, string, string][] = [
   ['diagnose', 'Diagnose', ''],
   ['map', 'Map', 'map'],
+  ['tables', 'Tables', 'tables'],
   ['switches', 'Switches', 'switches'],
   ['lamps', 'Lamps', 'lamps'],
   ['coils', 'Solenoids', 'coils'],
+  ['workshop', 'Workshop', 'workshop'],
   ['shopping', 'Shopping list', 'shopping'],
   ['verify', 'Verify', 'verify'],
   ['setup', 'Setup', 'setup'],
@@ -75,9 +77,6 @@ const NAV: [string, string, string][] = [
           <span class="brand-sub">Handbook</span>
         </a>
         <QuickSearch client:idle />
-        <button class="btn small theme" id="theme-toggle" type="button" aria-label="Toggle theme">
-          <span class="dark-only">Light</span><span class="light-only">Dark</span>
-        </button>
       </div>
       <nav class="nav" aria-label="Sections">
         {
@@ -116,18 +115,6 @@ const NAV: [string, string, string][] = [
           publish();
           new ResizeObserver(publish).observe(top);
         }
-        const b = document.getElementById('theme-toggle');
-        if (!b) return;
-        b.addEventListener('click', function () {
-          const root = document.documentElement;
-          const prefersLight = matchMedia('(prefers-color-scheme: light)').matches;
-          const current = root.dataset.theme || (prefersLight ? 'light' : 'dark');
-          const next = current === 'light' ? 'dark' : 'light';
-          root.dataset.theme = next;
-          try {
-            localStorage.setItem('tafh:theme', next);
-          } catch {}
-        });
       })();
     </script>
   </body>
@@ -177,26 +164,6 @@ const NAV: [string, string, string][] = [
     }
     .brand-sub {
       display: inline;
-    }
-  }
-  .theme {
-    margin-left: auto;
-  }
-  .light-only {
-    display: none;
-  }
-  :global(:root[data-theme='light']) .light-only {
-    display: inline;
-  }
-  :global(:root[data-theme='light']) .dark-only {
-    display: none;
-  }
-  @media (prefers-color-scheme: light) {
-    :global(:root:not([data-theme='dark'])) .light-only {
-      display: inline;
-    }
-    :global(:root:not([data-theme='dark'])) .dark-only {
-      display: none;
     }
   }
   .nav {

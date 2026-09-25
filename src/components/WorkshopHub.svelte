@@ -1,0 +1,238 @@
+<script lang="ts">
+  /**
+   * The Workshop hub's rows (spec §9.14). The counts are read on the device after hydration, so
+   * they render empty on the server and never as a build-time 0. No count uses `role=status`.
+   */
+  import { onMount } from 'svelte';
+  import { allStatuses } from '~/lib/model/status.svelte';
+  import { doneCount } from '~/lib/model/setup.svelte';
+  import { groupFaults, type ShoppingItem } from '~/lib/shopping';
+  import { loadVerifyTicks } from '~/lib/verify-store';
+  import BottomSheet from './BottomSheet.svelte';
+
+  let {
+    items,
+    version,
+    careNext,
+    setupSteps,
+    setupIds,
+    verifyIds,
+    links,
+  }: {
+    items: ShoppingItem[];
+    version: string;
+    careNext: string;
+    setupSteps: number;
+    setupIds: string[];
+    verifyIds: string[];
+    links: { shopping: string; verify: string; care: string; setup: string; device: string };
+  } = $props();
+
+  type Theme = 'system' | 'dark' | 'light';
+  const THEME_KEY = 'tafh:theme';
+  const THEMES: [Theme, string][] = [
+    ['system', 'System'],
+    ['dark', 'Dark'],
+    ['light', 'Light'],
+  ];
+
+  let hydrated = $state(false);
+  let verified = $state(0);
+  let theme = $state<Theme>('system');
+  let offline = $state('');
+  let about = $state(false);
+
+  const faults = $derived(
+    hydrated ? groupFaults(items, allStatuses()).reduce((n, g) => n + g.items.length, 0) : 0,
+  );
+  const setupDone = $derived(hydrated ? doneCount(setupIds) : 0);
+
+  onMount(() => {
+    hydrated = true;
+    const ticks = loadVerifyTicks();
+    verified = verifyIds.filter((id) => ticks[id]).length;
+    try {
+      const t = localStorage.getItem(THEME_KEY);
+      theme = t === 'light' || t === 'dark' ? t : 'system';
+    } catch {
+      /* private mode */
+    }
+    const sw = navigator.serviceWorker;
+    if (sw) {
+      const mark = () => (offline = sw.controller ? 'Ready' : '');
+      mark();
+      sw.ready.then(mark).catch(() => {});
+      sw.addEventListener('controllerchange', mark);
+      return () => sw.removeEventListener('controllerchange', mark);
+    }
+  });
+
+  /** System removes the stored choice; Dark or Light stores it. The head script applies it on load. */
+  function choose(t: Theme) {
+    theme = t;
+    const root = document.documentElement;
+    try {
+      if (t === 'system') {
+        localStorage.removeItem(THEME_KEY);
+        localStorage.removeItem('valvet:theme');
+      } else localStorage.setItem(THEME_KEY, t);
+    } catch {
+      /* private mode */
+    }
+    if (t === 'system') delete root.dataset.theme;
+    else root.dataset.theme = t;
+  }
+
+  const ICON = {
+    cart: 'M3 4h2l2 9h9l2-6H6M8 17a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM15 17a1 1 0 1 0 0-2 1 1 0 0 0 0 2z',
+    check: 'M4 10l4 4 8-8',
+    care: 'M10 3l2 4 4 .6-3 3 .8 4.4L10 13l-3.8 2 .8-4.4-3-3L8 7z',
+    setup: 'M4 6h12M4 10h12M4 14h8M14 13l1.5 1.5L18 12',
+    theme: 'M10 3a7 7 0 1 0 0 14V3z',
+    data: 'M10 3v9M6 8l4 4 4-4M4 16h12',
+    offline: 'M3 9a10 10 0 0 1 14 0M6 12a6 6 0 0 1 8 0M10 15h.01',
+    info: 'M10 9v5M10 6h.01M10 2a8 8 0 1 0 0 16 8 8 0 1 0 0-16z',
+  };
+</script>
+
+{#snippet tile(d: string)}
+  <span class="tile" aria-hidden="true">
+    <svg viewBox="0 0 20 20"><path {d} /></svg>
+  </span>
+{/snippet}
+
+{#snippet chev()}
+  <svg class="chev" viewBox="0 0 14 14" aria-hidden="true"><path d="M5 2l5 5-5 5" /></svg>
+{/snippet}
+
+<div class="hub-body">
+  <h2 class="lst-h">Work</h2>
+  <ul class="lst">
+    <li>
+      <a class="lrow" href={links.shopping}>
+        {@render tile(ICON.cart)}
+        <span class="txt"><span class="ttl">Shopping list</span></span>
+        <span class="val" data-count="shopping">{faults || ''}</span>
+        {@render chev()}
+      </a>
+    </li>
+    <li>
+      <a class="lrow" href={links.verify}>
+        {@render tile(ICON.check)}
+        <span class="txt"><span class="ttl">Verify</span></span>
+        <span class="val" data-count="verify"
+          >{hydrated ? `${verified} of ${verifyIds.length}` : ''}</span
+        >
+        {@render chev()}
+      </a>
+    </li>
+    <li>
+      <a class="lrow two" href={links.care}>
+        {@render tile(ICON.care)}
+        <span class="txt">
+          <span class="ttl">Care</span>
+          <span class="sub">Next: {careNext.charAt(0).toLowerCase() + careNext.slice(1)}</span>
+        </span>
+        {@render chev()}
+      </a>
+    </li>
+    <li>
+      <a class="lrow two" href={links.setup}>
+        {@render tile(ICON.setup)}
+        <span class="txt">
+          <span class="ttl">Machine setup</span>
+          <span class="sub">{setupSteps} steps</span>
+        </span>
+        <span class="val" data-count="setup"
+          >{setupDone ? `${setupDone} of ${setupIds.length}` : ''}</span
+        >
+        {@render chev()}
+      </a>
+    </li>
+  </ul>
+
+  <h2 class="lst-h">This device</h2>
+  <ul class="lst">
+    <li>
+      <div class="lrow two static">
+        {@render tile(ICON.theme)}
+        <span class="txt"><span class="ttl" id="appearance-label">Appearance</span></span>
+        <div class="seg" role="group" aria-label="Toggle theme">
+          {#each THEMES as [value, label] (value)}
+            <button type="button" aria-pressed={theme === value} onclick={() => choose(value)}>
+              {label}
+            </button>
+          {/each}
+        </div>
+      </div>
+    </li>
+    <li>
+      <a class="lrow two" href={links.device}>
+        {@render tile(ICON.data)}
+        <span class="txt">
+          <span class="ttl">Device data</span>
+          <span class="sub">Back up status, notes and setup</span>
+        </span>
+        {@render chev()}
+      </a>
+    </li>
+    <li>
+      <div class="lrow static">
+        {@render tile(ICON.offline)}
+        <span class="txt"><span class="ttl">Offline</span></span>
+        <span class="val">{offline}</span>
+      </div>
+    </li>
+  </ul>
+
+  <h2 class="lst-h">About</h2>
+  <ul class="lst">
+    <li>
+      <div class="lrow static">
+        {@render tile(ICON.info)}
+        <span class="txt"><span class="ttl">Version</span></span>
+        <span class="val mono">{version}</span>
+      </div>
+    </li>
+    <li>
+      <button class="lrow" type="button" aria-haspopup="dialog" onclick={() => (about = true)}>
+        {@render tile(ICON.info)}
+        <span class="txt"><span class="ttl">About this handbook</span></span>
+        {@render chev()}
+      </button>
+    </li>
+  </ul>
+</div>
+
+{#if about}
+  <BottomSheet
+    label="About this handbook"
+    title="About this handbook"
+    detent="medium"
+    recede="header.top, .hub-body, .hub > h1, .hub > .gf, footer.foot"
+    onclose={() => (about = false)}
+  >
+    <div class="about">
+      <p>
+        The Addams Family Handbook is a private service tool for one machine. Manual text and scans
+        are © Williams Electronics Games / Midway; hints marked as such are the owner's own
+        experience.
+      </p>
+      <p class="muted">Version {version}</p>
+    </div>
+  </BottomSheet>
+{/if}
+
+<style>
+  .static .seg {
+    margin-left: auto;
+  }
+  .about {
+    padding: 4px 16px 16px;
+    font-size: 15px;
+    line-height: 21px;
+  }
+  .about p {
+    margin: 0 0 10px;
+  }
+</style>

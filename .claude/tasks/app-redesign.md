@@ -307,7 +307,16 @@ Some things open as sheets with no URL of their own: Show on map, Add to shoppin
   - All smoke tests pass in both projects.
 - **Verify.** The gauntlet, plus `pnpm exec playwright test tests/e2e/map.spec.ts tests/e2e/smoke.spec.ts`. New checks: sheet geometry and thumb reach, expand and collapse, deselect re-fit, no page scroll at the four sizes, the parts dialog and its filter, panel width and `aria-current`, the embed's URL, reduced motion.
 
-### [ ] Phase 3: hubs (`/tables`, `/workshop`), the list vocabulary, Appearance
+### [x] Phase 3: hubs (`/tables`, `/workshop`), the list vocabulary, Appearance
+
+- **Done 2026-09-25** on `claude/app-redesign-phase-2`. Gauntlet green: check, lint, 49 unit tests, build, 108 e2e, `data-find` 8, base-path build clean, `theme-toggle` gone from `src`. Deviations from the steps above:
+  - The Verify checklist data moved out of `verify.astro` into `src/data/verify.ts` (`VERIFY_ITEMS`) so the hub can count "N of 13" against the real ids; the page imports it. The data has 13 items, matching the board.
+  - `allShoppingItems()` in `src/lib/shopping.ts` builds the shopping candidates for both `shopping.astro` and the hub (was inline in the page).
+  - `coils.astro` got `id="flippers"` and `id="gi"`, and `DeviceData.svelte` got `id="device-data"`, so the hub rows can link to them.
+  - Appearance, Offline and Version are labelled static rows (`div.lrow.static`), not links or buttons; the e2e check allows exactly those. Offline shows "Ready" once a service worker controls the page, else nothing.
+  - Machine setup shows "N of M" done items only once one is ticked; Care's subtitle takes the first care step's title.
+  - The precache check is `grep -c '"tables' dist/sw.js` (the manifest strips `.html`; the plan's grep for `tables.html` finds nothing).
+  - The list vocabulary uses global classes `.lst`, `.lst-h`, `.lrow`, `.gf`, `.seg`, `.toggle`, `.chip`, `.pill`, `.code`, `.hint`, `.btn.sm`, `.search` (PlayfieldMap keeps its own scoped `.rows`/`.row`).
 
 - **Goal.** The two new tab roots exist, built from the list-row, group and segmented styles. The theme control moves into Workshop → Appearance. They are reachable from today's nav strip.
 - **Boards.** Tables, Workshop, Components (§04, §05), Native (theme), Rationale (§04, §05).

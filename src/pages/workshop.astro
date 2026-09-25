@@ -1,0 +1,47 @@
+---
+import Base from '~/layouts/Base.astro';
+import WorkshopHub from '~/components/WorkshopHub.svelte';
+import { CARE_STEPS } from '~/data/care';
+import { SETUP_STEPS } from '~/data/setup';
+import { VERIFY_ITEMS } from '~/data/verify';
+import { allShoppingItems } from '~/lib/shopping';
+import { href } from '~/lib/url';
+import pkg from '../../package.json';
+
+/**
+ * The Workshop hub (spec §9.14). The rows whose counts come from the device (Shopping list,
+ * Verify, Machine setup), Appearance and the About sheet live in the WorkshopHub island; this
+ * page passes it the static facts and renders the footer.
+ */
+const careNext = CARE_STEPS[0]?.title ?? '';
+const setupIds = SETUP_STEPS.flatMap((s) => s.items.map((i) => i.id));
+---
+
+<Base
+  title="Workshop"
+  nav="workshop"
+  description="The shopping list, verification, care and setup, plus this device's settings and data."
+>
+  <div class="hub" data-hub="workshop">
+    <h1>Workshop</h1>
+    <WorkshopHub
+      client:load
+      items={allShoppingItems()}
+      version={pkg.version}
+      careNext={careNext}
+      setupSteps={SETUP_STEPS.length}
+      setupIds={setupIds}
+      verifyIds={VERIFY_ITEMS.map((i) => i.id)}
+      links={{
+        shopping: href('shopping'),
+        verify: href('verify'),
+        care: href('care'),
+        setup: href('setup'),
+        device: href('shopping#device-data'),
+      }}
+    />
+    <p class="gf">
+      Everything you record stays in this browser. Back it up before switching phones.
+    </p>
+  </div>
+</Base>
