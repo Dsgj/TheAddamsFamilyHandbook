@@ -1111,6 +1111,113 @@ table.t tr.row-fault td:first-child {
   }
 }
 
+/* ---- Page transitions (spec §10) ------------------------------------------------------------
+   Cross-document view transitions (Q11: no ClientRouter, so the worker, hydration and every page
+   script stay as they are). The bar, the shell and the toast host are captured on their own and
+   cross-fade in place; the root (the page) slides on push and pop and cross-fades on a tab tap.
+   Base.astro's pagereveal script sets the type. */
+@view-transition {
+  navigation: auto;
+}
+header.top {
+  view-transition-name: topbar;
+}
+nav.shell {
+  view-transition-name: shell;
+}
+.toast-host {
+  view-transition-name: toast;
+}
+::view-transition-group(*),
+::view-transition-old(*),
+::view-transition-new(*) {
+  animation-duration: var(--dur-2);
+  animation-timing-function: var(--ease-standard);
+}
+html:active-view-transition-type(push)::view-transition-old(root),
+html:active-view-transition-type(push)::view-transition-new(root),
+html:active-view-transition-type(pop)::view-transition-old(root),
+html:active-view-transition-type(pop)::view-transition-new(root) {
+  mix-blend-mode: normal;
+}
+html:active-view-transition-type(push)::view-transition-old(root) {
+  animation: vt-push-out var(--dur-4) var(--ease-emphasized) both;
+}
+html:active-view-transition-type(push)::view-transition-new(root) {
+  animation: vt-push-in var(--dur-4) var(--ease-emphasized) both;
+}
+html:active-view-transition-type(pop)::view-transition-old(root) {
+  z-index: 1;
+  animation: vt-pop-out var(--dur-3) var(--ease-exit) both;
+}
+html:active-view-transition-type(pop)::view-transition-new(root) {
+  animation: vt-pop-in var(--dur-3) var(--ease-exit) both;
+}
+@keyframes vt-push-in {
+  from {
+    transform: translateX(100%);
+  }
+}
+@keyframes vt-push-out {
+  to {
+    transform: translateX(-30%);
+    filter: brightness(0.9);
+  }
+}
+@keyframes vt-pop-out {
+  to {
+    transform: translateX(100%);
+  }
+}
+@keyframes vt-pop-in {
+  from {
+    transform: translateX(-30%);
+    filter: brightness(0.9);
+  }
+}
+@keyframes vt-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes vt-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+/* The tab icon presses to .9 (spec §10). */
+.shell .ico {
+  transition: transform var(--dur-1) var(--ease-standard);
+}
+.shell .tab:active .ico {
+  transform: scale(0.9);
+}
+/* Swipe back (motion.ts moves #main with the finger). */
+#main.swiping {
+  will-change: transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  html:active-view-transition-type(push)::view-transition-old(root),
+  html:active-view-transition-type(pop)::view-transition-old(root),
+  ::view-transition-old(*) {
+    animation: vt-fade-out 150ms var(--ease-standard) both;
+  }
+  html:active-view-transition-type(push)::view-transition-new(root),
+  html:active-view-transition-type(pop)::view-transition-new(root),
+  ::view-transition-new(*) {
+    animation: vt-fade-in 150ms var(--ease-standard) both;
+  }
+  ::view-transition-group(*) {
+    animation: none;
+  }
+  .shell .ico {
+    transition: none;
+  }
+  .shell .tab:active .ico {
+    transform: none;
+  }
+}
+
 @media print {
   :root {
     --tabbar-h: 0px;

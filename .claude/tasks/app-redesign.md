@@ -688,7 +688,18 @@ Done 2026-09-25. Toast.svelte (one host in Base, `aria-live=polite`, no status r
   - Pull-to-refresh exists on `/workshop` and nowhere else.
 - **Verify.** The gauntlet, plus `pnpm exec playwright test tests/e2e/pwa.spec.ts tests/e2e/care.spec.ts tests/e2e/setup.spec.ts tests/e2e/shopping.spec.ts tests/e2e/features.spec.ts`. Build the preview for the service-worker checks; the dev server has none (`devOptions.enabled: false`).
 
-### [ ] Phase 12: motion and navigation continuity
+### [x] Phase 12: motion and navigation continuity
+
+Done 2026-09-25. Decisions and deviations:
+- Q11 → cross-document view transitions (`@view-transition { navigation: auto }`), no Astro ClientRouter: the worker, hydration and every page script stay as they are. The type (push/pop/tab/fade) is set in an inline `pagereveal` listener in Base's head from the `tafh:prev` record (motion.ts writes it on pagehide) or the history direction; CSS keys on `html:active-view-transition-type(...)`.
+- Named captures: top bar (`topbar`), shell (`shell`) and toast host (`toast`) cross-fade in place; the root slides on push/pop and cross-fades on a tab tap. `<link rel="expect" href="#main" blocking="render">` so the new snapshot is complete.
+- Chrome skips the cross-document transition while the worker precaches on a first visit, and now and then under parallel test load (never with one worker); the page falls back to a plain swap. The transition-reading tests wait for `serviceWorker.ready` and, on an observed skip (`window.tafhMotion.type === 'none'`), step back and repeat the navigation.
+- Swipe back is touch-only: passive listeners on `#main`, 24 px edge, commit past 35 % of the width or 500 px/s, else spring back; tested via CDP touch events on the phone project only (2 tests skip on desktop).
+- Per-tab stack: tab links open the tab's last view (sessionStorage `tafh:nav`), scroll is restored per URL, the Map keeps zoom in `?z=` (with `layer`, `id`, `calib`).
+- Diagnose names its view (`body[data-view]` = Results/Search) and the URL its state answers to (`body[data-url]` = `/?q=…`) for motion.ts; typing leaves the address clean so a reload is the home, while a shared link that already carries `q` is kept honest. The back link of a page pushed from Results reads "Results" and lands on `/?q=…`; the override applies only to non-tab, non-swipe cross-tab pushes.
+- "The title fades into the back button" is approximated by the top bar's own cross-fade; the tab icon presses to .9 via `:active`. Under reduced motion every old/new snapshot only fades over 150 ms, groups do not move.
+- `window.tafhMotion` is a diagnostic for the tests (type, animations, pending/skipped).
+- Gauntlet: check 0 errors, lint clean, 57 unit tests, e2e 302 → 318 (316 passed, 2 skipped on desktop), data-find 8, `"tables` in sw.js, one h1 per page, base-path build clean.
 
 - **Goal.** Push, pop, swipe back and the tab cross-fade per Motion. Each tab keeps its stack, scroll, and the Map's zoom and selection. Reduced motion is honoured everywhere.
 - **Boards.** Motion, Components (§01, §03), Rationale (§04).

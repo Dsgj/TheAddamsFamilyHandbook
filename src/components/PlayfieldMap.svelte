@@ -122,6 +122,9 @@
   }
   let selKey = $state<string>('');
   let zoom = $state(1);
+  /** A zoom from the URL (`z`), applied once the first fit has landed. */
+  let startZoom = 1;
+  let zoomSync: ReturnType<typeof setTimeout> | undefined;
   let calib = $state(false);
   let draft = $state<Record<string, Loc[]>>({});
   let copied = $state('');
@@ -180,6 +183,7 @@
     if (fit > 0 && canvas && !ready) {
       void canvas.offsetWidth; // commit the first px size before transitions switch on
       ready = true;
+      if (startZoom > 1) zoomTo(startZoom, undefined, 0); // the zoom the URL asked for (spec §10)
     }
   });
 
@@ -192,6 +196,8 @@
     const u = new URLSearchParams(location.search);
     const l = u.get('layer');
     if (l) setOn(parseLayers(l));
+    const z = Number(u.get('z'));
+    if (z > 1) startZoom = Math.min(z, MAX_ZOOM);
     const i = u.get('id') || initialId;
     if (i) {
       // `id=kind:id` is exact; a bare id is looked up in the layers that are on, in order.
@@ -253,7 +259,8 @@
       const what = (e as CustomEvent<string>).detail;
       if (what === 'parts') partsOpen = true;
       else if (what === 'find') {
-        if (wide) el?.closest('.map-ui')?.querySelector<HTMLInputElement>('.panel input.find')?.focus();
+        if (wide)
+          el?.closest('.map-ui')?.querySelector<HTMLInputElement>('.panel input.find')?.focus();
         else partsOpen = true;
       }
     };
@@ -300,6 +307,7 @@
     // Hand-built so the comma list stays readable (URLSearchParams would write %2C).
     const q = [`layer=${visible.join(',')}`];
     if (current) q.push(`id=${encodeURIComponent(current.id)}`);
+    if (zoom !== 1) q.push(`z=${String(Math.round(zoom * 100) / 100)}`);
     if (calib) q.push('calib=1');
     history.replaceState(null, '', `${location.pathname}?${q.join('&')}${location.hash}`);
   }
@@ -440,6 +448,9 @@
       void canvas.offsetWidth;
       canvas.style.transition = '';
     }
+    // A pinch calls this per move; the URL follows once it settles.
+    clearTimeout(zoomSync);
+    zoomSync = setTimeout(syncUrl, 150);
   }
   /** Lands the new size from the old one: a transform that eases to none (emphasized). */
   function animateScale(k: number, anchor: Anchor, dur: number, prevShift = 0) {
