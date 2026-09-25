@@ -9,6 +9,8 @@
   import { groupFaults, type ShoppingItem } from '~/lib/shopping';
   import { loadVerifyTicks } from '~/lib/verify-store';
   import BottomSheet from './BottomSheet.svelte';
+  import InstallSheet from './InstallSheet.svelte';
+  import { isStandalone } from '~/lib/install';
 
   let {
     items,
@@ -41,6 +43,8 @@
   let theme = $state<Theme>('system');
   let offline = $state('');
   let about = $state(false);
+  let install = $state(false);
+  let standalone = $state(false);
 
   const faults = $derived(
     hydrated ? groupFaults(items, allStatuses()).reduce((n, g) => n + g.items.length, 0) : 0,
@@ -49,6 +53,7 @@
 
   onMount(() => {
     hydrated = true;
+    standalone = isStandalone();
     const ticks = loadVerifyTicks();
     verified = verifyIds.filter((id) => ticks[id]).length;
     try {
@@ -91,6 +96,7 @@
     theme: 'M10 3a7 7 0 1 0 0 14V3z',
     data: 'M10 3v9M6 8l4 4 4-4M4 16h12',
     offline: 'M3 9a10 10 0 0 1 14 0M6 12a6 6 0 0 1 8 0M10 15h.01',
+    install: 'M10 3v9M6 8l4 4 4-4M4 16h12',
     info: 'M10 9v5M10 6h.01M10 2a8 8 0 1 0 0 16 8 8 0 1 0 0-16z',
   };
 </script>
@@ -183,6 +189,21 @@
         <span class="val">{offline}</span>
       </div>
     </li>
+    <li>
+      {#if standalone}
+        <div class="lrow static">
+          {@render tile(ICON.install)}
+          <span class="txt"><span class="ttl">Install</span></span>
+          <span class="val">Installed</span>
+        </div>
+      {:else}
+        <button class="lrow" type="button" aria-haspopup="dialog" onclick={() => (install = true)}>
+          {@render tile(ICON.install)}
+          <span class="txt"><span class="ttl">Install the handbook</span></span>
+          {@render chev()}
+        </button>
+      {/if}
+    </li>
   </ul>
 
   <h2 class="lst-h">About</h2>
@@ -203,6 +224,13 @@
     </li>
   </ul>
 </div>
+
+{#if install}
+  <InstallSheet
+    recede="header.top, .hub-body, main > .lt, .hub > .gf, footer.foot"
+    onclose={() => (install = false)}
+  />
+{/if}
 
 {#if about}
   <BottomSheet

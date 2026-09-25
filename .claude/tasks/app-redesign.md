@@ -652,7 +652,9 @@ Done 2026-09-25. Both Apple meta tags, `icons/icon-180.png` and the 1170×2532 s
   - `grep -oE '"orientation": ?"any"' dist/manifest.webmanifest | wc -l` → 1;
   - `grep -oE '"(start_url|scope)": ?"[^"]*"' dist/manifest.webmanifest` after the BASE_PATH build → both `/TheAddamsFamilyHandbook/`.
 
-### [ ] Phase 11: system states (toasts, install sheet, offline scans, pull-to-refresh)
+### [x] Phase 11: system states (toasts, install sheet, offline scans, pull-to-refresh)
+
+Done 2026-09-25. Toast.svelte (one host in Base, `aria-live=polite`, no status role; one toast at a time, Update wins and stays, others leave after 4 s) replaces `#sw-status`; pwa.ts talks to it through `tafh:toast` and takes `tafh:reload` / `tafh:check-update` back. InstallSheet.svelte from the Workshop's new "Install the handbook" row (static "Installed" row when standalone); lib/install.ts keeps the deferred `beforeinstallprompt`. PageViewer shows the scan-not-cached card on `img` error with "Show the text". Pull-to-refresh on the Workshop only (touch drag from the top past 72 px → `tafh:check-update` → toast). Deviations: (1) Q22 — the Install button appears only where `beforeinstallprompt` fired; the iPhone footer always shows. (2) The update check caps `registration.update()` at 3 s so the toast always arrives. (3) The offline-scan e2e aborts the `/assets/pages/**` requests instead of `context.setOffline` (the page is not worker-controlled on a first visit under Playwright); the same `onerror` path fires. (4) The shell.spec `#sw-status` test became the toast test and waits for the rise animation before measuring. e2e 284 → 302.
 
 - **Goal.** The offline, update, install and scan-not-cached states as drawn.
 - **Boards.** Native, Install, Update, Workshop.

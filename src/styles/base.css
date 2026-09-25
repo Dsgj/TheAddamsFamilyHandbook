@@ -285,40 +285,6 @@ main.wide {
     var(--shadow-2),
     inset 0 0 0 1px var(--sep);
 }
-/* The service-worker line (pwa.ts writes to it by id): a fixed toast-like line at the bottom of
-   every page, above the map controls, letting taps through except on its Reload button. */
-#sw-status {
-  position: fixed;
-  left: calc(var(--shell-w) + 12px);
-  right: 12px;
-  bottom: calc(var(--tabbar-h) + var(--safe-bot) + 10px);
-  z-index: 40;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  width: max-content;
-  max-width: calc(100% - 24px);
-  margin: 0 auto;
-  padding: 10px 14px;
-  border-radius: var(--r-md);
-  background: var(--bar);
-  -webkit-backdrop-filter: blur(20px) saturate(1.5);
-  backdrop-filter: blur(20px) saturate(1.5);
-  box-shadow:
-    var(--shadow-2),
-    inset 0 0 0 1px var(--sep);
-  color: var(--ink);
-  font-size: 0.9rem;
-  pointer-events: none;
-}
-#sw-status[hidden] {
-  display: none;
-}
-#sw-status .btn {
-  pointer-events: auto;
-}
 .grid-2 {
   display: grid;
   gap: var(--gap);
@@ -1175,7 +1141,7 @@ table.t tr.row-fault td:first-child {
   .btn,
   .field,
   .foot,
-  #sw-status,
+  .toast-host,
   .map-controls,
   .sr-only,
   .top astro-island,

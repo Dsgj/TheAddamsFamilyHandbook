@@ -29,6 +29,8 @@
 
   const [, W, H, tiled] = $derived(meta);
   let mode = $state<'image' | 'text'>('image');
+  /** A scan image failed to load: offline and not yet cached (spec §11). */
+  let missing = $state(false);
   let rot = $state(0);
   let scale = $state(0); // 0 = fit width
   let stage: HTMLDivElement | undefined = $state();
@@ -176,6 +178,12 @@
       {/if}
     </div>
   {:else}
+    {#if missing}
+      <div class="card nocache">
+        <p>This scan isn't on the device yet. Open it once while you have a connection.</p>
+        <button type="button" class="btn sm" onclick={() => (mode = 'text')}>Show the text</button>
+      </div>
+    {/if}
     <div class="stagewrap">
       <!-- svelte-ignore a11y_no_static_element_interactions (mouse drag-to-pan; keyboard and touch use scroll) -->
       <div
@@ -204,12 +212,25 @@
                   class="tile t{q}"
                   loading="eager"
                   decoding="async"
+                  onerror={() => (missing = true)}
                 />
               {/each}
             {:else if tiled}
-              <img src={src('_o')} alt="{doc} page {page}" draggable="false" class="full" />
+              <img
+                src={src('_o')}
+                alt="{doc} page {page}"
+                draggable="false"
+                class="full"
+                onerror={() => (missing = true)}
+              />
             {:else}
-              <img src={src()} alt="{doc} page {page}" draggable="false" class="full" />
+              <img
+                src={src()}
+                alt="{doc} page {page}"
+                draggable="false"
+                class="full"
+                onerror={() => (missing = true)}
+              />
             {/if}
           </div>
         </div>
@@ -278,6 +299,17 @@
 {/if}
 
 <style>
+  .nocache {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    margin: 0 0 8px;
+  }
+  .nocache p {
+    flex: 1 1 240px;
+    margin: 0;
+  }
   .tb {
     display: flex;
     gap: 4px;
