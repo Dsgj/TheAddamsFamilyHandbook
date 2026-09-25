@@ -90,7 +90,7 @@ Some things open as sheets with no URL of their own: Show on map, Add to shoppin
 ## Keep
 
 - **Routes.** Every route above, with `build.format: 'file'` and `trailingSlash: 'never'` (static output) unchanged.
-- **Base path.** The site deploys under `/<repo>/` (`BASE_PATH`, `.github/workflows/deploy.yml:32`; `astro.config.ts:7-9`). Every internal URL is built with `href()`, `componentHref()` or `manualHref()` from `src/lib/url.ts`, as the nav does today (Base.astro:4, :82). That covers nav.ts entries, back links, hub rows, map deep links such as `/map?layer=sw&id=32`, the icon and splash links, and anything else new. Never write a root-relative `"/…"` link. The manifest's `start_url` and `scope` stay the base-aware `scope` (astro.config.ts:9, :30-31). The gauntlet's base-path check enforces this.
+- **Base path.** The site deploys under `/<repo>/` (`BASE_PATH`, `.github/workflows/deploy.yml:32`; `astro.config.ts:7-9`). Every internal URL is built with `href()`, `componentHref()` or `manualHref()` from `src/lib/url.ts`, as the nav does today (Base.astro:4, :82). That covers nav.ts entries, back links, hub rows, map deep links such as `/map?layer=sw&id=32`, the icon and splash links, and anything else new. Never write a root-relative `"/…"` link. The manifest's `start_url` and `scope` stay the base-aware `scope` (astro.config.ts:9, :30-31). The manifest has no `shortcuts`; if any are added, vite-pwa doesn't prefix their `url`, so build them from `scope` too. The gauntlet's base-path check enforces this.
 - **URL parameters.**
   - `/map`:
     - `layer=` takes sw, lamp, coil or shot, a comma list, or `all`. The default is sw, lamp, coil.
@@ -184,7 +184,7 @@ Some things open as sheets with no URL of their own: Show on map, Add to shoppin
      - Keep `--shadow`, `--r` and `--nav-h` for now (they retire in Phase 5).
   3. base.css:
      - Links: `a { color: var(--amber-ink) }` (was `var(--amber)`, base.css:17-20), so light-theme link text is #a8440a and dark stays #ff8a3d.
-     - Print block (`@media print`, :363-372 resets only `--shadow`): also set `--amber-ink: #000`, `--shadow-1`, `--shadow-2` and `--shadow-sheet` to `none`, and `--raised`, `--cell`, `--sheet`, `--bar` to `#fff`. Hide the floating map controls and `#sw-status` (already listed at :385).
+     - Print block (`@media print`, :363-372 resets only `--shadow`): also set `--amber-ink: #000`, `--shadow-1`, `--shadow-2` and `--shadow-sheet` to `none`, and `--raised`, `--cell`, `--sheet`, `--bar` to `#fff`. Hide the floating map controls and `#sw-status` (already listed at :384).
   4. Base.astro, interim bar heights (removed in Phase 5) and full bleed:
      - The inline script publishes the sticky `header.top` height as `--topbar-h`, using a ResizeObserver.
      - `--tabbar-h` stays 0 until Phase 4.
@@ -252,7 +252,7 @@ Some things open as sheets with no URL of their own: Show on map, Add to shoppin
      - Timings as in spec §10, including reduced motion.
   2. Below 1000, the selection sheet:
      - Selecting opens the map sheet at peek.
-     - At 1× (below 600; for 600–999 [confirm on board MapFitSpec]) the drawing re-fits to stageH − 96 and the controls move 12 above the sheet.
+     - At 1× below 600 the drawing re-fits to stageH − 96 and the controls move 12 above the sheet. For 600–999 the spec's code sets `phone = max-width: 599px`, so nothing re-fits and the sheet covers the drawing's bottom; Q29 settles whether tablets re-fit too.
      - Expanded, at 1×: the scroller is `overflow: hidden` and can't scroll, so the canvas moves with `transform: translateY(…)` until the part's centre sits mid-band in the uncovered band (spec §7.6: top −79.8 at 390×844). Above 1× the scroller scrolls instead (spec §7.1 `centre()`, with the uncovered band as the height). Collapse returns the translate to 0. The translate runs with the sheet's snap, 350 emphasized (board Motion: "Drawing, on expand y 0 to −79.8 … 350 emph"); under reduced motion it jumps inside the snap's 150 ms fade.
      - Expanded hides the controls (120 ms fade). Deselect re-fits.
      - Content per spec §7.6. Shots keep the shot-card content and `data-id`.
@@ -262,7 +262,7 @@ Some things open as sheets with no URL of their own: Show on map, Add to shoppin
      - Then the list per visible layer, one `h3` per layer as today. Picking a row closes the sheet and selects the part (the selection sheet opens at peek).
   4. From 1000, the panel `aside` "Selected part and parts on the map" (spec §7.7):
      - The selected part, with the status segmented control wired to the status store.
-     - With nothing selected: today's empty card (the h2 "Playfield", the hint "Tap a marker on the drawing, or pick from the list." and the `.prov` paragraph, :381-389) takes the selected-part section.
+     - With nothing selected: today's empty card (the h2 "Playfield", the hint "Tap a marker on the drawing, or pick from the list." and the `.prov` paragraph, :381-389) takes the selected-part section. Below 1000 the card isn't rendered at all: with nothing selected the phone shows only the fitted drawing and the controls, and the `.prov` paragraph lives in the All parts sheet (step 3). The hint has no home on phones.
      - The list of parts on the visible layers, headed by the same "Find a part" field as the phone sheet (Q28). The selected row is tinted **and** has `aria-current="true"`; nothing else in the list carries `aria-current`.
      - The layer-source link stays at the top of the aside (Phase 1).
   5. The handbook embed (`embed` prop, set by `[section].astro:74`):
@@ -297,10 +297,11 @@ Some things open as sheets with no URL of their own: Show on map, Add to shoppin
   - `src/styles/base.css` (edit: spec §8.3, §8.4, §8.6, §8.7)
   - `src/pages/tables.astro` (create)
   - `src/pages/workshop.astro` (create)
+  - `src/components/WorkshopHub.svelte` (create: a `client:load` island for the rows whose counts come from the device, the "About this handbook" sheet and the Appearance control; it imports the status store, verify-store.ts and setup.svelte.ts. workshop.astro renders the static rows itself and mounts this island for the rest, since an `.astro` page can't read localStorage at build time)
   - `src/lib/verify-store.ts` (create: `KEY = 'tafh:verify'` and `loadVerifyTicks()`, moved out of verify-check.ts:5-15)
   - `src/lib/verify-check.ts` (edit: import them; it keeps its self-run `initVerifyChecks()` at :54, so the hub must not import verify-check.ts)
   - `src/layouts/Base.astro` (edit: add Tables and Workshop to the interim NAV; remove `#theme-toggle` at :75-77 and its inline script at :100-115)
-  - `src/styles/base.css` (edit: also drop `#theme-toggle` from the print list, :384)
+  - `src/styles/base.css` (edit: also drop `#theme-toggle` from the print list, :383)
   - `tests/e2e/smoke.spec.ts` (edit :68-74)
   - `tests/e2e/hubs.spec.ts` (create)
 - **Steps.**
@@ -310,13 +311,13 @@ Some things open as sheets with no URL of their own: Show on map, Add to shoppin
      - "Recently viewed" stays hidden until Phase 7 fills it.
      - What the "Search tables" field filters isn't drawn [confirm on board Tables].
   3. `/workshop` per spec §9.14:
-     - The counts come from the status store (`groupFaults`), `loadVerifyTicks()` and `setupItems()` (src/lib/model/setup.svelte.ts:55).
+     - The counts come from the status store (`groupFaults`), `loadVerifyTicks()` and `setupItems()` (src/lib/model/setup.svelte.ts:55). They are read on the device, so the rows that carry a count render inside WorkshopHub.svelte; the count is empty until hydration, never a build-time 0.
      - "Device data" links to its current home until Q7 settles.
      - "Install app" stays hidden until Phase 11.
      - The Version comes from package.json.
-     - The last group ends with a row "About this handbook". It opens a modal BottomSheet (Phase 2) holding the footer's copyright paragraph (Base.astro:93-97), word for word, and the Version.
+     - The last group ends with a row "About this handbook" (inside WorkshopHub.svelte). It opens a modal BottomSheet (Phase 2) holding the footer's copyright paragraph (Base.astro:93-97), word for word, and the Version.
      - No count or badge on the hub uses `role=status` or `<output>` (Keep → Accessibility).
-  4. Appearance: a segmented group named "Toggle theme" with System / Dark / Light.
+  4. Appearance (inside WorkshopHub.svelte): a segmented group named "Toggle theme" with System / Dark / Light.
      - System removes `tafh:theme`; Dark or Light stores it.
      - The head script (Base.astro:53-54) is unchanged. Q3 decides what a missing key means.
      - It sits in the page, so print hides it with the other `.btn`s and `.no-print` (base.css:379-389).
@@ -431,7 +432,7 @@ Some things open as sheets with no URL of their own: Show on map, Add to shoppin
      - Keep the shared-cause and "Not recognised" outputs.
      - How Share results shares isn't drawn [confirm on board DiagnoseResults].
   6. Search per spec §9.3. The trigger, exactly: the field switches to search when its input is one line, contains **no digit**, and has at least 2 letters. Anything else stays a live diagnosis, so "row 5" still says "Not recognised" (features.spec.ts:22-27) and "Check Switch 32" still diagnoses. Q20 decides whether parts and OCR are in scope.
-  7. Remove QuickSearch from the top bar on phones. Keep `?q=`.
+  7. Remove the QuickSearch mount from index.astro (Phase 5 parked it there); the field's search state replaces it. Keep `?q=`. The sidebar search from 1280 waits for Q10.
 - **Acceptance.**
   - At 390×844 with fresh storage, the quick links, the examples, the field and the Diagnose button are all visible without scrolling, and the field sits above the tab bar. The Diagnose button's centre is in the lower half of the viewport (thumb reach).
   - Tapping the example "32 68 F1 F3" gives 4 `article.comp` and the J806 shared-cause card, with no button pressed.
@@ -630,11 +631,11 @@ Some things open as sheets with no URL of their own: Show on map, Add to shoppin
 
 Each question ends with the phase it blocks.
 
-1. **The uncommitted workshop-mode slice** (`mobile-redesign.md`, plus the diffs in `tokens.css` and `base.css`: `--tabs-h`, `--type-base`, the `data-mode='workshop'` blocks; uncommitted in the `addams-handbook-mobile-redesign-fc850f` worktree, not on `main`). It conflicts with the Workshop tab and uses another tab set. Discard it, or keep `--type-base` and the higher-contrast values? *Phase 1.*
+1. **The uncommitted workshop-mode slice** (`mobile-redesign.md`, plus the diffs in `tokens.css` and `base.css`: `--tabs-h`, `--type-base`, the `data-mode='workshop'` blocks; uncommitted in the `addams-handbook-mobile-redesign-fc850f` worktree, not on `main`). It conflicts with the Workshop tab and uses another tab set. Discard it, or keep `--type-base` and the higher-contrast values? *Phase 1.* **Answered 2026-09-25: discard it entirely.**
 2. Tab 5: Workshop (the default, as the board recommends) or Shopping list? *Phase 4.*
 3. **Theme default.** Native says "Dark is the default" and also "System clears it". Today no stored key follows the OS. Which should no key mean? *Phase 3.*
-4. **The data-find bar.** `appendix-integration.md:50` says 0; the last green run recorded 8 (`grep -ro 'data-find=' dist --include=*.html | wc -l`; `grep -c` under-counts the compressed HTML). Which is the target? *Every phase.*
-5. Marker sizes: above 1×, constant or growing (MapZoom draws 26 px at 2.4×)? And the shot marker's 16 px at 1× isn't drawn on any board: confirm it. *Phase 1.*
+4. **The data-find bar.** `appendix-integration.md:50` says 0; the last green run recorded 8 (`grep -ro 'data-find=' dist --include=*.html | wc -l`; `grep -c` under-counts the compressed HTML). Which is the target? *Every phase.* **Interim: 8 is the baseline; add none.**
+5. Marker sizes: above 1×, constant or growing (MapZoom draws 26 px at 2.4×)? And the shot marker's 16 px at 1× isn't drawn on any board: confirm it. *Phase 1.* **Answered 2026-09-25: constant px above 1×; shot 16 confirmed.**
 6. SwitchShop's quantity and part-or-assembly choice change the derived shopping list into stored lines, and change what the badge counts (rows or units). Build it, or keep "Add to list" = mark Fault? *Phases 4 and 7.*
 7. Device data: its own page, a section on `/workshop`, or stay on `/shopping` (where features.spec opens it)? *Phases 3 and 9.*
 8. `/coils`: the three Tables rows (Solenoids & flashers, Flipper coils, GI). Anchors on `/coils`, or separate pages? *Phase 3.*
@@ -644,17 +645,18 @@ Each question ends with the phase it blocks.
 12. Calibration's medium detent on phones: ≈470 like the modal? *Phase 2.*
 13. The height of the handbook embed stage (`#pg-9`). *Phase 1 (an interim default is set).*
 14. Body text 16 (today) or 17/24 (kit)? *Phase 5.*
-15. Light-theme contrast on `--ground`: `--ok` 4.19, `--warn` 3.46 and `--brass` 4.08 are under 4.5. Darken them, or restrict them to icons and large text? *Phase 1.*
+15. Light-theme contrast on `--ground`: `--ok` 4.19, `--warn` 3.46 and `--brass` 4.08 are under 4.5. Darken them, or restrict them to icons and large text? *Phase 1.* **Answered 2026-09-25: darken the light values to ≥ 4.5 on `--ground`.**
 16. Recent items (Diagnose's recent reports, Tables Recently viewed, Continue reading): how many, which key, and do they go in the backup file? The recording rule is set (Phase 6, step 4: on Diagnose, Enter, or leaving the field with a recognised code); confirm it. And what does Main's top-bar ibtn "Recent reports" open (the full history, or nothing until there is one)? *Phase 6.*
 17. HandbookReader's per-page pager (1-14 / 1-16): does it replace today's per-section navigation? *Phase 8.*
 18. The ComponentPage prev/next pager isn't on the Switch board. Keep it? *Phase 7.*
 19. The Care, Setup and Verify bodies aren't drawn. Restyle only, keeping their content and tests? *Phase 9.*
 20. DiagnoseSearch scope: do parts (2,562 lines) and manual OCR go in the index, loaded lazily? *Phase 6.*
-21. The selected-marker pulse: once (board) or looping (today)? *Phase 1.*
+21. The selected-marker pulse: once (board) or looping (today)? *Phase 1.* **Answered 2026-09-25: once.**
 22. Install: a custom sheet on `beforeinstallprompt` (Chromium), with the iPhone text as the fallback? *Phase 11.*
-23. Add a 390×844 Playwright project? The tests use `setViewportSize` meanwhile. *None.*
+23. Add a 390×844 Playwright project? The tests use `setViewportSize` meanwhile. Note that map.spec (Phase 1) sets 1440×900 inside the phone-dark project, which emulates a Pixel 7 (`isMobile`, touch): a wide viewport under mobile emulation is not the desktop case. The recommendation is a phone project at 390×844 plus running the wide sizes only in desktop-light. *Phase 1.*
 24. Drop the `valvet:theme` and `valvet:status` legacy fallbacks? *None.*
 25. Where does the layer-source link go on the new map ("Playfield Shots, PDF pages 9–10" and the others)? It isn't drawn. *Phases 1 and 2 (meanwhile it sits at the top of the aside from 1000 and at the top of the All parts sheet on phones; never under the stage, which would scroll the page).*
 26. The expanded-sheet links. MapExpanded shows Details / Manual / Switch matrix / On the shopping list; MapFitSpec's schematic shows other labels. Confirm MapExpanded? *Phase 2.*
-27. What does the "Show faults, N" pill do (filter the markers, or open the list)? *Phase 2.*
+27. What does the "Show faults, N" pill do (filter the markers, or open the list)? And where does it sit: the Map board draws it at top 632 (about 103 above the stage bottom, level with the control column's lower capsule), not 12 above the stage bottom (spec §7.3). *Phase 2.*
 28. What does the Map's "Find a part" ibtn do? It's on Map, ShellTablet and ShellDesktop, but its result isn't drawn. The proposal: it opens the parts list with a "Find a part" field focused that filters by id or name (the All parts sheet on phones; the panel list from 1000). *Phases 2 and 5.*
+29. On 600–999 the selection sheet covers the drawing's bottom without a re-fit (spec §7.1 `phone = max-width: 599px`; MapFitSpec draws no tablet selection). Re-fit there as on phones, or accept the overlap? *Phase 2.*

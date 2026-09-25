@@ -199,7 +199,7 @@ The five tabs, in job order:
 - Badge (Workshop):
   - An 18 px pill, mono 11, `--amber-fill` on `--on-amber`, with a 2 px ring in `--ground`.
   - Position: top 3, left `calc(50% + 5px)`.
-  - The link's accessible name is "Workshop, 4 on the shopping list".
+  - The link's accessible name is "Workshop, 4 on the shopping list": the `aria-label` sits on the `<a>` and the badge is `aria-hidden`, as Components draws it. Map, MapPeek and MapFitSpec label only the badge span; Components wins.
   - Whether it hides at 0 isn't drawn **[confirm on board Components]**.
 
 ### 6.3 Rail, 600–1279 (ShellTablet, Components §01)
@@ -281,7 +281,7 @@ Source: MapFitSpec, unless noted.
 |---|---|---|---|---|
 | Phone 390×844 | 390 × 670 (844−44−49−47−34) | 309 × 670 (s 0.24797) | gutters 40.5 | bottom sheet |
 | Tablet portrait 820×1180 | 740 × 1086 (rail 80; 1180−50−24−20) | 501 × 1086 | left 119.6 | bottom sheet |
-| Tablet landscape 1180×820 | 700 × 726 (rail 80 + panel 400) | 334.8 × 726 | left 182.6 | side panel |
+| Tablet landscape 1180×820 | 700 × 726 (rail 80 + panel 400) | 334.8 × 726 (the MapFitSpec caption rounds to 335) | left 182.6 | side panel |
 | Desktop 1440×900 | 764 × 844 (sidebar 256 + panel 420; 900−56) | 389.2 × 844 (s 0.31236) | left 187.4 | side panel |
 
 - The phone stage starts at y 91 (47 + 44), is 390×670, has overflow hidden and a `--ground` background (Map).
@@ -336,7 +336,7 @@ dragMove keeps working
   - Fit is `aria-disabled="true"` in `--faint` at 1× and `--amber-ink` when zoomed.
 - Faults pill:
   - `button.glass.t-cap`, text "4 faults on the map", `aria-label="Show faults, 4"`.
-  - Bottom-left of the stage: left 12, 12 above the stage bottom. 26 tall, radius 13, gap 6, padding 0 10.
+  - Bottom-left of the stage: left 12. The Map board draws it at top 632 (bottom 658, about 103 above the stage bottom, level with the control column's lower capsule), not 12 above the stage bottom; Q27 confirms the position with its action. 26 tall, radius 13, gap 6, padding 0 10.
   - What it does isn't drawn **[confirm on board Map]**.
 - Top bar: title "Map" with two ibtns, "Find a part" and "All parts on the map". Until the Phase 5 top bar exists, "All parts on the map" is an interim 44×44 `.glass` ibtn at the top of the right column.
 - "All parts on the map" opens a sheet on phones; on wide screens it is the panel's list.
