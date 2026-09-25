@@ -34,6 +34,19 @@
     const q = new URLSearchParams(location.search).get('q');
     if (q && !input) input = q;
   });
+  // The body names this view and its URL (`?q=`) for motion.ts, so a back link from a page opened
+  // here reads "Results" and lands on them (spec §10). Typing leaves the address clean (a reload
+  // is the home); a shared link that already carries `q` is kept honest.
+  $effect(() => {
+    if (!hydrated) return;
+    const q = input.trim();
+    const want = q ? `?q=${encodeURIComponent(q)}` : '';
+    document.body.dataset.url = location.pathname + want;
+    document.body.dataset.view = mode === 'results' ? 'Results' : mode === 'search' ? 'Search' : '';
+    if (location.search && location.search !== want) {
+      history.replaceState(null, '', location.pathname + want);
+    }
+  });
   onMount(() => {
     hydrated = true;
     canPaste = typeof navigator !== 'undefined' && !!navigator.clipboard?.readText;

@@ -43,13 +43,15 @@ const {
 } = Astro.props;
 
 const tab = tabFor(nav);
+/** 0 on a tab root, 1 under it, 2 under that: the pagereveal script reads push against pop from it. */
+const depth = back ? (PARENT[back.path] ? 2 : 1) : 0;
 /** The Shopping list's candidate keys, so the badge counts exactly what the list shows. */
 const shopKeys = allShoppingItems().map((i) => `${i.kind}:${i.id}`);
 const hasActions = Astro.slots.has('actions');
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" data-tab={tab} data-depth={depth}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -73,7 +75,64 @@ const hasActions = Astro.slots.has('actions');
         if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
       } catch {}
     </script>
+    <script is:inline>
+      // The view transition's type (spec §10): push, pop, tab or fade, decided from the page
+      // being left (motion.ts writes `tafh:prev` on pagehide) or the history direction. This must
+      // run before the first render, so it is inline; the rest of the continuity is motion.ts.
+      addEventListener('pagereveal', function (e) {
+        const vt = e.viewTransition;
+        if (!vt) {
+          window.tafhMotion = { type: 'none', animations: [] };
+          return;
+        }
+        let prev = null;
+        try {
+          prev = JSON.parse(sessionStorage.getItem('tafh:prev') || 'null');
+        } catch {}
+        const d = document.documentElement.dataset;
+        const depth = Number(d.depth || 0);
+        let type = 'fade';
+        const act = 'navigation' in window ? navigation.activation : null;
+        if (act && act.navigationType === 'traverse' && act.from && navigation.currentEntry) {
+          type = act.from.index > navigation.currentEntry.index ? 'pop' : 'push';
+        } else if (prev) {
+          if (prev.viaTab) type = 'tab';
+          else if (prev.swipe) type = 'fade';
+          else if (prev.depth < depth) type = 'push';
+          else if (prev.depth > depth) type = 'pop';
+          else type = prev.tab === d.tab ? 'fade' : 'tab';
+        }
+        vt.types.add(type);
+        // What ran, for the tests: `window.tafhMotion`.
+        window.tafhMotion = { type: type, animations: [], pending: true };
+        vt.ready.catch(function () {
+          window.tafhMotion = { type: type, animations: [], skipped: true };
+        });
+        vt.ready.then(function () {
+          window.tafhMotion = {
+            type: type,
+            animations: document.getAnimations().map(function (a) {
+              const fx = a.effect;
+              const keys = fx && fx.getKeyframes ? fx.getKeyframes() : [];
+              const props = {};
+              keys.forEach(function (k) {
+                Object.keys(k).forEach(function (p) {
+                  if (!/^(offset|computedOffset|easing|composite)$/.test(p)) props[p] = 1;
+                });
+              });
+              return {
+                name: a.animationName || a.transitionProperty || a.id || '',
+                duration: fx ? Number(fx.getTiming().duration) : 0,
+                props: Object.keys(props).sort(),
+              };
+            }),
+          };
+        });
+      });
+    </script>
+    <link rel="expect" href="#main" blocking="render" />
     <script src="~/pwa.ts"></script>
+    <script src="~/motion.ts"></script>
   </head>
   <body>
     <a class="sr-only" href="#main">Skip to content</a>
