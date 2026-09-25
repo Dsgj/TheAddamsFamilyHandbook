@@ -17,7 +17,7 @@
    - Stop any stray preview on port 4321 first: locally Playwright reuses a running server (`playwright.config.ts:30` `reuseExistingServer`), so a stale preview tests an old build. `shopping-list.md` used `pnpm exec astro preview stop`; if the Astro CLI rejects that, stop the process listening on 4321.
    - Run `pnpm check` · `pnpm lint` · `pnpm test` · `pnpm build` · `pnpm test:e2e`.
    - Record `grep -ro 'data-find=' dist --include=*.html | wc -l` (the target is Q4). Don't use `grep -c`: the built HTML is compressed onto few lines and Git Bash has no globstar, so `grep -c … dist/**/*.html` under-counts.
-   - Base-path check, last (it leaves `dist` built with a base): `BASE_PATH=/TheAddamsFamilyHandbook/ pnpm build`, then `grep -rhoE '(href|src)="/[^"]*"' dist --include=*.html | grep -v '="/TheAddamsFamilyHandbook/' | sort -u`. Expect no output. CI deploys under `/<repo>/` (`deploy.yml:32`). If the first run (before Phase 1) already lists some, record them here as the baseline and add none.
+   - Base-path check, last (it leaves `dist` built with a base): `MSYS_NO_PATHCONV=1 BASE_PATH=/TheAddamsFamilyHandbook/ pnpm build` (in Git Bash the MSYS prefix is required, or the leading slash becomes a Windows path and every URL shows up unprefixed), then `grep -rhoE '(href|src)="/[^"]*"' dist --include=*.html | grep -v '="/TheAddamsFamilyHandbook/' | sort -u`. Expect no output. CI deploys under `/<repo>/` (`deploy.yml:32`). If the first run (before Phase 1) already lists some, record them here as the baseline and add none.
    - Report exit codes and counts, not logs.
 6. Then update the status line, tick the phase below and note any deviations under it.
 7. Commit only when the owner says so.
@@ -164,7 +164,7 @@ Some things open as sheets with no URL of their own: Show on map, Add to shoppin
 
 ## Phases
 
-### [ ] Phase 1: tokens and map fit (priority 1)
+### [x] Phase 1: tokens and map fit (priority 1)
 
 - **Goal.** At 1× `/map` shows the whole playfield at every width, with floating controls. It ships inside today's shell, using CSS custom properties with fallbacks.
 - **Boards.** MapFitSpec, Map, MapLight, MapZoom, ShellTablet, ShellDesktop, Components (§07), Motion.
@@ -234,6 +234,16 @@ Some things open as sheets with no URL of their own: Show on map, Add to shoppin
   - the 44 px control targets and the marker hit rule;
   - the link colour per theme;
   - reduced motion (`page.emulateMedia({ reducedMotion: 'reduce' })`).
+- **Done 2026-09-25** on `claude/app-redesign-phase-1` (uncommitted until the owner says so). Gauntlet green: check, lint, 49 unit tests, build, 48 e2e, `data-find` 8, base-path build clean. Deviations from the steps above:
+  - The branch is based on `claude/addams-redesign-handoff` (main plus the task files), not bare main.
+  - The `embed` prop (Phase 2 step 5) is already on PlayfieldMap: `[section].astro:74` passes it, and `syncUrl()` is a no-op in the embed. Phase 2 only needs to build on it.
+  - Markers keep their px size at every zoom (Q5), not just at 1×. The canvas has `overflow: clip` and each marker box is clamped inside it via `clamp()`, or edge markers made the scroller scrollable at 1×.
+  - Canvas px sizes are floored so the scroller never gains a 1 px scroll.
+  - `.glass` lives in base.css (shared by the controls and `#sw-status`); the Phase 5 shell can reuse it.
+  - Light `--ok`, `--warn` and `--brass` darkened to ≥ 4.5 on `--ground` (Q15); the light tints keep the spec values.
+  - The wide zoom capsule is vertical; the readout sits at right 68 / bottom 68 as the spec states. `--tabbar-h` ships 0 until Phase 4.
+  - Keys: the root handler takes `+ = - _ 0 Escape`; arrows only when the scroller (`tabindex=0 role=region`) has focus. The `/map` window listener is skipped in the embed.
+  - Checked by eye at phone-dark and desktop-light: floating column, glass list with counts, readout, legend, side panel.
 
 ### [ ] Phase 2: map selection, the sheet and the side panel
 

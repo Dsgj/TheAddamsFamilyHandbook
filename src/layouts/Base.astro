@@ -11,12 +11,15 @@ interface Props {
   /** Active nav key. */
   nav?: string;
   wide?: boolean;
+  /** Full-bleed page (the map): no gutter or max-width on main, and no footer. */
+  fullbleed?: boolean;
 }
 const {
   title,
   description = 'Offline service companion for The Addams Family pinball.',
   nav,
   wide,
+  fullbleed,
 } = Astro.props;
 
 const NAV: [string, string, string][] = [
@@ -86,19 +89,33 @@ const NAV: [string, string, string][] = [
         }
       </nav>
     </header>
-    <main id="main" class:list={['wrap', { wide }]}>
+    <main id="main" class:list={[{ wrap: !fullbleed, wide, fullbleed }]}>
       <slot />
     </main>
-    <footer class="foot wrap muted small">
-      <p>
-        The Addams Family Handbook is a private service tool for one machine. Manual text and scans
-        are © Williams Electronics Games / Midway; hints marked as such are the owner's own
-        experience.
-      </p>
-      <p id="sw-status" hidden></p>
-    </footer>
+    {
+      !fullbleed && (
+        <footer class="foot wrap muted small">
+          <p>
+            The Addams Family Handbook is a private service tool for one machine. Manual text and
+            scans are © Williams Electronics Games / Midway; hints marked as such are the owner's
+            own experience.
+          </p>
+        </footer>
+      )
+    }
+    <p id="sw-status" hidden></p>
     <script is:inline>
       (function () {
+        // Interim (until the Phase 5 top bar): publish the sticky header's height as --topbar-h so
+        // the map's fit rule and scroll padding follow the real header.
+        const top = document.querySelector('header.top');
+        if (top && 'ResizeObserver' in window) {
+          const publish = function () {
+            document.documentElement.style.setProperty('--topbar-h', top.offsetHeight + 'px');
+          };
+          publish();
+          new ResizeObserver(publish).observe(top);
+        }
         const b = document.getElementById('theme-toggle');
         if (!b) return;
         b.addEventListener('click', function () {
