@@ -58,7 +58,7 @@
   }
 </script>
 
-<section class="card device">
+<section class="card device" id="device-data">
   <h2>Device data</h2>
   <p class="muted small">
     Status, notes, the service log and the machine setup live only in this browser. Download a

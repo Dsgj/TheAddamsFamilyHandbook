@@ -69,12 +69,17 @@ test('status persists on the device', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Fault' })).toHaveAttribute('aria-pressed', 'true');
 });
 
-test('theme toggle switches to the other palette', async ({ page }) => {
-  await gotoHydrated(page, '/');
-  const before = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-  await page.getByRole('button', { name: 'Toggle theme' }).click();
-  const after = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-  expect(after).not.toBe(before);
+test('Appearance switches to the other palette and remembers it', async ({ page }) => {
+  await gotoHydrated(page, '/workshop');
+  const seg = page.getByRole('group', { name: 'Toggle theme' });
+  const bg = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  await seg.getByRole('button', { name: 'Light' }).click();
+  const light = await bg();
+  await seg.getByRole('button', { name: 'Dark' }).click();
+  const dark = await bg();
+  expect(dark).not.toBe(light);
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
 });
 
 test('layers combine and the shot layer opens a shot card', async ({ page }) => {

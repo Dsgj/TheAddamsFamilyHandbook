@@ -408,6 +408,311 @@ table.t tr.row-fault td:first-child {
 }
 
 /* Print: the shopping list at the parts drawer, a component card taped inside the cabinet. */
+/* ---- List vocabulary (spec §8.4): groups of rows, each an <a> or a <button> ---- */
+.lst-h {
+  margin: 22px 16px 7px;
+  font: 600 13px/18px var(--font-body);
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.lst {
+  list-style: none;
+  margin: 0 16px;
+  padding: 0;
+  border-radius: var(--r-md);
+  background: var(--cell);
+  overflow: hidden;
+}
+.lst > li + li > .lrow {
+  border-top: 1px solid var(--sep);
+}
+.lrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 6px 16px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.lrow.two {
+  min-height: 60px;
+}
+.lrow:is(a, button):active {
+  background: var(--press);
+}
+.lrow .tile {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  background: var(--tint);
+  color: var(--amber-ink);
+}
+.lrow .tile svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.lrow .txt {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+}
+.lrow .ttl {
+  font-size: 17px;
+  line-height: 22px;
+}
+.lrow .sub {
+  font-size: 15px;
+  line-height: 20px;
+  color: var(--muted);
+}
+.lrow .val {
+  flex: 0 0 auto;
+  font-size: 17px;
+  line-height: 22px;
+  color: var(--muted);
+}
+.lrow .val.mono {
+  font-size: 15px;
+  line-height: 20px;
+}
+.lrow .chev {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  color: var(--faint);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.lrow.danger {
+  color: var(--bad);
+}
+.lrow.static {
+  cursor: default;
+}
+.gf {
+  margin: 7px 16px 0;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--muted);
+}
+
+/* ---- Segmented control (spec §8.3) ---- */
+.seg {
+  display: inline-grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 2px;
+  height: 36px;
+  padding: 2px;
+  border-radius: 9px;
+  background: var(--seg-track);
+}
+.seg > button {
+  min-width: 0;
+  height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 7px;
+  background: none;
+  color: var(--ink);
+  font: 500 15px/20px var(--font-body);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background var(--dur-2) var(--ease-standard),
+    box-shadow var(--dur-2) var(--ease-standard);
+}
+.seg > button[aria-pressed='true'],
+.seg > button[aria-selected='true'],
+.seg > a[aria-current] {
+  background: var(--seg-thumb);
+  font-weight: 600;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.28),
+    0 0 0 0.5px rgba(0, 0, 0, 0.18);
+}
+.seg > .st-ok[aria-pressed='true'] {
+  background: var(--ok-tint);
+  box-shadow: inset 0 0 0 1px var(--ok);
+}
+.seg > .st-fault[aria-pressed='true'] {
+  background: var(--bad-tint);
+  box-shadow: inset 0 0 0 1px var(--bad);
+}
+
+/* ---- Toggle (spec §8.4) ---- */
+.toggle {
+  position: relative;
+  flex: 0 0 auto;
+  width: 51px;
+  height: 31px;
+  padding: 0;
+  border: 0;
+  border-radius: 16px;
+  background: var(--sunk);
+  cursor: pointer;
+  transition: background var(--dur-2) var(--ease-standard);
+}
+.toggle::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  background: #f4efe6;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: transform var(--dur-2) var(--ease-standard);
+}
+.toggle[aria-checked='true'] {
+  background: var(--amber-fill);
+}
+.toggle[aria-checked='true']::after {
+  transform: translateX(20px);
+}
+
+/* ---- Chips, pills, codes (spec §8.6) ---- */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--sunk);
+  color: var(--ink);
+  font: 500 14px/18px var(--font-body);
+  cursor: pointer;
+}
+.chip.on {
+  background: var(--tint);
+  box-shadow: inset 0 0 0 1px var(--amber-ink);
+  color: var(--amber-ink);
+}
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 12px;
+  font: 600 13px/18px var(--font-body);
+  background: var(--sunk);
+  color: var(--muted);
+}
+.pill.ok {
+  background: var(--ok-tint);
+  color: var(--ok);
+}
+.pill.fault {
+  background: var(--bad-tint);
+  color: var(--bad);
+}
+.pill.untested {
+  background: var(--warn-tint);
+  color: var(--warn);
+}
+.pill .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.code {
+  display: inline-grid;
+  place-items: center;
+  min-width: 36px;
+  height: 26px;
+  padding: 0 6px;
+  border-radius: 6px;
+  font: 500 14px/18px var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.code.lg {
+  min-width: 54px;
+  height: 40px;
+  border-radius: 8px;
+  font-size: 22px;
+  line-height: 26px;
+}
+.hint {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--brass-tint);
+  font-size: 15px;
+  line-height: 21px;
+}
+.hint strong {
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--brass);
+}
+
+/* ---- Buttons and fields (spec §8.7) ---- */
+.btn.sm {
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 10px;
+  font-size: 15px;
+  line-height: 20px;
+}
+.search {
+  width: 100%;
+  height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--seg-track);
+  color: var(--ink);
+  font: 400 15px/20px var(--font-body);
+}
+.search::placeholder {
+  color: var(--faint);
+}
+.search:focus {
+  outline: 2px solid var(--amber);
+  outline-offset: 1px;
+}
+
+/* ---- Hub pages (spec §9.5, §9.14) ---- */
+.hub {
+  max-width: 640px;
+  margin: 0 auto;
+}
+.hub > h1 {
+  margin: 0 16px 8px;
+}
+.hub > .search {
+  width: calc(100% - 32px);
+  margin: 4px 16px 8px;
+}
+.hub .lst-h:first-of-type {
+  margin-top: 10px;
+}
+
 @media print {
   :root {
     --ground: #fff;
@@ -436,7 +741,6 @@ table.t tr.row-fault td:first-child {
   .btn,
   .field,
   .foot,
-  #theme-toggle,
   #sw-status,
   .map-controls,
   .sr-only,

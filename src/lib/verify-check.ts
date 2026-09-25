@@ -1,26 +1,8 @@
 /**
  * Enhances every `<input class="verify-check" data-id>` on the Verify page: reflects the device
- * state on load and stores a tick with its date. Same shape as fault-check.ts, own key.
+ * state on load and stores a tick with its date. The key and the loader live in verify-store.ts.
  */
-const KEY = 'tafh:verify';
-
-type Ticks = Record<string, string>;
-
-function load(): Ticks {
-  try {
-    return JSON.parse(localStorage.getItem(KEY) ?? '{}') as Ticks;
-  } catch {
-    return {};
-  }
-}
-
-function save(t: Ticks) {
-  try {
-    localStorage.setItem(KEY, JSON.stringify(t));
-  } catch {
-    /* private mode */
-  }
-}
+import { loadVerifyTicks as load, saveVerifyTicks as save } from '~/lib/verify-store';
 
 export function initVerifyChecks(root: ParentNode = document) {
   const ticks = load();
