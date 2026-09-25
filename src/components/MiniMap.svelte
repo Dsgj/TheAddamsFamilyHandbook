@@ -3,11 +3,13 @@
   import type { Loc } from '~/lib/model/types';
   import { href } from '~/lib/url';
 
-  /** Crops a 132×168 window of the playfield drawing around the first position, with a ring. */
-  let { pos, size = 520 }: { pos: Loc[]; size?: number } = $props();
-
-  const W = 132;
-  const H = 168;
+  /** Crops a w×h window (132×168 by default) of the playfield drawing around the first position. */
+  let {
+    pos,
+    size = 520,
+    w: W = 132,
+    h: H = 168,
+  }: { pos: Loc[]; size?: number; w?: number; h?: number } = $props();
   const scale = $derived(size / PLAYFIELD.w);
   const mapH = $derived(PLAYFIELD.h * scale);
   const first = $derived(pos[0]);
@@ -43,9 +45,10 @@
   .mini {
     position: relative;
     overflow: hidden;
-    border-radius: var(--r-xs);
-    border: 1px solid var(--line);
+    max-width: 100%;
+    border-radius: 12px;
     background: var(--sunk);
+    box-shadow: inset 0 0 0 1px var(--sep);
     flex: 0 0 auto;
   }
   .mini.none {

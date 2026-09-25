@@ -331,12 +331,17 @@ main.wide {
 }
 
 /* Cards and surfaces */
+/* The card (spec §8.5): --cell with an inset hairline; `.lifted` adds the shadow. */
 .card {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--r-xs);
-  padding: var(--pad);
-  box-shadow: var(--shadow-1);
+  background: var(--cell);
+  border-radius: var(--r-md);
+  padding: 16px;
+  box-shadow: inset 0 0 0 1px var(--sep);
+}
+.card.lifted {
+  box-shadow:
+    inset 0 0 0 1px var(--sep),
+    var(--shadow-1);
 }
 .sunk {
   background: var(--sunk);

@@ -1,51 +1,31 @@
 ---
 import Base from '~/layouts/Base.astro';
 import Diagnose from '~/components/Diagnose.svelte';
-import QuickSearch from '~/components/QuickSearch.svelte';
-import { href } from '~/lib/url';
+
+/**
+ * The Diagnose home (spec §9.1). The old quick links live in their hubs: Test menu and Error
+ * messages on /handbook, Fuses on /tables, Verify, Setup and Care on /workshop, the map layers on
+ * the Map tab. The bar's "Recent reports" button talks to the island through a `tafh:diag` event.
+ */
 ---
 
 <Base title="Diagnose" nav="diagnose" h1="large">
-  <QuickSearch client:idle />
-  <p class="muted">
-    Type the numbers from the Test Report (T.1 Switch Edges, T.2 Switch Levels) or a message from
-    the display, and get each component with wiring, location and a shared-cause check.
-  </p>
+  <Fragment slot="actions">
+    <button class="ibtn" type="button" aria-label="Recent reports" data-diag="recent">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="8.5"></circle><path d="M12 7.5V12l3 2"></path>
+      </svg>
+    </button>
+  </Fragment>
   <Diagnose client:load />
-  <section class="quick">
-    <h2>Quick links</h2>
-    <ul>
-      <li>
-        <a href={href('handbook/tests')}>Test menu T.1–T.13</a> · how to run switch, solenoid and lamp
-        tests
-      </li>
-      <li><a href={href('handbook/errors')}>Check Switch messages and error codes</a></li>
-      <li><a href={href('fuses')}>Fuses, LEDs and jumpers</a></li>
-      <li>
-        <a href={href('verify')}>Things to verify in the machine</a> · open questions from the data
-      </li>
-      <li>
-        <a href={href('setup')}>Machine setup</a> · presets, adjustments and utilities as a guide
-      </li>
-      <li>
-        <a href={href('care')}>Care</a> · cleaning and upkeep by interval, with the date last done
-      </li>
-      <li>
-        <a href={href('map?layer=sw')}>Switch location map</a> · <a href={href('map?layer=lamp')}
-          >lamps</a
-        > · <a href={href('map?layer=coil')}>solenoids</a> · <a href={href('map?layer=shot')}
-          >shots</a
-        >
-      </li>
-    </ul>
-  </section>
 </Base>
 
-<style>
-  .quick {
-    margin-top: 24px;
-  }
-  .quick ul {
-    padding-left: 1.2em;
-  }
-</style>
+<script>
+  document
+    .querySelectorAll<HTMLButtonElement>('button[data-diag]')
+    .forEach((b) =>
+      b.addEventListener('click', () =>
+        document.dispatchEvent(new CustomEvent('tafh:diag', { detail: b.dataset.diag })),
+      ),
+    );
+</script>
