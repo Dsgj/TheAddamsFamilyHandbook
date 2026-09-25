@@ -245,7 +245,15 @@ Some things open as sheets with no URL of their own: Show on map, Add to shoppin
   - Keys: the root handler takes `+ = - _ 0 Escape`; arrows only when the scroller (`tabindex=0 role=region`) has focus. The `/map` window listener is skipped in the embed.
   - Checked by eye at phone-dark and desktop-light: floating column, glass list with counts, readout, legend, side panel.
 
-### [ ] Phase 2: map selection, the sheet and the side panel
+### [x] Phase 2: map selection, the sheet and the side panel
+
+- **Done 2026-09-25** on `claude/app-redesign-phase-2`. Gauntlet green: check, lint, 49 unit tests, build, 98 e2e, `data-find` 8, base-path build clean. Deviations from the steps above:
+  - Open questions settled by the plan's defaults, not the owner: Q12 (phone calibration sheet `max-height: min(470px, 60dvh)`), Q25 (source link at the top of the panel / after the Find field in the parts sheet), Q27 (the faults pill is left out), Q28 (Find a part filters by id, shown id and name), Q29 (only below 600 re-fits; 600–999 keeps the overlap).
+  - The wide panel reuses `ComponentCard` (with its `StatusRow`) for the selected part, under a "Switch 32" heading with Deselect, instead of the spec's bespoke layout; the phone sheet has the bespoke header, wiring rows and link grid.
+  - Lamp rows and the sheet show the id as the DMD does (`L13`); the marker names follow spec §7.5.
+  - The zoom FLIP and the new canvas transitions coexist by setting `transition: none` inline during the zoom step; the `.ready` class turns transitions on only after the first fit so the Phase 1 fit tests hold.
+  - Under reduced motion the controls still fade (120 ms) and the sheet fades in (150 ms); the e2e check allows fades and forbids everything else.
+  - The embed's aside keeps today's layout; its e2e check waits for the fit before clicking (the marker moved under the click otherwise).
 
 - **Goal.** Selecting a part never pushes its details below the fold. Phones get the peek/expanded sheet with the drawing re-fitted above it; from 1000 the side panel holds the selected part and the parts list.
 - **Boards.** MapPeek, MapPeekLight, MapExpanded, MapFitSpec, ShellTablet, ShellDesktop, Components (§03), Motion.

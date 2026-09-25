@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { gotoHydrated } from './helpers';
 
-/** Playfield map, Phase 1 of the app redesign: the fit rule, zoom, keys, controls, markers. */
+/** Playfield map, Phases 1–2 of the app redesign: fit, zoom, keys, markers, the sheets, the panel. */
 
 const IMG = { w: 1246, h: 2702 };
 const SIZES = [
@@ -180,10 +180,10 @@ test('markers select by name, by the nearest-centre rule, and never on a drag', 
   page,
 }) => {
   await gotoHydrated(page, '/map?layer=sw,shot');
-  const jet = page.getByRole('button', { name: /^32 Upper Right Jet/ }).first();
+  const jet = page.getByRole('button', { name: /^Switch 32, Upper Right Jet/ }).first();
   await jet.click();
   await expect(jet).toHaveAttribute('aria-pressed', 'true');
-  const book = page.getByRole('button', { name: /^K Bookcase/ }).first();
+  const book = page.getByRole('button', { name: /^Shot K, Bookcase/ }).first();
   await book.click();
   await expect(book).toHaveAttribute('aria-pressed', 'true');
   await expect(jet).toHaveAttribute('aria-pressed', 'false');
@@ -199,7 +199,7 @@ test('markers select by name, by the nearest-centre rule, and never on a drag', 
       };
     }),
   );
-  const c32 = centres.find((c) => c.name.startsWith('32 '))!;
+  const c32 = centres.find((c) => c.name.startsWith('Switch 32,'))!;
   expect(c32).toBeTruthy();
   const dirs = [
     [20, 0],
@@ -236,6 +236,7 @@ test('markers select by name, by the nearest-centre rule, and never on a drag', 
 });
 
 test('links use the amber ink of each theme', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
   await gotoHydrated(page, '/map?layer=sw');
   const link = page.locator('aside a.src');
   await page.emulateMedia({ colorScheme: 'light' });
@@ -263,4 +264,230 @@ test('reduced motion: fit and the zoom steps land without a transform animation'
   await zoomGroup.getByRole('button', { name: 'Fit whole playfield' }).click();
   expect(await running()).toBe(0);
   expect(near(await canvasWidth(page), w1)).toBe(true);
+});
+
+/* ---------- Phase 2: the selection sheet, the parts sheet and the wide panel ---------- */
+
+const SHEET = 'section.sheet[aria-label^="Selected part"]';
+const box = async (page: Page, sel: string) => {
+  const b = await page.locator(sel).boundingBox();
+  expect(b, `${sel} has a box`).not.toBeNull();
+  return b!;
+};
+const centreY = async (page: Page, sel: string) => {
+  const b = await box(page, sel);
+  return b.y + b.height / 2;
+};
+
+test.describe('phone selection sheet', () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+
+  test('peek re-fits the drawing above it; the controls sit 12 px above the sheet', async ({
+    page,
+  }) => {
+    await gotoHydrated(page, '/map?layer=sw&id=32');
+    const sheet = page.locator(SHEET);
+    await expect(sheet).toHaveAttribute('aria-label', 'Selected part, Switch 32');
+    await expect(sheet).toHaveAttribute('data-id', '32');
+    await expect(sheet.getByRole('heading', { level: 2 })).toHaveText('Upper Right Jet');
+    await expect(sheet.getByText('Switch · column')).toBeVisible();
+    const grab = sheet.getByRole('button', { name: 'Expand details' });
+    await expect(grab).toHaveAttribute('aria-expanded', 'false');
+    await expect.poll(() => fitted(page)).toBe(true);
+    // The sheet sits inside the viewport at 96 px, the drawing ends at its top edge.
+    await expect
+      .poll(async () => {
+        const s = await box(page, SHEET);
+        const g = await geometry(page);
+        return (
+          near(s.height, 96) &&
+          s.y + s.height <= g.innerHeight + 0.5 &&
+          g.canvas.bottom <= s.y + 0.5 &&
+          near(g.canvas.height, g.scroller.height - 96)
+        );
+      })
+      .toBe(true);
+    const sheetTop = (await box(page, SHEET)).y;
+    expect(await centreY(page, '.marker.sel')).toBeLessThan(sheetTop);
+    await expect
+      .poll(async () => {
+        const c = await box(page, '.map-controls .column');
+        return near(c.y + c.height, sheetTop - 12);
+      })
+      .toBe(true);
+    // No page scroll and no stage scroll at 1×.
+    const g = await geometry(page);
+    expect(g.scrollHeight).toBeLessThanOrEqual(g.clientHeight + 1);
+    expect(g.pageScrollHeight).toBeLessThanOrEqual(g.innerHeight + 1);
+  });
+
+  test('the grabber expands to 416, hides the controls and keeps the part in view; Esc closes', async ({
+    page,
+  }) => {
+    await gotoHydrated(page, '/map?layer=sw&id=32');
+    const sheet = page.locator(SHEET);
+    await expect.poll(() => fitted(page)).toBe(true);
+    await sheet.getByRole('button', { name: 'Expand details' }).click();
+    const grab = sheet.getByRole('button', { name: 'Collapse details' });
+    await expect(grab).toHaveAttribute('aria-expanded', 'true');
+    await expect.poll(async () => near((await box(page, SHEET)).height, 416)).toBe(true);
+    await expect(sheet.getByRole('heading', { name: 'Wiring' })).toBeVisible();
+    await expect(sheet.getByRole('navigation', { name: 'More about switch 32' })).toBeVisible();
+    await expect(page.locator('.map-controls .column')).toBeHidden();
+    // The selected marker stays in the band above the sheet.
+    await expect
+      .poll(async () => {
+        const y = await centreY(page, '.marker.sel');
+        const s = await box(page, SHEET);
+        const g = await geometry(page);
+        return y > g.scroller.top && y < s.y;
+      })
+      .toBe(true);
+    // Collapse again: the controls return.
+    await grab.click();
+    await expect(sheet.getByRole('button', { name: 'Expand details' })).toBeVisible();
+    await expect(page.locator('.map-controls .column')).toBeVisible();
+    // Esc deselects, the sheet leaves, the drawing re-fits to the whole stage.
+    await page.keyboard.press('Escape');
+    await expect(sheet).toHaveCount(0);
+    await expect(page).not.toHaveURL(/id=/);
+    await expect
+      .poll(async () => {
+        const g = await geometry(page);
+        return near(g.canvas.height, g.scroller.height) || near(g.canvas.width, g.scroller.width);
+      })
+      .toBe(true);
+  });
+
+  test('Deselect closes the sheet', async ({ page }) => {
+    await gotoHydrated(page, '/map?layer=sw&id=32');
+    await page.locator(SHEET).getByRole('button', { name: 'Deselect' }).click();
+    await expect(page.locator(SHEET)).toHaveCount(0);
+    await expect(page).not.toHaveURL(/id=/);
+  });
+
+  test('the parts sheet filters, picks and hands focus back', async ({ page }) => {
+    await gotoHydrated(page, '/map?layer=sw');
+    const opener = page.getByRole('button', { name: 'All parts on the map' });
+    await opener.click();
+    const dialog = page.getByRole('dialog', { name: 'All parts on the map' });
+    await expect(dialog).toBeVisible();
+    const find = dialog.getByRole('searchbox', { name: 'Find a part' });
+    await expect(find).toBeFocused();
+    await find.fill('jet');
+    const rows = dialog.locator('.rows .row');
+    await expect(rows.first()).toBeVisible();
+    for (const text of await rows.allInnerTexts()) expect(text.toLowerCase()).toContain('jet');
+    await dialog.getByRole('button', { name: /^32\s+Upper Right Jet/ }).click();
+    await expect(dialog).toHaveCount(0);
+    await expect(opener).toBeFocused();
+    await expect(page.locator(SHEET)).toHaveAttribute('aria-label', 'Selected part, Switch 32');
+    await expect(
+      page.locator(SHEET).getByRole('button', { name: 'Expand details' }),
+    ).toHaveAttribute('aria-expanded', 'false');
+    await expect(page).toHaveURL(/id=32/);
+  });
+
+  test('reduced motion: the sheet and the canvas move without animations', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await gotoHydrated(page, '/map?layer=sw&id=32');
+    await expect.poll(() => fitted(page)).toBe(true);
+    await page.locator(SHEET).getByRole('button', { name: 'Expand details' }).click();
+    await expect.poll(async () => near((await box(page, SHEET)).height, 416)).toBe(true);
+    // Fades are allowed under reduced motion (spec §10); nothing else may move.
+    const moving = await page.evaluate(() =>
+      document
+        .getAnimations()
+        .filter((a) => a.playState === 'running')
+        .map((a) => (a as CSSTransition).transitionProperty ?? (a as CSSAnimation).animationName)
+        .filter((n) => n !== 'opacity' && n !== 'visibility' && !/fade/.test(n)),
+    );
+    expect(moving).toEqual([]);
+  });
+});
+
+for (const size of SIZES) {
+  test(`a selected part never makes the page scroll at ${size.width}×${size.height}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(size);
+    await gotoHydrated(page, '/map?layer=sw&id=32');
+    await expect.poll(() => fitted(page)).toBe(true);
+    await expect
+      .poll(async () => {
+        const g = await geometry(page);
+        return (
+          g.scrollHeight <= g.clientHeight + 1 &&
+          g.scroller.bottom <= g.innerHeight + 0.5 &&
+          (size.width < 1000 || g.pageScrollHeight <= g.innerHeight + 1)
+        );
+      })
+      .toBe(true);
+  });
+}
+
+test.describe('wide panel', () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  test('holds the selected part and the list; the selected row is current', async ({ page }) => {
+    await gotoHydrated(page, '/map?layer=sw&id=32');
+    const panel = page.getByRole('complementary', {
+      name: 'Selected part and parts on the map',
+    });
+    await expect(panel).toBeVisible();
+    expect(near((await panel.boundingBox())!.width, 420)).toBe(true);
+    await expect(panel.locator('article.comp[data-id="32"]')).toBeVisible();
+    await expect(panel.getByRole('heading', { name: 'Switch 32' })).toBeVisible();
+    await expect(panel.locator('[aria-current="true"]')).toHaveCount(1);
+    await expect(panel.locator('[aria-current="true"]')).toContainText('Upper Right Jet');
+    await expect(page.locator(SHEET)).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'All parts on the map' })).toHaveCount(0);
+    // Find a part narrows the list.
+    await panel.getByRole('searchbox', { name: 'Find a part' }).fill('zzz');
+    await expect(panel.locator('.rows .row')).toHaveCount(0);
+    await panel.getByRole('searchbox', { name: 'Find a part' }).fill('32');
+    await expect(panel.locator('.rows .row').first()).toContainText('Upper Right Jet');
+  });
+
+  test('a Fault persists across a reload and names the marker', async ({ page }) => {
+    await gotoHydrated(page, '/map?layer=sw&id=32');
+    await page
+      .getByRole('group', { name: 'Test status' })
+      .getByRole('button', { name: 'Fault' })
+      .click();
+    await page.reload();
+    await expect(
+      page.getByRole('group', { name: 'Test status' }).getByRole('button', { name: 'Fault' }),
+    ).toHaveAttribute('aria-pressed', 'true');
+    await expect(
+      page.getByRole('button', { name: /^Switch 32, Upper Right Jet, Fault, selected$/ }),
+    ).toHaveCount(1);
+  });
+
+  test('nothing selected shows the Playfield card and the provenance', async ({ page }) => {
+    await gotoHydrated(page, '/map');
+    const panel = page.getByRole('complementary', {
+      name: 'Selected part and parts on the map',
+    });
+    await expect(panel.getByRole('heading', { name: 'Playfield' })).toBeVisible();
+    await expect(panel.locator('.prov')).toBeVisible();
+  });
+});
+
+test('the handbook embed has no sheet: the shot card sits under the drawing', async ({ page }) => {
+  await gotoHydrated(page, '/handbook/rules');
+  const embed = page.locator('#pg-9 .shot-map');
+  await embed.scrollIntoViewIfNeeded();
+  await expect
+    .poll(() =>
+      embed.locator('.canvas').evaluate((el) => (el as HTMLElement).style.width.endsWith('px')),
+    )
+    .toBe(true);
+  const url = page.url();
+  const k = embed.getByRole('button', { name: /^Shot K, Bookcase/ }).first();
+  await k.click();
+  await expect(k).toHaveAttribute('aria-pressed', 'true');
+  expect(page.url()).toBe(url);
+  await expect(page.locator(SHEET)).toHaveCount(0);
+  await expect(page.locator('#pg-9 article.shot-card[data-id="K"]')).toBeVisible();
 });
