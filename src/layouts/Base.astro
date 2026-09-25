@@ -3,6 +3,7 @@ import '~/styles/tokens.css';
 import '~/styles/base.css';
 import { pwaInfo } from 'virtual:pwa-info';
 import { href } from '~/lib/url';
+import Toast from '~/components/Toast.svelte';
 import { PARENT, TABS, tabFor, type BackLink } from '~/lib/nav';
 import { allShoppingItems } from '~/lib/shopping';
 import TabBadge from '~/components/TabBadge.svelte';
@@ -177,7 +178,7 @@ const hasActions = Astro.slots.has('actions');
         </footer>
       )
     }
-    <p id="sw-status" hidden></p>
+    <Toast client:load />
     <script is:inline>
       (function () {
         // The large title collapses over the first 52 px of scroll (spec §6.5): the compact

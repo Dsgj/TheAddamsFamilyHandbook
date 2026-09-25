@@ -23,6 +23,7 @@ const setupIds = SETUP_STEPS.flatMap((s) => s.items.map((i) => i.id));
   h1="large"
   description="The shopping list, verification, care and setup, plus this device's settings and data."
 >
+  <p class="ptr" data-ptr aria-hidden="true">Checking for updates…</p>
   <div class="hub" data-hub="workshop">
     <WorkshopHub
       client:load
@@ -45,3 +46,73 @@ const setupIds = SETUP_STEPS.flatMap((s) => s.items.map((i) => i.id));
     </p>
   </div>
 </Base>
+
+<script>
+  /* Pull-to-refresh (spec §11), on the Workshop only: a downward touch drag from the top of the
+     page past 72 px asks pwa.ts for an update check (`tafh:check-update`); the answer is a toast. */
+  const ptr = document.querySelector<HTMLElement>('[data-ptr]');
+  if (ptr) {
+    const LIMIT = 72;
+    let startY = -1;
+    let pull = 0;
+    const setPull = (y: number) => {
+      pull = y;
+      ptr.style.setProperty('--pull', `${Math.min(y, LIMIT + 24)}px`);
+      ptr.classList.toggle('on', y > 0);
+      ptr.classList.toggle('armed', y >= LIMIT);
+    };
+    window.addEventListener(
+      'touchstart',
+      (e) => {
+        startY = window.scrollY <= 0 ? (e.touches[0]?.clientY ?? -1) : -1;
+      },
+      { passive: true },
+    );
+    window.addEventListener(
+      'touchmove',
+      (e) => {
+        if (startY < 0) return;
+        const dy = (e.touches[0]?.clientY ?? 0) - startY;
+        if (dy <= 0 || window.scrollY > 0) {
+          if (pull) setPull(0);
+          return;
+        }
+        setPull(dy * 0.6);
+      },
+      { passive: true },
+    );
+    const end = () => {
+      if (pull >= LIMIT) window.dispatchEvent(new CustomEvent('tafh:check-update'));
+      startY = -1;
+      setPull(0);
+    };
+    window.addEventListener('touchend', end);
+    window.addEventListener('touchcancel', end);
+  }
+</script>
+
+<style>
+  .ptr {
+    position: fixed;
+    left: var(--shell-w);
+    right: 0;
+    top: calc(var(--safe-top) + var(--topbar-h));
+    z-index: 15;
+    margin: 0;
+    padding: 8px 16px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--muted);
+    opacity: 0;
+    transform: translateY(calc(var(--pull, 0px) - 40px));
+    transition: opacity var(--dur-1);
+    pointer-events: none;
+  }
+  .ptr.on {
+    opacity: 0.7;
+  }
+  .ptr.armed {
+    opacity: 1;
+    color: var(--amber);
+  }
+</style>

@@ -81,14 +81,18 @@ test.describe('phone tab bar', () => {
     expect(row!.y + row!.height).toBeLessThanOrEqual(bar.y + 0.5);
   });
 
-  test('#sw-status sits 10 above the tab bar and covers no tab', async ({ page }) => {
+  test('the toast sits 10 above the tab bar and covers no tab', async ({ page }) => {
     await gotoHydrated(page, '/');
     await page.evaluate(() => {
-      const s = document.getElementById('sw-status')!;
-      s.textContent = 'Update ready';
-      s.hidden = false;
+      window.dispatchEvent(
+        new CustomEvent('tafh:toast', { detail: { kind: 'update', text: 'Update ready' } }),
+      );
     });
-    const status = await box(page, '#sw-status');
+    await expect(page.locator('.toast')).toBeVisible();
+    await page
+      .locator('.toast')
+      .evaluate((el) => Promise.all(el.getAnimations().map((a) => a.finished)));
+    const status = await box(page, '.toast');
     const bar = await box(page, 'nav.shell');
     expect(Math.abs(bar.y - (status.y + status.height) - 10)).toBeLessThanOrEqual(0.5);
     for (let i = 0; i < TAB_ORDER.length; i++) {
