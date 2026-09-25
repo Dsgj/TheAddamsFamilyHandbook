@@ -4,10 +4,14 @@ import PageViewer from '~/components/PageViewer.svelte';
 import ManualSearch from '~/components/ManualSearch.svelte';
 import ocr from '~/data/kit/ocr-text.json';
 import type { DocId } from '~/lib/model/types';
-import { DOC_NAME, DOCS, PAGES, pageCount, pageLabel, tocTitle } from '~/lib/pages';
+import { DOC_NAME, DOCS, PAGES, pageCount, pageLabel, tocTitle, TOC } from '~/lib/pages';
 import { sectionOfPage } from '~/lib/handbook/sections';
 import { href, manualHref } from '~/lib/url';
 
+/**
+ * The manual viewer page (spec §9.12): the document segmented control, the viewer island with
+ * its toolbar, the contents around this page, the footer line and the OCR search.
+ */
 export function getStaticPaths() {
   return DOCS.flatMap((doc) =>
     PAGES[doc].map((meta) => ({ params: { doc, page: String(meta[0]) }, props: { doc, meta } })),
@@ -19,44 +23,124 @@ const text = (ocr as Record<DocId, string[]>)[doc][page - 1] ?? '';
 const label = pageLabel(doc, page);
 const title = tocTitle(doc, page);
 const sec = doc === 'ops' ? sectionOfPage(page) : undefined;
+const SHORT: Record<DocId, string> = { ops: 'Operations', hb: 'Handbook', wpc: 'Schematics' };
+
+/** The contents around this page: the current entry and up to three on either side. */
+const toc = TOC[doc];
+let cur = 0;
+toc.forEach(([p], i) => {
+  if (p <= page) cur = i;
+});
+const from = Math.max(0, Math.min(cur - 3, toc.length - 7));
+const around = toc.slice(from, from + 7).map(([p, name], i) => ({
+  p,
+  name,
+  current: from + i === cur,
+}));
 ---
 
 <Base
   title={`${DOC_NAME[doc]} ${label ? 'p. ' + label : '#' + page}`}
+  short={label ? `p. ${label}` : `#${page}`}
   nav="manual"
   h1="bar"
   back={{ path: 'manual', label: 'Manuals' }}
   wide
 >
-  <div class="crumbs small">
-    <a href={manualHref(doc, 1)}>{DOC_NAME[doc]}</a> ›
-    <span class="mono">{label ? `p. ${label}` : `#${page}`}</span>
+  <nav class="seg docseg" aria-label="Document">
     {
-      sec && (
-        <span>
-          {' '}
-          · <a href={href(`handbook/${sec.key}#pg-${page}`)}>read the transcription</a>
-        </span>
-      )
+      DOCS.map((d) => (
+        <a href={manualHref(d, d === doc ? page : 1)} aria-current={d === doc ? 'page' : undefined}>
+          {SHORT[d]}
+        </a>
+      ))
     }
-  </div>
+  </nav>
   <PageViewer client:load {doc} {page} {meta} count={pageCount(doc)} {text} {title} />
-  <details class="srch">
-    <summary>Search all scans</summary>
-    <ManualSearch client:visible doc={doc} />
-  </details>
+
+  <div class="below">
+    <section>
+      <h2 class="lst-h">Contents</h2>
+      <ul class="lst">
+        {
+          sec && (
+            <li>
+              <a class="lrow" href={href(`handbook/${sec.key}#pg-${page}`)}>
+                <span class="txt">
+                  <span class="ttl">Read the transcription</span>
+                  <span class="sub">{sec.title}, in the Handbook</span>
+                </span>
+                <svg class="chev" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M9 5l7 7-7 7" />
+                </svg>
+              </a>
+            </li>
+          )
+        }
+        {
+          around.map((e) => (
+            <li>
+              <a
+                class="lrow"
+                href={manualHref(doc, e.p)}
+                aria-current={e.current ? 'true' : undefined}
+              >
+                <span class="txt">
+                  <span class="ttl">{e.name}</span>
+                </span>
+                <span class="val mono">{pageLabel(doc, e.p) || `#${e.p}`}</span>
+                <svg class="chev" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M9 5l7 7-7 7" />
+                </svg>
+              </a>
+            </li>
+          ))
+        }
+        <li>
+          <a class="lrow" href={href('manual')}>
+            <span class="txt">
+              <span class="ttl">All contents</span>
+            </span>
+            <svg class="chev" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M9 5l7 7-7 7"></path>
+            </svg>
+          </a>
+        </li>
+      </ul>
+      <p class="gf">Scans are saved on the device as you open them.</p>
+    </section>
+    <section>
+      <h2 class="lst-h">Search</h2>
+      <ManualSearch client:visible doc={doc} />
+    </section>
+  </div>
 </Base>
 
 <style>
-  .crumbs {
-    margin-bottom: 8px;
-    color: var(--muted);
+  .docseg {
+    display: grid;
+    max-width: 480px;
+    margin: 0 0 12px;
   }
-  .srch {
-    margin-top: 16px;
+  .below {
+    display: grid;
+    gap: 0 var(--gap);
+    margin-top: 8px;
   }
-  summary {
-    cursor: pointer;
+  @media (min-width: 1000px) {
+    .below {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      align-items: start;
+    }
+  }
+  .lst,
+  .lst-h,
+  .gf {
+    margin-left: 0;
+    margin-right: 0;
+  }
+  .lrow[aria-current] .ttl {
     color: var(--amber);
+    font-weight: 600;
   }
 </style>

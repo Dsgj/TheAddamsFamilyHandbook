@@ -1,12 +1,16 @@
 ---
 import Base from '~/layouts/Base.astro';
+import DocSeg from '~/components/DocSeg.astro';
 import ManualSearch from '~/components/ManualSearch.svelte';
 import { DOCS, DOC_NAME, DOC_UNIT, pageCount, pageLabel, TOC } from '~/lib/pages';
 import { manualHref } from '~/lib/url';
+
+/** The Manuals index: the segmented links, the OCR search and each document's contents. */
 ---
 
 <Base title="Manuals" nav="manual">
   <h1>Manuals</h1>
+  <DocSeg current="manual" />
   <p class="muted">
     Page scans of the three documents that came with the machine, with OCR text for searching.
   </p>
@@ -14,18 +18,25 @@ import { manualHref } from '~/lib/url';
   <div class="docs">
     {
       DOCS.map((d) => (
-        <section class="card">
-          <h2>
-            <a href={manualHref(d, 1)}>{DOC_NAME[d]}</a>{' '}
-            <span class="muted small">
+        <section>
+          <h2 class="lst-h">
+            <a href={manualHref(d, 1)}>{DOC_NAME[d]}</a>
+            <span class="n">
               {pageCount(d)} {DOC_UNIT[d]}
             </span>
           </h2>
-          <ul class="toc">
+          <ul class="lst">
             {TOC[d].map(([p, name]) => (
               <li>
-                <a href={manualHref(d, p)}>{name}</a>
-                <span class="mono muted small">{pageLabel(d, p) || `#${p}`}</span>
+                <a class="lrow" href={manualHref(d, p)}>
+                  <span class="txt">
+                    <span class="ttl">{name}</span>
+                  </span>
+                  <span class="val mono">{pageLabel(d, p) || `#${p}`}</span>
+                  <svg class="chev" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M9 5l7 7-7 7" />
+                  </svg>
+                </a>
               </li>
             ))}
           </ul>
@@ -33,31 +44,41 @@ import { manualHref } from '~/lib/url';
       ))
     }
   </div>
+  <p class="gf">Scans are saved on the device as you open them.</p>
 </Base>
 
 <style>
   .docs {
     display: grid;
-    gap: var(--gap);
-    margin-top: var(--gap);
+    gap: 0 var(--gap);
+    margin-top: 4px;
   }
   @media (min-width: 900px) {
     .docs {
       grid-template-columns: 1fr 1fr 1fr;
+      align-items: start;
     }
   }
-  .toc {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    columns: 1;
+  .lst,
+  .lst-h,
+  .gf {
+    margin-left: 0;
+    margin-right: 0;
   }
-  .toc li {
+  .lst-h {
     display: flex;
     justify-content: space-between;
     gap: 8px;
-    padding: 3px 0;
-    border-bottom: 1px dashed var(--line);
-    font-size: 0.9rem;
+  }
+  .lst-h a {
+    color: inherit;
+  }
+  .lst-h .n {
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 500;
+  }
+  .lrow {
+    min-height: 44px;
   }
 </style>

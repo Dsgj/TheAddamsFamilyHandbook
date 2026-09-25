@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { untrack } from 'svelte';
+  import { onMount, untrack } from 'svelte';
   import type { DocId } from '~/lib/model/types';
   import { DOC_NAME, pageLabel, tocTitle } from '~/lib/pages';
   import { href, manualHref } from '~/lib/url';
@@ -10,6 +10,14 @@
   let data = $state<Record<DocId, string[]> | null>(null);
   let loading = $state(false);
   let only = $state<DocId | ''>(untrack(() => doc));
+
+  // `/manual?q=flipper` (the Handbook home's "Search the scans for …") runs the search on load.
+  onMount(() => {
+    const m = /[?&]q=([^&]*)/.exec(location.search);
+    if (!m) return;
+    q = decodeURIComponent(m[1]!.replace(/\+/g, ' '));
+    void ensure();
+  });
 
   async function ensure() {
     if (data || loading) return;
