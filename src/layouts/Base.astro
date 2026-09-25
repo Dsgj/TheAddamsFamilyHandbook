@@ -3,24 +3,40 @@ import '~/styles/tokens.css';
 import '~/styles/base.css';
 import { pwaInfo } from 'virtual:pwa-info';
 import { href } from '~/lib/url';
-import { TABS, tabFor } from '~/lib/nav';
+import { PARENT, TABS, tabFor, type BackLink } from '~/lib/nav';
 import { allShoppingItems } from '~/lib/shopping';
-import QuickSearch from '~/components/QuickSearch.svelte';
 import TabBadge from '~/components/TabBadge.svelte';
 
 interface Props {
+  /** The document title. Also the top bar's text unless `heading` says otherwise. */
   title: string;
+  /** The top bar's text when it differs from the document title (e.g. "Switch 32"). */
+  heading?: string;
+  /** A shorter word phones show in place of `heading` (the accessible text stays `heading`). */
+  short?: string;
   description?: string;
   /** Active nav key. */
   nav?: string;
+  /**
+   * Which element is the page's one h1 (spec §6.5). 'large': a tab root; the large title under
+   * the bar is the h1. 'page': the page renders its own h1; the bar's title is decoration.
+   * 'bar': the compact title is the h1.
+   */
+  h1?: 'large' | 'page' | 'bar';
+  /** The back link. Defaults to the nav key's static parent on pushed pages; `null` for none. */
+  back?: BackLink | null;
   wide?: boolean;
   /** Full-bleed page (the map): no gutter or max-width on main, and no footer. */
   fullbleed?: boolean;
 }
 const {
   title,
+  heading = title,
+  short,
   description = 'Offline service companion for The Addams Family pinball.',
   nav,
+  h1 = 'page',
+  back = h1 === 'large' ? null : nav ? PARENT[nav] : null,
   wide,
   fullbleed,
 } = Astro.props;
@@ -28,6 +44,7 @@ const {
 const tab = tabFor(nav);
 /** The Shopping list's candidate keys, so the badge counts exactly what the list shows. */
 const shopKeys = allShoppingItems().map((i) => `${i.kind}:${i.id}`);
+const hasActions = Astro.slots.has('actions');
 ---
 
 <!doctype html>
@@ -99,23 +116,47 @@ const shopKeys = allShoppingItems().map((i) => `${i.kind}:${i.id}`);
         }
       </ul>
     </nav>
-    <header class="top">
-      <div class="top-row">
-        <a class="brand" href={href('')} aria-label="The Addams Family Handbook home">
-          <img
-            class="brand-logo"
-            src={href('brand/logo.webp')}
-            alt="The Addams Family"
-            width="800"
-            height="406"
-            decoding="async"
-          />
-          <span class="brand-sub">Handbook</span>
-        </a>
-        <QuickSearch client:idle />
+    <header class="top" data-h1={h1}>
+      <div class="tb">
+        <div class="lead">
+          {
+            back && (
+              <a class="back" href={href(back.path)}>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M15 5l-7 7 7 7" />
+                </svg>
+                <span>{back.label}</span>
+              </a>
+            )
+          }
+        </div>
+        {
+          h1 === 'bar' ? (
+            <h1 class="ct">
+              <span class:list={['full', { 'has-short': !!short }]}>{heading}</span>
+              {short && (
+                <span class="short" aria-hidden="true">
+                  {short}
+                </span>
+              )}
+            </h1>
+          ) : (
+            <div class="ct" aria-hidden="true">
+              {heading}
+            </div>
+          )
+        }
+        <div class="trail">{hasActions && <slot name="actions" />}</div>
       </div>
     </header>
     <main id="main" class:list={[{ wrap: !fullbleed, wide, fullbleed }]}>
+      {
+        h1 === 'large' && (
+          <div class="lt">
+            <h1>{heading}</h1>
+          </div>
+        )
+      }
       <slot />
     </main>
     {
@@ -132,15 +173,32 @@ const shopKeys = allShoppingItems().map((i) => `${i.kind}:${i.id}`);
     <p id="sw-status" hidden></p>
     <script is:inline>
       (function () {
-        // Interim (until the Phase 5 top bar): publish the sticky header's height as --topbar-h so
-        // the map's fit rule and scroll padding follow the real header.
+        // The large title collapses over the first 52 px of scroll (spec §6.5): the compact
+        // title fades in between 40 and 52 and the hairline appears at 52. Under reduced motion
+        // the titles swap at 52.
         const top = document.querySelector('header.top');
-        if (top && 'ResizeObserver' in window) {
-          const publish = function () {
-            document.documentElement.style.setProperty('--topbar-h', top.offsetHeight + 'px');
+        const lt = document.querySelector('main > .lt');
+        if (top && lt) {
+          const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+          let queued = false;
+          const apply = function () {
+            queued = false;
+            const y = Math.max(0, window.scrollY);
+            const done = y >= 52;
+            const ct = reduce.matches ? (done ? 1 : 0) : Math.min(1, Math.max(0, (y - 40) / 12));
+            const large = reduce.matches ? (done ? 0 : 1) : Math.max(0, 1 - y / 52);
+            top.style.setProperty('--ct', String(ct));
+            lt.style.setProperty('--lt', String(large));
+            top.toggleAttribute('data-collapsed', done);
           };
-          publish();
-          new ResizeObserver(publish).observe(top);
+          const onScroll = function () {
+            if (queued) return;
+            queued = true;
+            requestAnimationFrame(apply);
+          };
+          apply();
+          addEventListener('scroll', onScroll, { passive: true });
+          reduce.addEventListener('change', apply);
         }
         // Reselecting the current tab (spec §6.1): on the tab's root it scrolls to the top and
         // focuses the h1; on a pushed page the link itself goes to the root.
@@ -165,67 +223,3 @@ const shopKeys = allShoppingItems().map((i) => `${i.kind}:${i.id}`);
     </script>
   </body>
 </html>
-
-<style>
-  .top {
-    position: sticky;
-    top: 0;
-    z-index: 20;
-    background: color-mix(in srgb, var(--ground) 92%, transparent);
-    backdrop-filter: blur(8px);
-    border-bottom: 1px solid var(--line);
-  }
-  .top-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 6px var(--pad);
-    max-width: 1120px;
-    margin: 0 auto;
-  }
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: var(--ink);
-    text-decoration: none;
-    white-space: nowrap;
-  }
-  .brand:hover {
-    text-decoration: none;
-  }
-  .brand-logo {
-    height: 40px;
-    width: auto;
-    filter: drop-shadow(0 0 8px var(--amber-glow));
-  }
-  .brand-sub {
-    color: var(--muted);
-    font-size: 0.8rem;
-    display: none;
-  }
-  @media (min-width: 700px) {
-    .brand-logo {
-      height: 44px;
-    }
-    .brand-sub {
-      display: inline;
-    }
-  }
-  /* From 1280 the sidebar carries the logo; the header keeps only the search until Phase 5. */
-  @media (min-width: 1280px) {
-    .brand {
-      display: none;
-    }
-    .top-row {
-      justify-content: flex-end;
-    }
-  }
-  main.wide {
-    max-width: 1400px;
-  }
-  .foot {
-    border-top: 1px solid var(--line);
-    margin-top: 32px;
-  }
-</style>

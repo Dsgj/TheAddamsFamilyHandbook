@@ -98,3 +98,27 @@ export const NAV_TAB: Record<string, TabKey> = {
 };
 
 export const tabFor = (nav?: string): TabKey | undefined => (nav ? NAV_TAB[nav] : undefined);
+
+export interface BackLink {
+  /** Path for `href()`. */
+  path: string;
+  label: string;
+}
+
+/**
+ * The static parent of each pushed page (spec §6.5, the Routes table), keyed by the Base `nav`
+ * key. Tab roots have no parent; ComponentPage and the manual viewer pass their own.
+ */
+export const PARENT: Record<string, BackLink> = {
+  switches: { path: 'tables', label: 'Tables' },
+  lamps: { path: 'tables', label: 'Tables' },
+  coils: { path: 'tables', label: 'Tables' },
+  fuses: { path: 'tables', label: 'Tables' },
+  handbook: { path: 'handbook', label: 'Handbook' },
+  manual: { path: 'handbook', label: 'Handbook' },
+  parts: { path: 'handbook', label: 'Handbook' },
+  shopping: { path: 'workshop', label: 'Workshop' },
+  verify: { path: 'workshop', label: 'Workshop' },
+  setup: { path: 'workshop', label: 'Workshop' },
+  care: { path: 'workshop', label: 'Workshop' },
+};

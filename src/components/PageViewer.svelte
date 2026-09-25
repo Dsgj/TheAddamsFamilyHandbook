@@ -230,7 +230,7 @@
     overflow: auto;
     max-height: 80vh;
     border: 1px solid var(--line);
-    border-radius: var(--r);
+    border-radius: var(--r-xs);
     background: var(--sunk);
     cursor: grab;
     touch-action: pan-x pan-y pinch-zoom;

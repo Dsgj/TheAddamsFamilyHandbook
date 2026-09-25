@@ -245,10 +245,24 @@
       mq.addEventListener('change', h);
       return () => mq.removeEventListener('change', h);
     });
+    // The top bar's buttons (map.astro, spec §6.5): "All parts on the map" opens the parts sheet;
+    // "Find a part" opens it with its field focused below 1000 and focuses the panel's field
+    // from 1000 (Q28).
+    const onBar = (e: Event) => {
+      if (embed) return;
+      const what = (e as CustomEvent<string>).detail;
+      if (what === 'parts') partsOpen = true;
+      else if (what === 'find') {
+        if (wide) el?.closest('.map-ui')?.querySelector<HTMLInputElement>('.panel input.find')?.focus();
+        else partsOpen = true;
+      }
+    };
+    document.addEventListener('tafh:map', onBar);
     return () => {
       ro.disconnect();
       above.disconnect();
       removeEventListener('resize', measureTop);
+      document.removeEventListener('tafh:map', onBar);
       for (const off of offs) off();
     };
   });
@@ -1027,20 +1041,6 @@
           {/if}
         {:else}
           <div class="column">
-            {#if !embed}
-              <button
-                class="glass ibtn parts-btn"
-                type="button"
-                aria-label="All parts on the map"
-                aria-haspopup="dialog"
-                aria-expanded={partsOpen}
-                onclick={() => (partsOpen = true)}
-              >
-                <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true">
-                  <path d="M4 5h12M4 10h12M4 15h12" />
-                </svg>
-              </button>
-            {/if}
             <div class="glass capsule layers" role="group" aria-label="Layers">
               {#each LAYERS as l (l)}
                 <button
@@ -1233,7 +1233,7 @@
     height: auto;
     max-height: calc(100dvh - var(--topbar-h) - var(--tabbar-h) - var(--safe-bot));
     border: 1px solid var(--line);
-    border-radius: var(--r);
+    border-radius: var(--r-xs);
   }
   .canvas {
     position: relative;
@@ -1425,10 +1425,6 @@
       opacity var(--dur-1) var(--ease-standard),
       visibility 0s var(--dur-1);
   }
-  .parts-btn {
-    border-radius: var(--r-md);
-  }
-
   /* The selection sheet's content (spec §7.6). */
   .ph {
     display: flex;

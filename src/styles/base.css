@@ -5,7 +5,7 @@
 }
 html {
   -webkit-text-size-adjust: 100%;
-  scroll-padding-top: calc(var(--nav-h) + 12px);
+  scroll-padding-top: calc(var(--safe-top) + var(--topbar-h) + 12px);
 }
 body {
   margin: 0;
@@ -21,8 +21,10 @@ a {
   color: var(--amber-ink);
   text-decoration: none;
 }
-a:hover {
-  text-decoration: underline;
+@media (hover: hover) {
+  a:hover {
+    text-decoration: underline;
+  }
 }
 h1,
 h2,
@@ -91,6 +93,186 @@ main.fullbleed {
   padding: 0;
   max-width: none;
 }
+/* The top bar (spec §6.5): a sticky compact bar of --topbar-h under the safe area. Tab roots add
+   the large-title row `.lt` under it in the content; the compact title fades in as it collapses
+   (Base.astro drives --ct and --lt from the scroll position). */
+.top {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  padding-top: var(--safe-top);
+  background: var(--bar);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  backdrop-filter: blur(20px) saturate(1.5);
+}
+.top::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: var(--sep);
+}
+.top .tb {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  height: var(--topbar-h);
+  padding: 0 8px;
+}
+.top .lead,
+.top .trail {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+.top .trail {
+  justify-content: flex-end;
+}
+.top .ct {
+  margin: 0;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+  font: 600 17px/22px var(--font-body);
+  letter-spacing: 0;
+  color: var(--ink);
+}
+.top .ct .short {
+  display: none;
+}
+/* On tab roots the compact title and the hairline appear only once the large title has gone. */
+.top[data-h1='large'] .ct {
+  opacity: var(--ct, 0);
+}
+.top[data-h1='large']:not([data-collapsed])::after {
+  opacity: 0;
+}
+.lt {
+  height: 52px;
+  padding: 0 0 5px;
+  display: flex;
+  align-items: flex-end;
+}
+.lt h1 {
+  margin: 0;
+  font: 400 34px/41px var(--font-display);
+  letter-spacing: 0.01em;
+  opacity: var(--lt, 1);
+}
+.back {
+  display: inline-flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 8px 0 2px;
+  color: var(--amber-ink);
+  font-size: 17px;
+  line-height: 22px;
+  white-space: nowrap;
+}
+.back svg {
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.ibtn {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 22px;
+  background: none;
+  color: var(--ink);
+  cursor: pointer;
+}
+.ibtn svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.tlink {
+  display: inline-flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 8px;
+  font-size: 17px;
+  line-height: 22px;
+}
+@media (max-width: 599px) {
+  .top .ct .full.has-short {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+  .top .ct .short {
+    display: inline;
+  }
+}
+/* From 600 the bar carries the title on every page; the large-title row is read, not seen. */
+@media (min-width: 600px) {
+  .top[data-h1='large'] .ct {
+    opacity: 1;
+  }
+  .top[data-h1='large']:not([data-collapsed])::after {
+    opacity: 1;
+  }
+  .lt {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    padding: 0;
+  }
+}
+@media (min-width: 1280px) {
+  .top .tb {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    padding: 0 8px 0 24px;
+  }
+  .top .ct {
+    max-width: none;
+    text-align: left;
+    font: 400 24px/30px var(--font-display);
+    letter-spacing: 0.02em;
+  }
+  .top .lead:empty {
+    display: none;
+  }
+}
+@media (hover: hover) {
+  .ibtn:hover,
+  .back:hover {
+    background: var(--sunk);
+    text-decoration: none;
+  }
+  .back:hover {
+    border-radius: 10px;
+  }
+}
+main.wide {
+  max-width: 1400px;
+}
+.foot {
+  border-top: 1px solid var(--line);
+  margin-top: 32px;
+}
+
 /* Glass surfaces (spec §4): the map controls, hint pills, the zoom readout, the keyboard legend. */
 .glass {
   background: var(--bar);
@@ -152,13 +334,13 @@ main.fullbleed {
 .card {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: var(--r);
+  border-radius: var(--r-xs);
   padding: var(--pad);
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-1);
 }
 .sunk {
   background: var(--sunk);
-  border-radius: var(--r);
+  border-radius: var(--r-xs);
 }
 .muted {
   color: var(--muted);
@@ -181,14 +363,16 @@ main.fullbleed {
   min-height: var(--touch);
   padding: 0 14px;
   border: 1px solid var(--line);
-  border-radius: var(--r);
+  border-radius: var(--r-xs);
   background: var(--sunk);
   color: var(--ink);
   cursor: pointer;
   white-space: nowrap;
 }
-.btn:hover {
-  border-color: var(--brass);
+@media (hover: hover) {
+  .btn:hover {
+    border-color: var(--brass);
+  }
 }
 .btn.primary {
   background: var(--amber);
@@ -213,7 +397,7 @@ main.fullbleed {
   padding: 8px 12px;
   background: var(--sunk);
   border: 1px solid var(--line);
-  border-radius: var(--r);
+  border-radius: var(--r-xs);
 }
 .field:focus {
   border-color: var(--amber);
@@ -262,8 +446,10 @@ table.t th {
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
-table.t tbody tr:hover {
-  background: var(--sunk);
+@media (hover: hover) {
+  table.t tbody tr:hover {
+    background: var(--sunk);
+  }
 }
 
 /* Status colours */
@@ -311,7 +497,7 @@ table.t tbody tr:hover {
   margin: 1em 0;
   padding: 8px;
   background: var(--sunk);
-  border-radius: var(--r);
+  border-radius: var(--r-xs);
 }
 .prose figure.fig img {
   display: block;
@@ -364,7 +550,7 @@ table.t tbody tr:hover {
 .mcard {
   background: var(--sunk);
   border: 1px solid var(--line);
-  border-radius: var(--r);
+  border-radius: var(--r-xs);
   padding: 10px 12px;
 }
 .mhead {

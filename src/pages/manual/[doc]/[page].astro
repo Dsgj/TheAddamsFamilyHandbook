@@ -21,9 +21,15 @@ const title = tocTitle(doc, page);
 const sec = doc === 'ops' ? sectionOfPage(page) : undefined;
 ---
 
-<Base title={`${DOC_NAME[doc]} ${label ? 'p. ' + label : '#' + page}`} nav="manual" wide>
+<Base
+  title={`${DOC_NAME[doc]} ${label ? 'p. ' + label : '#' + page}`}
+  nav="manual"
+  h1="bar"
+  back={{ path: 'manual', label: 'Manuals' }}
+  wide
+>
   <div class="crumbs small">
-    <a href={href('manual')}>Manuals</a> › <a href={manualHref(doc, 1)}>{DOC_NAME[doc]}</a> ›
+    <a href={manualHref(doc, 1)}>{DOC_NAME[doc]}</a> ›
     <span class="mono">{label ? `p. ${label}` : `#${page}`}</span>
     {
       sec && (

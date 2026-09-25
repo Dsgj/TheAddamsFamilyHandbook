@@ -116,7 +116,7 @@
     padding: 8px 10px;
     background: var(--surface);
     border: 1px solid var(--line);
-    border-radius: var(--r);
+    border-radius: var(--r-xs);
     color: var(--ink);
   }
   .hits a:hover {

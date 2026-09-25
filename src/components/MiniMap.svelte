@@ -43,7 +43,7 @@
   .mini {
     position: relative;
     overflow: hidden;
-    border-radius: var(--r);
+    border-radius: var(--r-xs);
     border: 1px solid var(--line);
     background: var(--sunk);
     flex: 0 0 auto;

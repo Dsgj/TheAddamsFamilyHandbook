@@ -19,6 +19,8 @@ const i = list.findIndex((x) => x.id === item.id);
 const prev = list[i - 1];
 const next = list[i + 1];
 const listPath = kind === 'switch' ? 'switches' : kind === 'lamp' ? 'lamps' : 'coils';
+/** The back link's label: the list page's name. */
+const listLabel = kind === 'switch' ? 'Switches' : kind === 'lamp' ? 'Lamps' : 'Solenoids';
 const layer = MAP_LAYER[kind];
 
 /** Owner appendices that apply to this component, resolved to their Handbook headings. */
@@ -36,10 +38,13 @@ const svc = serviceNotes(kind, item)
   .filter((n) => n.h);
 ---
 
-<Base title={`${KIND_LABEL[kind]} ${item.id} ${item.name}`} nav={listPath}>
-  <div class="crumbs small muted">
-    <a href={href(listPath)}>{KIND_LABEL[kind]}s</a> › <span class="mono">{item.id}</span>
-  </div>
+<Base
+  title={`${KIND_LABEL[kind]} ${item.id} ${item.name}`}
+  heading={`${KIND_LABEL[kind]} ${item.id}`}
+  nav={listPath}
+  h1="bar"
+  back={{ path: listPath, label: listLabel }}
+>
   <ComponentCard client:load {kind} {item} mapMeta={DATA.maps[layer]} linkTitle={false} />
   {
     notes.length > 0 && (
@@ -99,9 +104,6 @@ const svc = serviceNotes(kind, item)
     display: flex;
     flex-wrap: wrap;
     gap: 4px 12px;
-  }
-  .crumbs {
-    margin-bottom: 8px;
   }
   .pn {
     display: flex;

@@ -209,7 +209,7 @@
     label="About this handbook"
     title="About this handbook"
     detent="medium"
-    recede="header.top, .hub-body, .hub > h1, .hub > .gf, footer.foot"
+    recede="header.top, .hub-body, main > .lt, .hub > .gf, footer.foot"
     onclose={() => (about = false)}
   >
     <div class="about">

@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { gotoHydrated } from './helpers';
 
-/** Phase 4 of the app redesign: the navigation shell (tab bar, rail, sidebar). */
+/** Phases 4 and 5 of the app redesign: the navigation shell and the top bar. */
 
 const TAB_ORDER = ['Diagnose', 'Map', 'Tables', 'Handbook', 'Workshop'];
 const nav = (page: Page) => page.getByRole('navigation', { name: 'Sections' });
@@ -101,8 +101,10 @@ test.describe('phone tab bar', () => {
     page,
   }) => {
     await gotoHydrated(page, '/parts');
-    await page.evaluate(() => window.scrollTo(0, 600));
-    expect(await page.evaluate(() => scrollY)).toBeGreaterThan(0);
+    // The table may still be laying out right after hydration, so keep scrolling until it takes.
+    await expect
+      .poll(() => page.evaluate(() => (window.scrollTo(0, 600), scrollY)))
+      .toBeGreaterThan(0);
     await tabs(page).filter({ hasText: 'Handbook' }).click();
     await expect(page).toHaveURL(/\/handbook$/);
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
@@ -191,5 +193,185 @@ test.describe('sidebar', () => {
       'Shopping list 1 parts to order',
     );
     await expect(page.getByRole('status')).toHaveCount(0);
+  });
+});
+
+/* Phase 5: the top bar, back links and the large title. */
+
+const BAR = 'header.top';
+const headerBox = (page: Page) => box(page, BAR);
+const scrollPaddingTop = (page: Page) =>
+  page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop));
+const opacity = (page: Page, sel: string) =>
+  page.locator(sel).evaluate((el) => parseFloat(getComputedStyle(el).opacity));
+/** Gives the page room to scroll so the collapse can be driven. */
+const makeTall = (page: Page) =>
+  page.evaluate(() => (document.body.style.paddingBottom = '2000px'));
+const scrollTo = (page: Page, y: number) =>
+  page.evaluate((y) => window.scrollTo({ top: y, behavior: 'instant' as ScrollBehavior }), y);
+
+test.describe('top bar on phones', () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+
+  for (const path of ['/', '/tables', '/handbook', '/workshop']) {
+    test(`${path}: the large title is the h1 and collapses over 52 px`, async ({ page }) => {
+      await gotoHydrated(page, path);
+      const h1 = page.getByRole('heading', { level: 1 });
+      await expect(h1).toHaveCount(1);
+      await expect(page.locator('main > .lt h1')).toBeVisible();
+      const compact = page.locator(`${BAR} .ct`);
+      await expect(compact).toHaveAttribute('aria-hidden', 'true');
+      await expect(compact).toHaveText(await h1.innerText());
+      expect(await opacity(page, `${BAR} .ct`)).toBe(0);
+      await expect(page.locator(BAR)).not.toHaveAttribute('data-collapsed', /.*/);
+      await makeTall(page);
+      await scrollTo(page, 46);
+      await expect.poll(() => opacity(page, `${BAR} .ct`)).toBeCloseTo(0.5, 1);
+      await scrollTo(page, 52);
+      await expect.poll(() => opacity(page, `${BAR} .ct`)).toBe(1);
+      await expect(page.locator(BAR)).toHaveAttribute('data-collapsed', '');
+      await expect.poll(() => opacity(page, 'main > .lt h1')).toBe(0);
+      await scrollTo(page, 0);
+      await expect.poll(() => opacity(page, `${BAR} .ct`)).toBe(0);
+      await expect(page.locator(BAR)).not.toHaveAttribute('data-collapsed', /.*/);
+    });
+  }
+
+  test('reduced motion swaps the titles at 52 with no fade', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await gotoHydrated(page, '/tables');
+    await makeTall(page);
+    await scrollTo(page, 48);
+    await expect.poll(() => opacity(page, `${BAR} .ct`)).toBe(0);
+    await expect.poll(() => opacity(page, 'main > .lt h1')).toBe(1);
+    await scrollTo(page, 52);
+    await expect.poll(() => opacity(page, `${BAR} .ct`)).toBe(1);
+    await expect.poll(() => opacity(page, 'main > .lt h1')).toBe(0);
+  });
+
+  test('the bar is 44 tall and the skip link is first and targets #main', async ({ page }) => {
+    await gotoHydrated(page, '/switches');
+    const bar = await headerBox(page);
+    expect(bar.y).toBe(0);
+    expect(bar.height).toBe(44);
+    await page.keyboard.press('Tab');
+    const skip = page.getByRole('link', { name: 'Skip to content' });
+    await expect(skip).toBeFocused();
+    await expect(skip).toHaveAttribute('href', '#main');
+  });
+
+  test('a page with its own h1 keeps it; the bar title is decoration', async ({ page }) => {
+    await gotoHydrated(page, '/switches');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
+    await expect(page.locator(`${BAR} .ct`)).toHaveAttribute('aria-hidden', 'true');
+    await expect(page.locator(`${BAR} h1`)).toHaveCount(0);
+    await expect(page.locator('main > .lt')).toHaveCount(0);
+  });
+
+  for (const [path, parent, label] of [
+    ['/switch/32', '/switches', 'Switches'],
+    ['/lamp/11', '/lamps', 'Lamps'],
+    ['/coil/01', '/coils', 'Solenoids'],
+    ['/switches', '/tables', 'Tables'],
+    ['/lamps', '/tables', 'Tables'],
+    ['/coils', '/tables', 'Tables'],
+    ['/fuses', '/tables', 'Tables'],
+    ['/handbook/menus', '/handbook', 'Handbook'],
+    ['/manual', '/handbook', 'Handbook'],
+    ['/parts', '/handbook', 'Handbook'],
+    ['/manual/ops/25', '/manual', 'Manuals'],
+    ['/shopping', '/workshop', 'Workshop'],
+    ['/verify', '/workshop', 'Workshop'],
+    ['/setup', '/workshop', 'Workshop'],
+    ['/care', '/workshop', 'Workshop'],
+  ] as const) {
+    test(`${path} has a back link to ${parent}`, async ({ page }) => {
+      await gotoHydrated(page, path);
+      const back = page.locator(`${BAR} a.back`);
+      await expect(back).toHaveCount(1);
+      await expect(back).toHaveText(label);
+      await expect(back).toHaveAttribute('href', new RegExp(`${parent}$`));
+      expect((await back.boundingBox())!.height).toBe(44);
+    });
+  }
+
+  for (const path of ['/', '/map', '/tables', '/handbook', '/workshop']) {
+    test(`${path} has no back link`, async ({ page }) => {
+      await gotoHydrated(page, path);
+      await expect(page.locator(`${BAR} a.back`)).toHaveCount(0);
+    });
+  }
+
+  test('component pages and the viewer take the compact title as their h1', async ({ page }) => {
+    await gotoHydrated(page, '/switch/32');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Switch 32');
+    await expect(page.locator(`${BAR} h1.ct`)).toHaveCount(1);
+    await gotoHydrated(page, '/manual/ops/25');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(/p\. /);
+  });
+
+  test('/map: the h1 reads "Playfield map", shows "Map", and has both bar buttons', async ({
+    page,
+  }) => {
+    await gotoHydrated(page, '/map');
+    const h1 = page.getByRole('heading', { level: 1 });
+    await expect(h1).toHaveAccessibleName('Playfield map');
+    await expect(h1.locator('.short')).toBeVisible();
+    await expect(h1.locator('.short')).toHaveText('Map');
+    await expect(page.locator('main > .lt')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Find a part' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'All parts on the map' })).toBeVisible();
+    await page.getByRole('button', { name: 'Find a part' }).click();
+    const dialog = page.getByRole('dialog', { name: 'All parts on the map' });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole('searchbox', { name: 'Find a part' })).toBeFocused();
+  });
+
+  test('/handbook/menus anchors land below the bar', async ({ page }) => {
+    await gotoHydrated(page, '/handbook/menus#p17-2');
+    const bar = await headerBox(page);
+    await expect
+      .poll(() => page.locator('#p17-2').evaluate((el) => el.getBoundingClientRect().top))
+      .toBeGreaterThanOrEqual(bar.y + bar.height - 1);
+    expect(Math.abs((await scrollPaddingTop(page)) - (bar.height + 12))).toBeLessThanOrEqual(1);
+  });
+});
+
+test.describe('top bar from 600', () => {
+  test('is 50 tall on tablets and 56 on desktops, and carries the title', async ({ page }) => {
+    await page.setViewportSize({ width: 820, height: 1180 });
+    await gotoHydrated(page, '/tables');
+    expect((await headerBox(page)).height).toBe(50);
+    expect(await opacity(page, `${BAR} .ct`)).toBe(1);
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Tables');
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await gotoHydrated(page, '/tables');
+    expect((await headerBox(page)).height).toBe(56);
+    expect(await opacity(page, `${BAR} .ct`)).toBe(1);
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Tables');
+  });
+
+  test('/map at 1440: "Find a part" focuses the panel field; no "All parts" button', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await gotoHydrated(page, '/map');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveAccessibleName('Playfield map');
+    await expect(page.locator('header.top h1 .short')).toBeHidden();
+    await expect(page.getByRole('button', { name: 'All parts on the map' })).toHaveCount(0);
+    await page.getByRole('button', { name: 'Find a part' }).click();
+    await expect(
+      page.getByRole('complementary').getByRole('searchbox', { name: 'Find a part' }),
+    ).toBeFocused();
+  });
+
+  test('/handbook/menus anchors land below the bar at 1440', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await gotoHydrated(page, '/handbook/menus#p17-2');
+    const bar = await headerBox(page);
+    await expect
+      .poll(() => page.locator('#p17-2').evaluate((el) => el.getBoundingClientRect().top))
+      .toBeGreaterThanOrEqual(bar.y + bar.height - 1);
+    expect(Math.abs((await scrollPaddingTop(page)) - (bar.height + 12))).toBeLessThanOrEqual(1);
   });
 });

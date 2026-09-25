@@ -20,10 +20,10 @@ const setupIds = SETUP_STEPS.flatMap((s) => s.items.map((i) => i.id));
 <Base
   title="Workshop"
   nav="workshop"
+  h1="large"
   description="The shopping list, verification, care and setup, plus this device's settings and data."
 >
   <div class="hub" data-hub="workshop">
-    <h1>Workshop</h1>
     <WorkshopHub
       client:load
       items={allShoppingItems()}
