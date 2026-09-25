@@ -1,0 +1,48 @@
+<script lang="ts">
+  /**
+   * The Workshop tab's badge (spec §6.2) and the sidebar's Shopping-list count pill (§6.4). Both
+   * count the rows the Shopping list would show: every component marked Fault that has an
+   * orderable entry (the same count the Workshop hub shows), read from the status store so a Fault
+   * marked on the page updates the badge live. Nothing renders until the count is known on the
+   * device, and nothing renders at 0. The badge is `aria-hidden`; the link's name carries the count
+   * ("Workshop, 4 on the shopping list"). The pill is plain text with sr-only words, never a status.
+   */
+  import { onMount } from 'svelte';
+  import { allStatuses } from '~/lib/model/status.svelte';
+
+  let { keys, pill = false }: { keys: string[]; pill?: boolean } = $props();
+
+  let hydrated = $state(false);
+  let host = $state<HTMLElement | null>(null);
+
+  const known = new Set(keys);
+  const count = $derived(
+    hydrated ? allStatuses().filter((s) => s.status === 'fault' && known.has(s.id)).length : 0,
+  );
+
+  onMount(() => (hydrated = true));
+
+  $effect(() => {
+    if (pill || !host) return;
+    const link = host.closest('a');
+    if (!link) return;
+    if (count) link.setAttribute('aria-label', `Workshop, ${count} on the shopping list`);
+    else link.removeAttribute('aria-label');
+  });
+</script>
+
+{#if pill}
+  {#if count}
+    <span class="cnt">{count}<span class="sr-only"> parts to order</span></span>
+  {/if}
+{:else}
+  <span class="badge-host" bind:this={host} aria-hidden="true">
+    {#if count}<span class="badge" aria-hidden="true">{count}</span>{/if}
+  </span>
+{/if}
+
+<style>
+  .badge-host {
+    display: contents;
+  }
+</style>

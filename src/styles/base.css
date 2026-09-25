@@ -13,6 +13,9 @@ body {
   color: var(--ink);
   font: 16px/1.5 var(--font-body);
   min-height: 100dvh;
+  /* The navigation shell (spec §6): the tab bar below, the rail or sidebar to the left. */
+  padding-left: var(--shell-w);
+  padding-bottom: calc(var(--tabbar-h) + var(--safe-bot));
 }
 a {
   color: var(--amber-ink);
@@ -101,7 +104,7 @@ main.fullbleed {
    every page, above the map controls, letting taps through except on its Reload button. */
 #sw-status {
   position: fixed;
-  left: 12px;
+  left: calc(var(--shell-w) + 12px);
   right: 12px;
   bottom: calc(var(--tabbar-h) + var(--safe-bot) + 10px);
   z-index: 40;
@@ -713,8 +716,233 @@ table.t tr.row-fault td:first-child {
   margin-top: 10px;
 }
 
+/* The navigation shell (spec §6.2–§6.4): one `nav aria-label="Sections"` in three forms. Global so
+   the TabBadge island's spans get their styles too. */
+.shell {
+  position: fixed;
+  z-index: 30;
+}
+.shell ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.shell a {
+  text-decoration: none;
+}
+.shell .tab {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.shell .ico {
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.shell .badge {
+  position: absolute;
+  top: 3px;
+  left: calc(50% + 5px);
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--amber-fill);
+  color: var(--on-amber);
+  font: 500 11px/18px var(--font-mono);
+  text-align: center;
+  box-shadow: 0 0 0 2px var(--ground);
+}
+.shell-logo,
+.shell .subs {
+  display: none;
+}
+/* Phone tab bar (§6.2): 49 tall plus the safe area, five slots. */
+@media (max-width: 599px) {
+  .shell {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding-bottom: var(--safe-bot);
+    background: var(--bar);
+    -webkit-backdrop-filter: blur(20px) saturate(1.5);
+    backdrop-filter: blur(20px) saturate(1.5);
+    box-shadow: 0 -1px 0 var(--sep);
+  }
+  .shell .tabs {
+    display: flex;
+    justify-content: center;
+    height: var(--tabbar-h);
+  }
+  .shell .tabs > li {
+    flex: 1 1 0;
+    max-width: 96px;
+  }
+  .shell .tab {
+    height: var(--tabbar-h);
+    padding-top: 6px;
+    gap: 3px;
+    color: var(--faint);
+  }
+  .shell .ico {
+    width: 26px;
+    height: 26px;
+  }
+  .shell .lbl {
+    font-size: 11px;
+    line-height: 13px;
+    font-weight: 500;
+  }
+  .shell .tab[aria-current='page'] {
+    color: var(--amber-ink);
+    filter: drop-shadow(0 0 6px var(--amber-glow));
+  }
+}
+/* Rail, 600–1279 (§6.3): 80 wide, items 80×64, the current icon on a 56×32 pill. */
+@media (min-width: 600px) {
+  .shell {
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: var(--shell-w);
+    padding-top: calc(var(--safe-top) + 40px);
+    background: var(--surface);
+    box-shadow: 1px 0 0 var(--sep);
+    overflow-y: auto;
+  }
+  .shell .tabs {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .shell .tab {
+    width: var(--rail-w);
+    height: 64px;
+    justify-content: center;
+    gap: 2px;
+    color: var(--muted);
+  }
+  .shell .ico {
+    width: 56px;
+    height: 32px;
+    padding: 4px 16px;
+    border-radius: 16px;
+  }
+  .shell .lbl {
+    font-size: 12px;
+    line-height: 16px;
+  }
+  .shell .tab[aria-current='page'] {
+    color: var(--amber-ink);
+    font-weight: 600;
+  }
+  .shell .tab[aria-current='page'] .ico {
+    background: var(--tint);
+  }
+  .shell .badge {
+    left: calc(50% + 7px);
+    box-shadow: 0 0 0 2px var(--surface);
+  }
+  @media (hover: hover) {
+    .shell .tab:hover,
+    .shell .sub:hover {
+      background: var(--sunk);
+    }
+    .shell .tab:hover {
+      border-radius: 10px;
+    }
+  }
+}
+/* Sidebar, from 1280 (§6.4): 256 wide, the logo, top-level rows of 44 and sub-rows of 36. */
+@media (min-width: 1280px) {
+  .shell {
+    padding: calc(var(--safe-top) + 18px) 16px 16px;
+  }
+  .shell-logo {
+    display: block;
+    width: 160px;
+    margin: 0 0 12px 8px;
+  }
+  .shell-logo img {
+    display: block;
+    width: 160px;
+    height: 81px;
+    filter: drop-shadow(0 0 8px var(--amber-glow));
+  }
+  .shell .tabs {
+    gap: 8px;
+  }
+  .shell .tab {
+    flex-direction: row;
+    justify-content: flex-start;
+    width: auto;
+    height: 44px;
+    padding: 0 12px;
+    gap: 12px;
+    border-radius: 10px;
+    color: var(--ink);
+  }
+  .shell .tab .lbl {
+    font-size: 15px;
+    line-height: 20px;
+    font-weight: 500;
+  }
+  .shell .ico {
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border-radius: 0;
+  }
+  .shell .tab[aria-current='page'] {
+    background: var(--tint);
+  }
+  .shell .tab[aria-current='page'] .ico {
+    background: none;
+  }
+  .shell .tab[aria-current='page'] .lbl {
+    font-weight: 600;
+  }
+  .shell .badge {
+    display: none;
+  }
+  .shell .subs {
+    display: block;
+  }
+  .shell .sub {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 36px;
+    padding: 0 12px 0 46px;
+    border-radius: 8px;
+    font-size: 15px;
+    line-height: 20px;
+    color: var(--muted);
+  }
+  .shell .sub[aria-current='page'] {
+    color: var(--amber-ink);
+    font-weight: 600;
+  }
+  .shell .cnt {
+    margin-left: auto;
+    height: 20px;
+    padding: 0 7px;
+    border-radius: 10px;
+    background: var(--tint);
+    color: var(--amber-ink);
+    font: 12px/20px var(--font-mono);
+  }
+}
+
 @media print {
   :root {
+    --tabbar-h: 0px;
+    --shell-w: 0px;
     --ground: #fff;
     --surface: #fff;
     --sunk: #f2f2f2;
@@ -737,7 +965,7 @@ table.t tr.row-fault td:first-child {
     color: #000;
     font-size: 12px;
   }
-  .nav,
+  .shell,
   .btn,
   .field,
   .foot,

@@ -114,12 +114,14 @@
 
   /* Spec §1.3: layout. The safe areas fall back to 0 (viewport-fit=cover is set; Playwright has
      no inset). --topbar-h is the phone value here; Base.astro publishes the measured height of
-     the interim sticky header until the Phase 5 top bar exists. --tabbar-h is 0 until the Phase 4
-     tab bar ships. */
+     the interim sticky header until the Phase 5 top bar exists. --tabbar-h is the phone tab bar (49) and
+     0 from 600; --shell-w is the shell's left column: 0, the rail (80) from 600, the sidebar (256)
+     from 1280 (spec §6). */
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bot: env(safe-area-inset-bottom, 0px);
   --topbar-h: 44px;
-  --tabbar-h: 0px;
+  --tabbar-h: 49px;
+  --shell-w: 0px;
   --sheet-peek: 96px;
   --rail-w: 80px;
   --sidebar-w: 256px;
@@ -139,12 +141,15 @@
 @media (min-width: 600px) {
   :root {
     --topbar-h: 50px;
+    --tabbar-h: 0px;
+    --shell-w: var(--rail-w);
   }
 }
 @media (min-width: 1280px) {
   :root {
     --topbar-h: 56px;
     --panel-w: 420px;
+    --shell-w: var(--sidebar-w);
   }
 }
 

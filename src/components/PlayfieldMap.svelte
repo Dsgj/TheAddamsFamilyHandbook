@@ -1887,9 +1887,9 @@
   @media (max-width: 999px) {
     .map-ui:not(.embed) .calib {
       position: fixed;
-      left: 0;
+      left: var(--shell-w);
       right: 0;
-      bottom: 0;
+      bottom: calc(var(--tabbar-h) + var(--safe-bot));
       z-index: 30;
       margin: 0;
       max-height: min(470px, 60dvh);
@@ -1898,7 +1898,7 @@
       border-color: transparent;
       background: var(--sheet);
       box-shadow: var(--shadow-sheet);
-      padding-bottom: calc(var(--pad) + var(--safe-bot));
+      padding-bottom: var(--pad);
     }
   }
   @media (prefers-reduced-motion: reduce) {
