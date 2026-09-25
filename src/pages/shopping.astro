@@ -22,51 +22,87 @@ const items = allShoppingItems();
   </p>
   <ShoppingList client:load items={items} />
   <section class="kit">
-    <h2>Service kit</h2>
-    <p class="muted small">
-      What the yearly round and the appendices assume is on the bench. Same for every device, so it
-      is not tracked here.
-    </p>
-    <ul class="small">
-      <li>
-        <strong>Multimeter</strong> with a resistance range that reads below 10 Ω cleanly, for coils across
-        the lugs, fuses, and the 5 V, 12 V, 20 V and 50 V test points.
+    <h2 class="lst-h">Service kit</h2>
+    <ul class="lst">
+      <li class="lrow static">
+        <span class="txt"
+          ><strong>Multimeter</strong> with a resistance range that reads below 10 Ω cleanly, for coils
+          across the lugs, fuses, and the 5 V, 12 V, 20 V and 50 V test points.</span
+        >
       </li>
-      <li>
-        <strong>Trifurcon crimp terminals</strong>, .156 inch for the driver board power and lamp
-        connectors and .100 inch for the switch and logic connectors, with matching housings and
-        square-pin headers, and a ratchet crimp tool made for them. A browned or loose connector is
-        replaced, never sprayed.
+      <li class="lrow static">
+        <span class="txt"
+          ><strong>Trifurcon crimp terminals</strong>, .156 inch for the driver board power and lamp
+          connectors and .100 inch for the switch and logic connectors, with matching housings and
+          square-pin headers, and a ratchet crimp tool made for them. A browned or loose connector
+          is replaced, never sprayed.</span
+        >
       </li>
-      <li>
-        <strong>Contact cleaner</strong>: DeoxIT D5 spray, or the European one-can equivalent
-        Kontakt 60 PLUS. Plain Kontakt 60 only with the WL rinse and 61 protectant its maker calls
-        for. For intact, merely dirty connectors only.
+      <li class="lrow static">
+        <span class="txt"
+          ><strong>Contact cleaner</strong>: DeoxIT D5 spray, or the European one-can equivalent
+          Kontakt 60 PLUS. Plain Kontakt 60 only with the WL rinse and 61 protectant its maker calls
+          for. For intact, merely dirty connectors only.</span
+        >
       </li>
-      <li>
-        <strong>DeoxIT D100L</strong> or another liquid deoxidizer, for the edge connectors and pin headers
-        you can brush.
+      <li class="lrow static">
+        <span class="txt"
+          ><strong>DeoxIT D100L</strong> or another liquid deoxidizer, for the edge connectors and pin
+          headers you can brush.</span
+        >
       </li>
-      <li>
-        <strong>Isopropyl alcohol</strong> and lint-free wipes, for boards and playfield plastics.
+      <li class="lrow static">
+        <span class="txt"
+          ><strong>Isopropyl alcohol</strong> and lint-free wipes, for boards and playfield plastics.</span
+        >
       </li>
-      <li>
-        <strong>Card stock</strong> for switch contacts: close the switch on it and pull it through. No
-        files, no sandpaper, no spray on switches.
+      <li class="lrow static">
+        <span class="txt"
+          ><strong>Card stock</strong> for switch contacts: close the switch on it and pull it through.
+          No files, no sandpaper, no spray on switches.</span
+        >
       </li>
-      <li>
-        <strong>Soldering iron</strong> with a fine tip, 60/40 or 63/37 leaded solder, desoldering braid,
-        and a header pin extractor for the driver board's IDC connectors.
+      <li class="lrow static">
+        <span class="txt"
+          ><strong>Soldering iron</strong> with a fine tip, 60/40 or 63/37 leaded solder, desoldering
+          braid, and a header pin extractor for the driver board's IDC connectors.</span
+        >
       </li>
-      <li>
-        <strong>Spares</strong> that pay for themselves: a set of fuses in every rating on the Fuse List,
-        #44 or #47 lamps, #906 flashers, flipper links, a coil sleeve or two, and a 1N4004 diode strip.
+      <li class="lrow static">
+        <span class="txt"
+          ><strong>Spares</strong> that pay for themselves: a set of fuses in every rating on the Fuse
+          List, #44 or #47 lamps, #906 flashers, flipper links, a coil sleeve or two, and a 1N4004 diode
+          strip.</span
+        >
       </li>
     </ul>
-    <p class="small">
-      Why each one, and what not to buy, is in
+    <p class="gf">
+      What the yearly round and the appendices assume is on the bench; the same for every device, so
+      it is not tracked here. Why each one, and what not to buy, is in
       <a href={href(`handbook/appendix#${appendixAnchor('A7')}`)}>A7 Connectors and cleaning</a>.
     </p>
   </section>
   <DeviceData client:load />
 </Base>
+
+<style>
+  .kit {
+    margin-top: 24px;
+  }
+  .lst,
+  .lst-h,
+  .gf {
+    margin-left: 0;
+    margin-right: 0;
+  }
+  .kit .lrow {
+    align-items: flex-start;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    font-size: 15px;
+    line-height: 20px;
+  }
+  .kit .txt {
+    display: block;
+  }
+</style>
