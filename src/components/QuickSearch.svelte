@@ -126,8 +126,8 @@
     list-style: none;
     background: var(--surface);
     border: 1px solid var(--line);
-    border-radius: var(--r);
-    box-shadow: var(--shadow);
+    border-radius: var(--r-xs);
+    box-shadow: var(--shadow-1);
     z-index: 30;
     max-height: 60vh;
     overflow: auto;

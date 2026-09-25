@@ -1,11 +1,12 @@
 ---
 import Base from '~/layouts/Base.astro';
 import Diagnose from '~/components/Diagnose.svelte';
+import QuickSearch from '~/components/QuickSearch.svelte';
 import { href } from '~/lib/url';
 ---
 
-<Base title="Diagnose" nav="diagnose">
-  <h1>Diagnose</h1>
+<Base title="Diagnose" nav="diagnose" h1="large">
+  <QuickSearch client:idle />
   <p class="muted">
     Type the numbers from the Test Report (T.1 Switch Edges, T.2 Switch Levels) or a message from
     the display, and get each component with wiring, location and a shared-cause check.

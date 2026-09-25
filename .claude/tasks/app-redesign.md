@@ -397,7 +397,15 @@ Some things open as sheets with no URL of their own: Show on map, Add to shoppin
   - `#sw-status` (forced visible in the test) sits 10 above the tab bar at 390×844 and doesn't cover any tab.
 - **Verify.** The gauntlet, plus `pnpm exec playwright test tests/e2e/shell.spec.ts tests/e2e/map.spec.ts`. New checks: which navigation form shows per width, `aria-current` per route, the badge name, 44 px tabs.
 
-### [ ] Phase 5: top bar, back links and token migration
+### [x] Phase 5: top bar, back links and token migration
+
+**Done 2026-09-25.** Deviations and notes:
+- One `header.top` for every page, driven by a `h1` prop on Base (`large` | `page` | `bar`). Tab roots render the large title in `main > .lt` and Base's inline script drives `--ct`/`--lt` from the scroll position (40–52 fade, hairline at 52, reduced motion swaps at 52). From 600 the `.lt` row is clipped (sr-only style) so the bar carries the title, and the compact title is always opaque.
+- Back links come from `PARENT` in `~/lib/nav` by nav key; ComponentPage, the manual viewer and 404 pass explicit `back` props (component pages use the plural list label: Switches, Lamps, Solenoids). The manual viewer keeps a one-line doc link under the bar so the doc is still reachable.
+- The old header brand row, its QuickSearch mount and the `--topbar-h` ResizeObserver are gone; the token is static per breakpoint. QuickSearch mounts on `index.astro` until Phase 6 replaces it. Q10 sidebar search still omitted.
+- The Map's bar buttons live in `map.astro`'s `actions` slot and talk to the island through a `tafh:map` CustomEvent (`find` focuses the panel field on wide layouts, otherwise opens the sheet; `parts` opens the sheet). The interim in-map "All parts" glass button is removed.
+- Tokens: `--r`, `--nav-h` and `--shadow` removed; all uses renamed to `--r-xs`, `--safe-top + --topbar-h`, `--shadow-1`. Every hover rule now sits inside `@media (hover: hover)`.
+- Tests: `tests/e2e/shell.spec.ts` gained the Phase 5 block (collapse, reduced motion, back-link table, map bar buttons, anchors under the bar, 50/56 bar heights). The reselect test polls the initial scroll because the parts table can still be laying out right after hydration.
 
 - **Goal.** The board's top bar on every page:
   - a large title that collapses, on tab roots;

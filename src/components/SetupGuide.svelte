@@ -135,7 +135,7 @@
     min-width: 1.6em;
     text-align: center;
     border: 1px solid var(--brass);
-    border-radius: var(--r);
+    border-radius: var(--r-xs);
     color: var(--brass);
     font-size: 0.8em;
     margin-right: 4px;

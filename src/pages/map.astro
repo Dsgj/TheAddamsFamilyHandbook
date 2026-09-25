@@ -3,7 +3,42 @@ import Base from '~/layouts/Base.astro';
 import PlayfieldMap from '~/components/PlayfieldMap.svelte';
 ---
 
-<Base title="Playfield map" nav="map" fullbleed>
-  <h1 class="sr-only">Playfield map</h1>
+<Base title="Playfield map" short="Map" nav="map" h1="bar" fullbleed>
+  <Fragment slot="actions">
+    <button class="ibtn" type="button" aria-label="Find a part" data-map="find">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="11" cy="11" r="7" /><path d="M20 20l-4-4" />
+      </svg>
+    </button>
+    <button
+      class="ibtn narrow"
+      type="button"
+      aria-label="All parts on the map"
+      aria-haspopup="dialog"
+      data-map="parts"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 6h16M4 12h16M4 18h16" />
+      </svg>
+    </button>
+  </Fragment>
   <PlayfieldMap client:load />
 </Base>
+
+<style>
+  /* From 1000 the side panel holds the list (spec §6.5). */
+  @media (min-width: 1000px) {
+    .narrow {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  // The bar's buttons talk to the PlayfieldMap island through one document event.
+  for (const b of document.querySelectorAll<HTMLButtonElement>('button[data-map]')) {
+    b.addEventListener('click', () =>
+      document.dispatchEvent(new CustomEvent('tafh:map', { detail: b.dataset.map })),
+    );
+  }
+</script>

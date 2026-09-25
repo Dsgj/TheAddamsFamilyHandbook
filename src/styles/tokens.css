@@ -65,7 +65,6 @@
   --warn: #e3b557;
   --dmd-well: #0a0709;
   --scan-filter: invert(0.9) hue-rotate(180deg);
-  --shadow: 0 1px 0 rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
 
   /* App redesign, spec §1.1: surfaces, tints and elevation. */
   --raised: #221d26;
@@ -100,11 +99,9 @@
   --font-body: 'IBM Plex Sans', system-ui, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
 
-  --r: 6px;
   --gap: 12px;
   --pad: 16px;
   --touch: 44px;
-  --nav-h: 52px;
 
   /* Spec §4: radii. --r stays until Phase 5. */
   --r-xs: 6px;
@@ -169,7 +166,6 @@
   --warn: #875e06;
   --dmd-well: #17121a;
   --scan-filter: none;
-  --shadow: 0 1px 0 rgba(28, 23, 32, 0.08), 0 6px 18px rgba(28, 23, 32, 0.12);
   --raised: #fffcf5;
   --cell: #fffcf5;
   --sheet: #f3eee2;
@@ -217,7 +213,6 @@
     --warn: #875e06;
     --dmd-well: #17121a;
     --scan-filter: none;
-    --shadow: 0 1px 0 rgba(28, 23, 32, 0.08), 0 6px 18px rgba(28, 23, 32, 0.12);
     --raised: #fffcf5;
     --cell: #fffcf5;
     --sheet: #f3eee2;
