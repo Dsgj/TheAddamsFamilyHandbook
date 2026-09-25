@@ -23,7 +23,7 @@ export interface ShoppingGroup {
 }
 
 export const NO_PART = 'no part number';
-const KIND_ORDER: Kind[] = ['lamp', 'switch', 'coil'];
+export const KIND_ORDER: Kind[] = ['lamp', 'switch', 'coil'];
 export const KIND_TITLE: Record<Kind, string> = {
   lamp: 'Lamps',
   switch: 'Switches',

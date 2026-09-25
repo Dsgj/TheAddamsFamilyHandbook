@@ -148,17 +148,22 @@
     padding: 0;
     margin: 0;
   }
+  /* Rows are at least 44px tall with a 44px tick target (spec §8.3). */
   .item {
     display: grid;
     grid-template-columns: var(--touch) 1fr;
     gap: 4px;
-    padding: 10px 0;
+    min-height: 44px;
+    padding: 6px 0;
     border-top: 1px solid var(--line);
   }
   .tick {
     display: flex;
+    align-items: center;
     justify-content: center;
-    padding-top: 4px;
+    min-height: 44px;
+    align-self: start;
+    cursor: pointer;
   }
   .tick input {
     width: 22px;

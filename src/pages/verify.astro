@@ -12,7 +12,7 @@ const groups = [...new Set(ITEMS.map((i) => i.group))];
   <h1>Verify in the machine</h1>
   <p class="muted">
     Places where the manual, the parts list and the scans disagree, or where the data was placed by
-    hand. Tick an item when you have checked it on the machine. Ticks stay on this device.
+    hand. Tick an item when you have checked it on the machine. Ticks stay on this device.{' '}
     <span class="mono" data-verify-count></span>
   </p>
   {
@@ -54,24 +54,29 @@ const groups = [...new Set(ITEMS.map((i) => i.group))];
     margin: 0;
   }
   .checks li {
-    padding: 10px 0;
+    padding: 4px 0;
     border-top: 1px solid var(--line);
   }
   .checks li:first-child {
     border-top: 0;
   }
+  /* Rows are at least 44px tall with a 44px tick target (spec §8.3). */
   .checks label {
     display: grid;
     grid-template-columns: var(--touch) 1fr;
-    align-items: start;
+    align-items: center;
+    min-height: 44px;
     gap: 4px;
     cursor: pointer;
   }
   .checks input {
     width: 22px;
     height: 22px;
-    margin: 2px auto;
+    margin: 0 auto;
     accent-color: var(--ok);
+  }
+  .checks label:active {
+    background: var(--press);
   }
   .checks li.done .text {
     color: var(--muted);

@@ -585,7 +585,9 @@ Some things open as sheets with no URL of their own: Show on map, Add to shoppin
   - smoke "manual viewer…", "parts search…", "handbook menu map links…", appendix.spec and the `#pg-9` embed all pass unchanged.
 - **Verify.** The gauntlet, plus `pnpm exec playwright test tests/e2e/handbook.spec.ts tests/e2e/smoke.spec.ts tests/e2e/appendix.spec.ts`.
 
-### [ ] Phase 9: Workshop screens
+### [x] Phase 9: Workshop screens
+
+Done 2026-09-25. Deviations and decisions: Shopping list rows use the list vocabulary (a header row per part "1 × #555 (24-8768)", then one row per component with the `{ref} {name}` link and a visible "Fixed: {name}" button, so the test contract holds); a full swipe to the left (past the 88px `--bad` pane that reveals under the row) commits Fixed on release, a shorter one snaps back, and a mostly vertical drag scrolls (pointer events, `touch-action: pan-y`). "Share" uses the Web Share API and only renders where `navigator.share` exists (Copy as text is the fallback); "Show text" and the textarea stay, the export text is unchanged. Footer "Mark a part Fault and it lands here. Fixed clears the fault." The Service kit is a static grouped list after the shopping list with its note as the footnote. Device data (Q7 default: stays on /shopping as `#device-data`) is a grouped list: recorded line, Download backup, Read backup…, "When reading" with the Import mode select, and "Clear all" as a `.lrow.danger` row that keeps its second tap ("Really clear all?"); the empty row says "Nothing saved on this device yet." so the "not recorded" test still holds. Verify and Setup/Care (Q19: bodies not drawn): styles only, rows and tick targets are at least 44px; no `role=switch` toggles, because none of these boards show a toggle, so the checkboxes and their test selectors stay. No test edits; e2e 284.
 
 - **Goal.** The Shopping list per its board (groups, swipe to Fixed, Copy and Share). Verify, Care, Setup and Device data move into the grouped-list styles; their bodies aren't drawn (Q19).
 - **Boards.** Shopping, Workshop, Components (§05).

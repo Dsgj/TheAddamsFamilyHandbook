@@ -7,6 +7,10 @@
     importStatuses,
   } from '~/lib/model/status.svelte';
 
+  /**
+   * Device data (spec §9.14, Q7): the backup and restore rows at the foot of the Shopping list,
+   * linked from the Workshop hub as `shopping#device-data`. Clear all keeps its second tap.
+   */
   const count = $derived(allStatuses().filter((s) => s.status || s.note).length);
   const settings = $derived(Object.keys(setupItems()).length);
   let msg = $state('');
@@ -14,6 +18,7 @@
   let armed = $state(false);
   let mode = $state<'merge' | 'replace'>('merge');
   let file = $state<HTMLInputElement | undefined>();
+  const empty = $derived(!count && !settings);
 
   function say(text: string, bad = false) {
     msg = text;
@@ -58,57 +63,89 @@
   }
 </script>
 
-<section class="card device" id="device-data">
-  <h2>Device data</h2>
-  <p class="muted small">
-    Status, notes, the service log and the machine setup live only in this browser. Download a
-    backup before clearing site data or switching phones, then read it back here.
-    {#if count}<span class="mono">{count}</span>
-      {count === 1 ? 'component' : 'components'} recorded.{/if}
-    {#if settings}<span class="mono">{settings}</span>
-      {settings === 1 ? 'setting' : 'settings'} recorded.{/if}
-  </p>
-  <div class="bar">
-    <button type="button" class="btn small" onclick={download} disabled={!count && !settings}>
-      Download backup
-    </button>
-    <label class="btn small file">
-      Read backup…
-      <input
-        type="file"
-        accept="application/json,.json"
-        aria-label="Read backup file"
-        bind:this={file}
-        onchange={onFile}
-      />
-    </label>
-    <label class="small muted">
-      <select class="field small" bind:value={mode} aria-label="Import mode">
+<section class="device" id="device-data">
+  <h2 class="lst-h">Device data</h2>
+  <ul class="lst">
+    <li class="lrow static recorded">
+      <span class="txt">
+        <span class="ttl">
+          {#if count}<span class="mono">{count}</span>
+            {count === 1 ? 'component' : 'components'} recorded.{/if}
+          {#if settings}<span class="mono">{settings}</span>
+            {settings === 1 ? 'setting' : 'settings'} recorded.{/if}
+          {#if empty}Nothing saved on this device yet.{/if}
+        </span>
+        <span class="sub">
+          Status, notes, the service log and the machine setup live only in this browser.
+        </span>
+      </span>
+    </li>
+    <li>
+      <button type="button" class="lrow" onclick={download} disabled={empty}>
+        <span class="txt"><span class="ttl">Download backup</span></span>
+        <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"
+          ><path d="M12 4v11m-5-4l5 5 5-5M5 20h14" /></svg
+        >
+      </button>
+    </li>
+    <li>
+      <label class="lrow file">
+        <span class="txt"><span class="ttl">Read backup…</span></span>
+        <input
+          type="file"
+          accept="application/json,.json"
+          aria-label="Read backup file"
+          bind:this={file}
+          onchange={onFile}
+        />
+        <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"
+          ><path d="M12 20V9m-5 4l5-5 5 5M5 4h14" /></svg
+        >
+      </label>
+    </li>
+    <li class="lrow static">
+      <span class="txt"><span class="ttl">When reading</span></span>
+      <select class="field mode" bind:value={mode} aria-label="Import mode">
         <option value="merge">merge, newer wins</option>
         <option value="replace">replace everything</option>
       </select>
-    </label>
-    <button type="button" class="btn small danger" onclick={clear} disabled={!count && !settings}>
-      {armed ? 'Really clear all?' : 'Clear all'}
-    </button>
-    {#if msg}<span class="small {error ? 'bad' : 'ok'}" role="status">{msg}</span>{/if}
-  </div>
+    </li>
+    <li>
+      <button type="button" class="lrow danger" onclick={clear} disabled={empty}>
+        <span class="txt"><span class="ttl">{armed ? 'Really clear all?' : 'Clear all'}</span></span
+        >
+      </button>
+    </li>
+  </ul>
+  <p class="gf">
+    Download a backup before clearing site data or switching phones, then read it back here.
+    {#if msg}<span class={error ? 'bad' : 'ok'} role="status">{msg}</span>{/if}
+  </p>
 </section>
 
 <style>
   .device {
     margin-top: 24px;
   }
-  .bar {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px;
+  .lst,
+  .lst-h,
+  .gf {
+    margin-left: 0;
+    margin-right: 0;
+  }
+  .recorded {
+    min-height: 60px;
+  }
+  .recorded .mono {
+    color: var(--amber-ink);
+  }
+  .lrow:disabled {
+    color: var(--muted);
+    cursor: default;
   }
   .file {
     position: relative;
     overflow: hidden;
-    cursor: pointer;
   }
   .file input {
     position: absolute;
@@ -116,16 +153,22 @@
     opacity: 0;
     cursor: pointer;
   }
-  .field.small {
-    min-height: 32px;
-    padding: 2px 8px;
-    font-size: 0.85rem;
+  .file:focus-within {
+    outline: 2px solid var(--amber);
+    outline-offset: -2px;
   }
-  .danger:not(:disabled) {
-    color: var(--bad);
-    border-color: var(--bad);
+  .mode {
+    flex: 0 1 auto;
+    width: auto;
+    max-width: 58%;
+    min-height: 36px;
+    padding: 2px 8px;
+    font-size: 15px;
   }
   .bad {
     color: var(--bad);
+  }
+  .ok {
+    color: var(--ok);
   }
 </style>
