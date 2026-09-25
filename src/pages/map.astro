@@ -3,7 +3,7 @@ import Base from '~/layouts/Base.astro';
 import PlayfieldMap from '~/components/PlayfieldMap.svelte';
 ---
 
-<Base title="Playfield map" nav="map" wide>
-  <h1>Playfield map</h1>
+<Base title="Playfield map" nav="map" fullbleed>
+  <h1 class="sr-only">Playfield map</h1>
   <PlayfieldMap client:load />
 </Base>
