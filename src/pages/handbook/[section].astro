@@ -3,12 +3,19 @@ import { getCollection } from 'astro:content';
 import Base from '~/layouts/Base.astro';
 import HandbookToc from '~/components/HandbookToc.svelte';
 import PlayfieldMap from '~/components/PlayfieldMap.svelte';
+import ReaderBar from '~/components/ReaderBar.svelte';
 import { SECTIONS, isAppendixPage } from '~/lib/handbook/sections';
 import { handbookToc } from '~/lib/handbook/toc';
+import { pageLabel } from '~/lib/pages';
 import { href, manualHref } from '~/lib/url';
 import { APPENDICES, appendixAnchor } from '~/data/appendix';
 import { OWNER_NOTES } from '~/data/ownerNotes';
 
+/**
+ * The Handbook reader (spec §9.11): one section per page, the back link "Handbook", "View the
+ * scan" in the bar, and the bottom toolbar (ReaderBar). The reader pages by section (Q17); the
+ * toolbar's ends carry the nearest page label of the adjacent section.
+ */
 export async function getStaticPaths() {
   return SECTIONS.map((s) => ({ params: { section: s.key }, props: { section: s } }));
 }
@@ -20,10 +27,39 @@ const toc = await handbookToc();
 const i = SECTIONS.indexOf(section);
 const prev = SECTIONS[i - 1];
 const next = SECTIONS[i + 1];
+const end = (s: typeof section | undefined, page: number | undefined) =>
+  s && page !== undefined
+    ? {
+        href: href(`handbook/${s.key}`),
+        label: isAppendixPage(page) ? 'Appendix' : pageLabel('ops', page) || s.title,
+        title: s.title,
+      }
+    : undefined;
+const prevEnd = end(prev, prev?.pages.at(-1));
+const nextEnd = end(next, next?.pages[0]);
 const UNVERIFIED = new Set([26, 27, 28]);
+const scan = section.key === 'appendix' ? undefined : manualHref('ops', section.pages[0]!);
 ---
 
-<Base title={section.title} nav="handbook">
+<Base title={section.title} nav="handbook" back={{ path: 'handbook', label: 'Handbook' }}>
+  {
+    scan && (
+      <a slot="actions" class="ibtn" href={scan} aria-label="View the scan" title="View the scan">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="5" y="3" width="14" height="18" rx="2" />
+          <path d="M9 8h6M9 12h6M9 16h4" />
+        </svg>
+      </a>
+    )
+  }
+  <script is:inline>
+    try {
+      const t = localStorage.getItem('tafh:text');
+      if (t === 'sm' || t === 'lg') document.documentElement.dataset.text = t;
+    } catch {
+      /* no storage: the default size */
+    }
+  </script>
   <div class="hb">
     <aside class="side">
       <details class="card" open>
@@ -31,7 +67,7 @@ const UNVERIFIED = new Set([26, 27, 28]);
         <HandbookToc client:load items={toc} current={section.key} />
       </details>
     </aside>
-    <article class="prose">
+    <article class="prose" data-section={section.key} data-title={section.title}>
       <h1>{section.title}</h1>
       {
         section.key === 'appendix' && (
@@ -86,29 +122,37 @@ const UNVERIFIED = new Set([26, 27, 28]);
           </section>
         ))
       }
-      <nav class="pn">
-        {
-          prev ? (
-            <a class="btn" href={href(`handbook/${prev.key}`)}>
-              ‹ {prev.title}
-            </a>
-          ) : (
-            <span />
-          )
-        }
-        {
-          next ? (
-            <a class="btn" href={href(`handbook/${next.key}`)}>
-              {next.title} ›
-            </a>
-          ) : (
-            <span />
-          )
-        }
-      </nav>
     </article>
   </div>
+  <ReaderBar client:load prev={prevEnd} next={nextEnd} items={toc} current={section.key} />
 </Base>
+
+<script>
+  import { saveReading } from '~/lib/model/reading';
+  import { nowIso } from '~/lib/status-io';
+
+  // Continue reading: remember the page whose bar last crossed the upper part of the viewport.
+  const art = document.querySelector<HTMLElement>('article[data-section]');
+  if (art) {
+    const section = art.dataset.section ?? '';
+    const title = art.dataset.title ?? '';
+    const record = (sec: HTMLElement) => {
+      const label = sec.querySelector('.pg-bar .mono')?.textContent?.trim() ?? '';
+      saveReading({ section, title, anchor: sec.id, label, at: nowIso() });
+    };
+    const pages = [...art.querySelectorAll<HTMLElement>('section[id^="pg-"]')];
+    if (pages[0]) record(pages[0]);
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver(
+        (es) => {
+          for (const e of es) if (e.isIntersecting) record(e.target as HTMLElement);
+        },
+        { rootMargin: '-30% 0px -60% 0px' },
+      );
+      pages.forEach((p) => io.observe(p));
+    }
+  }
+</script>
 
 <style>
   .owner-note {
@@ -120,12 +164,18 @@ const UNVERIFIED = new Set([26, 27, 28]);
     display: grid;
     gap: var(--gap);
     grid-template-columns: 1fr;
+    /* Room for the fixed reader toolbar. */
+    padding-bottom: 72px;
+  }
+  .side {
+    display: none;
   }
   @media (min-width: 960px) {
     .hb {
       grid-template-columns: 300px minmax(0, 1fr);
     }
     .side {
+      display: block;
       position: sticky;
       top: calc(var(--safe-top) + var(--topbar-h) + 40px);
       align-self: start;
@@ -135,12 +185,5 @@ const UNVERIFIED = new Set([26, 27, 28]);
     cursor: pointer;
     font-family: var(--font-display);
     font-size: 1.1rem;
-  }
-  .pn {
-    display: flex;
-    justify-content: space-between;
-    gap: 8px;
-    margin-top: 32px;
-    flex-wrap: wrap;
   }
 </style>

@@ -721,10 +721,14 @@ table.t tr.row-fault td:first-child {
   border-radius: 9px;
   background: var(--seg-track);
 }
-.seg > button {
+.seg > button,
+.seg > a {
+  display: grid;
+  place-items: center;
   min-width: 0;
   height: 32px;
   padding: 0 12px;
+  text-decoration: none;
   border: 0;
   border-radius: 7px;
   background: none;
@@ -752,6 +756,14 @@ table.t tr.row-fault td:first-child {
 .seg > .st-fault[aria-pressed='true'] {
   background: var(--bad-tint);
   box-shadow: inset 0 0 0 1px var(--bad);
+}
+
+/* Reader text size (Phase 8): the Handbook reader's Text size sheet writes `data-text` on <html>. */
+:root[data-text='sm'] .prose {
+  font-size: 0.93rem;
+}
+:root[data-text='lg'] .prose {
+  font-size: 1.16rem;
 }
 
 /* ---- Toggle (spec §8.4) ---- */

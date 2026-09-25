@@ -1,54 +1,123 @@
 ---
 import Base from '~/layouts/Base.astro';
+import DocSeg from '~/components/DocSeg.astro';
 import HandbookToc from '~/components/HandbookToc.svelte';
 import { handbookToc } from '~/lib/handbook/toc';
 import { SECTIONS } from '~/lib/handbook/sections';
+import { pageLabel } from '~/lib/pages';
+import { APPENDICES, appendixAnchor } from '~/data/appendix';
 import { href, manualHref } from '~/lib/url';
 
+/**
+ * The Handbook home (spec §9.10): the segmented links, the search field, Continue reading (filled
+ * from `tafh:reading` by the page script), the operator's section list and the owner's notes.
+ */
 const toc = await handbookToc();
+const manual = SECTIONS.filter((s) => s.key !== 'appendix');
+/** "1-15–1-19" for a contiguous run of labelled pages; "A–F" for the shot maps; else nothing. */
+const range = (pages: number[]): string => {
+  const first = pages[0]!;
+  const last = pages.at(-1)!;
+  if (last - first !== pages.length - 1) return '';
+  const a = pageLabel('ops', first);
+  const b = pageLabel('ops', last);
+  return a && b ? (a === b ? a : `${a}–${b}`) : '';
+};
 ---
 
 <Base title="Handbook" nav="handbook" h1="large">
-  <p class="muted">
-    The Operations Manual's operator section (pages 1-1 to 1-48), transcribed and readable on a
-    phone. Every page links to its scan. Pages 1-16 to 1-18 (T.4–T.13) are transcribed from a poor
-    scan and not yet verified.
+  <DocSeg current="handbook" />
+  <HandbookToc client:load items={toc} home />
+
+  <section class="cont" hidden data-continue>
+    <h2 class="lst-h">Continue reading</h2>
+    <ul class="lst">
+      <li>
+        <a class="lrow two" href={href('handbook')}>
+          <span class="txt">
+            <span class="ttl" data-ttl></span>
+            <span class="sub" data-sub></span>
+          </span>
+          <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"
+            ><path d="M9 5l7 7-7 7"></path></svg
+          >
+        </a>
+      </li>
+    </ul>
+  </section>
+
+  <h2 class="lst-h">Operations Manual, operator's section</h2>
+  <ul class="lst">
+    {
+      manual.map((s) => (
+        <li>
+          <a class="lrow" href={href(`handbook/${s.key}`)}>
+            <span class="txt">
+              <span class="ttl">{s.title}</span>
+            </span>
+            {range(s.pages) && <span class="val mono">{range(s.pages)}</span>}
+            <svg class="chev" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M9 5l7 7-7 7" />
+            </svg>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+  <p class="gf">
+    Pages 1-16 to 1-18 are transcribed from a poor scan and not yet verified. Parts (section 2) and
+    schematics (section 3) are not transcribed; open them in <a href={manualHref('ops', 59)}
+      >the manual viewer</a
+    >.
   </p>
-  <div class="grid-2 wide-first">
-    <section class="card">
-      <h2>Sections</h2>
-      <ol class="secs">
-        {
-          SECTIONS.map((s) => (
-            <li>
-              <a href={href(`handbook/${s.key}`)}>{s.title}</a>
-              <span class="muted small mono">
-                {' '}
-                p. {s.pages[0]! - 10 > 0 ? `1-${s.pages[0]! - 10}` : s.pages[0]}–
-                {s.pages.at(-1)! - 10 > 0 ? `1-${s.pages.at(-1)! - 10}` : s.pages.at(-1)}
-              </span>
-            </li>
-          ))
-        }
-      </ol>
-      <p class="prov">
-        Parts (section 2) and schematics (section 3) are not transcribed; open them in <a
-          href={manualHref('ops', 59)}>the manual viewer</a
-        >.
-      </p>
-    </section>
-    <section class="card">
-      <h2>Find a heading</h2>
-      <HandbookToc client:load items={toc} />
-    </section>
-  </div>
+
+  <h2 class="lst-h">Owner service notes</h2>
+  <ul class="lst">
+    {
+      Object.entries(APPENDICES).map(([code, title]) => (
+        <li>
+          <a class="lrow" href={href(`handbook/appendix#${appendixAnchor(code)}`)}>
+            <span class="code dmd">{code}</span>
+            <span class="txt">
+              <span class="ttl">{title}</span>
+            </span>
+            <svg class="chev" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M9 5l7 7-7 7" />
+            </svg>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+  <p class="gf">The owner's own notes, not manual text.</p>
 </Base>
 
-<style>
-  .secs {
-    padding-left: 1.4em;
+<script>
+  import { readReading } from '~/lib/model/reading';
+  import { href } from '~/lib/url';
+
+  // Continue reading: the last page the reader scrolled to, if any.
+  const r = readReading();
+  const sec = document.querySelector<HTMLElement>('[data-continue]');
+  if (r && sec) {
+    const a = sec.querySelector<HTMLAnchorElement>('a.lrow')!;
+    a.href = href(`handbook/${r.section}#${r.anchor}`);
+    sec.querySelector('[data-ttl]')!.textContent = r.title;
+    sec.querySelector('[data-sub]')!.textContent = r.label;
+    sec.hidden = false;
   }
-  .secs li {
-    margin: 6px 0;
+</script>
+
+<style>
+  .lst,
+  .lst-h,
+  .gf {
+    margin-left: 0;
+    margin-right: 0;
+  }
+  .lrow .code {
+    flex: 0 0 auto;
+    min-width: 40px;
+    text-align: center;
   }
 </style>

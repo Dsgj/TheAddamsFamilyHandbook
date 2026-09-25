@@ -1,0 +1,35 @@
+---
+import { href } from '~/lib/url';
+
+/**
+ * The Handbook tab's segmented links (spec §9.10, §9.13): Handbook / Manuals / Parts. Links in a
+ * `nav`, not a tablist; the current route carries `aria-current="page"`.
+ */
+interface Props {
+  current: 'handbook' | 'manual' | 'parts';
+}
+const { current } = Astro.props;
+const LINKS: [Props['current'], string][] = [
+  ['handbook', 'Handbook'],
+  ['manual', 'Manuals'],
+  ['parts', 'Parts'],
+];
+---
+
+<nav class="seg links" aria-label="Handbook, Manuals or Parts">
+  {
+    LINKS.map(([k, label]) => (
+      <a href={href(k)} aria-current={k === current ? 'page' : undefined}>
+        {label}
+      </a>
+    ))
+  }
+</nav>
+
+<style>
+  .links {
+    display: grid;
+    max-width: 480px;
+    margin: 0 0 var(--gap);
+  }
+</style>
