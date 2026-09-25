@@ -5,7 +5,7 @@ import { href } from '~/lib/url';
 
 /**
  * The Tables hub (spec §9.5): the matrices, the drivers and the board tables, with their counts
- * taken from src/data. "Recently viewed" stays hidden until Phase 7 fills it.
+ * taken from src/data. "Recently viewed" lists the components opened on this device.
  */
 const sw = DATA.switches;
 const matrix = sw.filter((s) => s.col !== null).length;
@@ -104,7 +104,7 @@ const GROUPS: Group[] = [
       placeholder="Search tables"
       autocomplete="off"
     />
-    <section hidden data-recent>
+    <section hidden data-recent data-group>
       <h2 class="lst-h">Recently viewed</h2>
       <ul class="lst"></ul>
     </section>
@@ -141,6 +141,45 @@ const GROUPS: Group[] = [
 </Base>
 
 <script>
+  import { viewedEntries } from '~/lib/model/recent.svelte';
+  import { componentHref } from '~/lib/url';
+
+  // "Recently viewed" (spec §9.5): the components opened on this device, newest first.
+  const recent = document.querySelector<HTMLElement>('[data-recent]');
+  const viewed = viewedEntries();
+  if (recent && viewed.length) {
+    const ul = recent.querySelector('ul');
+    for (const v of viewed) {
+      const li = document.createElement('li');
+      const a = document.createElement('a');
+      a.className = 'lrow two';
+      a.href = componentHref(v.kind, v.id);
+      const code = document.createElement('span');
+      code.className = 'code dmd';
+      code.textContent = v.code;
+      const txt = document.createElement('span');
+      txt.className = 'txt';
+      const ttl = document.createElement('span');
+      ttl.className = 'ttl';
+      ttl.textContent = v.name;
+      const sub = document.createElement('span');
+      sub.className = 'sub';
+      sub.textContent = v.sub;
+      txt.append(ttl, sub);
+      const chev = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      chev.setAttribute('class', 'chev');
+      chev.setAttribute('viewBox', '0 0 14 14');
+      chev.setAttribute('aria-hidden', 'true');
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', 'M5 2l5 5-5 5');
+      chev.append(path);
+      a.append(code, txt, chev);
+      li.append(a);
+      ul?.append(li);
+    }
+    recent.hidden = false;
+  }
+
   // "Search tables" filters the rows by their text as you type; a group with no match hides.
   const hub = document.querySelector<HTMLElement>('[data-hub="tables"]');
   const field = hub?.querySelector<HTMLInputElement>('input.search');

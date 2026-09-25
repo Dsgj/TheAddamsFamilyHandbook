@@ -28,6 +28,8 @@ test('Broken tick on Lamps feeds the shopping list until Fixed', async ({ page }
 
 test('Broken tick on Switches and Solenoids lands on the shopping list', async ({ page }) => {
   await gotoHydrated(page, '/switches');
+  // The flipper table sits in its own tab since Phase 7 of the redesign.
+  await page.getByRole('tab', { name: 'Flipper J806' }).click();
   await page.getByLabel('Broken: Left Flipper Button').check();
   await gotoHydrated(page, '/coils');
   await page.getByLabel('Broken: Chair Kickout').check();
