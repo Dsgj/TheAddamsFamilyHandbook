@@ -16,7 +16,7 @@ Fakta om ägarens exemplar, som ägaren själv uppgett (september 2026). Använd
 | Serienummer | Etikett "20017 …" delvis synlig på backboxen; hela numret ska läsas av *(observerat 2026-09-24, foto)* |
 | Ljud-ROM | L-1 (enda versionen) |
 | Prissättning | Free play via pris satt till 00 credits |
-| Custom message | Under inmatning: `EDUCATION FIRST` / `··PINBALL SECOND`, ev. frame 2 `·BROUGHT TO YOU` / `·····BY LEO`. Displayen tar 2 rader × 16 tecken per frame |
+| Custom message | Under inmatning: `EDUCATION FIRST` / `··PINBALL SECOND`, frame 2 `·BROUGHT 2 LIFE` / `·····BY LEO`. Displayen tar 2 rader × 16 tecken per frame |
 | Manualer | Operations Manual jan 1992 (16-20017-101), Operator's Handbook jan 1991 (16-20017-103), WPC Schematic Manual jan 1992, fabrikens reservdelslista |
 
 ## Loggposter att importera
