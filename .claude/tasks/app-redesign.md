@@ -1,6 +1,6 @@
 # App redesign: five tabs, a fitted map, app-like shell
 
-**Status 2026-09-25: design published (canvas, 32 boards); handoff reviewed and corrected against the repo and the boards; implementation not started. Next: Phase 1.**
+**Status 2026-09-28: complete. Phases 1–12 implemented, each with a green gauntlet, merged to `main` (fast-forward, `d27cd47..02c7447`) and pushed to `origin/main`. Deviations and decisions sit under each phase; the open questions below not marked answered were settled by the plan's defaults (named in the phase notes) and can be reopened as follow-up work.**
 
 - Spec (all values): `.claude/tasks/app-redesign-spec.md`.
 - Design canvas: https://claude.ai/artifact/UafRUTDKLxz4RYNuLmeeuh.
