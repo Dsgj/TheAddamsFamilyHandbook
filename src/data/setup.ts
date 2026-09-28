@@ -50,11 +50,11 @@ export const SETUP_STEPS: SetupStep[] = [
         alt: 'For a harder game take U.9 03 Install Medium, the factory setting.',
       },
       {
-        id: 'U.9 10',
-        name: 'Install Novelty',
+        id: 'U.9 08',
+        name: 'Install Add-A-Ball',
         suggested: 'Install',
-        why: 'Removes every free-game award. Replays, match and high-score credits mean nothing on free play and only give a loud knock; specials score points instead.',
-        alt: 'U.9 08 Install Add-A-Ball gives an extra ball for replays and specials instead. More fun for the player, longer games when there is a queue.',
+        why: 'Replays and specials award an extra ball instead of a credit, which means nothing on free play. Also turns match off and sets the high score credits to 00.',
+        alt: 'U.9 10 Install Novelty removes the replay awards altogether and makes specials worth points: shorter, more even games when there is a queue.',
       },
     ],
   },
@@ -76,7 +76,7 @@ export const SETUP_STEPS: SetupStep[] = [
     id: 'standard',
     title: 'Standard adjustments',
     menu: 'A. Adjustments → A.1 Standard Adjustments',
-    intro: 'Check each one; Novelty already sets some of them.',
+    intro: 'Check each one; Add-A-Ball already sets some of them.',
     items: [
       { id: 'A.1 01', name: 'Balls Per Game', suggested: '3', why: 'Standard, right for a queue.' },
       {
@@ -86,10 +86,48 @@ export const SETUP_STEPS: SetupStep[] = [
         why: 'Forgiving without being limitless.',
       },
       {
+        id: 'A.1 03',
+        name: 'Maximum Extra Balls',
+        suggested: '3',
+        why: 'Caps how many extra balls one game can collect, from the playfield and the replay awards together, so a good game stays a reasonable length when people wait.',
+        alt: 'Raise it if nobody has to queue.',
+      },
+      {
+        id: 'A.1 05',
+        name: 'Replay System',
+        suggested: 'Auto%',
+        why: 'The replay score moves every 50 games so that about the chosen share of games earn the extra ball, whatever the colleagues score.',
+        alt: 'Fixed, with the score in A.1 09 Replay Level 1, if you would rather set it by hand.',
+      },
+      {
+        id: 'A.1 06',
+        name: 'Replay Percent',
+        suggested: '15%',
+        why: 'About one game in seven earns the extra ball from score. Lower it if games grow too long, raise it if nobody ever gets there.',
+      },
+      {
+        id: 'A.1 08',
+        name: 'Replay Levels',
+        suggested: '1',
+        why: 'One extra ball from score per game; the playfield gives the rest.',
+      },
+      {
+        id: 'A.1 14',
+        name: 'Replay Award',
+        suggested: 'Extra Ball',
+        why: 'Add-A-Ball sets this; confirm it.',
+      },
+      {
+        id: 'A.1 15',
+        name: 'Special Award',
+        suggested: 'Extra Ball',
+        why: 'Add-A-Ball sets this; confirm it.',
+      },
+      {
         id: 'A.1 19',
         name: 'Match Feature',
         suggested: 'OFF',
-        why: 'Novelty sets this; confirm it.',
+        why: 'Add-A-Ball sets this; confirm it.',
       },
       {
         id: 'A.1 20',
@@ -164,7 +202,7 @@ export const SETUP_STEPS: SetupStep[] = [
         id: 'A.4 04',
         name: 'Credits for high scores (A.4 04–08)',
         suggested: '00',
-        why: 'Novelty sets these; confirm all five.',
+        why: 'Add-A-Ball sets these; confirm all five.',
       },
       {
         id: 'A.4 09',
@@ -192,7 +230,7 @@ export const SETUP_STEPS: SetupStep[] = [
         id: 'h4-amode-sound',
         name: 'A-MODE SOUND',
         suggested: 'OFF',
-        why: 'Otherwise the game makes noise while standing unused in the office.',
+        why: 'Otherwise the game makes noise while standing unused. There is no low setting for attract sound, only on or off; the volume buttons apply to play and attract alike.',
         find: '',
       },
       {
@@ -241,7 +279,7 @@ export const SETUP_STEPS: SetupStep[] = [
         id: 'U.5',
         name: 'Custom Message',
         suggested: 'EDUCATION FIRST / PINBALL SECOND',
-        why: 'Two rows of 16 characters per frame.',
+        why: 'Two rows of 16 characters per frame, several frames. Frame 1: EDUCATION FIRST over PINBALL SECOND, with two leading spaces on the second row so the D ends at the right edge. Frame 2: BROUGHT 2 LIFE over BY LEO, one and five leading spaces so both rows sit centred. Up/Down picks letters, Start punctuation, Enter locks a character; the back-arrow after 9 erases. Hold Enter until Message Stored.',
       },
       {
         id: 'U.12',
@@ -304,7 +342,7 @@ export const SETUP_STEPS: SetupStep[] = [
         id: 'thing-knocker',
         name: 'Thing Knocker coil AE-23-800 fitted (missing on this machine)',
         suggested: 'AE-23-800',
-        why: 'The A-15267 bracket and the rubber pad are in the cabinet, the coil is not; the game plays without it. Buy an AE-23-800 with its sleeve and a 1N4004 diode. Fit the diode across the lugs with the band toward the 50 V lug (the one without the violet-red driver wire), or the driver Q80 dies on the first fire. The violet-red wire from J132-2 goes to the other lug. Then T.4 Solenoid Test, coil 02, with the glass off and the coin door open: one clean knock. The Thing Kickout uses the same coil and measured 4.7–4.8 Ω across the lugs on this machine (4.9 on the meter, leads subtracted), so a new one should read about that.',
+        why: 'With Add-A-Ball the knocker marks every replay and special; without the coil the extra ball only shows on the display and the game plays fine, so this is optional. The A-15267 bracket and the rubber pad are in the cabinet, the coil is not. If you want the knock, buy an AE-23-800 with its sleeve and a 1N4004 diode. Fit the diode across the lugs with the band toward the 50 V lug (the one without the violet-red driver wire), or the driver Q80 dies on the first fire. The violet-red wire from J132-2 goes to the other lug. Then T.4 Solenoid Test, coil 02, with the glass off and the coin door open: one clean knock. The Thing Kickout uses the same coil and measured 4.7–4.8 Ω across the lugs on this machine (4.9 on the meter, leads subtracted), so a new one should read about that.',
         find: 'A2',
       },
       {

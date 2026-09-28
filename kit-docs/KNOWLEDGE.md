@@ -213,8 +213,8 @@ Ordning: presets först (de skriver över enskilda värden), sedan justeringar. 
 | Preset | Varför |
 | --- | --- |
 | **U.9 02 Install Easy** | Snällare för sällanspelare (fler extra bollar, lättare lås, Million Plus sparas). Alternativ: **U.9 03 Install Medium** = fabrik. |
-| **U.9 10 Install Novelty** | Tar bort gratisspelsbelöningar (replay, match, high score-credits) som är meningslösa på free play. Special ger poäng. |
-| *(alternativ)* **U.9 08 Install Add-A-Ball** | Replays och specials ger extra boll i stället. Roligare, men längre spel om det är kö. |
+| **U.9 08 Install Add-A-Ball** | Replays och specials ger extra boll i stället för credits, som är meningslösa på free play. Stänger också av match och nollar high score-credits. Valt 2026-09-28: spelet står i ett eget spelrum, så spellängden är inte kritisk och en extraboll är roligare än en poängbonus. |
+| *(alternativ)* **U.9 10 Install Novelty** | Tar bort replay-belöningarna helt och gör special till poäng. Kortare och jämnare spel om det är kö. |
 
 ### A.3 Pricing
 
@@ -228,13 +228,18 @@ Ordning: presets först (de skriver över enskilda värden), sedan justeringar. 
 | --- | --- | --- |
 | A.1 01 Balls Per Game | 3 | lagom vid kö |
 | A.1 02 Tilt Warnings | 3 | |
-| A.1 19 Match Feature | OFF | Novelty sätter det |
+| A.1 03 Maximum Extra Balls | 3 | tak per spel, från spelplanen och replay tillsammans |
+| A.1 05 Replay System | Auto% | replay-gränsen justerar sig var 50:e spel |
+| A.1 06 Replay Percent | 15% | ungefär vart sjunde spel når extrabollen |
+| A.1 08 Replay Levels | 1 | en extraboll från poäng per spel |
+| A.1 14/15 Replay/Special Award | Extra Ball | Add-A-Ball sätter dem |
+| A.1 19 Match Feature | OFF | Add-A-Ball sätter det |
 | A.1 20 Custom Message | YES | |
 | A.1 21 Language | English | |
 | A.1 22 Clock Style | 24 Hours | |
 | A.1 23 Date Style | Date/Month/Year | |
 | A.1 24 Show Date and Time | NO | klockan går bara med spelet på (NVRAM utan batteri på U8), tiden släpar efter varje avstängning [observerat 2026-09-24, foto] |
-| A.1 25 Allow Dim Illumination | YES | behåller GI-effekterna |
+| A.1 25 Allow Dim Illumination | NO | LED-kit: dimmad GI flimrar. YES bara med glödlampor |
 | A.1 26 Tournament Play | YES | multiball/jackpots förs inte över mellan spelare |
 | A.1 27 Euro. Scr. Format | YES | 1.000.000 |
 | A.1 28 Minimum Volume Control | YES | ljudet kan stängas av helt vid möten |
@@ -245,7 +250,7 @@ Ordning: presets först (de skriver över enskilda värden), sedan justeringar. 
 
 Lämna enligt presetet. Kontrollera **A.2 20 Disable THING = NO** och **A.2 21 Disable BOOKCASE = NO**.
 
-**Finns bara i ROM H-4/6.0H, ej i manualen** [hämtat ur ROM-filen]: `A-MODE SOUND`, `A-MODE MUSIC` (stäng av på kontor), `GAMEOVER KICKOUT`, `SPOT GREED/BALL`, `FREEPLAY MESSAGE` (visar "FREE PLAY" i attract mode), `SPOT T-H-I-N-G`. De ligger efter A.2 26 i menyn. Exakt nummer och beskrivning måste läsas av på displayen.
+**Finns bara i ROM H-4/6.0H, ej i manualen** [hämtat ur ROM-filen]: `A-MODE SOUND`, `A-MODE MUSIC` (OFF; finns inget lågt läge, bara på/av), `GAMEOVER KICKOUT`, `SPOT GREED/BALL`, `FREEPLAY MESSAGE` (visar "FREE PLAY" i attract mode), `SPOT T-H-I-N-G`. De ligger efter A.2 26 i menyn. Exakt nummer och beskrivning måste läsas av på displayen.
 
 ### A.4 H.S.T.D
 
@@ -253,7 +258,7 @@ Lämna enligt presetet. Kontrollera **A.2 20 Disable THING = NO** och **A.2 21 D
 | --- | --- |
 | A.4 01 Highest Scores | ON |
 | A.4 03 Champion H.S.T.D. | ON |
-| A.4 04–08 Credits | 00 (Novelty) |
+| A.4 04–08 Credits | 00 (Add-A-Ball) |
 | A.4 09 High Score Reset Every | OFF (evig lista) eller t.ex. 2 000 |
 | A.4 10–14 Backup-poäng | sänk så kollegor kommer in på listan; justera efter några veckor |
 
@@ -341,7 +346,7 @@ Glödlampsartiklar: #555 = 24-8768, #44 = 24-6549, #455 = 24-6591, #906 = 24-880
 - **A.1 20 Custom Message = YES**, sedan **U.5**: Up/Down bokstäver, **Start** skiljetecken, Enter låser tecknet, bakåtpil (efter 9, före mellanslag) raderar. **Håll Enter** tills "Message Stored".
 - Format på den här maskinen: **2 rader × 16 tecken per frame**, flera frames. Endast engelska tecken.
 - Visas i attract mode tillsammans med high scores och replay-nivå.
-- Vald text: `EDUCATION FIRST` / `··PINBALL SECOND` (två inledande mellanslag så att D hamnar längst till höger); frame 2: `·BROUGHT TO YOU` / `·····BY LEO`.
+- Vald text: `EDUCATION FIRST` / `··PINBALL SECOND` (två inledande mellanslag så att D hamnar längst till höger); frame 2: `·BROUGHT 2 LIFE` / `·····BY LEO` (båda centrerade).
 
 ## 10. Säkringar: var de sitter [manual 1-47]
 

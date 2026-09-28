@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- **Setup guide: Add-A-Ball instead of Novelty.** The machine goes in a
+  separate game room, so game length matters less and an extra ball beats a
+  points bonus. The presets step now installs U.9 08, the standard adjustments
+  gain the extra-ball and replay items that hang on it (A.1 03, 05, 06, 08, 14,
+  15), the Thing Knocker item says the coil is optional, and U.5 spells out both
+  frames of the custom message. The knowledge bank follows.
 - **One playfield drawing instead of three scanned maps.** The map and the
   mini-maps now draw on a clean line drawing of the playfield
   (`assets/maps/playfield.png`, 169 KB) with markers coloured by kind and by
