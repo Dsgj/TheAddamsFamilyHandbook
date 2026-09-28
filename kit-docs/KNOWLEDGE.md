@@ -326,7 +326,7 @@ Kör sedan **U.3 Reset H.S.T.D.**
 | Inserts, lampmatris | #44 | 19 |
 | GI spelplan | #44 | 21 |
 | GI backbox (Insert House/People) | #555 | 23 |
-| Blinkande i backbox | #455 (självblinkande) | 7 |
+| Blinkande i backbox | #455 (självblinkande, **bajonett**, de svarta socklarna) | 7 |
 | Flashers | #906 | 14 enligt solenoidtabellen, 15 enligt reservdelslistan |
 
 Glödlampsartiklar: #555 = 24-8768, #44 = 24-6549, #455 = 24-6591, #906 = 24-8802.
@@ -336,7 +336,7 @@ Glödlampsartiklar: #555 = 24-8768, #44 = 24-6549, #455 = 24-6591, #906 = 24-880
 - Matrisen: **non-ghosting** krävs. Riktade ("top view"/Super Flux) under inserts.
 - GI: vanliga 6,3 V AC/DC non-polar räcker; **varmvit** (3000–3500 K) för originalkänsla. Spelets GI-fade försvinner med de flesta LEDs; många ägare behåller glödlampor i GI.
 - Flashers: 20 V-krets. Dedikerade pinball-flashers märkta "12–13 V" är gjorda för det. Bil-LED 12 V blir varm om flashern hålls tänd; 24 V-version blir dimmare (25–65 % beroende på konstruktion). Rundstrålande (5× Super Flux / 8 SMD) under kupoler.
-- #455: måste ersättas med **självblinkande** LED, annars slutar blixtarna i backglaset blinka.
+- #455: bajonettsockel, måste ersättas med **självblinkande** bajonett-LED, annars slutar blixtarna i backglaset blinka. De sju bajonettsocklarna i backboxen är just dessa; GI:n där är kil (#555). Ingen GI-positionskarta finns publikt (sökt 2026-09-28): manualen saknar en, och LED-kitens placeringsscheman (Comet, Ministry of Pinball) täcker inserts och backbox men inte GI-socklarna.
 - Pop bumper-kit: kropp 03-7443-5 med #555-sockel → BriteRings (limmas i originallocket) eller BriteCaps EVO (+5 mm höjd, kolla utrymmet under vänstra rampen vid jet 31/32). BriteCaps Classic passar inte (bajonett).
 
 **Butiker** [läge sept 2026]: pinballshop.nl (EiKO-glödlampor 4,95 €/10, HighFlow Super Flux 0,80 €, Frosted 0,75 €, T15/906 Super Flux flasher 2,95 €, Bee blinker 2,50 €), Pinball Center (Noflix, reservdelar, brända ROM:ar), Ministry of Pinball, A.u.S. coinoperatorshop.com (blinkande #455 3,55 €, färgade diffusa LED), PA LED paledbulb.com (non-ghosting 19,99 $/10, lager i FR/UK), Comet Pinball (färdigt Addams-kit 134,99 $).
