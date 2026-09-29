@@ -30,10 +30,6 @@
   let resultsHead: HTMLHeadingElement | undefined = $state();
   let recentHead: HTMLHeadingElement | undefined = $state();
 
-  $effect(() => {
-    const q = new URLSearchParams(location.search).get('q');
-    if (q && !input) input = q;
-  });
   // The body names this view and its URL (`?q=`) for motion.ts, so a back link from a page opened
   // here reads "Results" and lands on them (spec §10). Typing leaves the address clean (a reload
   // is the home); a shared link that already carries `q` is kept honest.
@@ -48,13 +44,28 @@
     }
   });
   onMount(() => {
+    // Read once, on load: this is a fresh document every time (no client router), so a later
+    // change to `?q=` – a tab link motion.ts rewrites, back/forward, a shared link – already gets
+    // here as a new mount. Reacting to `input` instead would refill it after Clear, Cancel,
+    // backspace-to-empty or Recent, since those set `input` to the very state this reads past.
+    const q = new URLSearchParams(location.search).get('q');
+    if (q && !input) input = q;
     hydrated = true;
     canPaste = typeof navigator !== 'undefined' && !!navigator.clipboard?.readText;
     const onBar = (e: Event) => {
       if ((e as CustomEvent<string>).detail === 'recent') showRecent();
     };
     document.addEventListener('tafh:diag', onBar);
-    return () => document.removeEventListener('tafh:diag', onBar);
+    // Reselecting the Diagnose tab while on results/search pops to the home (spec §6.1); Base.astro
+    // dispatches this once its own scroll-and-focus handling for the reselect is done.
+    const onReselect = () => {
+      if (mode !== 'home') clear();
+    };
+    document.addEventListener('tafh:reselect', onReselect);
+    return () => {
+      document.removeEventListener('tafh:diag', onBar);
+      document.removeEventListener('tafh:reselect', onReselect);
+    };
   });
 
   /** Search when the input is one line with no digit and at least two letters (spec §9.3). */

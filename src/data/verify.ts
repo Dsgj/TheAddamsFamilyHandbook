@@ -1,7 +1,8 @@
 /**
  * Open questions from kit-docs/KNOWN-ISSUES.md as the Verify checklist. Ticks are stored on the
- * device (tafh:verify) by src/lib/verify-check.ts and counted by src/lib/verify-store.ts. When one
- * is settled for good, fix the data and remove it here and in KNOWN-ISSUES.md.
+ * device (tafh:verify) by src/lib/model/verify.svelte.ts, ticked through src/lib/verify-check.ts
+ * and part of the backup file. When one is settled for good, fix the data and remove it here and in
+ * KNOWN-ISSUES.md.
  */
 import { appendixAnchor } from '~/data/appendix';
 import { componentHref, href, manualHref } from '~/lib/url';

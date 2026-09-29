@@ -157,6 +157,10 @@
 <style>
   .comp {
     display: grid;
+    /* Not the implicit auto column: the MiniMap's fixed 310px set the card's minimum, and on a
+       320px phone the Diagnose results scrolled sideways (WCAG 1.4.10). Its max-width: 100% then
+       fits it to the column. */
+    grid-template-columns: minmax(0, 1fr);
     gap: 14px;
   }
   header {

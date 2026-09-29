@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { SetupItem, SetupStep } from '~/data/setup';
-  import { doneCount, getSetup, setDone, setValue } from '~/lib/model/setup.svelte';
+  import { doneCount, getSetup, saveValue, setDone, setValue } from '~/lib/model/setup.svelte';
   import { shortDate } from '~/lib/status-io';
 
   let {
@@ -77,7 +77,8 @@
                       type="text"
                       value={cur?.value ?? ''}
                       placeholder={isCode(i.id) ? '' : 'number on display, value'}
-                      onchange={(e) => setValue(i.id, e.currentTarget.value)}
+                      oninput={(e) => setValue(i.id, e.currentTarget.value, { defer: true })}
+                      onchange={() => saveValue()}
                     />
                   </label>
                 </div>
@@ -193,6 +194,14 @@
     align-items: center;
     gap: 6px 8px;
     margin-top: 6px;
+  }
+  /* A long suggested value (U.5's custom message) wraps instead of widening the page at 320px. */
+  .vals .btn {
+    max-width: 100%;
+    padding-block: 4px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-align: left;
   }
   .set {
     display: flex;

@@ -287,6 +287,9 @@ const hasActions = Astro.slots.has('actions');
               h1.tabIndex = -1;
               h1.focus({ preventScroll: true });
             }
+            // Diagnose keeps results/search state on its own root (`?q=`), so reselecting its tab
+            // needs to pop that state too, not just scroll and focus (spec §6.1).
+            document.dispatchEvent(new CustomEvent('tafh:reselect'));
           });
         }
       })();

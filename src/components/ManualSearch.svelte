@@ -62,7 +62,10 @@
   });
 </script>
 
-<div class="search">
+<!-- Not `.search`: base.css's global rule for the spec's search field (§8.7) would collapse this
+     wrapper to 36px while its content (the results list) is thousands of pixels tall, so taps
+     land on whatever sits underneath instead of the hit (DS-01). -->
+<div class="msearch">
   <div class="row">
     <input
       class="field"

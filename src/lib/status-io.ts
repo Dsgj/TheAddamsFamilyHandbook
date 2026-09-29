@@ -1,7 +1,8 @@
 import type { ComponentStatus, SetupEntry, StatusEvent, StatusValue } from './model/types';
 
 export const HISTORY_MAX = 10;
-export const EXPORT_VERSION = 1;
+/** 2 added the Verify ticks. Older builds ignore both the version and the `verify` block. */
+export const EXPORT_VERSION = 2;
 
 export interface StatusExport {
   app: 'tafh';
@@ -10,6 +11,8 @@ export interface StatusExport {
   items: Record<string, ComponentStatus>;
   /** Machine setup values, present in exports from the Setup page onwards. */
   setup?: Record<string, SetupEntry>;
+  /** Verify checklist ticks, id → ISO date of the tick, from version 2 onwards. */
+  verify?: Record<string, string>;
 }
 
 const VALUES: ReadonlySet<string> = new Set<StatusValue | ''>(['ok', 'fault', 'untested', '']);
@@ -26,9 +29,39 @@ export function appendHistory(
   return [...h, { status, at }].slice(-HISTORY_MAX);
 }
 
+/**
+ * One component after a status or note change at `at`; undefined when nothing is left to keep.
+ * The log stays while something was ever recorded, so "Fixed" stays visible on the card.
+ */
+export function nextStatus(
+  id: string,
+  prev: ComponentStatus | undefined,
+  status: StatusValue | '',
+  note: string | undefined,
+  at: string,
+): ComponentStatus | undefined {
+  const changed = (prev?.status ?? '') !== status;
+  const history = changed ? appendHistory(prev?.history, status, at) : prev?.history;
+  const next: ComponentStatus = { id, status, note: note ?? prev?.note ?? '', at };
+  if (history?.length) next.history = history;
+  return next.status || next.note || next.history ? next : undefined;
+}
+
+/** One setup item after a value or tick change at `at`; undefined when it holds neither. */
+export function nextSetup(
+  prev: SetupEntry | undefined,
+  patch: { value?: string; done?: boolean },
+  at: string,
+): SetupEntry | undefined {
+  const value = patch.value ?? prev?.value ?? '';
+  const done = patch.done ?? prev?.done ?? false;
+  return value || done ? { value, done, at } : undefined;
+}
+
 export function serialize(
   items: Record<string, ComponentStatus>,
   setup?: Record<string, SetupEntry>,
+  verify?: Record<string, string>,
   now = new Date(),
 ): string {
   const out: StatusExport = {
@@ -38,6 +71,7 @@ export function serialize(
     items,
   };
   if (setup) out.setup = setup;
+  if (verify) out.verify = verify;
   return JSON.stringify(out, null, 2);
 }
 
@@ -56,8 +90,9 @@ function clean(key: string, v: unknown): ComponentStatus | undefined {
   if (!VALUES.has(o.status ?? '')) return undefined;
   const status = (o.status ?? '') as StatusValue | '';
   const note = typeof o.note === 'string' ? o.note : '';
-  if (!status && !note) return undefined;
   const history = Array.isArray(o.history) ? o.history.filter(isEvent).slice(-HISTORY_MAX) : [];
+  // An entry with only a log is what "Fixed" leaves behind (nextStatus keeps it), so keep it too.
+  if (!status && !note && !history.length) return undefined;
   const out: ComponentStatus = {
     id: key,
     status,
@@ -77,34 +112,79 @@ function cleanSetup(key: string, v: unknown): SetupEntry | undefined {
   return { value, done, at: typeof o.at === 'string' ? o.at : new Date(0).toISOString() };
 }
 
+function cleanVerify(key: string, v: unknown): string | undefined {
+  if (!key || key.length > 40 || typeof v !== 'string') return undefined;
+  return Number.isFinite(Date.parse(v)) ? v : undefined;
+}
+
 export interface Backup {
   items: Record<string, ComponentStatus>;
   /** Undefined when the file predates the Setup page, so an import leaves setup alone. */
   setup?: Record<string, SetupEntry>;
+  /** Undefined when the file predates version 2, so an import leaves the Verify ticks alone. */
+  verify?: Record<string, string>;
+}
+
+/** Why a file cannot be read as a backup. Nothing on the device has been touched. */
+export type BackupProblem = 'json' | 'not-backup' | 'foreign' | 'newer' | 'malformed' | 'empty';
+
+export class BackupError extends Error {
+  readonly reason: BackupProblem;
+  constructor(reason: BackupProblem) {
+    super(`Not a status export (${reason})`);
+    this.name = 'BackupError';
+    this.reason = reason;
+  }
+}
+
+const isRecord = (v: unknown): v is Record<string, unknown> =>
+  typeof v === 'object' && v !== null && !Array.isArray(v);
+
+/** The valid entries of one section; a section that had entries but no valid one is refused. */
+function section<V>(
+  raw: Record<string, unknown>,
+  cleanOne: (k: string, v: unknown) => V | undefined,
+): Record<string, V> {
+  const out: Record<string, V> = {};
+  for (const [k, v] of Object.entries(raw)) {
+    const c = cleanOne(k, v);
+    if (c !== undefined) out[k] = c;
+  }
+  if (Object.keys(raw).length && !Object.keys(out).length) throw new BackupError('malformed');
+  return out;
 }
 
 /**
- * Parses an export. Accepts the wrapped format and, for hand-made files, a bare items object.
- * Unknown keys and malformed entries are skipped, never thrown on. Throws only on invalid JSON.
+ * Parses an export, checking everything before anything is written. Accepts the wrapped format
+ * (`app` must be 'tafh' when present, `version` at most EXPORT_VERSION, 1 when absent) and, for
+ * hand-made files, a bare items object whose every key is a component key. Malformed entries are
+ * skipped. Throws a BackupError for anything else, so a wrong file never replaces the device data.
  */
 export function deserializeAll(json: string): Backup {
-  const raw = JSON.parse(json) as unknown;
-  if (typeof raw !== 'object' || raw === null) throw new Error('Not a status export');
-  const wrapped = 'items' in raw && typeof (raw as StatusExport).items === 'object';
-  const items = wrapped ? (raw as StatusExport).items : (raw as Record<string, unknown>);
-  const out: Backup = { items: {} };
-  for (const [k, v] of Object.entries(items)) {
-    const c = clean(k, v);
-    if (c) out.items[k] = c;
+  let raw: unknown;
+  try {
+    raw = JSON.parse(json);
+  } catch {
+    throw new BackupError('json');
   }
-  const setupRaw = wrapped ? (raw as StatusExport).setup : undefined;
-  if (setupRaw && typeof setupRaw === 'object') {
-    out.setup = {};
-    for (const [k, v] of Object.entries(setupRaw)) {
-      const c = cleanSetup(k, v);
-      if (c) out.setup[k] = c;
-    }
+  if (!isRecord(raw)) throw new BackupError('not-backup');
+  if (!('app' in raw || 'version' in raw || 'items' in raw)) {
+    const keys = Object.keys(raw);
+    if (!keys.length || !keys.every((k) => KEY_RE.test(k))) throw new BackupError('not-backup');
+    return { items: section(raw, clean) };
   }
+  if ('app' in raw && raw.app !== 'tafh') throw new BackupError('foreign');
+  const version = raw.version ?? 1;
+  if (typeof version !== 'number' || !Number.isInteger(version) || version < 1)
+    throw new BackupError('malformed');
+  if (version > EXPORT_VERSION) throw new BackupError('newer');
+  const { items, setup, verify } = raw;
+  if (!isRecord(items)) throw new BackupError('malformed');
+  if (setup !== undefined && !isRecord(setup)) throw new BackupError('malformed');
+  if (verify !== undefined && !isRecord(verify)) throw new BackupError('malformed');
+  const out: Backup = { items: section(items, clean) };
+  if (setup) out.setup = section(setup, cleanSetup);
+  if (verify) out.verify = section(verify, cleanVerify);
   return out;
 }
 
@@ -123,6 +203,56 @@ export function mergeSetup(
     if (!cur || inc.at > cur.at) out[k] = inc;
   }
   return out;
+}
+
+/** Merge for Verify ticks: the union, and the later date wins per check. */
+export function mergeVerify(
+  current: Record<string, string>,
+  incoming: Record<string, string>,
+): Record<string, string> {
+  const out = { ...current };
+  for (const [k, at] of Object.entries(incoming)) {
+    const cur = out[k];
+    if (!cur || !(Date.parse(cur) >= Date.parse(at))) out[k] = at;
+  }
+  return out;
+}
+
+/** Everything a backup covers, as stored on the device. */
+export interface Snapshot {
+  items: Record<string, ComponentStatus>;
+  setup: Record<string, SetupEntry>;
+  verify: Record<string, string>;
+}
+
+/**
+ * What the device holds after reading `b`. `replace` swaps each section the file carries and
+ * leaves the others alone; it refuses a file with nothing in it, so it never just wipes the device.
+ */
+export function applyBackup(cur: Snapshot, b: Backup, mode: 'merge' | 'replace'): Snapshot {
+  if (mode === 'replace') {
+    const n = [b.items, b.setup ?? {}, b.verify ?? {}].reduce(
+      (t, x) => t + Object.keys(x).length,
+      0,
+    );
+    if (!n) throw new BackupError('empty');
+    return { items: b.items, setup: b.setup ?? cur.setup, verify: b.verify ?? cur.verify };
+  }
+  return {
+    items: merge(cur.items, b.items),
+    setup: b.setup ? mergeSetup(cur.setup, b.setup) : cur.setup,
+    verify: b.verify ? mergeVerify(cur.verify, b.verify) : cur.verify,
+  };
+}
+
+/**
+ * How many entries on the device a move from `cur` to `next` removes or overwrites: what a replace
+ * would lose. DeviceData asks for a second tap when it is more than 0.
+ */
+export function lostEntries(cur: Snapshot, next: Snapshot): number {
+  const lost = (a: Record<string, unknown>, b: Record<string, unknown>) =>
+    Object.keys(a).filter((k) => JSON.stringify(a[k]) !== JSON.stringify(b[k])).length;
+  return lost(cur.items, next.items) + lost(cur.setup, next.setup) + lost(cur.verify, next.verify);
 }
 
 /** Merge: the newer `at` wins per component; histories are unioned by timestamp. */

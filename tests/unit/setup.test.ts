@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { SETUP_ITEM_COUNT, SETUP_STEPS } from '~/data/setup';
-import { deserializeAll, mergeSetup, serialize } from '~/lib/status-io';
+import { deserializeAll, EXPORT_VERSION, mergeSetup, nextSetup, serialize } from '~/lib/status-io';
 
 describe('setup data', () => {
   it('has unique item ids across steps', () => {
@@ -38,5 +38,31 @@ describe('setup in the backup file', () => {
     expect(m['A.1 26']?.value).toBe('YES');
     expect(m['U.5']).toBeDefined();
     expect(mergeSetup(setup, cur)['A.1 26']?.value).toBe('YES');
+  });
+});
+
+describe('Verify ticks in the backup file', () => {
+  const verify = { 'flasher-count': '2026-09-23T10:00:00.000Z' };
+  it('are written with version 2 and read back', () => {
+    const file = JSON.parse(serialize({}, {}, verify)) as { version: number; verify: unknown };
+    expect(file.version).toBe(EXPORT_VERSION);
+    expect(EXPORT_VERSION).toBe(2);
+    expect(file.verify).toEqual(verify);
+    expect(deserializeAll(serialize({}, undefined, verify)).verify).toEqual(verify);
+  });
+  it('are absent from an old file, so an import leaves them alone', () => {
+    expect(deserializeAll(serialize({}, {})).verify).toBeUndefined();
+  });
+});
+
+describe('nextSetup', () => {
+  it('keeps the other field and drops an empty item', () => {
+    const a = nextSetup(undefined, { value: '3' }, '2026-09-23');
+    expect(nextSetup(a, { done: true }, '2026-09-24')).toEqual({
+      value: '3',
+      done: true,
+      at: '2026-09-24',
+    });
+    expect(nextSetup(a, { value: '' }, '2026-09-24')).toBeUndefined();
   });
 });

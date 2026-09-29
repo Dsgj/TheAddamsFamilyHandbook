@@ -285,14 +285,17 @@ main.wide {
     var(--shadow-2),
     inset 0 0 0 1px var(--sep);
 }
+/* minmax(0,1fr), not 1fr: a plain 1fr track is minmax(auto,1fr), so a wide table sets the
+   column's minimum to its own min-content width and blows the page out past the viewport
+   (VP-02, VL-02, DS-12), on phone and at every desktop width up to 1366px. */
 .grid-2 {
   display: grid;
   gap: var(--gap);
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
 }
 @media (min-width: 900px) {
   .grid-2 {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .grid-2.wide-first {
     grid-template-columns: 3fr 2fr;
@@ -494,6 +497,12 @@ table.t th {
 }
 .prose .scroll-x {
   margin: 0.8em 0;
+}
+/* The appendix cites sources as bare <https://…> links; nothing else inside .prose needs to break
+   mid-word (that would crush table cells, see .prose .scroll-x above), so this is scoped to links,
+   not the whole .prose block (VP-01). */
+.prose a {
+  overflow-wrap: anywhere;
 }
 .prose blockquote {
   margin: 1em 0;

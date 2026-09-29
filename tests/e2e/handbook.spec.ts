@@ -61,7 +61,18 @@ test.describe('the Handbook home', () => {
   test('"Search the scans" hands the query to the manual search', async ({ page }) => {
     await gotoHydrated(page, '/manual?q=flipper');
     await expect(page.getByLabel('Search manual text')).toHaveValue('flipper');
-    await expect(page.locator('.search a[href*="/manual/"]').first()).toBeVisible();
+    await expect(page.locator('.msearch a[href*="/manual/"]').first()).toBeVisible();
+  });
+
+  // DS-01: the global .search field rule used to also match this wrapper and collapse it to
+  // 36px, so a tap on a hit landed on whatever TOC link sat underneath instead.
+  test('tapping an OCR hit opens the tapped page, not a neighboring one', async ({ page }) => {
+    await gotoHydrated(page, '/manual?q=flipper');
+    const hit = page.locator('.msearch a[href*="/manual/"]').first();
+    const href = await hit.getAttribute('href');
+    expect(href).toBeTruthy();
+    await hit.click();
+    await expect(page).toHaveURL(new RegExp(`${href!.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`));
   });
 });
 
@@ -239,5 +250,44 @@ test('Parts: Search parts, Clear search, the row count and four columns', async 
   await page.getByRole('button', { name: 'Clear search' }).click();
   await expect(page.getByLabel('Search parts')).toHaveValue('');
   await expect(page.getByLabel('Search parts')).toBeFocused();
+  await expect(page.locator('.count')).toContainText('Top-level assemblies');
+});
+
+// CO-12, DA-10: a part search hit links to /parts#<no>, a row that sits below the default
+// top-level cutoff and previously had no id for the hash to find.
+test('/parts#<no> reveals, scrolls to and highlights that row, on load and on hashchange', async ({
+  page,
+}) => {
+  await gotoHydrated(page, '/parts#01-10020');
+  await expect(page.getByLabel('Search parts')).toHaveValue('01-10020');
+  const first = page.locator('tr[data-part="01-10020"]');
+  await expect(first).toBeVisible();
+  await expect(first).toHaveClass(/hl/);
+  await expect(first).toContainText('cover-domestic cashbox');
+
+  // A same-document hash change (no reload, no new gotoHydrated) should reveal the new target too.
+  await page.evaluate(() => {
+    location.hash = '#01-9989';
+  });
+  await expect(page.getByLabel('Search parts')).toHaveValue('01-9989');
+  const second = page.locator('tr[data-part="01-9989"]');
+  await expect(second).toBeVisible();
+  await expect(second).toHaveClass(/hl/);
+  await expect(second).toContainText('cashbox handle');
+  // The new search term no longer matches the first part, so its row is gone, not just unhighlighted.
+  await expect(first).toHaveCount(0);
+});
+
+// A hash that isn't a part number — the skip link's #main, in particular — must not hijack the
+// search: it's a same-document anchor, so it reaches PartsList exactly like a part hash does.
+test('a non-part hash such as #main leaves Parts search alone', async ({ page }) => {
+  await gotoHydrated(page, '/parts#main');
+  await expect(page.getByLabel('Search parts')).toHaveValue('');
+  await expect(page.locator('.count')).toContainText('Top-level assemblies');
+
+  await page.evaluate(() => {
+    location.hash = '#main';
+  });
+  await expect(page.getByLabel('Search parts')).toHaveValue('');
   await expect(page.locator('.count')).toContainText('Top-level assemblies');
 });

@@ -1,6 +1,7 @@
 <script lang="ts">
   import {
     getStatus,
+    saveNote,
     setNote,
     setStatus,
     shortDate,
@@ -36,7 +37,8 @@
     placeholder="Note (stays on this device)"
     aria-label="Note"
     bind:value={note}
-    onchange={() => setNote(kind, id, note)}
+    oninput={(e) => setNote(kind, id, e.currentTarget.value, { defer: true })}
+    onchange={() => saveNote()}
   />
   {#if showLog && log.length}
     <ol class="log muted small" aria-label="Service log">
@@ -72,5 +74,14 @@
   .seg {
     flex: 1 1 100%;
     display: grid;
+  }
+  /* On a 320px phone each button is about 83px, and the global 12px padding pushed "Not tested"
+     out over its neighbour. The columns fill the row, so the padding only shows when narrow; a
+     label that still does not fit wraps inside its button. */
+  .seg > button {
+    padding: 0 2px;
+    white-space: normal;
+    line-height: 16px;
+    text-align: center;
   }
 </style>

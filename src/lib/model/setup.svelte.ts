@@ -1,57 +1,61 @@
+import { untrack } from 'svelte';
 import type { SetupEntry } from './types';
-import { mergeSetup } from '~/lib/status-io';
+import { nextSetup, nowIso } from '~/lib/status-io';
+import {
+  BACKUP_KEYS,
+  deferEntry,
+  flush,
+  readEntries,
+  requestPersist,
+  syncEntries,
+  updateEntry,
+  watch,
+  writeJson,
+} from '~/lib/storage';
 
 /**
  * What the machine is set to, per setup item (see src/data/setup.ts), local to this device.
- * Same shape as the status model: runes state, localStorage behind it, part of the backup file.
+ * Same shape as the status model: runes state following lib/storage.ts, part of the backup file.
  */
-const KEY = 'tafh:setup';
+const KEY = BACKUP_KEYS.setup;
 
-function load(): Record<string, SetupEntry> {
-  if (typeof localStorage === 'undefined') return {};
-  try {
-    const raw = localStorage.getItem(KEY);
-    return raw ? (JSON.parse(raw) as Record<string, SetupEntry>) : {};
-  } catch {
-    return {};
-  }
-}
+const read = () => readEntries<SetupEntry>(KEY);
+const state = $state<{ items: Record<string, SetupEntry> }>({ items: read() });
 
-const state = $state<{ items: Record<string, SetupEntry> }>({ items: load() });
-
-function persist() {
-  try {
-    localStorage.setItem(KEY, JSON.stringify(state.items));
-  } catch {
-    /* private mode: keep in memory only */
-  }
-}
+if (typeof window !== 'undefined')
+  watch(KEY, () => untrack(() => syncEntries(state.items, read())));
 
 export function getSetup(id: string): SetupEntry | undefined {
   return state.items[id];
 }
 
-function put(id: string, patch: Partial<SetupEntry>) {
-  const prev = state.items[id];
-  const next: SetupEntry = {
-    value: patch.value ?? prev?.value ?? '',
-    done: patch.done ?? prev?.done ?? false,
-    at: new Date().toISOString(),
-  };
-  if (!next.value && !next.done) delete state.items[id];
-  else state.items[id] = next;
-  persist();
+/**
+ * With `defer` (typing), the view updates now and storage after a short pause, or on pagehide;
+ * the tick and time are taken when it is written.
+ */
+export function setValue(id: string, value: string, opts: { defer?: boolean } = {}) {
+  const fn = (cur: SetupEntry | undefined) => nextSetup(cur, { value }, nowIso());
+  if (!opts.defer) {
+    updateEntry(KEY, id, fn);
+    return;
+  }
+  const next = fn(untrack(() => $state.snapshot(state.items[id])));
+  if (next) state.items[id] = next;
+  else delete state.items[id];
+  deferEntry(KEY, id, fn);
 }
 
-export function setValue(id: string, value: string) {
-  put(id, { value });
+/** Writes the typed values now (the field's change event) and asks once to keep storage. */
+export function saveValue() {
+  flush(KEY);
+  requestPersist();
 }
 
 export function setDone(id: string, done: boolean) {
-  put(id, { done });
+  updateEntry<SetupEntry>(KEY, id, (cur) => nextSetup(cur, { done }, nowIso()));
 }
 
-/** The raw record, for the backup file. */
+/** The raw record, for the device data counts. */
 export function setupItems(): Record<string, SetupEntry> {
   return state.items;
 }
@@ -60,17 +64,6 @@ export function doneCount(ids: string[]): number {
   return ids.filter((id) => state.items[id]?.done).length;
 }
 
-export function replaceSetup(items: Record<string, SetupEntry>) {
-  state.items = items;
-  persist();
-}
-
-export function mergeSetupInto(items: Record<string, SetupEntry>) {
-  state.items = mergeSetup(state.items, items);
-  persist();
-}
-
 export function clearSetup() {
-  state.items = {};
-  persist();
+  writeJson(KEY, {}, { reset: true });
 }

@@ -7,7 +7,7 @@
   import { allStatuses } from '~/lib/model/status.svelte';
   import { doneCount } from '~/lib/model/setup.svelte';
   import { groupFaults, type ShoppingItem } from '~/lib/shopping';
-  import { loadVerifyTicks } from '~/lib/verify-store';
+  import { verifiedCount } from '~/lib/model/verify.svelte';
   import BottomSheet from './BottomSheet.svelte';
   import InstallSheet from './InstallSheet.svelte';
   import { isStandalone } from '~/lib/install';
@@ -39,7 +39,6 @@
   ];
 
   let hydrated = $state(false);
-  let verified = $state(0);
   let theme = $state<Theme>('system');
   let offline = $state('');
   let about = $state(false);
@@ -50,12 +49,11 @@
     hydrated ? groupFaults(items, allStatuses()).reduce((n, g) => n + g.items.length, 0) : 0,
   );
   const setupDone = $derived(hydrated ? doneCount(setupIds) : 0);
+  const verified = $derived(hydrated ? verifiedCount(verifyIds) : 0);
 
   onMount(() => {
     hydrated = true;
     standalone = isStandalone();
-    const ticks = loadVerifyTicks();
-    verified = verifyIds.filter((id) => ticks[id]).length;
     try {
       const t = localStorage.getItem(THEME_KEY);
       theme = t === 'light' || t === 'dark' ? t : 'system';

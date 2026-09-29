@@ -65,6 +65,8 @@ test('setup values travel in the backup file', async ({ page }) => {
       }),
     ),
   });
+  // The file drops the custom message typed above, so replace asks once more before writing.
+  await page.getByRole('button', { name: /^Really replace\? 1 entry here will be lost/ }).click();
   await expect(page.getByRole('status')).toContainText('0 components and 2 settings read');
   await gotoHydrated(page, '/setup');
   await expect(page.getByRole('status')).toContainText('2 /');

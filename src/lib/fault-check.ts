@@ -1,24 +1,26 @@
-import { getStatus, setStatus } from '~/lib/model/status.svelte';
+import { getStatus, setStatus, watchStatus } from '~/lib/model/status.svelte';
 import type { Kind } from '~/lib/model/types';
 
 /**
  * Enhances every `<input class="fault-check" data-kind data-id>` in the static tables: reflects the
- * device status on load and writes Fault / clear on change. One module per page, no island per row.
+ * device status and writes Fault / clear on change. One module per page, no island per row. The
+ * store's watcher redraws the boxes after a change here, in another tab, or after a bfcache restore.
  */
 export function initFaultChecks(root: ParentNode = document) {
-  for (const el of root.querySelectorAll<HTMLInputElement>('input.fault-check')) {
-    const kind = el.dataset.kind as Kind;
-    const id = el.dataset.id ?? '';
-    const apply = (broken: boolean) => {
+  const boxes = [...root.querySelectorAll<HTMLInputElement>('input.fault-check')];
+  const refresh = () => {
+    for (const el of boxes) {
+      const broken = getStatus(el.dataset.kind as Kind, el.dataset.id ?? '')?.status === 'fault';
       el.checked = broken;
       el.closest('tr')?.classList.toggle('row-fault', broken);
-    };
-    apply(getStatus(kind, id)?.status === 'fault');
-    el.addEventListener('change', () => {
-      setStatus(kind, id, el.checked ? 'fault' : '');
-      apply(el.checked);
-    });
-  }
+    }
+  };
+  for (const el of boxes)
+    el.addEventListener('change', () =>
+      setStatus(el.dataset.kind as Kind, el.dataset.id ?? '', el.checked ? 'fault' : ''),
+    );
+  refresh();
+  watchStatus(refresh);
 }
 
 initFaultChecks();
