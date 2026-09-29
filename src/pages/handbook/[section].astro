@@ -163,7 +163,10 @@ const scan = section.key === 'appendix' ? undefined : manualHref('ops', section.
   .hb {
     display: grid;
     gap: var(--gap);
-    grid-template-columns: 1fr;
+    /* minmax(0,1fr), not 1fr: a plain 1fr track is minmax(auto,1fr), so a wide table (or figure)
+       sets the column's minimum to its own min-content width and blows the page out past the
+       viewport (VP-01, AY-03). */
+    grid-template-columns: minmax(0, 1fr);
     /* Room for the fixed reader toolbar. */
     padding-bottom: 72px;
   }

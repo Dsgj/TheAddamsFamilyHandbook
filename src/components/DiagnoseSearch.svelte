@@ -13,6 +13,8 @@
   type Group = 'components' | 'handbook' | 'manuals' | 'parts';
   interface Hit {
     group: Group;
+    /** Unique within its group by construction (never the incidental url+label pairing). */
+    id: string;
     /** The code or id shown as a chip; empty for handbook, manual and part rows. */
     code: string;
     label: string;
@@ -49,6 +51,7 @@
     const hit = (code: string, label: string, sub: string, url: string) =>
       out.push({
         group: 'components',
+        id: `components:${out.length}`,
         code,
         label,
         sub,
@@ -98,6 +101,7 @@
           const sub = t.section === 'appendix' ? 'Owner service notes' : `Handbook · p. ${t.label}`;
           return {
             group: 'handbook' as const,
+            id: `handbook:${t.id}`,
             code: '',
             label: t.text,
             sub,
@@ -123,6 +127,7 @@
           if (!text) return;
           out.push({
             group: 'manuals',
+            id: `manuals:${doc}:${i}`,
             code: '',
             label: `${name} p. ${i + 1}`,
             sub: text,
@@ -147,14 +152,30 @@
         string,
         number | null,
       ][];
-      parts = rows.map(([, , no, desc, qty]) => ({
-        group: 'parts' as const,
-        code: '',
-        label: desc,
-        sub: `${no}${qty && qty !== '1' ? ` · ×${qty}` : ''}`,
-        url: href('parts') + '#' + encodeURIComponent(no),
-        text: `${desc} ${no}`.toLowerCase(),
-      }));
+      // The BOM lists the same physical part once per assembly it's used in (a common washer
+      // repeats across hundreds of rows), so `no` alone (never duplicated with a different desc)
+      // is the natural key: keep the first row for each part and drop the rest (DA-01, DA-10).
+      // Every kept part still links to /parts#<no>, which is the same row PartsList reveals for
+      // all of them.
+      const seen: Record<string, true> = {};
+      const out: Hit[] = [];
+      for (const [, , no, desc] of rows) {
+        if (seen[no]) continue;
+        seen[no] = true;
+        out.push({
+          group: 'parts',
+          id: `parts:${no}`,
+          code: '',
+          label: desc,
+          // Qty is per assembly, not per part, and the same physical part can carry a different
+          // qty in each assembly it's deduped away from here — so it's dropped rather than shown
+          // as if it were one true value (see the major review note on this dedupe).
+          sub: no,
+          url: href('parts') + '#' + encodeURIComponent(no),
+          text: `${desc} ${no}`.toLowerCase(),
+        });
+      }
+      parts = out;
     } catch {
       parts = [];
     }
@@ -209,7 +230,7 @@
     {#each results as g (g.group)}
       <h3 class="lst-h">{GROUP_LABEL[g.group]} <span class="n">{g.hits.length}</span></h3>
       <ul class="lst">
-        {#each shown(g) as h (h.url + h.label)}
+        {#each shown(g) as h (h.id)}
           <li>
             <a class="lrow two" href={h.url}>
               {#if h.code}<span class="code dmd">{h.code}</span>{/if}

@@ -122,6 +122,70 @@ test.describe('home on a phone', () => {
   });
 });
 
+test.describe('the Diagnose home stays reachable after a ?q= URL', () => {
+  // CO-01 / SV-01 / UX-01: the effect that read `?q` used to track `input`, so it refilled the
+  // field right after Clear, Cancel, backspace-to-empty or Recent set it back to ''.
+  test.use({ viewport: { width: 390, height: 844 } });
+  const home = async (page: Page) => {
+    await expect(field(page)).toHaveValue('');
+    await expect(page.getByRole('navigation', { name: 'Quick links' })).toBeVisible();
+    await expect(page).not.toHaveURL(/\?/);
+  };
+  const tabLink = (page: Page, name: string) =>
+    page.getByRole('navigation', { name: 'Sections' }).locator('a.tab', { hasText: name });
+
+  test('Clear reaches the home, not the ?q= value', async ({ page }) => {
+    await gotoHydrated(page, '/?q=32');
+    await expect(field(page)).toHaveValue('32');
+    await page.getByRole('button', { name: 'Clear', exact: true }).click();
+    await home(page);
+  });
+
+  test('select-all then Backspace reaches the home', async ({ page }) => {
+    await gotoHydrated(page, '/?q=32');
+    await field(page).click();
+    await field(page).press('ControlOrMeta+a');
+    await field(page).press('Backspace');
+    await home(page);
+  });
+
+  test('Cancel (from a search ?q=) reaches the home', async ({ page }) => {
+    await gotoHydrated(page, '/?q=flipper');
+    await expect(field(page)).toHaveValue('flipper');
+    await page.getByRole('button', { name: 'Cancel' }).click();
+    await home(page);
+  });
+
+  test('after Clear, the Diagnose tab link from another tab returns to the home', async ({
+    page,
+  }) => {
+    await gotoHydrated(page, '/?q=32');
+    await page.getByRole('button', { name: 'Clear', exact: true }).click();
+    await home(page);
+    // Leave for another tab, then come back the way motion.ts rewrites tab links: to this tab's
+    // last view. Before the fix that "last view" was always stuck at `?q=32`, since Clear never
+    // actually took (the effect undid it), so this always came back to the results.
+    await tabLink(page, 'Map').click();
+    await expect(page).toHaveURL(/\/map/);
+    await tabLink(page, 'Diagnose').click();
+    await home(page);
+  });
+
+  test('re-tapping the Diagnose tab while on ?q= results pops to the home', async ({ page }) => {
+    await gotoHydrated(page, '/?q=32');
+    await expect(field(page)).toHaveValue('32');
+    // Base.astro's reselect handler (spec §6.1) intercepts a tap on the tab's own current link.
+    await page.locator('nav.shell a.tab[aria-current="page"]').click();
+    await home(page);
+  });
+
+  test('the Recent reports button reaches the home even from a ?q= URL', async ({ page }) => {
+    await gotoHydrated(page, '/?q=32');
+    await page.getByRole('button', { name: 'Recent reports' }).click();
+    await home(page);
+  });
+});
+
 test.describe('search', () => {
   test('a word searches everything; Cancel restores the home', async ({ page }) => {
     await gotoHydrated(page, '/');
@@ -158,6 +222,24 @@ test.describe('search', () => {
     await page.getByRole('button', { name: 'Clear search' }).click();
     await expect(field(page)).toHaveValue('');
     await expect(field(page)).toBeFocused();
+  });
+
+  // DA-01, CO-05: parts.json lists the same physical part once per assembly it's used in, so a
+  // search whose top hits include one of those repeats used to throw each_key_duplicate and drop
+  // the whole Parts group.
+  test('a search with duplicate part rows still renders the Parts group, without a console error', async ({
+    page,
+  }) => {
+    const errors: string[] = [];
+    page.on('console', (msg) => {
+      if (msg.type() === 'error') errors.push(msg.text());
+    });
+    page.on('pageerror', (err) => errors.push(String(err)));
+    await gotoHydrated(page, '/');
+    await field(page).fill('post');
+    await expect(page.getByRole('heading', { level: 3, name: /^Parts/ })).toBeVisible();
+    await expect(page.getByRole('link', { name: /post/i }).first()).toBeVisible();
+    expect(errors).toEqual([]);
   });
 
   for (const text of ['row 5', 'Check Switch 32', 'f', 'TEST REPORT\nSWITCH 32']) {

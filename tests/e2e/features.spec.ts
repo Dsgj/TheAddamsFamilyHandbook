@@ -72,6 +72,8 @@ test('device data downloads a backup and reads one back', async ({ page }) => {
     mimeType: 'application/json',
     buffer: Buffer.from(backup),
   });
+  // The file drops the switch marked above, so replace asks once more before writing.
+  await page.getByRole('button', { name: /^Really replace\? 1 entry here will be lost/ }).click();
   await expect(page.getByRole('status')).toContainText('2 components read');
   await expect(page.locator('.device')).toContainText('2 components recorded');
   await expect(page.locator('.grp', { hasText: 'Lamps' })).toContainText('Thing Multiball');

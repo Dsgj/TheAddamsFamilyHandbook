@@ -1,35 +1,47 @@
-import type { ComponentStatus, Kind, StatusValue } from './types';
-import { appendHistory, deserializeAll, merge, serialize } from '~/lib/status-io';
-import { mergeSetupInto, replaceSetup, setupItems } from './setup.svelte';
+import { untrack } from 'svelte';
+import type { ComponentStatus, Kind, SetupEntry, StatusValue } from './types';
+import {
+  applyBackup,
+  deserializeAll,
+  lostEntries,
+  nextStatus,
+  nowIso,
+  serialize,
+  type Snapshot,
+} from '~/lib/status-io';
+import {
+  BACKUP_KEYS,
+  deferEntry,
+  flush,
+  readEntries,
+  requestPersist,
+  syncEntries,
+  updateEntry,
+  watch,
+  writeJson,
+} from '~/lib/storage';
 export { shortDate } from '~/lib/status-io';
 
 /**
- * Per-component test status, local to this device (M1: localStorage; M2 moves it behind a
- * StorageAdapter on Dexie). Reactive via Svelte 5 runes so every island sees the same state.
- * Each component keeps a short history of status changes as a service log.
+ * Per-component test status, local to this device (M1: localStorage through lib/storage.ts; M2
+ * moves it to Dexie behind the same module). Reactive via Svelte 5 runes so every island sees the
+ * same state. Each component keeps a short history of status changes as a service log. Writes go
+ * entry by entry to fresh storage; the state follows storage through the watcher.
  */
-const KEY = 'tafh:status';
+const KEY = BACKUP_KEYS.status;
+/** Read-only fallback from before the rename. Never written or removed: Clear writes `{}`. */
 const LEGACY_KEY = 'valvet:status';
 
-function load(): Record<string, ComponentStatus> {
-  if (typeof localStorage === 'undefined') return {};
-  try {
-    const raw = localStorage.getItem(KEY) ?? localStorage.getItem(LEGACY_KEY);
-    return raw ? (JSON.parse(raw) as Record<string, ComponentStatus>) : {};
-  } catch {
-    return {};
-  }
-}
+const read = () => readEntries<ComponentStatus>(KEY, LEGACY_KEY);
+const state = $state<{ items: Record<string, ComponentStatus> }>({ items: read() });
 
-const state = $state<{ items: Record<string, ComponentStatus> }>({ items: load() });
+// Own writes and outside changes (another tab, a bfcache restore). Watchers run inside whatever
+// wrote, which can be an effect, so nothing here subscribes it to the map.
+if (typeof window !== 'undefined')
+  watch(KEY, () => untrack(() => syncEntries(state.items, read())));
 
-function persist() {
-  try {
-    localStorage.setItem(KEY, JSON.stringify(state.items));
-  } catch {
-    /* private mode: keep in memory only */
-  }
-}
+/** For the vanilla table enhancer: runs after every change to the statuses. */
+export const watchStatus = (cb: () => void) => watch(KEY, cb);
 
 export const statusKey = (kind: Kind, id: string) => `${kind}:${id}`;
 
@@ -39,30 +51,39 @@ export function getStatus(kind: Kind, id: string): ComponentStatus | undefined {
 
 export function setStatus(kind: Kind, id: string, status: StatusValue | '', note?: string) {
   const key = statusKey(kind, id);
-  const prev = state.items[key];
-  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- plain timestamp, not reactive state
-  const at = new Date().toISOString();
-  const changed = (prev?.status ?? '') !== status;
-  const history = changed ? appendHistory(prev?.history, status, at) : prev?.history;
-  const next: ComponentStatus = {
-    id: key,
-    status,
-    note: note ?? prev?.note ?? '',
-    at,
-  };
-  if (history?.length) next.history = history;
-  if (!next.status && !next.note) {
-    // Keep the log while something was ever recorded, so "Fixed" stays visible on the card.
-    if (history?.length) state.items[key] = next;
-    else delete state.items[key];
-  } else state.items[key] = next;
-  persist();
+  updateEntry<ComponentStatus>(
+    KEY,
+    key,
+    (cur) => nextStatus(key, cur, status, note, nowIso()),
+    LEGACY_KEY,
+  );
 }
 
-export function setNote(kind: Kind, id: string, note: string) {
+/**
+ * Changes the note and keeps the status. With `defer` (typing), the view updates now and storage
+ * after a short pause, or on pagehide; the status and time are taken when it is written.
+ */
+export function setNote(kind: Kind, id: string, note: string, opts: { defer?: boolean } = {}) {
   const key = statusKey(kind, id);
-  const prev = state.items[key];
-  setStatus(kind, id, prev?.status ?? '', note);
+  const fn = (cur: ComponentStatus | undefined) =>
+    nextStatus(key, cur, cur?.status ?? '', note, nowIso());
+  if (!opts.defer) {
+    updateEntry(KEY, key, fn, LEGACY_KEY);
+    return;
+  }
+  const next = fn(untrack(() => $state.snapshot(state.items[key])));
+  if (next) state.items[key] = next;
+  else delete state.items[key];
+  deferEntry(KEY, key, fn, { legacyKey: LEGACY_KEY });
+}
+
+/**
+ * Writes the typed notes now (the field's change event) and asks once to keep storage. All of
+ * them: the write re-reads the map, and a note still queued would be reverted in its field.
+ */
+export function saveNote() {
+  flush(KEY);
+  requestPersist();
 }
 
 export function allStatuses(): ComponentStatus[] {
@@ -70,32 +91,63 @@ export function allStatuses(): ComponentStatus[] {
 }
 
 export function clearStatuses() {
-  state.items = {};
-  persist();
+  writeJson(KEY, {}, { reset: true });
 }
 
-/** Pretty JSON of everything on this device (status and machine setup), for a backup file. */
+/** Pretty JSON of everything on this device (status, machine setup, Verify ticks), for a backup. */
 export function exportStatuses(): string {
-  return serialize(state.items, setupItems());
+  flush();
+  return serialize(
+    read(),
+    readEntries<SetupEntry>(BACKUP_KEYS.setup),
+    readEntries<string>(BACKUP_KEYS.verify),
+  );
+}
+
+/** Everything a backup covers, fresh from storage. */
+const snapshot = (): Snapshot => ({
+  items: read(),
+  setup: readEntries<SetupEntry>(BACKUP_KEYS.setup),
+  verify: readEntries<string>(BACKUP_KEYS.verify),
+});
+
+/**
+ * How many entries on this device a replace with `json` would remove or overwrite. Writes nothing;
+ * throws the same BackupError importStatuses would.
+ */
+export function replaceLoss(json: string): number {
+  flush();
+  const cur = snapshot();
+  return lostEntries(cur, applyBackup(cur, deserializeAll(json), 'replace'));
 }
 
 /**
- * Reads a backup. `merge` keeps the newer entry per component and setting (default); `replace`
- * drops what is on the device first. A file without a setup block leaves setup untouched.
- * Returns what the file held. Throws on invalid JSON.
+ * Reads a backup. `merge` keeps the newer entry per component, setting and check (default);
+ * `replace` swaps what the file carries. A file without a setup or verify block leaves that part
+ * alone. The whole file is checked before anything is written: a BackupError leaves the device as
+ * it was. Returns what the file held.
  */
 export function importStatuses(
   json: string,
   mode: 'merge' | 'replace' = 'merge',
-): { components: number; settings: number } {
-  const { items, setup } = deserializeAll(json);
-  state.items = mode === 'replace' ? items : merge(state.items, items);
-  persist();
-  if (setup) {
-    if (mode === 'replace') replaceSetup(setup);
-    else mergeSetupInto(setup);
-  }
-  return { components: Object.keys(items).length, settings: Object.keys(setup ?? {}).length };
+): { components: number; settings: number; verified: number } {
+  flush();
+  const b = deserializeAll(json);
+  const cur = snapshot();
+  const next = applyBackup(cur, b, mode);
+  const writes: [string, unknown, unknown][] = [
+    [KEY, cur.items, next.items],
+    [BACKUP_KEYS.setup, cur.setup, next.setup],
+    [BACKUP_KEYS.verify, cur.verify, next.verify],
+  ];
+  for (const [key, was, now] of writes)
+    if (JSON.stringify(was) !== JSON.stringify(now))
+      writeJson(key, now, { reset: mode === 'replace' });
+  return {
+    components: Object.keys(b.items).length,
+    settings: Object.keys(b.setup ?? {}).length,
+    verified: Object.keys(b.verify ?? {}).length,
+  };
 }
 
 export const STATUS_LABEL: Record<StatusValue, string> = {

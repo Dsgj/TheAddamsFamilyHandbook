@@ -1,7 +1,11 @@
 /**
  * Continue reading (spec §9.10): the last Handbook page the reader scrolled to, one entry under
- * `tafh:reading`, written by the reader page and shown on the Handbook home.
+ * `tafh:reading`, written by the reader page and shown on the Handbook home. It goes through
+ * lib/storage.ts like the other device data, so a Handbook home that is open in another tab or
+ * restored from the back/forward cache hears Clear all.
  */
+import { readJson, writeJson } from '~/lib/storage';
+
 export const READING_KEY = 'tafh:reading';
 
 export interface Reading {
@@ -16,23 +20,23 @@ export interface Reading {
   at: string;
 }
 
+const isReading = (v: unknown): v is Reading =>
+  typeof v === 'object' &&
+  v !== null &&
+  typeof (v as Partial<Reading>).section === 'string' &&
+  typeof (v as Partial<Reading>).anchor === 'string';
+
+/** Null during SSR, when storage throws, and when nothing (or junk) is stored. */
 export function readReading(): Reading | null {
-  try {
-    const raw = localStorage.getItem(READING_KEY);
-    if (!raw) return null;
-    const v = JSON.parse(raw) as Partial<Reading>;
-    return v && typeof v.section === 'string' && typeof v.anchor === 'string'
-      ? (v as Reading)
-      : null;
-  } catch {
-    return null;
-  }
+  return readJson<Reading | null>(READING_KEY, null, { isShape: isReading });
 }
 
+/** Private mode or full storage keeps it for this page only: Continue reading stays empty. */
 export function saveReading(r: Reading): void {
-  try {
-    localStorage.setItem(READING_KEY, JSON.stringify(r));
-  } catch {
-    /* private mode or full storage: Continue reading just stays empty */
-  }
+  writeJson(READING_KEY, r);
+}
+
+/** Stored as null, like the emptied Recent lists, so the watchers of the key hear it. */
+export function clearReading(): void {
+  writeJson(READING_KEY, null);
 }

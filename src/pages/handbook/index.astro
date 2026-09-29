@@ -93,19 +93,26 @@ const range = (pages: number[]): string => {
 </Base>
 
 <script>
-  import { readReading } from '~/lib/model/reading';
+  import { READING_KEY, readReading } from '~/lib/model/reading';
+  import { watch } from '~/lib/storage';
   import { href } from '~/lib/url';
 
-  // Continue reading: the last page the reader scrolled to, if any.
-  const r = readReading();
+  // Continue reading: the last page the reader scrolled to, if any. Drawn again when another tab
+  // changes it and when the page comes back from the back/forward cache, so Clear all hides it.
   const sec = document.querySelector<HTMLElement>('[data-continue]');
-  if (r && sec) {
-    const a = sec.querySelector<HTMLAnchorElement>('a.lrow')!;
-    a.href = href(`handbook/${r.section}#${r.anchor}`);
-    sec.querySelector('[data-ttl]')!.textContent = r.title;
-    sec.querySelector('[data-sub]')!.textContent = r.label;
-    sec.hidden = false;
-  }
+  const render = () => {
+    const r = readReading();
+    if (!sec) return;
+    if (r) {
+      const a = sec.querySelector<HTMLAnchorElement>('a.lrow')!;
+      a.href = href(`handbook/${r.section}#${r.anchor}`);
+      sec.querySelector('[data-ttl]')!.textContent = r.title;
+      sec.querySelector('[data-sub]')!.textContent = r.label;
+    }
+    sec.hidden = !r;
+  };
+  render();
+  watch(READING_KEY, render);
 </script>
 
 <style>

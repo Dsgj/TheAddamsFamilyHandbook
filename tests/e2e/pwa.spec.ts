@@ -92,3 +92,48 @@ test('pull-to-refresh lives on the Workshop only and ends in a toast', async ({ 
     { timeout: 8000 },
   );
 });
+
+/* P0 items 2 and 6 of the app audit: every query string used to miss the precache offline
+   (default `ignoreURLParametersMatching`), and the handbook's JPG figures were never cached at
+   all (the glob only covered PNGs). The paths are relative to baseURL, so the test also runs on
+   the production sub-path (`BASE_PATH=/valvet/`), where the home used to be keyed `/valvet` and
+   missed the precache (src/lib/precache.ts). */
+test('offline, a query string still hits the precache and a handbook photo still decodes', async ({
+  page,
+  context,
+}) => {
+  await gotoHydrated(page, './');
+  // The SW only becomes active once install (which precaches everything) has finished.
+  await page.evaluate(() => navigator.serviceWorker.ready.then(() => undefined));
+  await context.setOffline(true);
+
+  // motion.ts writes the Diagnose tab's href as `/?q=…` once a search has been made.
+  await gotoHydrated(page, './?q=32');
+  await expect(page.locator('.rh')).toHaveText('1 code');
+
+  // motion.ts writes the Map tab's href the same way once a marker has been picked.
+  await gotoHydrated(page, './map?layer=sw&id=32');
+  await expect(
+    page
+      .locator('.t-title', { hasText: 'Switch 32' })
+      .or(page.locator('.sheet.map[aria-label="Selected part, Switch 32"]')),
+  ).toBeVisible();
+
+  // The appendix is the one handbook section with photos (JPGs) rather than scan diagrams (PNGs).
+  await gotoHydrated(page, './handbook/appendix');
+  const photo = page.locator('figure.photo img').first();
+  await photo.scrollIntoViewIfNeeded();
+  await expect
+    .poll(() => photo.evaluate((img: HTMLImageElement) => img.naturalWidth))
+    .toBeGreaterThan(0);
+
+  // PF-12: a route the precache doesn't know (a typo, a section removed since this SW was built)
+  // gets the branded 404 page offline, not the browser's error page.
+  for (const path of ['./nope', './handbook/']) {
+    await page.goto(path);
+    await expect(page).toHaveTitle(/^Not found/);
+    await expect(page.locator('a', { hasText: 'Back to Diagnose' })).toBeVisible();
+  }
+
+  await context.setOffline(false);
+});

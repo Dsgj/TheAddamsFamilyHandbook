@@ -2,6 +2,7 @@ import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'astro/config';
 import svelte from '@astrojs/svelte';
 import AstroPWA from '@vite-pwa/astro';
+import { precacheKeys } from './src/lib/precache';
 
 // BASE_PATH is "/" locally and "/<repo>/" on GitHub Pages; the Docker image sets it at build time.
 const rawBase = process.env.BASE_PATH ?? '/';
@@ -45,15 +46,29 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // Every route here is a static page that reads its state (?q=, ?layer=&id=, …) client-side,
+        // so a query string must never take a navigation out of the precache. The default only
+        // strips utm_*/fbclid.
+        ignoreURLParametersMatching: [/.*/],
+        // Left null on purpose: vite-pwa/astro's own default (unset navigateFallback) falls back
+        // to the base path, i.e. every navigation that isn't an exact precache match — including a
+        // route added in a newer deploy that this client's SW hasn't picked up yet — would resolve
+        // to the cached home page instead of going to the network. That would shadow real routes
+        // while online. Unknown routes going offline (PF-12) are instead handled below with a
+        // NetworkOnly + precacheFallback rule, which only serves the cached 404 when the network
+        // actually fails.
         navigateFallback: null,
         globPatterns: [
           '**/*.{html,js,css,woff2,svg,webmanifest}',
           'data/*.json',
           'assets/maps/playfield.png',
-          'assets/figures/*.png',
+          'assets/figures/*.{png,jpg,jpeg}',
           'brand/*.webp',
         ],
         globIgnores: ['**/node_modules/**', 'assets/pages/**'],
+        // Keys the home as `scope` (`/valvet/`, the URL every link and start_url use) instead of
+        // Astro's slash-less `base`; see src/lib/precache.ts.
+        manifestTransforms: [precacheKeys(scope)],
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         runtimeCaching: [
           {
@@ -63,6 +78,20 @@ export default defineConfig({
               cacheName: 'tafh-scans',
               expiration: { maxEntries: 600, maxAgeSeconds: 60 * 60 * 24 * 365 },
               cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
+            // Catches navigations to routes that aren't in the precache (typos, stale links,
+            // sections removed since this SW was built). NetworkOnly always tries the network
+            // first — so a route that is genuinely new online still loads — and only falls back
+            // to the precached 404 page when that fetch fails, i.e. offline. The fallback URL is
+            // relative, matching the precache manifest's own keys, so it resolves under
+            // BASE_PATH the same way the SW's own scope does.
+            urlPattern: ({ request, url }) =>
+              request.mode === 'navigate' && url.origin === self.location.origin,
+            handler: 'NetworkOnly',
+            options: {
+              precacheFallback: { fallbackURL: '404' },
             },
           },
         ],
