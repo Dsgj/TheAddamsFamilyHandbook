@@ -101,7 +101,7 @@
     color: var(--violet);
   }
   li.cur a {
-    color: var(--amber);
+    color: var(--amber-ink);
   }
   li.lv2 a {
     padding-left: 14px;
@@ -115,7 +115,7 @@
     padding-left: 12px;
   }
   li.scans a {
-    color: var(--amber);
+    color: var(--amber-ink);
     font-weight: 500;
     border-top: 1px solid var(--sep);
     border-radius: 0 0 var(--r-sm) var(--r-sm);

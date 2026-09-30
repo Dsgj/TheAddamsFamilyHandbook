@@ -235,14 +235,17 @@
     position: relative;
     overflow: hidden;
   }
+  /* Fixed is a good outcome, so the pane is the OK colour, not red (DS-09). The label sits at
+     the pane's far edge, so the row uncovers it well before the armed point. */
   .pane {
     position: absolute;
     inset: 0 0 0 auto;
     display: grid;
-    place-items: center;
+    place-items: center end;
     width: 88px;
-    background: var(--bad);
-    color: #fff;
+    padding-right: 14px;
+    background: var(--ok);
+    color: var(--on-amber);
     font-weight: 600;
     opacity: 0;
     transition: opacity var(--dur-0) var(--ease-standard);
@@ -281,7 +284,6 @@
     }
   }
   .id {
-    color: var(--amber);
     margin-right: 4px;
   }
   .fix {

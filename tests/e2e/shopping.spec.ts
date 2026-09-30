@@ -41,3 +41,74 @@ test('Broken tick on Switches and Solenoids lands on the shopping list', async (
     /coil\/01$/,
   );
 });
+
+test('the swipe pane is the OK colour and its label shows before the armed point', async ({
+  page,
+}) => {
+  await gotoHydrated(page, '/lamps');
+  await page.getByLabel('Broken: Thing Multiball').check();
+  await gotoHydrated(page, '/shopping');
+  const sw = page.locator('li.sw').first();
+  const row = sw.locator('.row');
+  const pane = sw.locator('.pane');
+
+  // Fixed is a good outcome: the pane is --ok, not --bad (DS-09).
+  const colours = await pane.evaluate((el) => {
+    const probe = document.createElement('i');
+    el.append(probe);
+    probe.style.color = 'var(--ok)';
+    const ok = getComputedStyle(probe).color;
+    probe.style.color = 'var(--bad)';
+    const bad = getComputedStyle(probe).color;
+    probe.remove();
+    return { ok, bad, bg: getComputedStyle(el).backgroundColor };
+  });
+  expect(colours.bg).toBe(colours.ok);
+  expect(colours.bg).not.toBe(colours.bad);
+
+  // Drag the row 100px left and hold it there, short of letting go.
+  const box = await row.boundingBox();
+  if (!box) throw new Error('no row box');
+  const y = box.y + box.height / 2;
+  const x = box.x + box.width / 2;
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move(x - 100, y, { steps: 10 });
+  await expect(pane).toHaveCSS('opacity', '1');
+
+  const shown = await pane.evaluate((el) => {
+    const rgb = (s: string) => (s.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number);
+    const lum = (s: string) => {
+      const f = (v: number) => {
+        const c = v / 255;
+        return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+      };
+      const [r = 0, g = 0, b = 0] = rgb(s);
+      return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+    };
+    const cs = getComputedStyle(el);
+    const a = lum(cs.color);
+    const b = lum(cs.backgroundColor);
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const label = range.getBoundingClientRect();
+    const paneBox = el.getBoundingClientRect();
+    const rowBox = el.parentElement?.querySelector('.row')?.getBoundingClientRect();
+    return {
+      ratio: (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05),
+      label: { left: label.left, right: label.right },
+      pane: { left: paneBox.left, right: paneBox.right },
+      rowRight: rowBox?.right ?? Infinity,
+    };
+  });
+  expect(shown.ratio).toBeGreaterThanOrEqual(4.5);
+  // The label is uncovered: right of the moved row, inside the pane.
+  expect(shown.label.left).toBeGreaterThanOrEqual(shown.rowRight);
+  expect(shown.label.left).toBeGreaterThanOrEqual(shown.pane.left);
+  expect(shown.label.right).toBeLessThanOrEqual(shown.pane.right);
+
+  // Back to the start before letting go: nothing is committed.
+  await page.mouse.move(x, y, { steps: 10 });
+  await page.mouse.up();
+  await expect(page.getByRole('button', { name: 'Fixed: Thing Multiball' })).toBeVisible();
+});

@@ -239,11 +239,24 @@ test('links use the amber ink of each theme', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await gotoHydrated(page, '/map?layer=sw');
   const link = page.locator('aside a.src');
+  // Each theme's --amber-ink, read from the page, so retuning the token does not break this test.
+  const amberInk = () =>
+    page.evaluate(() => {
+      const probe = document.createElement('i');
+      probe.style.color = 'var(--amber-ink)';
+      document.body.append(probe);
+      const color = getComputedStyle(probe).color;
+      probe.remove();
+      return color;
+    });
   await page.emulateMedia({ colorScheme: 'light' });
   await page.evaluate(() => delete document.documentElement.dataset.theme);
-  await expect(link).toHaveCSS('color', 'rgb(168, 68, 10)');
+  const light = await amberInk();
+  await expect(link).toHaveCSS('color', light);
   await page.emulateMedia({ colorScheme: 'dark' });
-  await expect(link).toHaveCSS('color', 'rgb(255, 138, 61)');
+  const dark = await amberInk();
+  expect(dark).not.toBe(light);
+  await expect(link).toHaveCSS('color', dark);
 });
 
 test('reduced motion: fit and the zoom steps land without a transform animation', async ({
