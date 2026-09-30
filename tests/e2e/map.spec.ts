@@ -387,7 +387,7 @@ test.describe('phone selection sheet', () => {
     await expect(
       page.locator(SHEET).getByRole('button', { name: 'Expand details' }),
     ).toHaveAttribute('aria-expanded', 'false');
-    await expect(page).toHaveURL(/id=32/);
+    await expect(page).toHaveURL(/id=switch:32/);
   });
 
   test('reduced motion: the sheet and the canvas move without animations', async ({ page }) => {

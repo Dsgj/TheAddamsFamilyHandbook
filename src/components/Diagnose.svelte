@@ -12,7 +12,7 @@
   import { getStatus } from '~/lib/model/status.svelte';
   import type { Lamp, Switch } from '~/lib/model/types';
   import { lampSharedCauses, sharedCauses } from '~/lib/shared-cause';
-  import { href } from '~/lib/url';
+  import { href, replaceUrl } from '~/lib/url';
   import { onMount, tick, untrack } from 'svelte';
   import ComponentCard from './ComponentCard.svelte';
   import DiagnoseSearch from './DiagnoseSearch.svelte';
@@ -30,17 +30,49 @@
   let resultsHead: HTMLHeadingElement | undefined = $state();
   let recentHead: HTMLHeadingElement | undefined = $state();
 
+  let root: HTMLElement | undefined = $state();
+
   // The body names this view and its URL (`?q=`) for motion.ts, so a back link from a page opened
-  // here reads "Results" and lands on them (spec §10). Typing leaves the address clean (a reload
-  // is the home); a shared link that already carries `q` is kept honest.
+  // here reads "Results" and lands on them (spec §10), even before the address says so.
+  //
+  // The address itself follows the field once results or a search are committed (audit P1 item
+  // 7): Enter or Diagnose, the field losing focus, a link followed from the view, a Recent or Try
+  // row, or a `?q=` the page loaded with. It is rewritten in place, never pushed, so system Back
+  // from a card and a reload return to the results. Emptying the field (Clear, Cancel, Recent,
+  // reselecting the tab, backspace) returns it to the clean home; typing before a commit leaves it
+  // alone. The string is exactly `?q=` + encodeURIComponent, the same as `body[data-url]`.
+  let committed = false;
+  let pending: ReturnType<typeof setTimeout> | undefined;
+  const query = () => {
+    const q = input.trim();
+    return q ? `?q=${encodeURIComponent(q)}` : '';
+  };
+  function writeUrl() {
+    clearTimeout(pending);
+    pending = undefined;
+    const next = location.pathname + (committed ? query() : '') + location.hash;
+    if (next !== location.pathname + location.search + location.hash) replaceUrl(next);
+  }
+  function commit() {
+    if (!input.trim()) return;
+    committed = true;
+    writeUrl();
+  }
+  function uncommit() {
+    committed = false;
+    writeUrl();
+  }
   $effect(() => {
     if (!hydrated) return;
-    const q = input.trim();
-    const want = q ? `?q=${encodeURIComponent(q)}` : '';
+    const want = query();
     document.body.dataset.url = location.pathname + want;
     document.body.dataset.view = mode === 'results' ? 'Results' : mode === 'search' ? 'Search' : '';
-    if (location.search && location.search !== want) {
-      history.replaceState(null, '', location.pathname + want);
+    if (!want) {
+      if (committed || location.search) uncommit();
+    } else if (committed) {
+      // Typing while committed: one write per pause, well under the browsers' replaceState limits.
+      clearTimeout(pending);
+      pending = setTimeout(writeUrl, 250);
     }
   });
   onMount(() => {
@@ -50,6 +82,10 @@
     // backspace-to-empty or Recent, since those set `input` to the very state this reads past.
     const q = new URLSearchParams(location.search).get('q');
     if (q && !input) input = q;
+    // A `?q=` on load is committed (a cold link, a tab link, a reload); the address is normalised
+    // to the one form either way.
+    committed = !!q && !!input.trim();
+    writeUrl();
     hydrated = true;
     canPaste = typeof navigator !== 'undefined' && !!navigator.clipboard?.readText;
     const onBar = (e: Event) => {
@@ -62,9 +98,43 @@
       if (mode !== 'home') clear();
     };
     document.addEventListener('tafh:reselect', onReselect);
+    // A link followed from the view commits first (capture phase, so the entry holds `?q=` before
+    // the link navigates away from it; keyboard activation clicks too).
+    const onFollow = (e: Event) => {
+      if ((e.target as Element | null)?.closest?.('a[href]')) commit();
+    };
+    root?.addEventListener('click', onFollow, true);
+    // An edit still waiting for its pause is written before the page is hidden or left (an app
+    // switch the system may end in a discard, Back, a link), so the entry holds what the field says.
+    // Not while the page enters the back/forward cache: a replaceState there makes Chromium evict
+    // it, so the write waits for the restore (the visibilitychange after that pagehide is covered).
+    let frozen = false;
+    const flush = () => {
+      if (pending !== undefined && !frozen) writeUrl();
+    };
+    const onPageHide = (e: PageTransitionEvent) => {
+      if (e.persisted) frozen = true;
+      else flush();
+    };
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (!e.persisted) return;
+      frozen = false;
+      flush();
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') flush();
+    };
+    addEventListener('pagehide', onPageHide);
+    addEventListener('pageshow', onPageShow);
+    document.addEventListener('visibilitychange', onVisibility);
     return () => {
+      clearTimeout(pending);
       document.removeEventListener('tafh:diag', onBar);
       document.removeEventListener('tafh:reselect', onReselect);
+      root?.removeEventListener('click', onFollow, true);
+      removeEventListener('pagehide', onPageHide);
+      removeEventListener('pageshow', onPageShow);
+      document.removeEventListener('visibilitychange', onVisibility);
     };
   });
 
@@ -139,7 +209,12 @@
     const s = summary();
     if (top.summary !== s) recordRecent(input, s, top.at);
   });
+  function onBlur() {
+    record();
+    commit();
+  }
   async function diagnose() {
+    commit();
     record();
     await tick();
     if (resultsHead) {
@@ -163,20 +238,24 @@
   }
   function clear() {
     input = '';
+    uncommit();
     shared = '';
     field?.focus();
   }
   function cancelSearch() {
     input = '';
+    uncommit();
     field?.blur();
   }
   async function showRecent() {
     input = '';
+    uncommit();
     await tick();
     recentHead?.focus();
   }
   function refill(text: string) {
     input = text;
+    commit();
     field?.focus();
   }
   async function share() {
@@ -202,7 +281,7 @@
   }
 </script>
 
-<section class="diag" data-mode={mode}>
+<section class="diag" data-mode={mode} bind:this={root}>
   {#if mode === 'home'}
     <p class="intro">
       Type what the machine shows: a test report, a Check Switch message or single codes.
@@ -350,7 +429,7 @@
       bind:this={field}
       bind:value={input}
       onkeydown={onKey}
-      onblur={record}
+      onblur={onBlur}
     ></textarea>
     <div class="acts">
       {#if canPaste}
