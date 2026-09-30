@@ -3,6 +3,7 @@
   import type { DocId } from '~/lib/model/types';
   import { DOC_NAME, pageLabel, tocTitle } from '~/lib/pages';
   import { href, manualHref } from '~/lib/url';
+  import SearchField from './SearchField.svelte';
 
   /** Full-text search over the OCR text of all three documents (fetched on first use). */
   let { doc = '' }: { doc?: DocId | '' } = $props();
@@ -62,21 +63,20 @@
   });
 </script>
 
-<!-- Not `.search`: base.css's global rule for the spec's search field (§8.7) would collapse this
-     wrapper to 36px while its content (the results list) is thousands of pixels tall, so taps
-     land on whatever sits underneath instead of the hit (DS-01). -->
+<!-- The wrapper is never `.search` or `.srch`: those are the field's own classes (spec §8.7), and
+     the results list must not sit inside the field's box, or taps land on whatever sits
+     underneath instead of the hit (DS-01). The .srch wraps the input only, so its clear button
+     never lands on the select. -->
 <div class="msearch">
   <div class="row">
-    <input
-      class="field"
-      type="search"
-      placeholder="Search the scans (OCR)…"
-      aria-label="Search manual text"
+    <SearchField
+      label="Search manual text"
+      placeholder="Search the scans"
       bind:value={q}
       onfocus={ensure}
       oninput={ensure}
     />
-    <select class="field sel" bind:value={only} aria-label="Document">
+    <select class="search sel" bind:value={only} aria-label="Document">
       <option value="">All documents</option>
       <option value="ops">Operations Manual</option>
       <option value="hb">Operator's Handbook</option>
@@ -85,7 +85,9 @@
   </div>
   {#if loading}<p class="muted small">Loading text…</p>{/if}
   {#if q.trim().length >= 2 && data}
-    <p class="muted small">{hits.length ? `${hits.length} pages` : 'No pages match.'}</p>
+    <p class="muted small">
+      {hits.length ? `${hits.length} pages` : `No pages match “${q.trim()}”.`}
+    </p>
     <ul class="hits">
       {#each hits as h (h.doc + h.page)}
         <li>
@@ -107,12 +109,17 @@
 </div>
 
 <style>
+  /* The field keeps at least 136 px beside the select (its clear button takes 44 of it); on a
+     320 phone that no longer fits, so the select wraps under the field. */
   .row {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
   }
+  .row > :global(.srch) {
+    flex: 1 1 136px;
+  }
   .sel {
-    width: auto;
     flex: 0 0 auto;
   }
   .hits {
@@ -130,9 +137,11 @@
     border-radius: var(--r-xs);
     color: var(--ink);
   }
-  .hits a:hover {
-    border-color: var(--brass);
-    text-decoration: none;
+  @media (hover: hover) {
+    .hits a:hover {
+      border-color: var(--brass);
+      text-decoration: none;
+    }
   }
   .where {
     color: var(--amber);
@@ -140,7 +149,7 @@
   }
   .snip {
     display: block;
-    font-size: 0.9rem;
+    font: var(--t-sub);
     margin-top: 2px;
   }
 </style>

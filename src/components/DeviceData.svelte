@@ -267,7 +267,6 @@
     max-width: 58%;
     min-height: 36px;
     padding: 2px 8px;
-    font-size: 15px;
   }
   .bad {
     color: var(--bad);

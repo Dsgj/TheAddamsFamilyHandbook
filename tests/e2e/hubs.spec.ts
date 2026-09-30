@@ -42,7 +42,7 @@ test('Tables: rows, counts from the data and the search filter', async ({ page }
   await expect(visible).toContainText('Lamp matrix');
   await page.getByRole('searchbox', { name: 'Search tables' }).fill('zzz');
   await expect(page.locator(`${ROWS}:visible`)).toHaveCount(0);
-  await expect(page.getByText('No table matches.')).toBeVisible();
+  await expect(page.getByText('No tables match “zzz”.')).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await noHorizontalScroll(page)).toBe(true);
 });

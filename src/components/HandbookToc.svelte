@@ -1,5 +1,6 @@
 <script lang="ts">
   import { href } from '~/lib/url';
+  import SearchField from './SearchField.svelte';
 
   import type { TocItem } from '~/lib/handbook/types';
   /**
@@ -24,11 +25,9 @@
 </script>
 
 <nav class="toc" class:home aria-label="Handbook contents">
-  <input
-    class="field"
-    type="search"
-    placeholder={home ? 'Search the handbook and scans' : 'Find a heading (B.1, A.2 05, EOS…)'}
-    aria-label={home ? 'Search the handbook and scans' : 'Filter contents'}
+  <SearchField
+    label={home ? 'Search the handbook and scans' : 'Filter contents'}
+    placeholder={home ? 'Search the handbook and scans' : 'Find a heading, e.g. B.1 or EOS'}
     bind:value={q}
   />
   {#if !home || query}
@@ -41,7 +40,7 @@
           </a>
         </li>
       {/each}
-      {#if !shown.length}<li class="muted small none">No heading matches.</li>{/if}
+      {#if !shown.length}<li class="muted small none">No headings match “{query}”.</li>{/if}
       {#if home}
         <li class="scans">
           <a href={scans}>Search the scans for “{query}”</a>
@@ -52,12 +51,10 @@
 </nav>
 
 <style>
-  .toc .field {
+  .toc :global(.srch) {
     margin-bottom: 8px;
-    min-height: 38px;
   }
-  .home .field {
-    min-height: 44px;
+  .home :global(.srch) {
     margin-bottom: 0;
   }
   ul {
@@ -79,27 +76,27 @@
     justify-content: space-between;
     gap: 8px;
     padding: 5px 8px;
-    border-radius: 4px;
+    border-radius: var(--r-xs);
     color: var(--ink);
-    font-size: 0.9rem;
+    font: var(--t-sub);
   }
   .home li a {
     padding: 9px 12px;
-    border-radius: 8px;
-    font-size: 15px;
+    border-radius: var(--r-sm);
     min-height: 44px;
     align-items: center;
   }
   li.none {
     padding: 9px 12px;
   }
-  li a:hover {
-    background: var(--sunk);
-    text-decoration: none;
+  @media (hover: hover) {
+    li a:hover {
+      background: var(--sunk);
+      text-decoration: none;
+    }
   }
   li.lv1 a {
-    font-family: var(--font-display);
-    font-size: 1.05rem;
+    font: var(--t-name);
     margin-top: 8px;
     color: var(--violet);
   }
@@ -121,6 +118,6 @@
     color: var(--amber);
     font-weight: 500;
     border-top: 1px solid var(--sep);
-    border-radius: 0 0 8px 8px;
+    border-radius: 0 0 var(--r-sm) var(--r-sm);
   }
 </style>

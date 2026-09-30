@@ -26,29 +26,27 @@ a {
     text-decoration: underline;
   }
 }
+/* Headings on the type scale (spec §2): the in-page h1 is the large title, h2 the title, h3 the
+   name, h4 the section head. */
 h1,
 h2,
 h3,
 h4 {
-  font-family: var(--font-display);
-  font-weight: 400;
   letter-spacing: 0.02em;
-  line-height: 1.15;
   margin: 0 0 0.5em;
 }
 h1 {
-  font-size: 1.9rem;
+  font: var(--t-lt);
+  letter-spacing: 0.01em;
 }
 h2 {
-  font-size: 1.45rem;
+  font: var(--t-title);
 }
 h3 {
-  font-size: 1.2rem;
+  font: var(--t-name);
 }
 h4 {
-  font-family: var(--font-body);
-  font-weight: 600;
-  font-size: 1rem;
+  font: var(--t-head);
 }
 p {
   margin: 0 0 0.75em;
@@ -102,7 +100,7 @@ main.fullbleed {
 .top {
   position: sticky;
   top: 0;
-  z-index: 20;
+  z-index: var(--z-topbar);
   padding-top: var(--safe-top);
   background: var(--bar);
   -webkit-backdrop-filter: blur(20px) saturate(1.5);
@@ -143,7 +141,7 @@ main.fullbleed {
   text-overflow: ellipsis;
   white-space: nowrap;
   text-align: center;
-  font: 600 17px/22px var(--font-body);
+  font: var(--t-head);
   letter-spacing: 0;
   color: var(--ink);
 }
@@ -165,7 +163,7 @@ main.fullbleed {
 }
 .lt h1 {
   margin: 0;
-  font: 400 34px/41px var(--font-display);
+  font: var(--t-lt);
   letter-spacing: 0.01em;
   opacity: var(--lt, 1);
 }
@@ -195,7 +193,7 @@ main.fullbleed {
   height: 44px;
   padding: 0;
   border: 0;
-  border-radius: 22px;
+  border-radius: var(--r-full);
   background: none;
   color: var(--ink);
   cursor: pointer;
@@ -279,7 +277,7 @@ main.fullbleed {
   .back[data-bare] svg {
     margin-inline: -2px -8px;
     padding-inline: 2px 8px;
-    border-radius: 10px;
+    border-radius: var(--r-sm);
   }
   .back[data-bare]:focus-visible {
     outline: none;
@@ -297,7 +295,7 @@ main.fullbleed {
   .top .ct {
     max-width: none;
     text-align: left;
-    font: 400 24px/30px var(--font-display);
+    font: var(--t-h1-wide);
     letter-spacing: 0.02em;
   }
   .top .lead:empty {
@@ -311,7 +309,7 @@ main.fullbleed {
     text-decoration: none;
   }
   .back:hover {
-    border-radius: 10px;
+    border-radius: var(--r-sm);
   }
 }
 @media (hover: hover) and (max-width: 1279px) {
@@ -376,8 +374,10 @@ main.wide {
 .muted {
   color: var(--muted);
 }
+/* Size only, so `class="mono muted small"` keeps the mono face (spec §2, t-foot). */
 .small {
-  font-size: 0.85rem;
+  font-size: 13px;
+  line-height: 18px;
 }
 .scroll-x {
   overflow-x: auto;
@@ -385,43 +385,85 @@ main.wide {
   max-width: 100%;
 }
 
-/* Buttons and controls */
+/* ---- Buttons (spec §8.7) ----
+   The base is the gray variant: 50 tall, radius 12, 17/22 weight 600, no border. .primary, .tinted
+   and .plain recolour it; .sm is the 36-tall small button. Focus uses the global :focus-visible. */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-height: var(--touch);
-  padding: 0 14px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-xs);
+  min-height: 50px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: var(--r-btn);
   background: var(--sunk);
   color: var(--ink);
+  font: var(--t-head);
+  text-decoration: none;
   cursor: pointer;
   white-space: nowrap;
 }
-@media (hover: hover) {
-  .btn:hover {
-    border-color: var(--brass);
-  }
+.btn svg {
+  flex: none;
+  width: 20px;
+  height: 20px;
+}
+.btn.gray {
+  background: var(--sunk);
+  color: var(--ink);
 }
 .btn.primary {
-  background: var(--amber);
-  color: #1a0d05;
-  border-color: var(--amber);
-  font-weight: 600;
+  background: var(--amber-fill);
+  color: var(--on-amber);
 }
+.btn.tinted {
+  background: var(--tint);
+  color: var(--amber-ink);
+}
+.btn.plain {
+  background: none;
+  color: var(--amber-ink);
+}
+/* .small is the old name, kept for one release (2026-09-30); new markup says .sm. */
+.btn.sm,
 .btn.small {
-  min-height: 34px;
-  padding: 0 10px;
-  font-size: 0.85rem;
+  position: relative;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: var(--r-sm);
+  font: var(--t-sub);
+  font-weight: 500;
 }
-.btn[aria-pressed='true'],
-.btn.active {
-  border-color: var(--amber);
-  color: var(--amber);
-  box-shadow: 0 0 0 1px var(--amber) inset;
+/* A small button still offers a 44 hit area: 4 above and 4 below its 36 box. Rows of small
+   buttons keep a gap of at least 8, so the areas meet and never overlap. */
+.btn.sm::after,
+.btn.small::after {
+  content: '';
+  position: absolute;
+  inset: -4px 0;
 }
+/* After .sm, whose shorthand would reset the face (SetupGuide's suggested values). */
+.btn.mono {
+  font-family: var(--font-mono);
+}
+.btn[aria-pressed='true'] {
+  background: var(--tint);
+  color: var(--amber-ink);
+  box-shadow: inset 0 0 0 1px var(--amber-ink);
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+@media (hover: hover) {
+  .btn:hover {
+    filter: brightness(1.08);
+    text-decoration: none;
+  }
+}
+/* A form field. 16px at least on every input, select and textarea, whatever the visual size:
+   iOS Safari zooms into a smaller field on focus (spec §8.7). */
 .field {
   width: 100%;
   min-height: var(--touch);
@@ -429,6 +471,8 @@ main.wide {
   background: var(--sunk);
   border: 1px solid var(--line);
   border-radius: var(--r-xs);
+  font-size: 16px;
+  line-height: 21px;
 }
 .field:focus {
   border-color: var(--amber);
@@ -452,7 +496,7 @@ textarea.field {
       4px,
     var(--dmd-well);
   padding: 8px 14px;
-  border-radius: 4px;
+  border-radius: var(--r-xs);
   text-shadow: 0 0 6px var(--amber-glow);
   border: 1px solid #2a2230;
 }
@@ -461,7 +505,7 @@ textarea.field {
 table.t {
   border-collapse: collapse;
   width: 100%;
-  font-size: 0.92rem;
+  font: var(--t-sub);
 }
 table.t th,
 table.t td {
@@ -472,8 +516,8 @@ table.t td {
 }
 table.t th {
   color: var(--muted);
+  font: var(--t-cap);
   font-weight: 500;
-  font-size: 0.8rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -496,7 +540,7 @@ table.t th {
 
 /* Provenance notes */
 .prov {
-  font-size: 0.82rem;
+  font: var(--t-foot);
   color: var(--muted);
   border-left: 2px solid var(--brass);
   padding-left: 10px;
@@ -545,7 +589,7 @@ table.t th {
 }
 .prose figcaption,
 .prose .fig-note {
-  font-size: 0.85rem;
+  font: var(--t-foot);
   color: var(--muted);
   margin-top: 6px;
 }
@@ -571,7 +615,7 @@ table.t th {
   margin: 1.8em 0 0.8em;
   padding-top: 8px;
   border-top: 1px dashed var(--line);
-  font-size: 0.8rem;
+  font: var(--t-cap);
   color: var(--muted);
 }
 .pg-bar .btn {
@@ -594,8 +638,9 @@ table.t th {
   display: flex;
   gap: 8px;
   align-items: baseline;
+  font: var(--t-head);
   font-family: var(--font-display);
-  font-size: 1.1rem;
+  font-weight: 400;
   margin-bottom: 6px;
 }
 .mhead b {
@@ -614,7 +659,7 @@ table.t th {
   font-family: var(--font-mono);
   color: var(--muted);
   margin-right: 6px;
-  font-size: 0.85em;
+  font-size: 13px;
 }
 
 /* Broken tick in the component tables */
@@ -637,7 +682,8 @@ table.t tr.row-fault td:first-child {
 /* ---- List vocabulary (spec §8.4): groups of rows, each an <a> or a <button> ---- */
 .lst-h {
   margin: 22px 16px 7px;
-  font: 600 13px/18px var(--font-body);
+  font: var(--t-foot);
+  font-weight: 600;
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -681,7 +727,7 @@ table.t tr.row-fault td:first-child {
   flex: 0 0 auto;
   width: 30px;
   height: 30px;
-  border-radius: 7px;
+  border-radius: var(--r-thumb);
   background: var(--tint);
   color: var(--amber-ink);
 }
@@ -737,8 +783,7 @@ table.t tr.row-fault td:first-child {
 }
 .gf {
   margin: 7px 16px 0;
-  font-size: 13px;
-  line-height: 18px;
+  font: var(--t-foot);
   color: var(--muted);
 }
 
@@ -750,7 +795,7 @@ table.t tr.row-fault td:first-child {
   gap: 2px;
   height: 36px;
   padding: 2px;
-  border-radius: 9px;
+  border-radius: var(--r-track);
   background: var(--seg-track);
 }
 .seg > button,
@@ -762,10 +807,11 @@ table.t tr.row-fault td:first-child {
   padding: 0 12px;
   text-decoration: none;
   border: 0;
-  border-radius: 7px;
+  border-radius: var(--r-thumb);
   background: none;
   color: var(--ink);
-  font: 500 15px/20px var(--font-body);
+  font: var(--t-sub);
+  font-weight: 500;
   white-space: nowrap;
   cursor: pointer;
   transition:
@@ -806,7 +852,7 @@ table.t tr.row-fault td:first-child {
   height: 31px;
   padding: 0;
   border: 0;
-  border-radius: 16px;
+  border-radius: var(--r-chip);
   background: var(--sunk);
   cursor: pointer;
   transition: background var(--dur-2) var(--ease-standard);
@@ -830,7 +876,9 @@ table.t tr.row-fault td:first-child {
   transform: translateX(20px);
 }
 
-/* ---- Chips, pills, codes (spec §8.6) ---- */
+/* ---- Chips, pills, codes, wires (spec §8.6) ----
+   .chip is a control (a filter, a recent search); a label that only shows a value is a .pill,
+   a .code or a .wire, never a .chip. */
 .chip {
   display: inline-flex;
   align-items: center;
@@ -838,7 +886,7 @@ table.t tr.row-fault td:first-child {
   height: 32px;
   padding: 0 12px;
   border: 0;
-  border-radius: 16px;
+  border-radius: var(--r-chip);
   background: var(--sunk);
   color: var(--ink);
   font: 500 14px/18px var(--font-body);
@@ -855,8 +903,9 @@ table.t tr.row-fault td:first-child {
   gap: 6px;
   height: 24px;
   padding: 0 8px;
-  border-radius: 12px;
-  font: 600 13px/18px var(--font-body);
+  border-radius: var(--r-btn);
+  font: var(--t-foot);
+  font-weight: 600;
   background: var(--sunk);
   color: var(--muted);
 }
@@ -878,30 +927,46 @@ table.t tr.row-fault td:first-child {
   border-radius: 50%;
   background: currentColor;
 }
+/* A code chip. `.code.dmd` puts it on the DMD well: .dmd gives the look, .code (later) the box. */
 .code {
   display: inline-grid;
   place-items: center;
   min-width: 36px;
   height: 26px;
   padding: 0 6px;
-  border-radius: 6px;
-  font: 500 14px/18px var(--font-mono);
+  border-radius: var(--r-xs);
+  font: var(--t-code);
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 .code.lg {
   min-width: 54px;
   height: 40px;
-  border-radius: 8px;
-  font-size: 22px;
-  line-height: 26px;
+  border-radius: var(--r-code-lg);
+  font: var(--t-code-lg);
+}
+/* A wire colour: the swatch and its name. A label, not a control: no background, no cursor. */
+.wire {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: var(--t-foot);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+.wire i {
+  display: inline-block;
+  flex: none;
+  width: 26px;
+  height: 10px;
+  border-radius: var(--r-wire);
+  box-shadow: var(--wire-edge);
 }
 .hint {
   padding: 12px 14px;
-  border-radius: 12px;
+  border-radius: var(--r-btn);
   background: var(--brass-tint);
-  font-size: 15px;
-  line-height: 21px;
+  font: var(--t-sub);
 }
 .hint strong {
   font-size: 13px;
@@ -909,30 +974,78 @@ table.t tr.row-fault td:first-child {
   color: var(--brass);
 }
 
-/* ---- Buttons and fields (spec §8.7) ---- */
-.btn.sm {
-  min-height: 36px;
-  padding: 0 14px;
-  border-radius: 10px;
-  font-size: 15px;
-  line-height: 20px;
-}
+/* ---- The search field (spec §8.7) ----
+   One field: a 36-tall pill (radius 10, --seg-track) painted inside a 44 box, so the hit area
+   stays 44. The 4px transparent border and the padding-box clip draw the pill; the outer radius
+   is the pill's plus the border. The text is 16/21, not the spec's 15/20: iOS Safari zooms into
+   any field under 16px. .srch wraps an input.search and its "Clear search" button. */
 .search {
+  -webkit-appearance: none;
+  appearance: none;
   width: 100%;
-  height: 36px;
+  height: 44px;
   padding: 0 12px;
-  border: 0;
-  border-radius: 10px;
-  background: var(--seg-track);
+  border: 4px solid transparent;
+  border-radius: calc(var(--r-sm) + 4px);
+  background-color: var(--seg-track);
+  background-clip: padding-box;
   color: var(--ink);
-  font: 400 15px/20px var(--font-body);
+  font: var(--t-callout);
 }
 .search::placeholder {
   color: var(--faint);
+  opacity: 1;
 }
+/* The ring sits 1 outside the pill, inside the box. */
 .search:focus {
   outline: 2px solid var(--amber);
-  outline-offset: 1px;
+  outline-offset: -3px;
+}
+.search::-webkit-search-decoration,
+.search::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  display: none;
+}
+/* The select twin (Manuals): a chevron of two gradients in --muted, clipped to the pill. */
+select.search {
+  width: auto;
+  padding-right: 32px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position:
+    right 19px center,
+    right 14px center;
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+.srch {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+/* Room for the clear button only while there is text to clear, so a long placeholder is not cut. */
+.srch .search:not(:placeholder-shown) {
+  padding-right: 44px;
+}
+.srch .clear {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  color: var(--muted);
+}
+.srch .clear svg {
+  width: 16px;
+  height: 16px;
+}
+@media (hover: hover) {
+  .srch .clear:hover {
+    background: none;
+    color: var(--ink);
+  }
 }
 
 /* ---- Hub pages (spec §9.5, §9.14) ---- */
@@ -943,9 +1056,12 @@ table.t tr.row-fault td:first-child {
 .hub > h1 {
   margin: 0 16px 8px;
 }
+/* The pill sits 4 below the title and 8 above the list, where the 36-tall field used to. The bare
+   .search is /tables' until it is wrapped in .srch. */
+.hub > .srch,
 .hub > .search {
   width: calc(100% - 32px);
-  margin: 4px 16px 8px;
+  margin: 0 16px 4px;
 }
 .hub .lst-h:first-of-type {
   margin-top: 10px;
@@ -955,7 +1071,7 @@ table.t tr.row-fault td:first-child {
    the TabBadge island's spans get their styles too. */
 .shell {
   position: fixed;
-  z-index: 30;
+  z-index: var(--z-shell);
 }
 .shell ul {
   list-style: none;
@@ -986,10 +1102,12 @@ table.t tr.row-fault td:first-child {
   min-width: 18px;
   height: 18px;
   padding: 0 5px;
-  border-radius: 9px;
+  border-radius: var(--r-full);
   background: var(--amber-fill);
   color: var(--on-amber);
-  font: 500 11px/18px var(--font-mono);
+  font: var(--t-tab);
+  font-family: var(--font-mono);
+  line-height: 18px;
   text-align: center;
   box-shadow: 0 0 0 2px var(--ground);
 }
@@ -1029,9 +1147,7 @@ table.t tr.row-fault td:first-child {
     height: 26px;
   }
   .shell .lbl {
-    font-size: 11px;
-    line-height: 13px;
-    font-weight: 500;
+    font: var(--t-tab);
   }
   .shell .tab[aria-current='page'] {
     color: var(--amber-ink);
@@ -1066,7 +1182,7 @@ table.t tr.row-fault td:first-child {
     width: 56px;
     height: 32px;
     padding: 4px 16px;
-    border-radius: 16px;
+    border-radius: var(--r-full);
   }
   .shell .lbl {
     font-size: 12px;
@@ -1089,7 +1205,7 @@ table.t tr.row-fault td:first-child {
       background: var(--sunk);
     }
     .shell .tab:hover {
-      border-radius: 10px;
+      border-radius: var(--r-sm);
     }
   }
 }
@@ -1119,7 +1235,7 @@ table.t tr.row-fault td:first-child {
     height: 44px;
     padding: 0 12px;
     gap: 12px;
-    border-radius: 10px;
+    border-radius: var(--r-sm);
     color: var(--ink);
   }
   .shell .tab .lbl {
@@ -1154,7 +1270,7 @@ table.t tr.row-fault td:first-child {
     gap: 8px;
     height: 36px;
     padding: 0 12px 0 46px;
-    border-radius: 8px;
+    border-radius: var(--r-sm);
     font-size: 15px;
     line-height: 20px;
     color: var(--muted);
@@ -1167,11 +1283,59 @@ table.t tr.row-fault td:first-child {
     margin-left: auto;
     height: 20px;
     padding: 0 7px;
-    border-radius: 10px;
+    border-radius: var(--r-full);
     background: var(--tint);
     color: var(--amber-ink);
-    font: 12px/20px var(--font-mono);
+    font: var(--t-cap);
+    font-family: var(--font-mono);
+    line-height: 20px;
   }
+}
+
+/* ---- Type utilities (spec §2): one class per step of the scale ---- */
+.t-lt {
+  font: var(--t-lt);
+  letter-spacing: 0.01em;
+}
+.t-h1-wide {
+  font: var(--t-h1-wide);
+}
+.t-title {
+  font: var(--t-title);
+}
+.t-name {
+  font: var(--t-name);
+}
+.t-head {
+  font: var(--t-head);
+}
+.t-body {
+  font: var(--t-body);
+}
+.t-callout {
+  font: var(--t-callout);
+}
+.t-sub {
+  font: var(--t-sub);
+}
+.t-foot {
+  font: var(--t-foot);
+}
+.t-cap {
+  font: var(--t-cap);
+}
+.t-tab {
+  font: var(--t-tab);
+}
+.t-mono {
+  font: var(--t-mono);
+  font-variant-numeric: tabular-nums;
+}
+.t-code {
+  font: var(--t-code);
+}
+.t-code-lg {
+  font: var(--t-code-lg);
 }
 
 /* ---- Page transitions (spec §10) ------------------------------------------------------------
@@ -1210,7 +1374,7 @@ html:active-view-transition-type(push)::view-transition-new(root) {
   animation: vt-push-in var(--dur-4) var(--ease-emphasized) both;
 }
 html:active-view-transition-type(pop)::view-transition-old(root) {
-  z-index: 1;
+  z-index: var(--z-lift-1);
   animation: vt-pop-out var(--dur-3) var(--ease-exit) both;
 }
 html:active-view-transition-type(pop)::view-transition-new(root) {
@@ -1263,12 +1427,12 @@ html:active-view-transition-type(pop)::view-transition-new(root) {
   html:active-view-transition-type(push)::view-transition-old(root),
   html:active-view-transition-type(pop)::view-transition-old(root),
   ::view-transition-old(*) {
-    animation: vt-fade-out 150ms var(--ease-standard) both;
+    animation: vt-fade-out var(--dur-0) var(--ease-standard) both;
   }
   html:active-view-transition-type(push)::view-transition-new(root),
   html:active-view-transition-type(pop)::view-transition-new(root),
   ::view-transition-new(*) {
-    animation: vt-fade-in 150ms var(--ease-standard) both;
+    animation: vt-fade-in var(--dur-0) var(--ease-standard) both;
   }
   ::view-transition-group(*) {
     animation: none;
@@ -1310,6 +1474,8 @@ html:active-view-transition-type(pop)::view-transition-new(root) {
   .shell,
   .btn,
   .field,
+  .srch,
+  .search,
   .foot,
   .toast-host,
   .map-controls,

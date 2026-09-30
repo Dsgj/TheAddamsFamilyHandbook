@@ -154,8 +154,8 @@
       </dd>
     </dl>
     <div class="acts">
-      <a class="btn sm" href={componentHref(kind, sel.id)}>Open</a>
-      <a class="btn sm" href={href(`map?layer=${layer}&id=${sel.id}`)}>Show on map</a>
+      <a class="btn sm tinted" href={componentHref(kind, sel.id)}>Open</a>
+      <a class="btn sm tinted" href={href(`map?layer=${layer}&id=${sel.id}`)}>Show on map</a>
     </div>
   </div>
 {/if}
@@ -165,7 +165,7 @@
     border-collapse: separate;
     border-spacing: 3px;
     min-width: 860px;
-    font-size: 0.8rem;
+    font: var(--t-cap);
   }
   th {
     font-weight: 500;
@@ -183,12 +183,15 @@
     gap: 2px;
   }
   .hd .n {
+    font: var(--t-head);
     font-family: var(--font-display);
-    font-size: 1.1rem;
+    font-weight: 500;
     color: var(--ink);
   }
+  /* Size only: the pin is .mono. */
   .pin {
-    font-size: 0.7rem;
+    font-size: 12px;
+    line-height: 16px;
   }
   .rowh {
     min-width: 120px;
@@ -199,7 +202,7 @@
   td {
     background: var(--surface);
     border: 1px solid var(--line);
-    border-radius: 4px;
+    border-radius: var(--r-xs);
     padding: 0;
     min-width: 92px;
     height: 58px;
@@ -229,11 +232,17 @@
     color: var(--ink);
     text-decoration: none;
   }
-  td a:hover,
   td a:focus-visible {
     background: var(--sunk);
     outline: 2px solid var(--amber);
     outline-offset: -2px;
+  }
+  @media (hover: hover) {
+    td a:hover {
+      background: var(--sunk);
+      outline: 2px solid var(--amber);
+      outline-offset: -2px;
+    }
   }
   td a.target {
     box-shadow: 0 0 0 2px var(--amber) inset;
@@ -264,12 +273,11 @@
   }
   .cell h2 {
     margin: 0;
-    font: 400 22px/28px var(--font-display);
+    font: var(--t-title);
   }
   .cell .kind {
     margin: 0;
-    font-size: 15px;
-    line-height: 20px;
+    font: var(--t-sub);
     color: var(--muted);
   }
   .wiring {
@@ -277,8 +285,7 @@
     grid-template-columns: max-content 1fr;
     gap: 6px 12px;
     margin: 0;
-    font-size: 15px;
-    line-height: 20px;
+    font: var(--t-sub);
   }
   .wiring dt {
     color: var(--muted);
@@ -298,11 +305,5 @@
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-  }
-  .acts .btn {
-    text-decoration: none;
-    background: var(--tint);
-    border: 0;
-    color: var(--amber-ink);
   }
 </style>

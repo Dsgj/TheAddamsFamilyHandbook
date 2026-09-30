@@ -97,13 +97,19 @@ const GROUPS: Group[] = [
   description="The switch and lamp matrices, the solenoid table, fuses, LEDs and jumper charts."
 >
   <div class="hub" data-hub="tables">
-    <input
-      class="search"
-      type="search"
-      aria-label="Search tables"
-      placeholder="Search tables"
-      autocomplete="off"
-    />
+    <!-- The markup of SearchField.svelte (spec §8.7), written out: this page has no island. -->
+    <div class="srch">
+      <input
+        class="search"
+        type="search"
+        aria-label="Search tables"
+        placeholder="Search tables"
+        autocomplete="off"
+      />
+      <button class="ibtn clear" type="button" aria-label="Clear search" hidden>
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"></path></svg>
+      </button>
+    </div>
     <section hidden data-recent data-group>
       <h2 class="lst-h">Recently viewed</h2>
       <ul class="lst"></ul>
@@ -136,9 +142,16 @@ const GROUPS: Group[] = [
         </section>
       ))
     }
-    <p class="gf" data-empty hidden>No table matches.</p>
+    <p class="gf" data-empty hidden>No tables match.</p>
   </div>
 </Base>
+
+<style>
+  /* .ibtn sets display: grid, which would beat the hidden attribute's UA rule. */
+  .srch .clear[hidden] {
+    display: none;
+  }
+</style>
 
 <script>
   import { viewedEntries } from '~/lib/model/recent.svelte';
@@ -181,12 +194,16 @@ const GROUPS: Group[] = [
   }
 
   // "Search tables" filters the rows by their text as you type; a group with no match hides.
+  // "Clear search" shows while the field holds text; it empties the field, re-runs the filter
+  // through an input event and puts focus back in the field (SearchField.svelte's behaviour).
   const hub = document.querySelector<HTMLElement>('[data-hub="tables"]');
   const field = hub?.querySelector<HTMLInputElement>('input.search');
+  const clear = hub?.querySelector<HTMLButtonElement>('.srch .clear');
   if (hub && field) {
     const groups = [...hub.querySelectorAll<HTMLElement>('[data-group]')];
     const empty = hub.querySelector<HTMLElement>('[data-empty]');
     const apply = () => {
+      if (clear) clear.hidden = !field.value;
       const q = field.value.trim().toLowerCase();
       let shown = 0;
       for (const g of groups) {
@@ -199,8 +216,16 @@ const GROUPS: Group[] = [
         g.hidden = n === 0;
         shown += n;
       }
-      if (empty) empty.hidden = shown > 0;
+      if (empty) {
+        empty.hidden = shown > 0;
+        empty.textContent = `No tables match “${field.value.trim()}”.`;
+      }
     };
     field.addEventListener('input', apply);
+    clear?.addEventListener('click', () => {
+      field.value = '';
+      field.dispatchEvent(new Event('input', { bubbles: true }));
+      field.focus();
+    });
   }
 </script>

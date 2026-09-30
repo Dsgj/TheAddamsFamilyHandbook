@@ -22,6 +22,7 @@
   import { componentHref, href, manualHref, parseMapId, replaceUrl } from '~/lib/url';
   import BottomSheet from './BottomSheet.svelte';
   import ComponentCard from './ComponentCard.svelte';
+  import SearchField from './SearchField.svelte';
   import WireChip from './WireChip.svelte';
 
   /** Component layers plus the manual's lettered shots. Any combination can be shown. */
@@ -264,7 +265,7 @@
       if (what === 'parts') partsOpen = true;
       else if (what === 'find') {
         if (wide)
-          el?.closest('.map-ui')?.querySelector<HTMLInputElement>('.panel input.find')?.focus();
+          el?.closest('.map-ui')?.querySelector<HTMLInputElement>('.panel input.search')?.focus();
         else partsOpen = true;
       }
     };
@@ -759,7 +760,7 @@
 {#snippet partHead(item: Item)}
   {@const st = statusOf(item)}
   <div class="ph">
-    <span class="code dmd">{showId(item)}</span>
+    <span class="code lg dmd">{showId(item)}</span>
     <div class="pt">
       <h2 class="name">{item.name}</h2>
       <p class="kind muted">{kindLine(item)}</p>
@@ -825,11 +826,11 @@
       <p class="prov hint">{t(COIL_NOTE, coil.note)}</p>
     {/if}
     <nav class="more" aria-label="More about {KIND_WORD[item.kind].toLowerCase()} {showId(item)}">
-      <a class="btn small" href={componentHref(item.kind, item.id)}>Details</a>
-      <a class="btn small" href={manualHref('ops', page)}>Manual p. 2-{page - 58}</a>
-      <a class="btn small" href={href(TABLE[item.kind][0])}>{TABLE[item.kind][1]}</a>
+      <a class="btn sm" href={componentHref(item.kind, item.id)}>Details</a>
+      <a class="btn sm" href={manualHref('ops', page)}>Manual p. 2-{page - 58}</a>
+      <a class="btn sm" href={href(TABLE[item.kind][0])}>{TABLE[item.kind][1]}</a>
       {#if statusOf(item) === 'fault'}
-        <a class="btn small" href={href('shopping')}>On the shopping list</a>
+        <a class="btn sm" href={href('shopping')}>On the shopping list</a>
       {/if}
     </nav>
   {:else if item.kind === 'shot'}
@@ -847,15 +848,7 @@
 <!-- The parts list with its filter: the phone sheet and the wide panel share it (spec §7.7). -->
 {#snippet partsList(inSheet: boolean)}
   <div class="parts">
-    <input
-      class="field find"
-      type="search"
-      aria-label="Find a part"
-      placeholder="Find a part"
-      autocomplete="off"
-      bind:value={q}
-      data-autofocus={inSheet ? '' : undefined}
-    />
+    <SearchField label="Find a part" placeholder="Find a part" autofocus={inSheet} bind:value={q} />
     {#if inSheet}
       {@render srcLink()}
       {@render prov()}
@@ -863,7 +856,7 @@
     {#each visible as l (l)}
       {@const rows = itemsIn(l).filter(matches)}
       {#if rows.length}
-        <h3 class="t-head k-{l}">
+        <h3 class="lh k-{l}">
           <span>{LABEL[l]}</span>
           <span class="muted small">{counts[l]} on the map</span>
         </h3>
@@ -880,7 +873,7 @@
                 type="button"
                 onclick={() => pick(item)}
               >
-                <span class="mono tile">{showId(item)}</span>
+                <span class="code dmd tile">{showId(item)}</span>
                 <span class="txt">
                   <span class="nm">{item.name}</span>
                   {#if sub}<span class="sub muted">{sub}</span>{/if}
@@ -893,6 +886,9 @@
         </ul>
       {/if}
     {/each}
+    {#if q.trim() && !visible.some((l) => itemsIn(l).some(matches))}
+      <p class="gf none">No parts match “{q.trim()}”.</p>
+    {/if}
   </div>
 {/snippet}
 
@@ -922,10 +918,10 @@
         >
       </div>
       <div class="actions">
-        <button class="btn small" onclick={exportJson} disabled={!moved}
+        <button class="btn sm" onclick={exportJson} disabled={!moved}
           >Copy JSON ({moved} moved)</button
         >
-        <button class="btn small" onclick={resetDraft} disabled={!moved}>Discard drafts</button>
+        <button class="btn sm" onclick={resetDraft} disabled={!moved}>Discard drafts</button>
       </div>
       {#if copied}
         {#if copied.startsWith('{')}
@@ -1098,7 +1094,7 @@
         <section class="selected" aria-label="Selected part">
           {#if current}
             <div class="ph slim">
-              <h2 class="t-title">{KIND_WORD[current.kind]} {showId(current)}</h2>
+              <h2 class="t-name">{KIND_WORD[current.kind]} {showId(current)}</h2>
               {@render deselectBtn()}
             </div>
           {/if}
@@ -1324,13 +1320,13 @@
     font-weight: 600;
   }
   .marker.k-sw {
-    z-index: 1;
+    z-index: var(--z-lift-1);
   }
   .marker.k-lamp {
-    z-index: 2;
+    z-index: var(--z-lift-2);
   }
   .marker.k-shot {
-    z-index: 3;
+    z-index: var(--z-lift-3);
   }
   .marker.st-ok {
     --k: var(--ok);
@@ -1364,7 +1360,7 @@
   }
   .marker.sel {
     --m: 24px;
-    z-index: 4;
+    z-index: var(--z-lift-4);
     background: var(--amber-fill);
     color: var(--on-amber);
     box-shadow:
@@ -1411,7 +1407,7 @@
     position: absolute;
     inset: 0;
     pointer-events: none;
-    z-index: 25;
+    z-index: var(--z-map-controls);
   }
   .map-controls > *,
   .column {
@@ -1455,16 +1451,9 @@
     padding: 0;
     min-height: 44px;
   }
-  .ph .t-title {
+  .ph .t-name {
     flex: 1;
     margin: 0;
-    font-size: 1.25rem;
-  }
-  .code {
-    font-size: 17px;
-    line-height: 1;
-    padding: 6px 8px;
-    border-radius: 6px;
   }
   .pt {
     flex: 1;
@@ -1472,8 +1461,7 @@
   }
   .pt .name {
     margin: 0;
-    font-size: 20px;
-    line-height: 24px;
+    font: var(--t-name);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1486,8 +1474,9 @@
   .pill {
     flex: 0 0 auto;
     padding: 2px 8px;
-    border-radius: 999px;
-    font: 600 12px/16px var(--font-body);
+    border-radius: var(--r-btn);
+    font: var(--t-cap);
+    font-weight: 600;
     background: var(--sunk);
     color: var(--muted);
   }
@@ -1523,7 +1512,8 @@
   }
   .gh {
     margin: 14px 16px 6px;
-    font: 600 13px/18px var(--font-body);
+    font: var(--t-foot);
+    font-weight: 600;
     color: var(--muted);
     text-transform: uppercase;
     letter-spacing: 0.04em;
@@ -1565,10 +1555,7 @@
     margin: 16px 16px 12px;
   }
   .more .btn {
-    display: grid;
-    place-items: center;
     min-height: 44px;
-    text-decoration: none;
     text-align: center;
   }
   .shot-note {
@@ -1581,23 +1568,20 @@
     gap: 6px;
     padding: 4px 16px 16px;
   }
-  .parts .find {
-    width: 100%;
-    box-sizing: border-box;
-  }
   .parts .src {
     justify-self: start;
   }
   .parts .prov {
     margin: 0;
   }
-  .t-head {
+  .lh {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
     gap: 8px;
     margin: 16px 0 4px;
-    font: 600 15px/20px var(--font-body);
+    font: var(--t-sub);
+    font-weight: 600;
     color: var(--k, var(--ink));
   }
   .rows {
@@ -1621,15 +1605,7 @@
     min-height: 60px;
   }
   .rows .tile {
-    display: grid;
-    place-items: center;
-    min-width: 34px;
-    height: 30px;
-    padding: 0 4px;
-    border-radius: 7px;
-    background: var(--tint);
-    color: var(--ink);
-    font-size: 13px;
+    flex: none;
   }
   .rows .txt {
     flex: 1;
@@ -1648,9 +1624,11 @@
     background: var(--tint);
     color: var(--ink);
   }
+  /* The selected row's id tile turns amber (spec §7.7). */
   .rows .row.sel .tile {
     background: var(--amber-fill);
     color: var(--on-amber);
+    text-shadow: none;
   }
 
   /* The wide panel (spec §7.7): the selected part above, the list below, inside the stage height. */
@@ -1749,7 +1727,7 @@
     color: var(--ink);
     cursor: pointer;
     text-align: left;
-    font: 400 15px/20px var(--font-body);
+    font: var(--t-sub);
   }
   .lrow:active {
     background: var(--press);
@@ -1759,7 +1737,7 @@
     place-items: center;
     width: 32px;
     height: 32px;
-    border-radius: 9px;
+    border-radius: var(--r-track);
     background: var(--k-fill);
   }
   .lrow.k-shot .tile {
@@ -1769,7 +1747,9 @@
     flex: 1;
   }
   .lrow .cnt {
-    font: 500 13px/18px var(--font-mono);
+    font: var(--t-foot);
+    font-family: var(--font-mono);
+    font-weight: 500;
     color: var(--muted);
   }
   .lrow.off {
@@ -1792,7 +1772,9 @@
     border-radius: var(--r-md);
     display: grid;
     place-items: center;
-    font: 500 12px/16px var(--font-mono);
+    font: var(--t-cap);
+    font-family: var(--font-mono);
+    font-weight: 500;
     color: var(--ink);
   }
   .legend {
@@ -1800,10 +1782,10 @@
     left: 16px;
     bottom: 16px;
     padding: 10px 12px;
-    border-radius: 12px;
+    border-radius: var(--r-btn);
     display: flex;
     gap: 14px;
-    font: 400 12px/16px var(--font-body);
+    font: var(--t-cap);
     color: var(--muted);
   }
   .legend span {
@@ -1817,10 +1799,11 @@
     min-width: 20px;
     height: 20px;
     padding: 0 5px;
-    border-radius: 5px;
+    border-radius: var(--r-xs);
     background: var(--sunk);
     color: var(--ink);
-    font: 500 11px/1 var(--font-mono);
+    font: var(--t-tab);
+    font-family: var(--font-mono);
   }
 
   /* Side column: the source link, the card and the list. Below 1000 it sits under the stage
@@ -1860,15 +1843,17 @@
     text-align: left;
     background: none;
     border: 0;
-    border-radius: 4px;
+    border-radius: var(--r-xs);
     padding: 6px 8px;
     cursor: pointer;
     min-height: 36px;
     align-items: center;
     color: inherit;
   }
-  .row:hover {
-    background: var(--sunk);
+  @media (hover: hover) {
+    .row:hover {
+      background: var(--sunk);
+    }
   }
   .row.sel {
     background: var(--sunk);
@@ -1902,7 +1887,7 @@
       left: var(--shell-w);
       right: 0;
       bottom: calc(var(--tabbar-h) + var(--safe-bot));
-      z-index: 30;
+      z-index: var(--z-toolbar);
       margin: 0;
       max-height: min(470px, 60dvh);
       overflow: auto;

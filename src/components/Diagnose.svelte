@@ -209,6 +209,48 @@
     const s = summary();
     if (top.summary !== s) recordRecent(input, s, top.at);
   });
+  // The toast rests 10 above the tab bar (spec §8.8), where the dock sticks over results and a
+  // search. While the dock reaches into that band, lift the toast above the dock's top through
+  // --toast-lift; when the dock sits higher (short results, or scrolled to the end) the toast stays
+  // put, since lifting it by the dock's height would land it on the dock. Measured on scroll,
+  // resize and a resize of the dock or the view, and written only when the value changes.
+  let dock: HTMLElement | undefined = $state();
+  const docked = $derived(mode !== 'home');
+  const TOAST_BAND = 80; // the 10 gap and a toast of up to two lines (60), with room to spare
+  $effect(() => {
+    if (!docked || !dock || !root) return;
+    const el = dock;
+    const html = document.documentElement;
+    let frame = 0;
+    let lift = '';
+    const measure = () => {
+      frame = 0;
+      // The dock's sticky bottom is the top of the tab bar (the viewport's bottom on desktop).
+      const line = innerHeight - (parseFloat(getComputedStyle(el).bottom) || 0);
+      const r = el.getBoundingClientRect();
+      const next = r.bottom > line - TOAST_BAND ? `${Math.ceil(line - r.top)}px` : '';
+      if (next === lift) return;
+      lift = next;
+      if (lift) html.style.setProperty('--toast-lift', lift);
+      else html.style.removeProperty('--toast-lift');
+    };
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(measure);
+    };
+    measure();
+    const ro = new ResizeObserver(schedule);
+    ro.observe(el);
+    ro.observe(root);
+    addEventListener('scroll', schedule, { passive: true });
+    addEventListener('resize', schedule);
+    return () => {
+      cancelAnimationFrame(frame);
+      ro.disconnect();
+      removeEventListener('scroll', schedule);
+      removeEventListener('resize', schedule);
+      if (lift) html.style.removeProperty('--toast-lift');
+    };
+  });
   function onBlur() {
     record();
     commit();
@@ -416,7 +458,7 @@
     </div>
   {/if}
 
-  <div class="dock">
+  <div class="dock" bind:this={dock}>
     <label class="lbl" for="codes">Test report or display message</label>
     <textarea
       id="codes"
@@ -479,7 +521,8 @@
     background: var(--surface);
     box-shadow: inset 0 0 0 1px var(--sep);
     color: var(--ink);
-    font: 600 15px/20px var(--font-body);
+    font: var(--t-sub);
+    font-weight: 600;
     text-align: center;
     text-decoration: none;
   }
@@ -517,7 +560,8 @@
     border: 0;
     background: none;
     color: var(--amber-ink);
-    font: 600 13px/18px var(--font-body);
+    font: var(--t-foot);
+    font-weight: 600;
     text-transform: none;
     letter-spacing: 0;
     cursor: pointer;
@@ -540,7 +584,7 @@
   .rbar .rh {
     grid-column: 2;
     margin: 0;
-    font: 600 17px/22px var(--font-body);
+    font: var(--t-head);
     text-align: center;
   }
   .rbar .rh:focus-visible {
@@ -551,7 +595,8 @@
     border: 0;
     background: none;
     color: var(--amber-ink);
-    font: 400 17px/22px var(--font-body);
+    font: var(--t-head);
+    font-weight: 400;
     cursor: pointer;
     justify-self: start;
     padding: 0;
@@ -584,8 +629,6 @@
   }
   .causes h2 {
     margin: 0 0 8px;
-    font-size: 22px;
-    line-height: 28px;
   }
   .causes ul {
     margin: 0;
@@ -600,15 +643,13 @@
   }
   .causes .code {
     flex: none;
-    font-size: 12px;
   }
   .causes li.eos {
     border-left: 3px solid var(--warn);
     padding-left: 10px;
   }
   .ctext {
-    font-size: 15px;
-    line-height: 21px;
+    font: var(--t-sub);
   }
   .cards {
     display: grid;
@@ -630,7 +671,7 @@
   .diag:not([data-mode='home']) .dock {
     position: sticky;
     bottom: calc(var(--tabbar-h) + var(--safe-bot));
-    z-index: 5;
+    z-index: var(--z-dock);
     margin: 12px -8px 0;
     padding: 8px 8px 8px;
     background: var(--bar);
@@ -640,7 +681,8 @@
   .lbl {
     display: block;
     margin-bottom: 6px;
-    font: 500 15px/20px var(--font-body);
+    font: var(--t-sub);
+    font-weight: 500;
     color: var(--muted);
   }
   .well {
@@ -683,20 +725,13 @@
     gap: 8px;
     margin-top: 10px;
   }
-  .acts .btn {
-    min-height: 50px;
-    padding: 0 20px;
-    border-radius: 12px;
-    font: 600 17px/22px var(--font-body);
-  }
   .acts .go {
     flex: 1;
   }
   .or {
     margin: 10px 0 0;
     text-align: center;
-    font-size: 15px;
-    line-height: 20px;
+    font: var(--t-sub);
     color: var(--muted);
   }
 </style>

@@ -211,9 +211,12 @@ if (back && main && (navigator as { standalone?: boolean }).standalone !== false
     main.style.transform = x ? `translateX(${x}px)` : '';
   };
   const springBack = () => {
-    main.style.transition = reduce.matches ? 'none' : 'transform 250ms var(--ease-emphasized)';
+    main.style.transition = reduce.matches
+      ? 'none'
+      : 'transform var(--dur-3) var(--ease-emphasized)';
     move(0);
-    setTimeout(() => (main.style.transition = ''), 260);
+    // --dur-3 is 300ms; clear the transition just after it ends.
+    setTimeout(() => (main.style.transition = ''), 310);
   };
   resetSwipe = () => {
     x0 = -1;

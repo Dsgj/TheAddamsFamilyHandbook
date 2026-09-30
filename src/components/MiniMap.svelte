@@ -86,7 +86,7 @@
     position: relative;
     overflow: hidden;
     max-width: 100%;
-    border-radius: 12px;
+    border-radius: var(--r-btn);
     background: var(--sunk);
     box-shadow: inset 0 0 0 1px var(--sep);
     flex: 0 0 auto;
@@ -117,11 +117,10 @@
     height: 30px;
     padding: 0 4px;
     transform: translate(-50%, -50%);
-    border-radius: 15px;
+    border-radius: var(--r-full);
     background: var(--cell);
     color: var(--ink);
-    font-size: 12px;
-    line-height: 16px;
+    font: var(--t-cap);
     box-shadow: 0 0 0 1px var(--sep);
   }
 </style>

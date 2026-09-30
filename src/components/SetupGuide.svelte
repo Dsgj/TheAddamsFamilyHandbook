@@ -66,7 +66,7 @@
                   <span class="small muted">Suggested</span>
                   <button
                     type="button"
-                    class="btn small mono"
+                    class="btn sm mono"
                     title="Use suggested value"
                     onclick={() => setValue(i.id, i.suggested)}>{i.suggested}</button
                   >
@@ -192,7 +192,8 @@
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 6px 8px;
+    /* 8 between rows too: a small button's 44 hit area reaches 4 past its box (spec §8.7). */
+    gap: 8px;
     margin-top: 6px;
   }
   /* A long suggested value (U.5's custom message) wraps instead of widening the page at 320px. */

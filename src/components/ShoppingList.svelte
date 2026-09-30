@@ -149,7 +149,7 @@
                 onpointercancel={cancel}
               >
                 <a class="lnk" href={componentHref(i.kind, i.id)} draggable="false">
-                  <span class="mono id">{itemRef(i)}</span>
+                  <span class="code dmd id">{itemRef(i)}</span>
                   {i.name}
                 </a>
                 <button
@@ -182,7 +182,7 @@
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: 8px 12px;
+    gap: 8px var(--gap);
     margin: 0 0 4px;
   }
   .total {
@@ -199,14 +199,16 @@
     align-items: center;
     gap: 8px;
   }
+  /* Size only, so the .mono face stays; 16 at least, or iOS zooms into the field (spec §8.7). */
   .text {
     width: 100%;
     margin: 8px 0 4px;
-    font-size: 0.9rem;
+    font-size: 16px;
+    line-height: 21px;
     white-space: pre;
   }
   .grp {
-    margin-top: 12px;
+    margin-top: var(--gap);
   }
   .lst,
   .lst-h,
@@ -243,7 +245,7 @@
     color: #fff;
     font-weight: 600;
     opacity: 0;
-    transition: opacity 0.15s;
+    transition: opacity var(--dur-0) var(--ease-standard);
   }
   .sw:has(.dragging) .pane {
     opacity: 1;
@@ -256,7 +258,7 @@
     background: var(--cell);
     padding-right: 8px;
     touch-action: pan-y;
-    transition: transform 0.18s;
+    transition: transform var(--dur-2) var(--ease-standard);
     user-select: none;
     -webkit-user-select: none;
   }
@@ -273,8 +275,10 @@
     line-height: 22px;
     text-decoration: none;
   }
-  .lnk:hover {
-    text-decoration: underline;
+  @media (hover: hover) {
+    .lnk:hover {
+      text-decoration: underline;
+    }
   }
   .id {
     color: var(--amber);

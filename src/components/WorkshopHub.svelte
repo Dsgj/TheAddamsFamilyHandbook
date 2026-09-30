@@ -255,8 +255,7 @@
   }
   .about {
     padding: 4px 16px 16px;
-    font-size: 15px;
-    line-height: 21px;
+    font: var(--t-sub);
   }
   .about p {
     margin: 0 0 10px;

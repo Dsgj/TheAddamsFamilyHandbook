@@ -306,12 +306,11 @@
   }
   .head h2 {
     margin: 0;
-    font: 400 24px/30px var(--font-display);
+    font: var(--t-h1-wide);
   }
   .kind {
     margin: 0;
-    font-size: 15px;
-    line-height: 20px;
+    font: var(--t-sub);
     color: var(--muted);
   }
   .cur.st-ok {
@@ -334,8 +333,7 @@
     grid-template-columns: max-content 1fr;
     gap: 6px 12px;
     margin: 0;
-    font-size: 15px;
-    line-height: 20px;
+    font: var(--t-sub);
   }
   dt {
     color: var(--muted);
@@ -367,8 +365,11 @@
   .hint {
     margin: 10px 0 0;
   }
+  /* minmax(0,1fr), not the implicit auto track: the map crop starts at 340 before it measures
+     itself, and an auto track would keep that as its minimum and push the sheet past a 320 phone. */
   .sheet-map {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: 14px;
     padding: 4px 16px 16px;
   }
@@ -379,15 +380,15 @@
     margin: 0;
     color: var(--muted);
   }
+  /* Two equal buttons side by side while both fit their text, else one above the other: a 320
+     phone has 288 for the row, and each 17/22 600 label needs about 165 (spec §8.7). */
   .acts {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
+    flex-wrap: wrap;
     gap: 10px;
   }
   .acts .btn {
-    min-height: 50px;
-    border-radius: 12px;
-    text-decoration: none;
-    font-size: 17px;
+    flex: 1 1 0;
+    min-width: max-content;
   }
 </style>
