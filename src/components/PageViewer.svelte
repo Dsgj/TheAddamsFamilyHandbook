@@ -3,13 +3,15 @@
   import BottomSheet from './BottomSheet.svelte';
   import type { DocId, PageMeta } from '~/lib/model/types';
   import { pdfPageFromLabel } from '~/lib/pages';
-  import { href, manualHref } from '~/lib/url';
+  import { href, manualHref, replacePage } from '~/lib/url';
 
   /**
    * The manual page viewer (spec §9.12). Toolbar: Previous page, "97 / 124" (opens the Go to page
    * sheet), Next page, Rotate page, Text. Zoom out / Fit / Zoom in sit in a glass capsule floating
    * over the scan. Pinch, Ctrl + wheel, drag to pan and the keys (← → pages, + − 0 zoom, R rotate,
-   * T text) are unchanged.
+   * T text) are unchanged. Paging (Prev, Next, the arrow keys, Go to) replaces the history entry
+   * (`replacePage`, `data-replace` for motion.ts), so Back leaves the manual instead of stepping
+   * back through every page read, and the back link carries over from the page replaced.
    */
   let {
     doc,
@@ -81,8 +83,8 @@
   const rotate = () => (rot = (rot + 90) % 360);
   function onKey(e: KeyboardEvent) {
     if ((e.target as HTMLElement).tagName === 'INPUT' || go) return;
-    if (e.key === 'ArrowLeft' && page > 1) location.href = manualHref(doc, page - 1);
-    else if (e.key === 'ArrowRight' && page < count) location.href = manualHref(doc, page + 1);
+    if (e.key === 'ArrowLeft' && page > 1) replacePage(manualHref(doc, page - 1));
+    else if (e.key === 'ArrowRight' && page < count) replacePage(manualHref(doc, page + 1));
     else if (e.key === '+' || e.key === '=') zoomBy(1.2);
     else if (e.key === '-') zoomBy(1 / 1.2);
     else if (e.key === '0') scale = 0;
@@ -114,7 +116,7 @@
     e.preventDefault();
     const s = jump.trim();
     const n = /^\d+$/.test(s) ? Number(s) : doc === 'ops' ? pdfPageFromLabel(s) : undefined;
-    if (n !== undefined && n >= 1 && n <= count) location.href = manualHref(doc, n);
+    if (n !== undefined && n >= 1 && n <= count) replacePage(manualHref(doc, n));
     else bad = true;
   }
 </script>
@@ -126,6 +128,7 @@
     <a
       class="ibtn"
       href={page > 1 ? manualHref(doc, page - 1) : undefined}
+      data-replace
       aria-disabled={page <= 1 ? 'true' : undefined}
       aria-label="Previous page"
     >
@@ -145,6 +148,7 @@
     <a
       class="ibtn"
       href={page < count ? manualHref(doc, page + 1) : undefined}
+      data-replace
       aria-disabled={page >= count ? 'true' : undefined}
       aria-label="Next page"
     >

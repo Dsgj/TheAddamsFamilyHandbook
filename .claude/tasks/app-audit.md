@@ -1,6 +1,6 @@
 # Full app audit (2026-09-29)
 
-**Status: P0 is done, reviewed twice, green and committed. P1 item 7 is in progress. The rest of P1 and P2-P4 are not started.** Twelve specialist reviewers, one adversarial verifier per dimension and a completeness critic reviewed the whole app against a fresh build. There were 231 findings: 154 confirmed, 69 partly confirmed, 7 deliberate (documented decisions) and 1 refuted. Each finding below carries the verifier's recalibrated severity. The raw result, with evidence, repro scripts and a fix per finding, is in the workflow journal of session c5ab0448 (run wf_05057fc7-6a2). The rows here are enough to find each spot again.
+**Status: P0 (645d614) and P1 (back behaviour) are committed on main. P2-P4 are not started.** Twelve specialist reviewers, one adversarial verifier per dimension and a completeness critic reviewed the whole app against a fresh build. There were 231 findings: 154 confirmed, 69 partly confirmed, 7 deliberate (documented decisions) and 1 refuted. Each finding below carries the verifier's recalibrated severity. The raw result, with evidence, repro scripts and a fix per finding, is in the workflow journal of session c5ab0448 (run wf_05057fc7-6a2). The rows here are enough to find each spot again.
 
 The audit started from this baseline: build OK, astro check 0 errors (16 hints, all from the deprecated `z` import), eslint clean, vitest 57/57. The e2e suite was run against the fresh build and 315 of 318 tests pass. The phone-dark push-transition test in motion.spec fails even with one worker. svelte-check finds 7 errors, and `pnpm check` does not run svelte-check.
 
@@ -61,7 +61,7 @@ The findings are grouped by root cause, so one fix usually closes several of the
 
 ## Resume
 
-P0 is committed (see Progress at the end). Next is P1 item 7, back behaviour. Writing `?q` with replaceState reverses a documented decision (app-redesign.md:699). The owner said to continue on 2026-09-29, which covers that change. Verify with `pnpm check`, `pnpm dlx svelte-check`, `pnpm lint`, `pnpm test`, `pnpm build` and the full e2e suite on both projects.
+P0 (645d614) and P1 are committed on main (see Progress at the end). Next is P2 item 1, the header title and back label. The P1 navigation rules are recorded in app-redesign.md, Phase 12, in the bullets dated 2026-09-29; keep them in step with any later change to motion.ts, nav-state.ts, Base.astro or Diagnose.svelte. Verify with `pnpm check`, `pnpm dlx svelte-check`, `pnpm lint`, `pnpm test`, `pnpm build` and the full e2e suite on both projects.
 
 ## Appendix: every finding
 
@@ -365,7 +365,7 @@ One row per finding. Severity is the verifier's recalibrated value. Refuted and 
 
 ## Progress
 
-P0 was fixed by workflow wf_b1e7e918-802 and re-verified by wf_622399b3-62b, both in session 892cf09d. Their journals hold every agent's full report. The change set is 37 files against 4e38085. It was committed on the branch audit-fixes on 2026-09-29.
+P0 was fixed by workflow wf_b1e7e918-802 and re-verified by wf_622399b3-62b, both in session 892cf09d. Their journals hold every agent's full report. The change set is 37 files against 4e38085. It was committed to main as 645d614 and pushed on 2026-09-29.
 
 ### P0 status per item
 
@@ -387,6 +387,32 @@ P0 was fixed by workflow wf_b1e7e918-802 and re-verified by wf_622399b3-62b, bot
 | e2e desktop-light | | 232 passed, 39 phone-only skips |
 | pwa.spec offline test under /valvet/ | fails | passes |
 
+### P1 status (back behaviour, one item: UX-02, CO-10, UX-03, CO-09, UX-08, VL-03, CO-06, CO-07, UX-04)
+
+P1 was designed, critiqued, implemented, reviewed by two lenses, fixed, re-checked and put through the gauntlet by workflow wf_43454508-090 (session 892cf09d, 2026-09-29 to 2026-09-30). Every finding is marked fixed by the dynamic reviewer, the static reviewer and the re-check. The change set is 18 files against 645d614, committed on main on 2026-09-30. The design is `p1-design-final.md` in that session's scratchpad, and the rules it settled are the 2026-09-29 bullets of app-redesign.md, Phase 12.
+
+- **Header back and swipe back (UX-02, CO-10).** Both go through one guarded `goBack`. It calls `history.back()` when the previous entry is the target, found through the Navigation API where it exists and otherwise through a `from` stamp carried in `history.state`, and it uses `location.replace` otherwise, so a cold deep link never leaves the app. A double activation cannot walk two entries.
+- **Back link after a traversal (UX-04 and the header pointing forward).** `resolveBack` in nav-state.ts decides the link once per load and stores it in `history.state`. `backOverride` now needs a fresh (10 s), same-origin `tafh:prev`, and only a cross-tab or push-down move; `depthOf` fixes the depth that made tab roots collide with nav keys. Labels come from `body[data-view]`, then `html[data-label]`, then the tab label. Sidebar links keep the static parent and get the tab cross-fade (VL-03). Manual paging (arrows, Go to, Prev/Next, same-doc TOC rows) replaces the entry instead of pushing.
+- **Diagnose `?q` (UX-03, CO-09).** A commit (Enter, Diagnose, blur, a link followed from the view, a Recent row, or `?q` on load) writes `?q` with replaceState. Edits after a commit follow 250 ms after the last key, or at once when the page is hidden or left. That flush is skipped while the page enters the back/forward cache and runs on the restore instead, because a replaceState inside a persisted pagehide makes Chromium evict the page (the re-check found this regression from the fix round, fixed afterwards in this session with a test in back.spec). Clear, Cancel, Recent, reselect and emptying the field return to a clean `/`. A reload inside the 250 ms still loads the query before the edit; that limit is documented and accepted.
+- **Map ids (CO-06).** The map writes `id=kind:id` and `parseMapId` reads it; the link builders in url.ts stay bare, and bare ids in old links still resolve. lamp 55 survives a layer toggle and a reload.
+- **bfcache restore (CO-07).** A persisted pageshow resets the swipe transform and re-points the tabs. touchcancel springs back, and swipe is off in iOS Safari tabs. Verified only with a synthetic persisted pageshow, because Playwright's Chromium runs without bfcache.
+
+Deviations from the design, each checked by a reviewer: map.spec:127 keeps HEAD's `/id=32/`, because a bare id is not rewritten on load; three P0 Diagnose tests reopen `/` instead of reloading a committed `?q`; motion.spec's "each tab keeps its stack" waits for hydration (it was failing 9 of 12 runs at the P0 snapshot); Base.astro's pagereveal uses one promise chain, so an aborted transition no longer leaves an unhandled rejection.
+
+Leftovers, none blocking: the swipe-back fade is aborted in phone emulation ("Viewport size changed"), so a real Android device should confirm it plays; `from` is inferred from `document.referrer` without the Navigation API, which a tab with unrelated earlier history could get wrong; `leavesHere` ignores SVG links; other e2e tests that click right after a cross-document navigation may share the hydration race that was hardened in motion.spec.
+
+### P1 verification (default base, fresh build)
+
+| Check | P0 | Now |
+|---|---|---|
+| pnpm check | 0 errors, 16 hints | 0 errors, 16 hints |
+| svelte-check (dlx) | 7 errors | the same 7 |
+| pnpm lint, prettier on changed files | clean | clean (app-redesign.md was not prettier-clean at HEAD either) |
+| vitest | 120/120 | 140/140 |
+| e2e phone-dark | 271 passed | 295 passed, 1 skipped (workflow gauntlet) |
+| e2e desktop-light | 232 passed, 39 skipped | 253 passed, 43 skipped (workflow gauntlet) |
+| full suite after the bfcache flush fix | | vitest 140/140; phone-dark 296 passed, 1 skipped, twice in a row (a first run exited 1 with its summary lost to an output filter); desktop-light 254 passed, 43 skipped |
+
 ### Working notes for the next session
 
 - svelte-check is not a dependency. Run `pnpm dlx svelte-check` after `pnpm check`. Run cold, it adds 3 spurious toc.ts errors.
@@ -396,3 +422,6 @@ P0 was fixed by workflow wf_b1e7e918-802 and re-verified by wf_622399b3-62b, bot
 - The audit cites `src/lib/motion.ts`, but the file is `src/motion.ts`.
 - The phone-dark push-transition test in motion.spec passed in every run this session, so it is timing-dependent, not deterministic.
 - The overflow sweep compares with the configured viewport, not `window.innerWidth`, because Chromium's mobile emulation grows the layout viewport to fit overflow.
+- tests/e2e/map.spec.ts is CRLF as well. Check it with `prettier --check --end-of-line crlf`.
+- Playwright's Chromium runs with `--disable-back-forward-cache`, so bfcache behaviour (persisted pagehide and pageshow) only shows in a probe against msedge or chrome with that flag removed. The e2e tests dispatch synthetic PageTransitionEvents instead.
+- "Transition was aborted" and "ViewTransition opt-in disabled" pageerrors are Chromium-internal and appear when the Navigation API is hidden in a test.

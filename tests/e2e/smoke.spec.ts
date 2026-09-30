@@ -21,7 +21,7 @@ test('map marker opens the component card', async ({ page }) => {
       'aside article.comp[data-id="32"], section[aria-label^="Selected part"][data-id="32"]',
     ),
   ).toBeVisible();
-  await expect(page).toHaveURL(/id=32/);
+  await expect(page).toHaveURL(/id=switch:32/);
 });
 
 test('switch matrix supports keyboard navigation', async ({ page }) => {
@@ -101,7 +101,7 @@ test('layers combine and the shot layer opens a shot card', async ({ page }) => 
     .click();
   await expect(page.locator('.marker.k-sw').first()).toBeVisible();
   await expect(page).toHaveURL(/layer=sw,shot/);
-  await expect(page).toHaveURL(/id=K/);
+  await expect(page).toHaveURL(/id=shot:K/);
 });
 
 test('handbook rules section embeds the shot map after page 9', async ({ page }) => {

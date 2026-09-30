@@ -83,6 +83,7 @@ const around = toc.slice(from, from + 7).map(([p, name], i) => ({
               <a
                 class="lrow"
                 href={manualHref(doc, e.p)}
+                data-replace
                 aria-current={e.current ? 'true' : undefined}
               >
                 <span class="txt">

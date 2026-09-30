@@ -5,6 +5,7 @@ import { pwaInfo } from 'virtual:pwa-info';
 import { href } from '~/lib/url';
 import Toast from '~/components/Toast.svelte';
 import { PARENT, TABS, tabFor, type BackLink } from '~/lib/nav';
+import { depthOf } from '~/lib/nav-state';
 import { allShoppingItems } from '~/lib/shopping';
 import TabBadge from '~/components/TabBadge.svelte';
 
@@ -43,15 +44,23 @@ const {
 } = Astro.props;
 
 const tab = tabFor(nav);
-/** 0 on a tab root, 1 under it, 2 under that: the pagereveal script reads push against pop from it. */
-const depth = back ? (PARENT[back.path] ? 2 : 1) : 0;
+/**
+ * 0 on a tab root, 1 under it, 2 under that: the pagereveal script reads push against pop from it.
+ * A page whose parent is a tab root is 1 (a Handbook section, Manuals), anything deeper 2.
+ */
+const depth = depthOf(
+  back?.path,
+  TABS.map((t) => t.path),
+);
+/** What a back link to this page says (motion.ts): the phone's short title, else the heading. */
+const label = short ?? heading;
 /** The Shopping list's candidate keys, so the badge counts exactly what the list shows. */
 const shopKeys = allShoppingItems().map((i) => `${i.kind}:${i.id}`);
 const hasActions = Astro.slots.has('actions');
 ---
 
 <!doctype html>
-<html lang="en" data-tab={tab} data-depth={depth}>
+<html lang="en" data-tab={tab} data-depth={depth} data-label={label}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -79,6 +88,7 @@ const hasActions = Astro.slots.has('actions');
       // The view transition's type (spec §10): push, pop, tab or fade, decided from the page
       // being left (motion.ts writes `tafh:prev` on pagehide) or the history direction. This must
       // run before the first render, so it is inline; the rest of the continuity is motion.ts.
+      // It mirrors `classify` in src/lib/nav-state.ts: keep the two in step.
       addEventListener('pagereveal', function (e) {
         const vt = e.viewTransition;
         if (!vt) {
@@ -89,15 +99,22 @@ const hasActions = Astro.slots.has('actions');
         try {
           prev = JSON.parse(sessionStorage.getItem('tafh:prev') || 'null');
         } catch {}
+        // A record older than 10 s (or without a time) is not about this page.
+        const age = prev && typeof prev.at === 'number' ? Date.now() - prev.at : -1;
+        if (!(age >= 0 && age <= 10000)) prev = null;
         const d = document.documentElement.dataset;
         const depth = Number(d.depth || 0);
         let type = 'fade';
-        const act = 'navigation' in window ? navigation.activation : null;
-        if (act && act.navigationType === 'traverse' && act.from && navigation.currentEntry) {
-          type = act.from.index > navigation.currentEntry.index ? 'pop' : 'push';
+        // Truthiness, not just `in`: a browser (or a test) may define it without the API.
+        const nav = 'navigation' in window ? window.navigation : null;
+        const act = nav && nav.currentEntry ? nav.activation : null;
+        if (prev && prev.swipe) {
+          type = 'fade';
+        } else if (act && act.navigationType === 'traverse' && act.from) {
+          type = act.from.index > nav.currentEntry.index ? 'pop' : 'push';
         } else if (prev) {
-          if (prev.viaTab) type = 'tab';
-          else if (prev.swipe) type = 'fade';
+          if (prev.back) type = 'pop';
+          else if (prev.viaTab) type = 'tab';
           else if (prev.depth < depth) type = 'push';
           else if (prev.depth > depth) type = 'pop';
           else type = prev.tab === d.tab ? 'fade' : 'tab';
@@ -105,10 +122,7 @@ const hasActions = Astro.slots.has('actions');
         vt.types.add(type);
         // What ran, for the tests: `window.tafhMotion`.
         window.tafhMotion = { type: type, animations: [], pending: true };
-        vt.ready.catch(function () {
-          window.tafhMotion = { type: type, animations: [], skipped: true };
-        });
-        vt.ready.then(function () {
+        const ran = function () {
           window.tafhMotion = {
             type: type,
             animations: document.getAnimations().map(function (a) {
@@ -127,6 +141,11 @@ const hasActions = Astro.slots.has('actions');
               };
             }),
           };
+        };
+        // One chain with both handlers: a `.then` beside a `.catch` leaves its own promise
+        // rejected, unhandled, whenever the browser aborts the transition.
+        vt.ready.then(ran, function () {
+          window.tafhMotion = { type: type, animations: [], skipped: true };
         });
       });
     </script>

@@ -56,7 +56,8 @@ test.describe('home on a phone', () => {
     await expect(page.getByRole('heading', { level: 2, name: '2 codes' })).toBeVisible();
     await page.getByRole('button', { name: 'Diagnose' }).click();
     await expect(page.getByRole('heading', { level: 2, name: '2 codes' })).toBeFocused();
-    await page.reload();
+    // A committed search keeps ?q (audit P1 item 7), so reload would reopen the results.
+    await gotoHydrated(page, '/');
     await expect(page.getByRole('heading', { level: 2, name: 'Recent' })).toBeVisible();
     const rows = page.locator('.recent .lrow');
     await expect(rows.first()).toContainText('32 68');
@@ -79,7 +80,7 @@ test.describe('home on a phone', () => {
     await field(page).press('Enter');
     await field(page).fill('l11');
     await field(page).press('Enter');
-    await page.reload();
+    await gotoHydrated(page, '/');
     const rows = page.locator('.recent .lrow');
     await expect(rows).toHaveCount(2);
     await expect(rows.nth(0)).toContainText('l11');
@@ -95,7 +96,7 @@ test.describe('home on a phone', () => {
     await field(page).fill('Check Switch 68');
     await page.getByRole('button', { name: 'Fault' }).click();
     await page.getByRole('heading', { level: 2, name: '1 code' }).click();
-    await page.reload();
+    await gotoHydrated(page, '/');
     const row = page.locator('.recent .lrow').first();
     await expect(row).toContainText('Check Switch 68');
     await expect(row).toContainText('1 switch · 1 marked Fault');

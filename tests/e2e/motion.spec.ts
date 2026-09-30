@@ -23,8 +23,15 @@ const motion = (page: Page) =>
 
 /* The transition, once it has run. Under parallel test load Chrome now and then skips a
    cross-document transition altogether (a plain swap, `type: 'none'`; never with one worker);
-   the test then steps back and makes the same navigation again. */
-async function transition(page: Page, go: () => Promise<void>, to: RegExp, from: RegExp) {
+   the test then steps back (or, after a back that went through history, forward) and makes the
+   same navigation again. */
+async function transition(
+  page: Page,
+  go: () => Promise<void>,
+  to: RegExp,
+  from: RegExp,
+  undo = () => page.goBack(),
+) {
   for (let attempt = 0; attempt < 6; attempt++) {
     await go();
     await expect(page).toHaveURL(to);
@@ -32,7 +39,7 @@ async function transition(page: Page, go: () => Promise<void>, to: RegExp, from:
     await expect.poll(async () => (await motion(page))?.pending).toBeFalsy();
     const m = (await motion(page))!;
     if (m.type !== 'none' && !m.skipped) return m;
-    await page.goBack();
+    await undo();
     await expect(page).toHaveURL(from);
     await expect.poll(async () => (await motion(page))?.type).toBeTruthy();
   }
@@ -57,6 +64,7 @@ test('a link push slides the page in; the back link pops it', async ({ page }) =
     () => page.locator('header.top a.back').click(),
     /\/tables$/,
     /\/switches$/,
+    () => page.goForward(),
   );
   expect(pop.type).toBe('pop');
 });
@@ -90,12 +98,19 @@ test('under reduced motion a push holds only opacity animations of 150 ms or les
   await context.close();
 });
 
+/** Waits for the page's scripts: motion.ts has re-pointed the tab hrefs and the islands are live. */
+const settled = async (page: Page) => {
+  await page.waitForLoadState('load');
+  await expect(page.locator('astro-island[ssr][client="load"]')).toHaveCount(0);
+};
+
 test('each tab keeps its stack, scroll and the Map zoom and selection', async ({ page }) => {
   await gotoHydrated(page, '/map?layer=sw');
   await tabLink(page, 'Tables').click();
   await page.locator('main').getByRole('link', { name: 'Switch matrix' }).first().click();
   await page.locator('main a[data-cell="32"]').first().click();
   await expect(page).toHaveURL(/\/switch\/32$/);
+  await settled(page);
   await expect
     .poll(() => page.evaluate(() => (window.scrollTo(0, 240), Math.round(scrollY))))
     .toBeGreaterThan(0);
@@ -103,12 +118,13 @@ test('each tab keeps its stack, scroll and the Map zoom and selection', async ({
 
   await tabLink(page, 'Map').click();
   await expect(page).toHaveURL(/\/map\?layer=sw/);
+  await settled(page);
   await page.getByRole('group', { name: 'Zoom' }).getByRole('button', { name: 'Zoom in' }).click();
   await expect(page).toHaveURL(/[?&]z=1\.6/);
   const jet = page.getByRole('button', { name: /^Switch 32, Upper Right Jet/ }).first();
   await jet.click();
   await expect(jet).toHaveAttribute('aria-pressed', 'true');
-  await expect(page).toHaveURL(/[?&]id=32/);
+  await expect(page).toHaveURL(/[?&]id=switch:32/);
 
   await tabLink(page, 'Tables').click();
   await expect(page).toHaveURL(/\/switch\/32$/);
@@ -116,7 +132,7 @@ test('each tab keeps its stack, scroll and the Map zoom and selection', async ({
 
   await tabLink(page, 'Map').click();
   await expect(page).toHaveURL(/[?&]z=1\.6/);
-  await expect(page).toHaveURL(/[?&]id=32/);
+  await expect(page).toHaveURL(/[?&]id=switch:32/);
   await expect(
     page.getByRole('button', { name: /^Switch 32, Upper Right Jet/ }).first(),
   ).toHaveAttribute('aria-pressed', 'true');

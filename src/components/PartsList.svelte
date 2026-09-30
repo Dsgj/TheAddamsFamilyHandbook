@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import type { PartRow } from '~/lib/model/types';
-  import { href } from '~/lib/url';
+  import { href, replaceUrl } from '~/lib/url';
 
   /**
    * The parts list (spec §9.13): "Search parts" with "Clear search", the row count, and the table
@@ -75,7 +75,7 @@
 
   /** Drops a stale hash from the URL once the field no longer reflects it. */
   function stripHash() {
-    if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+    if (location.hash) replaceUrl(location.pathname + location.search);
   }
 
   function path(i: number): string[] {

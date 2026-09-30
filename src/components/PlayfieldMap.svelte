@@ -19,7 +19,7 @@
   import { allPositions, PLAYFIELD, positions, posKey } from '~/lib/data/positions';
   import { getStatus, STATUS_LABEL } from '~/lib/model/status.svelte';
   import type { Coil, Kind, Lamp, Loc, Switch } from '~/lib/model/types';
-  import { componentHref, href, manualHref } from '~/lib/url';
+  import { componentHref, href, manualHref, parseMapId, replaceUrl } from '~/lib/url';
   import BottomSheet from './BottomSheet.svelte';
   import ComponentCard from './ComponentCard.svelte';
   import WireChip from './WireChip.svelte';
@@ -198,19 +198,23 @@
     if (l) setOn(parseLayers(l));
     const z = Number(u.get('z'));
     if (z > 1) startZoom = Math.min(z, MAX_ZOOM);
-    const i = u.get('id') || initialId;
-    if (i) {
-      // `id=kind:id` is exact; a bare id is looked up in the layers that are on, in order.
+    const m = parseMapId(u.get('id') || initialId);
+    if (m?.kind) {
+      // `id=kind:id` (what syncUrl writes) is exact, and shows its layer.
+      const kind = m.kind;
+      untrack(() => on.add(layerOf(kind)));
+      selKey = posKey(kind, m.id);
+    } else if (m) {
+      // A bare id (the link builders' form) is looked up in the layers that are on, in order.
+      const i = m.id;
       const layers = untrack(() => LAYERS.filter((x) => on.has(x)));
-      const hit = i.includes(':')
-        ? i
-        : layers
-            .map((x) => posKey(kindOf(x), i))
-            .find(
-              (k) =>
-                positions(...(k.split(':') as [PosKind, string])).length ||
-                itemsIn(layerOf(k.split(':')[0] as PosKind)).some((c) => c.id === i),
-            );
+      const hit = layers
+        .map((x) => posKey(kindOf(x), i))
+        .find(
+          (k) =>
+            positions(...(k.split(':') as [PosKind, string])).length ||
+            itemsIn(layerOf(k.split(':')[0] as PosKind)).some((c) => c.id === i),
+        );
       selKey = hit ?? posKey(kindOf(layers[0] ?? 'sw'), i);
     }
     calib = u.get('calib') === '1';
@@ -306,10 +310,11 @@
     if (embed) return;
     // Hand-built so the comma list stays readable (URLSearchParams would write %2C).
     const q = [`layer=${visible.join(',')}`];
-    if (current) q.push(`id=${encodeURIComponent(current.id)}`);
+    // The kind keeps a reload on this marker: lamp 55 is not switch 55 (audit CO-06).
+    if (current) q.push(`id=${current.kind}:${encodeURIComponent(current.id)}`);
     if (zoom !== 1) q.push(`z=${String(Math.round(zoom * 100) / 100)}`);
     if (calib) q.push('calib=1');
-    history.replaceState(null, '', `${location.pathname}?${q.join('&')}${location.hash}`);
+    replaceUrl(`${location.pathname}?${q.join('&')}${location.hash}`);
   }
   function pick(item: Item) {
     const wasOpen = sheetOpen;
