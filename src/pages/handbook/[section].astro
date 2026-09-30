@@ -100,7 +100,7 @@ const scan = section.key === 'appendix' ? undefined : manualHref('ops', section.
               {isAppendixPage(e.data.page) ? (
                 <span class="small muted">owner's note</span>
               ) : (
-                <a class="btn small" href={manualHref('ops', e.data.page)}>
+                <a class="btn sm" href={manualHref('ops', e.data.page)}>
                   Scan
                 </a>
               )}
@@ -189,9 +189,11 @@ const scan = section.key === 'appendix' ? undefined : manualHref('ops', section.
       align-self: start;
     }
   }
+  /* The Contents heading keeps its display face, like the manual card heads (.mhead). */
   summary {
     cursor: pointer;
+    font: var(--t-head);
     font-family: var(--font-display);
-    font-size: 1.1rem;
+    font-weight: 400;
   }
 </style>

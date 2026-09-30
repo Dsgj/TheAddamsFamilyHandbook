@@ -59,6 +59,33 @@ Baseline before Phase 1 (from `playfield-map.md`, last green run):
   - While a part is selected on a phone at 1×, the drawing re-fits above the 96 px peek sheet.
   - Above 1× the map only pans; Fit returns to 1×.
 - **Footer.** The footer (the Williams / Midway copyright paragraph) stays on every page except full-bleed `/map`. From Phase 3 the same paragraph is also in Workshop → About this handbook. `#sw-status` leaves the footer in Phase 1 (a fixed line above the tab bar) and becomes the toast in Phase 11.
+- **Design-system foundations** (2026-09-30, audit P2 item 2: DS-02, DS-06, DS-07, DS-10, DS-11, DS-14, DS-15, DS-20, VP-09, VP-10, VP-14, SV-16). Spec §2, §4 and §8.6–§8.8 carry the detail.
+  - **Type.** Every step of the scale is a `--t-*` token and a `.t-*` class. The headings take their steps: h1 34/41, h2 22/28, h3 20/24, h4 17/22 600 (they were 1.9, 1.45 and 1.2 rem). `.hint` moves from 15/21 to `t-sub` 15/20.
+  - **Body stays 16.** `--t-body` (17/24) exists, but the body keeps 16/1.5 until the owner answers Q14.
+  - **Buttons.** The bare `.btn` is the spec's gray variant (`--sunk`, `--ink`); `.btn.gray` spells it out. `.btn.sm` gets a `::after` reaching 4 above and below, so a small button standing alone still has a 44 hit area. `.btn.mono` puts back the mono face that the `.btn.sm` shorthand would drop. `.btn.active` is dropped (no markup used it): the pressed state is `.btn[aria-pressed='true']`, and `.btn:disabled` fades to .45.
+  - **`.btn.small`** stays as an alias of `.btn.sm` for one release. A follow-up drops it once no markup says `small`.
+  - **Search at 16px.** `.search` is 16/21, not the boards' 15/20, because iOS Safari zooms into any field under 16px. Its box is 44 tall with the 36 pill painted inside by a 4 px transparent border, so no search field loses the 44 hit area the old `.field` searches had.
+  - **Calib exception.** The `?calib=1` tools (the calibration textarea and the overlay select) are the only fields exempt from the 16px rule: they are for the developer and never on a user route.
+  - **Clear and empty state.** A search field shows a "Clear search" button only while it has text. The button empties the field and puts focus back in it. A search with no hits shows one line, `No {things} match “{q}”.`, and placeholders lose their ellipsis.
+  - **Stacking.** A named `--z-*` scale (spec §4) replaces every bare z-index. The toast stays under modal sheets, because a modal makes the toast inert. It clears the reader toolbar and the map sheet by position instead: the host adds `--toast-lift`, which the islands set on the root (it is not a token).
+  - **Wires.** `.wire` (a swatch and a mono name, no background, no cursor) replaces WireChip's `.chip`, because a chip reads as a control.
+  - **`--dur-0`** (150 ms) names the reduced-motion cross-fade.
+  - **Map list tile.** The id tile becomes `.code.dmd` (spec §7.7), and the selected row keeps its amber tile.
+- **Design-system islands** (2026-09-30, audit P2 item 2, the second half). Every island and page is now on the foundations: no bare z-index, radius literal or loose `:hover` is left in src, and the unit test lints all of src.
+  - **One search field.** `SearchField.svelte` is the only search field markup: HandbookToc, ManualSearch, PartsList and the map's "Find a part" use it, and tables.astro writes the same markup by hand. Each island keeps its own behaviour (the parts list still strips its hash, Manuals still loads the index on focus).
+  - **Clear room only with text.** `.srch .search` reserves the 44 for the clear button only while the field has text (`:not(:placeholder-shown)`), so a long placeholder such as "Search the handbook and scans" is not cut at 320.
+  - **Manuals row.** The field keeps at least 136 beside the document select; on a 320 phone the select wraps under it instead of squeezing the field to two letters.
+  - **Toast lift.** The reader toolbar sets `--toast-lift: 62px` from `:root:has(nav.rbar)` (the nav, because Diagnose also has a `div.rbar` that is not a toolbar). The phone map sheet sets it to its current detent's height while it is open and removes it when it closes.
+  - **Map sheet header.** The selected part's number is `.code.lg.dmd` in the phone peek and the wide panel, as spec §7.6 and §7.7 draw it (40 tall, mono 22).
+  - **Reader text view.** PageViewer's OCR text keeps the body face at `--t-sub`: it is prose, and the mono step made it read as code.
+  - **Small buttons in a wrapping row** sit 8 apart, so the 4 px hit-area extensions of two rows never overlap.
+  - **Swipe spring-back** uses `--dur-3` (300 ms, was 250).
+- **Design-system review fixes** (2026-09-30, audit P2 item 2, after the two reviews).
+  - **Toast over the Diagnose dock.** Over results and a search the toast now clears the sticky dock: while the dock reaches into the 80 above the tab bar, Diagnose sets `--toast-lift` to the distance from the dock's top to the bar. When the dock sits higher (short results, or scrolled to the end) there is no lift, because a fixed lift of the dock's height would put the toast on the dock. At HEAD the toast covered Paste and Diagnose.
+  - **Map lift keeps its safe-bot.** The map sheet's lift stays `detent + safe-bot`: the sheet pads its body with safe-bot and is that much taller, so a lift of the detent alone would sink the toast into the sheet on a phone with a home indicator (checked with a 34 px inset: 10 above the sheet at both detents).
+  - **Wire edge in light.** The light `--wire-edge` is .35 (was .18), the strength of the 1 px border the old wire chip had, so a white wire keeps its edge on the light page.
+  - **Handbook Contents heading** keeps its display face: `t-head` size with Fell at 400, as the manual card heads (`.mhead`). It was Fell 17.6 at HEAD; the plain `t-head` would have made it Plex Sans 600.
+  - **Sheet actions wrap.** The part sheet's "Open in Map" and "Manual page" share the row equally while both fit and stack at full width on a 320 phone, where the two 165-wide buttons overflowed the sheet by 36 (at HEAD too). The row alone did not fix it: the sheet's grid had an implicit auto column, and the map crop, which starts at 340 before it measures itself, held that column at 340; the column is now `minmax(0, 1fr)`, so the crop measures 288 and the map fits too.
 
 ## Routes
 

@@ -115,7 +115,7 @@ test('offline, a query string still hits the precache and a handbook photo still
   await gotoHydrated(page, './map?layer=sw&id=32');
   await expect(
     page
-      .locator('.t-title', { hasText: 'Switch 32' })
+      .locator('.t-name', { hasText: 'Switch 32' })
       .or(page.locator('.sheet.map[aria-label="Selected part, Switch 32"]')),
   ).toBeVisible();
 

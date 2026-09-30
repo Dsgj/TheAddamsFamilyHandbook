@@ -103,9 +103,14 @@
 {/if}
 
 <style>
+  /* The toast sits 10 above the toolbar, not on it (52 bar + 10; spec §8.8). Diagnose's results
+     bar is a div.rbar, so the match names the nav. */
+  :global(:root:has(nav.rbar)) {
+    --toast-lift: 62px;
+  }
   .rbar {
     position: fixed;
-    z-index: 30;
+    z-index: var(--z-toolbar);
     left: calc(var(--shell-w) + 12px);
     right: 12px;
     bottom: calc(var(--tabbar-h) + var(--safe-bot) + 10px);
@@ -115,7 +120,7 @@
     gap: 2px;
     height: 52px;
     padding: 4px;
-    border-radius: 16px;
+    border-radius: var(--r-chip);
     max-width: 520px;
     margin: 0 auto;
   }
@@ -128,16 +133,19 @@
     min-height: 44px;
     padding: 0 12px;
     border: 0;
-    border-radius: 12px;
+    border-radius: var(--r-btn);
     background: none;
     color: var(--ink);
-    font: 500 15px/20px var(--font-body);
+    font: var(--t-sub);
+    font-weight: 500;
     text-decoration: none;
     cursor: pointer;
     white-space: nowrap;
   }
-  .rb:hover {
-    background: var(--sunk);
+  @media (hover: hover) {
+    .rb:hover {
+      background: var(--sunk);
+    }
   }
   .rb.end {
     color: var(--amber);

@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import type { PartRow } from '~/lib/model/types';
   import { href, replaceUrl } from '~/lib/url';
+  import SearchField from './SearchField.svelte';
 
   /**
    * The parts list (spec §9.13): "Search parts" with "Clear search", the row count, and the table
@@ -128,27 +129,21 @@
 </script>
 
 <div class="parts" bind:this={root}>
-  <div class="srch">
-    <input
-      class="field"
-      type="search"
-      placeholder="Part number or description (e.g. 5768, flipper, SW-1A)…"
-      aria-label="Search parts"
-      bind:value={q}
-      oninput={() => {
-        highlight = '';
-        appliedHash = '';
-        stripHash();
-      }}
-      bind:this={field}
-    />
-    {#if q}
-      <button class="btn sm" type="button" onclick={clear}>Clear search</button>
-    {/if}
-  </div>
+  <SearchField
+    label="Search parts"
+    placeholder="Part number or description"
+    bind:value={q}
+    bind:input={field}
+    oninput={() => {
+      highlight = '';
+      appliedHash = '';
+      stripHash();
+    }}
+    onclear={clear}
+  />
   <p class="gf count" role="status">
     {#if loading}Loading…{:else if !searching}Top-level assemblies ({shown.length} rows). Type at least
-      two characters to search all {rows.length} rows.{:else}{`${shown.length} ${shown.length === 1 ? 'row' : 'rows'}`}{shown.length ===
+      two characters to search all {rows.length} rows, e.g. 5768, flipper or SW-1A.{:else}{`${shown.length} ${shown.length === 1 ? 'row' : 'rows'}`}{shown.length ===
       300
         ? ' (first 300)'
         : ''}{/if}
@@ -176,18 +171,12 @@
       </tbody>
     </table>
   </div>
+  {#if searching && !loading && !shown.length}
+    <p class="gf">No parts match “{q.trim()}”.</p>
+  {/if}
 </div>
 
 <style>
-  .srch {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-  }
-  .srch .field {
-    flex: 1;
-    min-height: 44px;
-  }
   .count {
     margin: 6px 0 8px;
   }

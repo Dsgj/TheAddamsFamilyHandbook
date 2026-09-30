@@ -136,10 +136,10 @@
   <StatusRow {kind} id={item.id} />
 
   <div class="acts">
-    <a class="btn sm" href={href(`map?layer=${layer}&id=${item.id}`)}>Show on map</a>
-    <a class="btn sm" href={manualHref('ops', mapPage)}>p. 2-{mapPage - 58}</a>
+    <a class="btn sm tinted" href={href(`map?layer=${layer}&id=${item.id}`)}>Show on map</a>
+    <a class="btn sm tinted" href={manualHref('ops', mapPage)}>p. 2-{mapPage - 58}</a>
     {#if linkTitle}
-      <a class="btn sm" href={componentHref(kind, item.id)}>Details</a>
+      <a class="btn sm tinted" href={componentHref(kind, item.id)}>Details</a>
     {/if}
   </div>
 
@@ -173,15 +173,14 @@
   }
   .head h2 {
     margin: 0;
-    font: 400 22px/28px var(--font-display);
+    font: var(--t-title);
   }
   .head h2 a {
     color: inherit;
   }
   .kind {
     margin: 0;
-    font-size: 15px;
-    line-height: 20px;
+    font: var(--t-sub);
     color: var(--muted);
   }
   .wiring {
@@ -189,8 +188,7 @@
     grid-template-columns: max-content 1fr;
     gap: 6px 12px;
     margin: 0;
-    font-size: 15px;
-    line-height: 20px;
+    font: var(--t-sub);
   }
   dt {
     color: var(--muted);
@@ -210,23 +208,11 @@
     display: block;
     max-width: 100%;
   }
+  /* A gap of 8 each way: the small buttons' 44 hit areas meet and never overlap (spec §8.7). */
   .acts {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-  }
-  /* Small buttons keep a 44 hit area (spec §8.7). */
-  .acts .btn {
-    position: relative;
-    text-decoration: none;
-    background: var(--tint);
-    border: 0;
-    color: var(--amber-ink);
-  }
-  .acts .btn::after {
-    content: '';
-    position: absolute;
-    inset: -4px 0;
   }
   .hint {
     margin: 0;

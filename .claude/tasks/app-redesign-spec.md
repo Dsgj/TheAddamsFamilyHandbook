@@ -51,7 +51,7 @@ Source: Components §07 (it matches the kit). Each light value goes into **both*
 | --bar | rgba(14,11,16,.82) | rgba(239,233,218,.84) |
 | --scrim | rgba(5,3,6,.56) | rgba(28,23,32,.32) |
 | --press | rgba(236,230,218,.07) | rgba(28,23,32,.06) |
-| --wire-edge | inset 0 0 0 1px rgba(255,255,255,.2) | inset 0 0 0 1px rgba(0,0,0,.18) |
+| --wire-edge | inset 0 0 0 1px rgba(255,255,255,.2) | inset 0 0 0 1px rgba(0,0,0,.35) |
 | --shadow-1 | 0 1px 0 rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35) | 0 1px 0 rgba(28,23,32,.08), 0 6px 18px rgba(28,23,32,.12) |
 | --shadow-2 | 0 12px 40px rgba(0,0,0,.55) | 0 12px 36px rgba(28,23,32,.2) |
 | --shadow-sheet | 0 -10px 40px rgba(0,0,0,.5) | 0 -8px 30px rgba(28,23,32,.16) |
@@ -108,25 +108,33 @@ Source: Components §07 (it matches the kit). Each light value goes into **both*
 
 Source: the kit and Components. Faces: Fell = IM Fell English SC (display), Plex Sans (UI), Plex Mono (codes).
 
+Each step is a token and a class of the same name (2026-09-30, audit P2 item 2): `--t-x` in tokens.css holds what the `font` shorthand carries (weight, size / line height, family), and the utility `.t-x` in base.css sets `font: var(--t-x)`.
+
 | Class | Face | Size / line height | Notes |
 |---|---|---|---|
-| t-lt | Fell | 34/41 | letter-spacing .01em; large title |
-| t-title | Fell | 22/28 | card name, sheet name |
-| t-head | Plex Sans 600 | 17/22 | compact title, section heads |
-| t-body | Plex Sans | 17/24 | kit base text |
-| t-callout | Plex Sans | 16/21 | |
-| t-sub | Plex Sans | 15/20 | subtitles, sidebar rows |
-| t-foot | Plex Sans | 13/18 | kind lines, group headers |
-| t-cap | Plex Sans | 12/16 | glass captions, rail labels |
+| t-lt | Fell | 34/41 | letter-spacing .01em; large title, the in-page h1 |
+| t-h1-wide | Fell | 24/30 | desktop header title, from 1280 |
+| t-title | Fell | 22/28 | card name, sheet name, h2 |
+| t-name | Fell | 20/24 | peek-sheet name, h3 |
+| t-head | Plex Sans 600 | 17/22 | compact title, section heads, h4, buttons |
+| t-body | Plex Sans | 17/24 | kit base text; unused while the body stays 16 (below) |
+| t-callout | Plex Sans | 16/21 | search and form fields (§8.7) |
+| t-sub | Plex Sans | 15/20 | subtitles, sidebar rows, tables, hints, small buttons (500) |
+| t-foot | Plex Sans | 13/18 | kind lines, group headers, `.small`, pills (600), wires (mono) |
+| t-cap | Plex Sans | 12/16 | glass captions, rail labels, table heads (500) |
+| t-tab | Plex Sans 500 | 11/13 | tab labels; badges (mono) |
 | t-mono | Plex Mono 500 | 15/20 | tabular-nums |
+| t-code | Plex Mono 500 | 14/18 | `.code` |
+| t-code-lg | Plex Mono 500 | 22/26 | `.code.lg` |
 
-- Other sizes the boards use:
-  - Tab label 11/13, weight 500.
-  - Desktop header h1: Fell 24/30.
-  - Peek-sheet name: Fell 20/24.
-  - Code chip: mono 14/18; large code chip: 22/26.
-  - Buttons 17/22 weight 600; small buttons 15/20.
-- The kit's base text is 17/24; the repo body is 16/1.5 today. **[confirm on board Components]**: owner question "Body 16 or 17".
+- A token can't carry `letter-spacing` or `font-variant-numeric`, and the shorthand resets `font-variant-numeric`. So `.t-lt` and `h1` set `letter-spacing: .01em` themselves, and `.t-mono` and every `t-mono` site set `font-variant-numeric: tabular-nums` after the shorthand.
+- A rule that keeps another face or weight writes `font: var(--t-x)` and overrides `font-family` or `font-weight` on the next line.
+- `.small` and the rules that can style a `.mono` element set only `font-size` and `line-height`: a shorthand would reset the mono face, and `class="mono muted small"` is common. For the same reason `.btn.mono` restores the mono face after the `.btn.sm` shorthand.
+- Exceptions, off the scale on purpose (tests/unit/design-system.test.ts holds the relative-size allow-list):
+  - `.well` 26/32 (the DMD field, §9.1), `.goto .field` 20px, and the map markers at 10px (§7.5).
+  - Relative sizes: `code, .mono` 0.92em; print `a[href^=http]::after` 0.85em; the reader text-size steps `:root[data-text] .prose` 0.93rem and 1.16rem; ShoppingList `.total .dmd` 1.3em and `.sw.armed .pane` 1.1em; SetupGuide `.n` 0.8em.
+  - The `?calib=1` developer tools: PlayfieldMap `.calib textarea` (11px mono) and the overlay `select` inside `label.small`. They are never on a user route, so they are exempt from the 16px input rule (§8.7).
+- The kit's base text is 17/24; the repo body stays 16/1.5. **[confirm on board Components]**: owner question "Body 16 or 17" (Q14).
 
 ## 3. Spacing
 
@@ -149,14 +157,33 @@ Source: the kit and Components §05.
 Source: Components §07 and the kit.
 
 - Radii:
-  - Tokens: --r-xs 6, --r-sm 10, --r-md 14, --r-lg 20.
-  - Controls: buttons 12; small buttons 10; chips 16; pills 12; segmented track 9 and thumb 7; icon tiles 7 (list) or 9 (map layers list); toast 14; sheet top corners 20; grabber 3.
+  - Scale tokens: --r-xs 6, --r-sm 10, --r-md 14, --r-lg 20.
+  - Named tokens: --r-btn 12, --r-chip 16, --r-track 9, --r-thumb 7, --r-wire 5, --r-grab 3, --r-code-lg 8, --r-full 999px.
+  - Controls: buttons 12 (`--r-btn`); small buttons and the search pill 10 (`--r-sm`); chips and toggles 16 (`--r-chip`); pills 12 (`--r-btn`); segmented track 9 (`--r-track`) and thumb 7 (`--r-thumb`); icon tiles 7 (list, `--r-thumb`) or 9 (map layers list, `--r-track`); toast 14 (`--r-md`); sheet top corners 20 (`--r-lg`); grabber 3 (`--r-grab`); `.code` 6 (`--r-xs`) and `.code.lg` 8 (`--r-code-lg`); the wire swatch 5 (`--r-wire`).
+  - Every other radius follows three steps, in order: (1) a control this spec gives a radius uses its named token; (2) any other radius at least half its box height is `--r-full` (50% stays 50%); (3) any other literal snaps to the nearest scale token (4 and 5 go to xs, 8 goes to sm).
+  - These stay, because they are shapes and not steps of the scale: `0`, `50%`, `28%` (the marker squircle), `inherit`, a token plus a border width (the search box's `calc(var(--r-sm) + 4px)`, §8.7), and the two 2px marker details on the map.
 - Elevation:
   - `--shadow-1`: cards marked "lifted".
   - `--shadow-2`: toasts and glass.
   - `--shadow-sheet`: sheets.
   - Hairlines use `--sep`. The rail's is `inset -1px 0 0 var(--sep)`.
 - Glass (`.glass`): background `--bar`, `backdrop-filter: blur(20px) saturate(1.5)`, `--shadow-2` plus an inset `--sep` ring. Used by the map controls, hint pills, the zoom readout and the keyboard legend.
+- Stacking: every `z-index` in src is a `--z-*` token from tokens.css, never a bare number. Low to high:
+
+  | Token | Value | Layer |
+  |---|---|---|
+  | --z-lift-1 … --z-lift-4 | 1 … 4 | local stacking only: the view-transition old page, the manual viewer's corner, the map markers (switch, lamp, shot, selected) |
+  | --z-dock | 5 | Diagnose's sticky dock |
+  | --z-ptr | 15 | Workshop's pull-to-refresh line, under the top bar |
+  | --z-topbar | 20 | the top bar |
+  | --z-map-controls | 25 | map controls (§7.3) |
+  | --z-peek | 28 | map peek sheet (§7.6) |
+  | --z-shell | 30 | tab bar, rail, sidebar |
+  | --z-toolbar | 32 | reader toolbar, phone calibration sheet |
+  | --z-toast | 40 | toast host |
+  | --z-modal | 60 | modal sheet and its scrim |
+
+  - The toast stays under the modal. A modal sheet makes everything outside its dialog `inert`, the toast included: above the scrim its Reload would look live but do nothing, and it would cover the sheet's bottom buttons. The toast clears the bottom chrome by position instead (§8.8).
 
 ## 5. Breakpoints
 
@@ -434,8 +461,8 @@ dragMove keeps working
   - A 32 px fade at the bottom.
 - With nothing selected, the selected-part section shows today's empty card (PlayfieldMap.svelte:381-389): the h2 "Playfield", "Tap a marker on the drawing, or pick from the list." and the `.prov` provenance paragraph. The boards don't draw this state.
 - List section (flex 1, top hairline):
-  - Header `.t-head` "Switches" with "55 on the map", padding 16 32 8.
-  - `.row.two` rows: a mono id tile, the name, and "Column 3, row 1".
+  - Header `.lh` (t-sub 600) "Switches" with "55 on the map", padding 16 32 8. Not `.t-head`: that is the global 17/22 utility.
+  - `.row.two` rows: a `.code.dmd` id tile (§8.6), the name, and "Column 3, row 1".
   - The selected row is on `--tint`, its tile `--amber-fill`, and it shows `.pill.fault`. It also carries `aria-current="true"`, the only `aria-current` in the list, so the selection isn't colour alone.
   - The "Find a part" filter field heads the list if Q28 confirms the proposal.
 
@@ -536,24 +563,42 @@ dragMove keeps working
 ### 8.6 Chips, pills, codes, wires (kit)
 
 - `.chip`: 32 tall, padding 0 12, radius 16, `--sunk`. `.chip.on`: `--tint` with an inset `--amber-ink` ring. The hit area is still 44.
+  - A `.chip` is a control (a filter, a recent search). A label that only shows a value is a `.pill`, a `.code` or a `.wire`, never a `.chip`.
 - `.pill`: 24 tall, radius 12, 13/18 weight 600, in ok / fault / untested variants. `.dot`: 8 px.
 - `.code`: 26 tall, min-width 36, radius 6, 14/18, letter-spacing .06em, uppercase. `.code.lg`: 40 tall, min-width 54, radius 8, 22/26.
+  - `.code.dmd` puts a code on the DMD well: `.dmd` gives the look, `.code` the box. The map's list id tiles use it (§7.7).
 - `.dmd`: a dot grid (a radial gradient on a 4 px background-size) on `--dmd-well`, text in `--dmd-ink`, text-shadow `0 0 10px rgba(255,138,61,.5)`, inset rings. The DMD well stays dark in the light theme.
-- `.wire i`: 26×10, radius 5.
+- `.wire`: a swatch and the colour's name, 13/18 mono, inline, no background, no cursor, no height of its own. It is a label, not a control, so it has no chip styling.
+- `.wire i`: 26×10, radius 5, the `--wire-edge` ring, no border.
   - Colours: Brown #7B4B2A, Red #C62828, Orange #EF7D1A, Yellow #F2C230, Green #2E8B3D, Blue #2458C6, Violet #7B3FB0, Gray #8C8C8C, Black #1A1A1A, White #F7F7F7.
   - A striped wire is base 0–58%, stripe 58–76%, base 76–100%.
-- `.hint`: padding 12 14, radius 12, `--brass-tint`, 15/21; its bold label is 13/18 in brass.
+- `.hint`: padding 12 14, radius 12, `--brass-tint`, 15/20 (`t-sub`); its bold label is 13/18 in brass.
 
 ### 8.7 Buttons and fields (kit)
 
-- `.btn`: 50 tall, padding 0 20, radius 12, 17/22 weight 600, svg 20. Variants: primary (its text is `--on-amber`, §1.4), tinted, gray (`--sunk`), plain.
-- `.btn.sm`: 36 tall, padding 0 14, radius 10, 15/20. Wherever it stands alone it must still offer a 44 hit area.
-- `.search`: 36 tall, radius 10, `--seg-track`, placeholder in `--faint`.
+- `.btn`: 50 tall, padding 0 20, radius 12, 17/22 weight 600, svg 20, gap 6. The bare `.btn` is the gray variant (`--sunk`, `--ink`).
+  - Variants: `.primary` (`--amber-fill`; its text is `--on-amber`, §1.4), `.tinted` (`--tint`, `--amber-ink`), `.gray` (the base, spelled out), `.plain` (no background, `--amber-ink`).
+  - `.btn[aria-pressed='true']`: `--tint` with an inset `--amber-ink` ring, as `.chip.on`. `.btn:disabled`: opacity .45. On hover-capable pointers, hover brightens by 1.08. Focus is the global `:focus-visible` ring.
+  - `.btn.mono` sets the mono face (SetupGuide's suggested value).
+- `.btn.sm`: 36 tall, padding 0 14, radius 10, 15/20 weight 500. A `::after` that reaches 4 above and below gives every small button a 44 hit area, alone or in a row. Rows of small buttons keep a gap of at least 8, so the zones meet but don't overlap. `.btn.small` is an alias for one release.
+- Two bare `.btn` side by side (a sheet's actions) share the row equally while both labels fit, and stack at full width when they don't (`flex: 1 1 0; min-width: max-content` in a wrapping row): a 320 phone has 288 for the row, and "Open in Map" alone needs 165 at 17/22 600. A sheet body laid out as a grid gives its column `minmax(0, 1fr)`, so a child that starts wide (the part sheet's map crop, 340 before it measures itself) cannot hold the column past the sheet.
+- Inputs: every input, select and textarea a user reaches is at least 16px, or iOS Safari zooms the page when it takes focus. Only the `?calib=1` developer tools are exempt (§2).
+  - `.field`: 44 tall, radius 6, with its border; 16/21.
+- `.search`: a pill 36 tall, radius 10, on `--seg-track`, placeholder in `--faint`, painted inside a 44 tall box by a 4 px transparent border and a padding-box background, so the hit area stays 44.
+  - Its text is 16/21 (`t-callout`), not the boards' 15/20, for the 16px rule above.
+  - The focus ring sits 1 outside the pill. The browser's own search decoration and cancel button are hidden.
+  - `select.search` (Manuals) is the same pill, width auto, with a chevron in `--muted` drawn by two gradients. The search field keeps at least 136 beside it; on a narrower row the select wraps under the field.
+- `.srch` wraps an `input.search` and its clear button `.srch .clear`: an `.ibtn` (44, round) at the field's right end with a 16 px ×, named "Clear search". It shows only while the field has text. A click empties the field, tells the owner, and puts focus back in the field. The SearchField island renders this pattern (tables.astro writes the same markup by hand).
+  - The field's right padding makes room for the clear button only while it has text, so an empty field shows its whole placeholder.
+  - On a hub, `.hub > .srch` is inset 16 at the sides; its pill sits 4 below the title and 8 above the list.
+  - A search with no hits shows one line, `No {things} match “{q}”.`: a `<p class="gf">` under a table or list, the island's count line where it has one (Manuals), or a muted row inside the list it filters (handbook contents). Placeholders have no ellipsis.
 
 ### 8.8 Toast (Native, Update, Motion)
 
 - `.toast`: left and right 12, min-height 56, padding 10 10 10 14, radius 14, `--raised`, `--shadow-2` plus an inset `--sep` ring.
 - It sits 10 above the tab bar. One toast at a time; Update ready wins.
+  - It also sits 10 above a reader toolbar or a map sheet. The host's bottom adds `var(--toast-lift, 0px)`, and the islands set that on the root: the reader toolbar 62 (its 52 and the 10 gap), the phone map sheet its height at the current detent (peek or expanded, plus the safe-bot its body pads with; never the live drag height), and Diagnose the distance from its sticky dock's top to the tab bar while the dock reaches into the toast's resting band (80 above the bar). When the dock sits higher (short results, or scrolled to the end) the toast stays at rest, since a fixed lift would land it on the dock. Modal sheets never lift it.
+  - The host is `--z-toast` (40), under `--z-modal` (60); see §4 "Stacking".
 - Offline ready: "Ready to work offline. Scans are cached as you open them." It leaves after 4 s.
 - Update ready: "A new version of the handbook is ready." with "Reload". It leaves only on Reload.
 - Motion: 200 ms standard with a 12 px rise. Under reduced motion it only fades.
@@ -755,13 +800,13 @@ Source: Motion.
 |---|---|---|---|
 | --dur-1 | 120 | press, tab icon, fading the map controls | kept, without the icon scale |
 | --dur-2 | 200 | tab cross-fade, toast in | kept; the toast drops its rise |
-| --dur-3 | 300 | pop, dismiss, scrim, Fit, sheet to peek | 150 ms cross-fade |
+| --dur-3 | 300 | pop, dismiss, scrim, Fit, sheet to peek, the swipe-back spring | 150 ms cross-fade |
 | --dur-4 | 350 | push, sheet detent snap | 150 ms cross-fade |
 | --dur-5 | 420 | modal present | fades in at its detent, 150 ms |
 
+- `--dur-0` 150 is the reduced-motion cross-fade. It keeps the audit's name although it is longer than `--dur-1`, so the tokens are out of numeric order there.
 - Untokened durations:
-  - 150: the reduced-motion fallback.
-  - 250: zoom steps, double-tap, rubber band and the swipe-back spring.
+  - 250: zoom steps, double-tap and the rubber band.
   - 1.6 s: the pulse, run once.
   - 4 s: the toast dwell. The update toast stays until acted on.
   - 1.06 s: the DMD caret blink, in hard steps; steady under reduced motion.

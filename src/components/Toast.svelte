@@ -7,6 +7,9 @@
    * time: Update ready wins over everything and stays until Reload; the others leave after 4 s.
    * The host is a plain aria-live region (never `role=status`: /care, /setup and /shopping run a
    * strict `getByRole('status')`) and passes pointer events through; only Reload takes them.
+   * It sits 10 above the tab bar, lifted by --toast-lift over a reader toolbar (ReaderBar), the
+   * map's sheet (BottomSheet) or the Diagnose dock, and under a modal sheet, which makes it inert
+   * (spec §4, §8.8).
    */
   type Kind = 'offline' | 'update' | 'info';
   interface Toast {
@@ -54,10 +57,10 @@
 <style>
   .toast-host {
     position: fixed;
-    z-index: 40;
+    z-index: var(--z-toast);
     left: calc(var(--shell-w) + 12px);
     right: 12px;
-    bottom: calc(var(--tabbar-h) + var(--safe-bot) + 10px);
+    bottom: calc(var(--tabbar-h) + var(--safe-bot) + 10px + var(--toast-lift, 0px));
     display: grid;
     justify-items: center;
     pointer-events: none;
@@ -69,15 +72,14 @@
     width: min(100%, 520px);
     min-height: 56px;
     padding: 10px 10px 10px 14px;
-    border-radius: 14px;
+    border-radius: var(--r-md);
     background: var(--raised);
     box-shadow:
       var(--shadow-2),
       inset 0 0 0 1px var(--sep);
     color: var(--ink);
-    font-size: 15px;
-    line-height: 20px;
-    animation: toast-in var(--dur-2) cubic-bezier(0.2, 0, 0, 1);
+    font: var(--t-sub);
+    animation: toast-in var(--dur-2) var(--ease-standard);
   }
   .toast .text {
     flex: 1;

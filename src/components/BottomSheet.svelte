@@ -40,6 +40,8 @@
     children: Snippet;
   } & HTMLAttributes<HTMLElement> = $props();
 
+  /** --dur-0, the reduced-motion fade, as a number for the Svelte transitions. */
+  const DUR_0 = 150;
   const reduced = () =>
     typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -70,7 +72,7 @@
 
   /** Rises from the bottom (emphasized); under reduced motion, a 150 ms fade at its detent. */
   function rise(_node: Element, { duration = 300 }: { duration?: number } = {}) {
-    if (reduced()) return { duration: 150, css: (t: number) => `opacity: ${t}` };
+    if (reduced()) return { duration: DUR_0, css: (t: number) => `opacity: ${t}` };
     return {
       duration,
       easing: emphasized,
@@ -79,7 +81,7 @@
   }
   /** Leaves downward (exit); under reduced motion, a 150 ms fade. */
   function leave(_node: Element, { duration = 300 }: { duration?: number } = {}) {
-    if (reduced()) return { duration: 150, css: (t: number) => `opacity: ${t}` };
+    if (reduced()) return { duration: DUR_0, css: (t: number) => `opacity: ${t}` };
     return {
       duration,
       easing: exit,
@@ -88,7 +90,7 @@
   }
   function fade(_node: Element, { duration = 300 }: { duration?: number } = {}) {
     return {
-      duration: reduced() ? 150 : duration,
+      duration: reduced() ? DUR_0 : duration,
       easing: standard,
       css: (t: number) => `opacity: ${t}`,
     };
@@ -128,6 +130,17 @@
   function toggle() {
     expanded = !expanded;
   }
+  // The toast sits 10 above the map sheet (spec §8.8): publish the sheet's height at its detent as
+  // --toast-lift. That height is the detent plus the safe-bot the sheet pads its body with (see
+  // style:height below), so the lift carries that safe-bot too: dropping it would sink the toast
+  // into the sheet on a phone with a home indicator. Keyed on the detent, never on the live drag
+  // height: a custom property written on the root at every pointermove would restyle the document.
+  $effect(() => {
+    if (kind !== 'map') return;
+    const html = document.documentElement;
+    html.style.setProperty('--toast-lift', `calc(${expanded ? full : peek}px + var(--safe-bot))`);
+    return () => html.style.removeProperty('--toast-lift');
+  });
 
   // ---- modal kind: focus, inert, Esc, recede
   let dialog: HTMLElement | undefined = $state();
@@ -200,7 +213,7 @@
     const r = reduced();
     for (const p of receded) {
       p.style.transition = r
-        ? 'opacity 150ms var(--ease-standard)'
+        ? 'opacity var(--dur-0) var(--ease-standard)'
         : 'transform var(--dur-5) var(--ease-emphasized), opacity var(--dur-5) var(--ease-emphasized)';
       p.style.transform = r ? '' : 'scale(0.94) translateY(10px)';
       p.style.opacity = '0.62';
@@ -213,7 +226,7 @@
       html.style.overflow = prevOverflow;
       for (const p of receded) {
         p.style.transition = r
-          ? 'opacity 150ms var(--ease-standard)'
+          ? 'opacity var(--dur-0) var(--ease-standard)'
           : 'transform var(--dur-3) var(--ease-exit), opacity var(--dur-3) var(--ease-exit)';
         p.style.transform = '';
         p.style.opacity = '';
@@ -313,18 +326,18 @@
     display: block;
     width: 36px;
     height: 5px;
-    border-radius: 3px;
+    border-radius: var(--r-grab);
     background: var(--grabber);
   }
 
   /* Map kind: absolute at the bottom of the stage (the tab bar sits below it), over the drawing
-     (z 28 > controls 25). */
+     (--z-peek over --z-map-controls). */
   .map {
     position: absolute;
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 28;
+    z-index: var(--z-peek);
     transition: height var(--dur-4) var(--ease-emphasized);
     animation: rise var(--dur-3) var(--ease-emphasized);
   }
@@ -343,7 +356,7 @@
     background: none;
     cursor: grab;
     touch-action: none;
-    border-radius: 12px;
+    border-radius: var(--r-full);
   }
   .grab:active {
     cursor: grabbing;
@@ -361,7 +374,7 @@
   .modal {
     position: fixed;
     inset: 0;
-    z-index: 60;
+    z-index: var(--z-modal);
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
@@ -404,7 +417,7 @@
     grid-column: 2;
     margin: 0;
     text-align: center;
-    font: 600 17px/22px var(--font-body);
+    font: var(--t-head);
   }
   .close {
     grid-column: 3;
@@ -431,7 +444,7 @@
   @media (prefers-reduced-motion: reduce) {
     .map {
       transition: none;
-      animation: fadein 150ms var(--ease-standard);
+      animation: fadein var(--dur-0) var(--ease-standard);
     }
   }
   @keyframes fadein {

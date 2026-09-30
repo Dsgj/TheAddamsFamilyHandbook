@@ -324,10 +324,10 @@
     min-height: 44px;
     padding: 0 12px;
     border: 0;
-    border-radius: 10px;
+    border-radius: var(--r-sm);
     background: var(--cell);
     color: var(--ink);
-    font-size: 15px;
+    font: var(--t-sub);
     cursor: pointer;
   }
   .grow {
@@ -382,7 +382,7 @@
     position: absolute;
     right: 12px;
     bottom: 12px;
-    z-index: 2;
+    z-index: var(--z-lift-2);
   }
   .capsule {
     display: flex;
@@ -409,15 +409,15 @@
     stroke-linecap: round;
   }
   .capsule .fit {
-    font: 600 13px/18px var(--font-body);
+    font: var(--t-foot);
+    font-weight: 600;
   }
   .capsule .fit[aria-pressed='true'] {
     color: var(--muted);
   }
   .text pre {
     white-space: pre-wrap;
-    font-family: var(--font-body);
-    font-size: 0.95rem;
+    font: var(--t-sub);
     margin: 0;
   }
   /* The key hint shows where there is a keyboard: wide screens or hover-capable pointers. */
@@ -426,7 +426,7 @@
     margin: 6px 0 0;
     padding: 0;
     background: none;
-    font-size: 0.85rem;
+    font: var(--t-foot);
   }
   @media (min-width: 1000px), (hover: hover) {
     .keys {
@@ -439,7 +439,8 @@
     padding: 4px 16px 16px;
   }
   .lbl {
-    font: 600 13px/18px var(--font-body);
+    font: var(--t-foot);
+    font-weight: 600;
     color: var(--muted);
   }
   .goto .field {

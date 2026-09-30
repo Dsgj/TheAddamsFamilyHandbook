@@ -1,6 +1,6 @@
 # Full app audit (2026-09-29)
 
-**Status: P0 (645d614), P1 (00c83ad, back behaviour) and P2 item 1 (dc21002, header title and back label) are committed on main. P2 items 2-5, P3 and P4 are not started.** Twelve specialist reviewers, one adversarial verifier per dimension and a completeness critic reviewed the whole app against a fresh build. There were 231 findings: 154 confirmed, 69 partly confirmed, 7 deliberate (documented decisions) and 1 refuted. Each finding below carries the verifier's recalibrated severity. The raw result, with evidence, repro scripts and a fix per finding, is in the workflow journal of session c5ab0448 (run wf_05057fc7-6a2). The rows here are enough to find each spot again.
+**Status: P0 (645d614), P1 (00c83ad, back behaviour), P2 item 1 (dc21002, header) and P2 item 2 (component migration) are committed on main. P2 items 3-5, P3 and P4 are not started.** Twelve specialist reviewers, one adversarial verifier per dimension and a completeness critic reviewed the whole app against a fresh build. There were 231 findings: 154 confirmed, 69 partly confirmed, 7 deliberate (documented decisions) and 1 refuted. Each finding below carries the verifier's recalibrated severity. The raw result, with evidence, repro scripts and a fix per finding, is in the workflow journal of session c5ab0448 (run wf_05057fc7-6a2). The rows here are enough to find each spot again.
 
 The audit started from this baseline: build OK, astro check 0 errors (16 hints, all from the deprecated `z` import), eslint clean, vitest 57/57. The e2e suite was run against the fresh build and 315 of 318 tests pass. The phone-dark push-transition test in motion.spec fails even with one worker. svelte-check finds 7 errors, and `pnpm check` does not run svelte-check.
 
@@ -61,7 +61,7 @@ The findings are grouped by root cause, so one fix usually closes several of the
 
 ## Resume
 
-P0 (645d614), P1 (00c83ad) and P2 item 1 (dc21002) are committed on main (see Progress at the end). Next is P2 item 2, the component migration. The header rules from P2 item 1 are in app-redesign-spec.md §6.5 and app-redesign.md (entry dated 2026-09-30). The P1 navigation rules are recorded in app-redesign.md, Phase 12, in the bullets dated 2026-09-29; keep them in step with any later change to motion.ts, nav-state.ts, Base.astro or Diagnose.svelte. Verify with `pnpm check`, `pnpm dlx svelte-check`, `pnpm lint`, `pnpm test`, `pnpm build` and the full e2e suite on both projects.
+P0 (645d614), P1 (00c83ad), P2 item 1 (dc21002) and P2 item 2 are committed on main (see Progress at the end). Next is P2 item 3, light theme and print. The header rules from P2 item 1 are in app-redesign-spec.md §6.5; the tokens, button, search, stacking and radius rules from P2 item 2 are in the spec (§2, §4 Stacking table, §8.6-8.8, §10) and enforced by tests/unit/design-system.test.ts; both are logged in app-redesign.md (entries dated 2026-09-30). The P1 navigation rules are recorded in app-redesign.md, Phase 12, in the bullets dated 2026-09-29; keep them in step with any later change to motion.ts, nav-state.ts, Base.astro or Diagnose.svelte. Verify with `pnpm check`, `pnpm dlx svelte-check`, `pnpm lint`, `pnpm test`, `pnpm build` and the full e2e suite on both projects.
 
 ## Appendix: every finding
 
@@ -435,6 +435,29 @@ Leftovers, none blocking: the swipe-back fade is aborted in phone emulation ("Vi
 | e2e phone-dark | 296 passed, 1 skipped | 331 passed, 1 failed (back.spec:672, flaky), 2 skipped |
 | e2e desktop-light | 254 passed, 43 skipped | 256 passed, 78 skipped |
 
+### P2 item 2 status (component migration: DS-02, DS-07, DS-10, VP-09, VP-10, SV-16, DS-06, VP-14, DS-11, DS-15, DS-14, DS-20)
+
+- Tokens (src/styles/tokens.css, CRLF): 14 type tokens `--t-*` as font shorthands (t-lt 34/41 and t-title 22/28 Fell, t-name 20/24, t-h1-wide 24/30, t-head 600 17/22, t-body 17/24 unused since body stays 16, t-callout 16/21, t-sub 15/20, t-foot 13/18, t-cap 12/16, t-tab 500 11/13, t-mono, t-code 14/18, t-code-lg 22/26); a stacking scale `--z-lift-1..4` 1-4, `--z-dock` 5, `--z-ptr` 15, `--z-topbar` 20, `--z-map-controls` 25, `--z-peek` 28, `--z-shell` 30, `--z-toolbar` 32, `--z-toast` 40, `--z-modal` 60 (the toast stays under a modal sheet, which makes it inert); radius tokens `--r-btn` 12, `--r-chip` 16, `--r-track` 9, `--r-thumb` 7, `--r-wire` 5, `--r-grab` 3, `--r-code-lg` 8, `--r-full`; `--dur-0` 150 ms.
+- base.css: the `.btn` family (gray base on `--sunk`, primary with `--on-amber` text, tinted, gray, plain, `sm` 36 tall with a `::after` that keeps a 44 hit area, `small` kept as an alias, mono, `aria-pressed`, disabled; hover inside the media query). One `.search`: a 44 box with a 4 px transparent border around a 36 painted pill of radius 10, 16/21 text (the spec's 15/20 is overridden so iOS does not zoom; logged). `.srch` wraps a field and a "Clear search" `.ibtn`. `.field` 16/21. `.wire` for wire swatches. `.code`/`.code.lg` on tokens. `.t-*` utilities. Every radius, z-index and hover in src/styles on the rules above.
+- Islands: new src/components/SearchField.svelte (HandbookToc, ManualSearch, PartsList, PlayfieldMap); tables.astro writes the same markup by hand. Empty states read "No {things} match “q”." everywhere. WireChip renders `span.wire`. `btn small` became `btn sm`; local `.btn` copies in Diagnose, ComponentCard, ComponentDetail and Matrix are gone. Every z-index is a token. `--toast-lift` raises the toast above the reader toolbar (`:root:has(nav.rbar)`, 62 px), the map sheet (detent plus safe-bot, set per detent change) and the Diagnose dock (fix round). PlayfieldMap's header class is `.t-name`; its list header is `h3.lh`. The swipe spring-back runs on `--dur-3` (300 ms, was 250).
+- Tests: tests/unit/design-system.test.ts lints the sources (no bare z-index, every `:hover` inside `@media (hover: hover)`, rem/em sizes only on an allow-list, `--z-*` in order, radii on tokens, every `--z-*` used, the classes the islands depend on exist). tests/e2e/design-system.spec.ts: `.btn.sm` hit area, the Go dialog button, the toast above the reader bar, the map sheet (with a 34 px safe-bot guard) and the Diagnose dock, every visible input at 16 px or more on 11 routes, search structure and clear behaviour, the wire swatch. hubs.spec and pwa.spec follow the renames.
+- Deviations: Diagnose's DMD field is not a SearchField (spec §9.1 keeps it); `.hub > .search` and `.btn.small` stay as unused aliases (drop in a later sweep, with the unit test's class list); the map peek title truncates about 2 characters earlier at 320 because the spec's `.code.lg` chip is 40 tall; the handbook section summary keeps Fell 400.
+- Reviews: dynamic pass with 3 minor, static fix_needed with 6 minor; the fix round fixed all but one and rejected the claim that safe-bot is counted twice in the map lift (the sheet's height includes it; a guard test proves the 10 px gap at a 34 px inset); the recheck passed. All 12 IDs marked fixed by both reviewers and the recheck.
+- Environment: a locked worktree from another session sits at .claude/worktrees/installed-leds (branch worktree-installed-leds, base 8b90d85); bare `pnpm lint` walks into its dist/ and .astro/ and exits 1 with 1206 errors that are not ours. `pnpm exec eslint . --ignore-pattern '.claude/**'` is clean. A permanent fix is `.claude/**` in the eslint.config ignores, as its own change.
+
+### P2 item 2 verification (default base, fresh build)
+
+| Check | P2 item 1 | Now |
+|---|---|---|
+| pnpm check | 0 errors, 16 hints | 0 errors, 16 hints |
+| svelte-check (dlx) | the same 7 | the same 7 (line numbers shifted by 1-2) |
+| pnpm lint | clean | clean when scoped past the foreign worktree (see above) |
+| prettier | two .claude md files flagged (pre-existing) | the same two, plus tokens.css unless `--end-of-line crlf` |
+| vitest | 140/140 | 148/148 |
+| pnpm build | 349 pages | 349 pages |
+| e2e phone-dark | 331 passed, 1 flaky, 2 skipped | 363 passed, 3 skipped, back.spec:672 flaky once and 3/3 alone |
+| e2e desktop-light | 256 passed, 78 skipped | 287 passed, 80 skipped |
+
 ### Working notes for the next session
 
 - svelte-check is not a dependency. Run `pnpm dlx svelte-check` after `pnpm check`. Run cold, it adds 3 spurious toc.ts errors.
@@ -445,5 +468,7 @@ Leftovers, none blocking: the swipe-back fade is aborted in phone emulation ("Vi
 - The phone-dark push-transition test in motion.spec passed in every run this session, so it is timing-dependent, not deterministic.
 - The overflow sweep compares with the configured viewport, not `window.innerWidth`, because Chromium's mobile emulation grows the layout viewport to fit overflow.
 - tests/e2e/map.spec.ts is CRLF as well. Check it with `prettier --check --end-of-line crlf`.
+- src/styles/tokens.css is CRLF too (since before the audit). Same prettier rule.
+- Another session's locked worktree under .claude/worktrees makes bare `pnpm lint` fail; scope it with `--ignore-pattern '.claude/**'` until eslint.config ignores that folder.
 - Playwright's Chromium runs with `--disable-back-forward-cache`, so bfcache behaviour (persisted pagehide and pageshow) only shows in a probe against msedge or chrome with that flag removed. The e2e tests dispatch synthetic PageTransitionEvents instead.
 - "Transition was aborted" and "ViewTransition opt-in disabled" pageerrors are Chromium-internal and appear when the Navigation API is hidden in a test.

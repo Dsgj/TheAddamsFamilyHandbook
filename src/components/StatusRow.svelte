@@ -69,7 +69,7 @@
     flex: 1 1 160px;
     min-height: 36px;
     padding: 4px 10px;
-    border-radius: 10px;
+    border-radius: var(--r-sm);
   }
   .seg {
     flex: 1 1 100%;
