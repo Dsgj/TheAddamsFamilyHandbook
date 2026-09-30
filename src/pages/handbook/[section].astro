@@ -41,7 +41,12 @@ const UNVERIFIED = new Set([26, 27, 28]);
 const scan = section.key === 'appendix' ? undefined : manualHref('ops', section.pages[0]!);
 ---
 
-<Base title={section.title} nav="handbook" back={{ path: 'handbook', label: 'Handbook' }}>
+<Base
+  title={section.title}
+  short={section.short}
+  nav="handbook"
+  back={{ path: 'handbook', label: 'Handbook' }}
+>
   {
     scan && (
       <a slot="actions" class="ibtn" href={scan} aria-label="View the scan" title="View the scan">

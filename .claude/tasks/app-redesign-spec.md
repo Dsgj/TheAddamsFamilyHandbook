@@ -229,7 +229,7 @@ The five tabs, in job order:
 
 - Phone:
   - The safe area (47) sits above a 44 nav row (`.tb`: a 3-column grid, padding 0 8).
-  - Title centred, max 220 wide.
+  - Title centred, max 220 wide. Under 1280 the columns are `minmax(var(--touch),1fr) minmax(0,auto) minmax(var(--touch),1fr)` (--touch is 44): the title takes its width first and the sides share the rest. A back label that does not fit its side wraps out of the 44 px link, where overflow clips it, and the chevron stays. The label is still the link's accessible name. Pages whose title would crowd the label pass `short` (the phone bar's title).
 - Tab roots add a large-title row:
   - The row is 52 tall (`.lt`: padding 0 16 5), Fell 34/41.
   - The compact title is Plex 600 17/22.
@@ -244,6 +244,7 @@ The five tabs, in job order:
   - A chevron (26) plus the parent's title, 17/22, `--amber-ink`.
   - 44 tall, padding 0 8 0 2.
   - A real `<a href>` to the parent.
+  - Under 1280: wraps (svg padded to --touch, label line-height --touch), `overflow: clip` (`hidden` as the fallback; not a scroll container, so find-in-page cannot scroll the label in), max-width 100 %. A collapsed link keeps its whole side as the tap area; Base's script sets `data-bare` on it, and the focus ring (inset) and the hover pill are then drawn round the chevron only (the svg takes over the 2/8 side padding, 36×44), not round the empty rest of the side.
 - Icon button (`.ibtn`): 44×44, radius 22, glyph 24. Text link (`.tlink`): 44 tall, 17/22, 8 side padding.
 - Markup: a `<header>`. Every page has exactly one h1 (appendix.spec.ts:16 runs a strict level-1 heading query), so the bar's title is the h1 only where the page has none of its own:
   - Tab roots (`/`, `/tables`, `/handbook`, `/workshop`): the large title is the h1; the compact title is `aria-hidden`; the in-page h1 goes.

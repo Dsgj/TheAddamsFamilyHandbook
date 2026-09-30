@@ -15,7 +15,7 @@ interface Props {
   /** The top bar's text when it differs from the document title (e.g. "Switch 32"). */
   heading?: string;
   /** A shorter word phones show in place of `heading` (the accessible text stays `heading`). */
-  short?: string;
+  short?: string | undefined;
   description?: string;
   /** Active nav key. */
   nav?: string;
@@ -228,7 +228,8 @@ const hasActions = Astro.slots.has('actions');
             </h1>
           ) : (
             <div class="ct" aria-hidden="true">
-              {heading}
+              <span class:list={['full', { 'has-short': !!short }]}>{heading}</span>
+              {short && <span class="short">{short}</span>}
             </div>
           )
         }
@@ -285,6 +286,21 @@ const hasActions = Astro.slots.has('actions');
           apply();
           addEventListener('scroll', onScroll, { passive: true });
           reduce.addEventListener('change', apply);
+        }
+        // Under 1280 a back label too long for its side wraps out of the link and only the
+        // chevron shows (base.css, VP-03/AY-13). data-bare mirrors that, so the focus ring and
+        // the hover pill go round the chevron. The link and the label both resize whenever the
+        // label wraps, returns or is rewritten (motion.ts), so observing the two is enough.
+        const back = document.querySelector('header.top a.back');
+        const label = back && back.querySelector('span');
+        if (label && window.ResizeObserver) {
+          const bare = new ResizeObserver(function () {
+            const gone =
+              label.getBoundingClientRect().top >= back.getBoundingClientRect().bottom - 0.5;
+            back.toggleAttribute('data-bare', gone);
+          });
+          bare.observe(back);
+          bare.observe(label);
         }
         // Reselecting the current tab (spec §6.1): on the tab's root it scrolls to the top and
         // focuses the h1; on a pushed page the link itself goes to the root.

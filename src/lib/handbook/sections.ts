@@ -5,6 +5,8 @@
 export interface Section {
   key: string;
   title: string;
+  /** The phone bar's title where `title` would crowd the back label (Base's `short`). */
+  short?: string;
   pages: number[];
 }
 
@@ -13,19 +15,25 @@ export const APPENDIX_FIRST_PAGE = 101;
 const range = (a: number, b: number) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
 
 export const SECTIONS: Section[] = [
-  { key: 'quick', title: 'Quick reference & contents', pages: [2, 3] },
-  { key: 'rules', title: 'Rules & shot maps', pages: range(5, 10) },
-  { key: 'setup', title: 'Assembly & operation', pages: range(11, 16) },
-  { key: 'menus', title: 'Menu system & bookkeeping', pages: range(17, 24) },
+  { key: 'quick', title: 'Quick reference & contents', short: 'Quick reference', pages: [2, 3] },
+  { key: 'rules', title: 'Rules & shot maps', short: 'Rules', pages: range(5, 10) },
+  { key: 'setup', title: 'Assembly & operation', short: 'Assembly', pages: range(11, 16) },
+  { key: 'menus', title: 'Menu system & bookkeeping', short: 'Menus', pages: range(17, 24) },
   { key: 'tests', title: 'Test menu', pages: range(25, 29) },
   { key: 'utilities', title: 'Utilities', pages: [30, 31, 37] },
-  { key: 'presets', title: 'Difficulty & presets', pages: range(32, 36) },
-  { key: 'adjustments', title: 'Adjustments A.1–A.5', pages: range(38, 53) },
-  { key: 'errors', title: 'Error messages & codes', pages: [54, 55] },
-  { key: 'maintenance', title: 'LEDs, fuses & maintenance', pages: [56, 57, 58] },
+  { key: 'presets', title: 'Difficulty & presets', short: 'Presets', pages: range(32, 36) },
+  { key: 'adjustments', title: 'Adjustments A.1–A.5', short: 'Adjustments', pages: range(38, 53) },
+  { key: 'errors', title: 'Error messages & codes', short: 'Error codes', pages: [54, 55] },
+  {
+    key: 'maintenance',
+    title: 'LEDs, fuses & maintenance',
+    short: 'Maintenance',
+    pages: [56, 57, 58],
+  },
   {
     key: 'appendix',
     title: 'Appendix: owner service notes',
+    short: 'Appendix',
     pages: range(APPENDIX_FIRST_PAGE, 108),
   },
 ];
