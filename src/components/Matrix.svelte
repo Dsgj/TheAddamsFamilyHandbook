@@ -197,7 +197,7 @@
     min-width: 120px;
   }
   th.hi .n {
-    color: var(--amber);
+    color: var(--amber-ink);
   }
   td {
     background: var(--surface);
@@ -210,9 +210,6 @@
   }
   td.hi {
     background: var(--sunk);
-  }
-  td.unused {
-    opacity: 0.45;
   }
   td.st-ok {
     border-color: var(--ok);
@@ -232,6 +229,14 @@
     color: var(--ink);
     text-decoration: none;
   }
+  /* An unused position reads grey, not dimmed: opacity took the text under 4.5 (AY-16). The link
+     sets its own colour, so the grey goes on the link and the id, not the cell. */
+  td.unused a {
+    color: var(--muted);
+  }
+  td.unused .id {
+    color: var(--faint-ink);
+  }
   td a:focus-visible {
     background: var(--sunk);
     outline: 2px solid var(--amber);
@@ -248,7 +253,7 @@
     box-shadow: 0 0 0 2px var(--amber) inset;
   }
   .id {
-    color: var(--amber);
+    color: var(--amber-ink);
     font-weight: 500;
     display: block;
   }
@@ -305,5 +310,45 @@
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
+  }
+  /* Print (audit DS-03): the whole matrix fits the width of an A4 page between 1 cm margins (718
+     px); on screen it scrolls sideways from 860. Eight equal columns, the names wrap. */
+  @media print {
+    .matrix {
+      min-width: 0;
+      width: 100%;
+      table-layout: fixed;
+      border-spacing: 2px;
+    }
+    .corner {
+      width: 88px;
+    }
+    .rowh,
+    td {
+      min-width: 0;
+    }
+    td {
+      height: auto;
+    }
+    td a,
+    td .empty {
+      padding: 3px 4px;
+    }
+    .nm {
+      font-size: 10px;
+      overflow-wrap: anywhere;
+    }
+    /* The headers' wire labels and pins wrap instead of widening their column. */
+    .hd :global(.wire) {
+      flex-wrap: wrap;
+      gap: 2px 4px;
+      white-space: normal;
+      font-size: 9px;
+      line-height: 12px;
+    }
+    .pin {
+      font-size: 9px;
+      line-height: 12px;
+    }
   }
 </style>

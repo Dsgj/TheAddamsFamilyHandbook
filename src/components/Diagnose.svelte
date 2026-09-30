@@ -696,8 +696,7 @@
     resize: none;
     field-sizing: content;
     background:
-      radial-gradient(circle at 2px 2px, rgba(255, 138, 61, 0.14) 0.6px, transparent 1px) 0 0 / 4px
-        4px,
+      radial-gradient(circle at 2px 2px, var(--dmd-dot) 0.6px, transparent 1px) 0 0 / 4px 4px,
       var(--dmd-well);
     box-shadow:
       inset 0 0 0 1px rgba(255, 255, 255, 0.08),
@@ -714,7 +713,7 @@
   }
   .well::placeholder {
     color: var(--dmd-ink);
-    opacity: 0.45;
+    opacity: 0.7;
   }
   .well:focus {
     outline: 2px solid var(--amber);

@@ -1,6 +1,6 @@
 # Full app audit (2026-09-29)
 
-**Status: P0 (645d614), P1 (00c83ad, back behaviour), P2 item 1 (dc21002, header) and P2 item 2 (component migration) are committed on main. P2 items 3-5, P3 and P4 are not started.** Twelve specialist reviewers, one adversarial verifier per dimension and a completeness critic reviewed the whole app against a fresh build. There were 231 findings: 154 confirmed, 69 partly confirmed, 7 deliberate (documented decisions) and 1 refuted. Each finding below carries the verifier's recalibrated severity. The raw result, with evidence, repro scripts and a fix per finding, is in the workflow journal of session c5ab0448 (run wf_05057fc7-6a2). The rows here are enough to find each spot again.
+**Status: P0 (645d614), P1 (00c83ad, back behaviour), P2 item 1 (dc21002, header), P2 item 2 (c210aa5, component migration) and P2 item 3 (light theme and print) are committed on main. P2 items 4-5, P3 and P4 are not started.** Twelve specialist reviewers, one adversarial verifier per dimension and a completeness critic reviewed the whole app against a fresh build. There were 231 findings: 154 confirmed, 69 partly confirmed, 7 deliberate (documented decisions) and 1 refuted. Each finding below carries the verifier's recalibrated severity. The raw result, with evidence, repro scripts and a fix per finding, is in the workflow journal of session c5ab0448 (run wf_05057fc7-6a2). The rows here are enough to find each spot again.
 
 The audit started from this baseline: build OK, astro check 0 errors (16 hints, all from the deprecated `z` import), eslint clean, vitest 57/57. The e2e suite was run against the fresh build and 315 of 318 tests pass. The phone-dark push-transition test in motion.spec fails even with one worker. svelte-check finds 7 errors, and `pnpm check` does not run svelte-check.
 
@@ -35,7 +35,7 @@ The findings are grouped by root cause, so one fix usually closes several of the
 2. **Finish the component migration** (DS-02, DS-07, DS-10, VP-09, VP-10, SV-16, DS-06, VP-14, DS-11, DS-15, DS-14, DS-20). Build the spec's `.btn` family, one search field, type tokens and a z-index scale. Stop WireChip from reusing the interactive `.chip` class. Move literal radii to tokens and wrap hovers in `@media (hover: hover)`. Effort L.
 3. **Light theme and print** (DS-04, DS-08, AY-04, DS-05, DS-03, DS-09, AY-16). Use `--on-amber` on the primary button and `--amber-ink` for amber text at 13 sites. Make the global `.dmd` use `--dmd-ink` and `--dmd-dot`. Fix the print token specificity in the light theme. The positive swipe-to-fix action should not be red. Effort M.
 4. **Tables, matrices and large screens** (VP-04, VP-12, VL-06, VL-07, VL-01, VL-04, VL-05, VL-08, VL-09, VL-10, VP-05, VP-06, VP-07, UX-15, VP-08). Put `nowrap` on code, pin and part cells, and show notes as a second row on phone. The desktop map side panel is a grid instead of a flex column (`PlayfieldMap.svelte:1823`), which clips the card. The glass controls cover the drawing from 1000 to 1366 px. Prose runs 114-184 characters per line, and "Appearance" truncates to "Appe". Effort M.
-5. **Accessibility** (AY-01, AY-02, AY-05, AY-06, AY-07, AY-09, AY-10, AY-12, AY-11, AY-14, AY-15). The map is a 148-stop tab trap, and the skip link stays 1×1 px when focused. Focused controls hide under the Diagnose dock and the tab bar. The 38 setup inputs are all named "Set to", and matrix status is shown by colour only. Counts and empty states are not announced, and many targets are under the spec's own 44 px. Effort M.
+5. **Accessibility** (AY-01, AY-02, AY-05, AY-06, AY-07, AY-09, AY-10, AY-12, AY-11, AY-14, AY-15). The map is a 148-stop tab trap, and the skip link stays 1×1 px when focused. Focused controls hide under the Diagnose dock and the tab bar. The 38 setup inputs are all named "Set to", and matrix status is shown by colour only. Counts and empty states are not announced, and many targets are under the spec's own 44 px. Carried over from P2 item 3: `.field` borders measure 1.39:1 in dark and 1.47:1 in light against their background; give them a 3:1 boundary or write a spec §12 rule that documents why not. Effort M.
 
 ### P3: copy and terminology
 
@@ -61,7 +61,7 @@ The findings are grouped by root cause, so one fix usually closes several of the
 
 ## Resume
 
-P0 (645d614), P1 (00c83ad), P2 item 1 (dc21002) and P2 item 2 are committed on main (see Progress at the end). Next is P2 item 3, light theme and print. The header rules from P2 item 1 are in app-redesign-spec.md §6.5; the tokens, button, search, stacking and radius rules from P2 item 2 are in the spec (§2, §4 Stacking table, §8.6-8.8, §10) and enforced by tests/unit/design-system.test.ts; both are logged in app-redesign.md (entries dated 2026-09-30). The P1 navigation rules are recorded in app-redesign.md, Phase 12, in the bullets dated 2026-09-29; keep them in step with any later change to motion.ts, nav-state.ts, Base.astro or Diagnose.svelte. Verify with `pnpm check`, `pnpm dlx svelte-check`, `pnpm lint`, `pnpm test`, `pnpm build` and the full e2e suite on both projects.
+P0 (645d614), P1 (00c83ad), P2 item 1 (dc21002), P2 item 2 (c210aa5) and P2 item 3 are committed on main (see Progress at the end). Next is P2 item 4, tables, matrices and large screens. The light-theme and print rules from P2 item 3 are in app-redesign-spec.md §1.1 (token table with `--brass-ink`, `--faint-ink`, `--seg-edge` and the print bullet) and §12, logged in app-redesign.md (decisions entry dated 2026-09-30, which also records the `.field` border deferral to P2 item 5), and enforced by tests/e2e/contrast.spec.ts and unit tests (g)-(l) in tests/unit/design-system.test.ts. The header rules from P2 item 1 are in app-redesign-spec.md §6.5; the tokens, button, search, stacking and radius rules from P2 item 2 are in the spec (§2, §4 Stacking table, §8.6-8.8, §10) and enforced by tests/unit/design-system.test.ts; both are logged in app-redesign.md (entries dated 2026-09-30). The P1 navigation rules are recorded in app-redesign.md, Phase 12, in the bullets dated 2026-09-29; keep them in step with any later change to motion.ts, nav-state.ts, Base.astro or Diagnose.svelte. Verify with `pnpm check`, `pnpm dlx svelte-check`, `pnpm lint`, `pnpm test`, `pnpm build` and the full e2e suite on both projects.
 
 ## Appendix: every finding
 
@@ -457,6 +457,28 @@ Leftovers, none blocking: the swipe-back fade is aborted in phone emulation ("Vi
 | pnpm build | 349 pages | 349 pages |
 | e2e phone-dark | 331 passed, 1 flaky, 2 skipped | 363 passed, 3 skipped, back.spec:672 flaky once and 3/3 alone |
 | e2e desktop-light | 256 passed, 78 skipped | 287 passed, 80 skipped |
+
+### P2 item 3 status (light theme and print: DS-04, DS-08, AY-04, DS-05, DS-03, DS-09, AY-16)
+
+- Tokens (src/styles/tokens.css, CRLF): the light inks were darkened to pass AA on their surfaces (`--amber-ink`/`--amber-fill` #9e4009, `--ok` #256738, `--warn` #7a5505, `--bad` #ab2e27, `--brass` #70552b, `--faint` #645c6c). The dark `--faint` (#857d8d) and `--brass` (#b08d57) are restored as border/decoration tokens and got text twins: `--faint-ink` (dark #918997, light and print #645c6c) used only by the `.field`/`.search` placeholders and the Matrix unused-cell id, `--brass-ink` (dark #b8955f, light and print #70552b) used only by `.hint strong` and the SetupGuide step number. New `--seg-edge`. The print block moved to the end of tokens.css and is written for `:root, :root[data-theme='light'], :root:not([data-theme='dark'])`, so it wins in both themes without `!important`; the two light blocks stay identical (46 declarations each).
+- base.css: the print block holds no tokens; it hides the chrome and controls (tab bar, top bar, nav.rbar, .tlink, .hb .side, button.lrow, .pgno; a.lrow content links still print) and prints the real h1 on large-title pages. `.dmd` reads `--dmd-ink`/`--dmd-dot`/`--dmd-well` with a 6 px glow. Ten `color: var(--amber)` text sites moved to `--amber-ink`. Light `--bar` opacity .84 to .94 so the glass bars keep 4.5:1 over scrolled content.
+- Islands: PlayfieldMap gets a `--k-ink` twin for the switch-layer text, the selected marker label sits on an opaque `--surface` chip, and the map-list pills paint `--pill-tint` over `--cell` in every row. Matrix unused cells are grey instead of dimmed and the matrix has its own print block for A4. ShoppingList's swipe pane is `--ok` with `--on-amber` text and the label at the far edge. Diagnose's well uses `--dmd-dot` and the placeholder sits at .7 opacity.
+- Tests: tests/e2e/contrast.spec.ts (new) sweeps 15 route states in both themes for AA on composited backgrounds (flat linear-gradient layers included), checks print on 8 routes against a HIDDEN list, checks the A4 fit of /switches and /lamps, and on the map route marks switches 32 and 33 Fault and hovers row 33 on desktop. shopping.spec.ts covers the swipe pane; map.spec.ts reads `--amber-ink` from the page. Unit tests (g)-(l): no `color: var(--amber)` outside an allow-list (custom-property chains included), the DMD tokens, the print rule shape, identical light blocks, the pinned dark tokens with the `--brass-ink` contrast, and the twins' usage lists.
+- Deviations and open points: DS-04 (`.btn.primary`) was already fixed by P2 item 2 and was only verified. Light `--brass` is #70552b (HEAD had #7d6033), so light borders are a shade darker than before. The contrast sweep composites only DOM-ancestor backgrounds; the dark tab labels over scrolled content under the glass bar (about 3.2:1) are not covered. The A4 fit is measured at Chrome's default margins. The `.field` border (1.39 dark, 1.47 light) is deferred to P2 item 5 and recorded in app-redesign.md.
+- Reviews: dynamic fix_needed with 1 major and 5 minor, static pass; the fix round fixed 9 of 10; the recheck came back fix_needed with 4 minor; a second fix round (two agents) fixed the three actionable ones and left the `.field` border to item 5 by design. All 7 IDs marked fixed.
+
+### P2 item 3 verification (default base, fresh build)
+
+| Check | P2 item 2 | Now |
+|---|---|---|
+| pnpm check | 0 errors, 16 hints | 0 errors, 16 hints |
+| svelte-check (dlx) | the same 7 | the same 7 |
+| pnpm lint | clean when scoped past the foreign worktree | clean when scoped past the foreign worktree |
+| prettier | the same two md files, tokens.css needs `--end-of-line crlf` | the same two md files; tokens.css, map.spec.ts and diagnose.spec.ts clean with `--end-of-line crlf` |
+| vitest | 148/148 | 154/154 |
+| pnpm build | 349 pages | 349 pages |
+| e2e phone-dark | 363 passed, 3 skipped | 413 passed, 3 skipped |
+| e2e desktop-light | 287 passed, 80 skipped | 336 passed, 80 skipped |
 
 ### Working notes for the next session
 

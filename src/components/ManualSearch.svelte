@@ -144,7 +144,7 @@
     }
   }
   .where {
-    color: var(--amber);
+    color: var(--amber-ink);
     margin-right: 8px;
   }
   .snip {

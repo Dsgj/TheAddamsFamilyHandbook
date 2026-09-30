@@ -478,26 +478,34 @@ main.wide {
   border-color: var(--amber);
   outline: none;
 }
+/* The UA's placeholder grey is 3.4 on --sunk; --faint-ink passes in both themes, as on .search
+   (AY-16). */
+.field::placeholder {
+  color: var(--faint-ink);
+  opacity: 1;
+}
 textarea.field {
   min-height: 80px;
   resize: vertical;
 }
 
-/* DMD string — display text on a near-black well with a 4 px dot grid */
+/* DMD string — display text on a near-black well with a 4 px dot grid (spec §8.6). The well
+   stays dark in the light theme, so the ink, the dots and the glow are the DMD's own tokens and
+   literal, never the page's amber (--amber-glow is transparent in light). Diagnose's .well is the
+   other DMD surface and reads the same three tokens. */
 .dmd {
   display: inline-block;
   font-family: var(--font-mono);
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  color: var(--amber);
+  color: var(--dmd-ink);
   background:
-    radial-gradient(circle at 2px 2px, rgba(255, 138, 61, 0.14) 0.6px, transparent 1px) 0 0 / 4px
-      4px,
+    radial-gradient(circle at 2px 2px, var(--dmd-dot) 0.6px, transparent 1px) 0 0 / 4px 4px,
     var(--dmd-well);
   padding: 8px 14px;
   border-radius: var(--r-xs);
-  text-shadow: 0 0 6px var(--amber-glow);
+  text-shadow: 0 0 6px rgba(255, 138, 61, 0.45);
   border: 1px solid #2a2230;
 }
 
@@ -644,7 +652,7 @@ table.t th {
   margin-bottom: 6px;
 }
 .mhead b {
-  color: var(--amber);
+  color: var(--amber-ink);
   font-family: var(--font-mono);
 }
 .mcard ol {
@@ -825,7 +833,7 @@ table.t tr.row-fault td:first-child {
   font-weight: 600;
   box-shadow:
     0 1px 3px rgba(0, 0, 0, 0.28),
-    0 0 0 0.5px rgba(0, 0, 0, 0.18);
+    0 0 0 1px var(--seg-edge);
 }
 .seg > .st-ok[aria-pressed='true'] {
   background: var(--ok-tint);
@@ -971,7 +979,7 @@ table.t tr.row-fault td:first-child {
 .hint strong {
   font-size: 13px;
   line-height: 18px;
-  color: var(--brass);
+  color: var(--brass-ink);
 }
 
 /* ---- The search field (spec §8.7) ----
@@ -993,7 +1001,7 @@ table.t tr.row-fault td:first-child {
   font: var(--t-callout);
 }
 .search::placeholder {
-  color: var(--faint);
+  color: var(--faint-ink);
   opacity: 1;
 }
 /* The ring sits 1 outside the pill, inside the box. */
@@ -1445,27 +1453,11 @@ html:active-view-transition-type(pop)::view-transition-new(root) {
   }
 }
 
+/* Print (audit DS-03): the token resets live at the end of tokens.css, where they beat the light
+   theme's blocks. Here: the shell, the bar's chrome, the controls and the toasts go; the page title
+   prints once, as the page's real h1 (the bar's on bar pages, the large title's on large-title
+   pages, the page's own on the rest). */
 @media print {
-  :root {
-    --tabbar-h: 0px;
-    --shell-w: 0px;
-    --ground: #fff;
-    --surface: #fff;
-    --sunk: #f2f2f2;
-    --ink: #000;
-    --muted: #444;
-    --line: #999;
-    --amber: #000;
-    --amber-ink: #000;
-    --shadow: none;
-    --shadow-1: none;
-    --shadow-2: none;
-    --shadow-sheet: none;
-    --raised: #fff;
-    --cell: #fff;
-    --sheet: #fff;
-    --bar: #fff;
-  }
   body {
     background: #fff;
     color: #000;
@@ -1481,8 +1473,80 @@ html:active-view-transition-type(pop)::view-transition-new(root) {
   .map-controls,
   .sr-only,
   .top astro-island,
-  .no-print {
+  .no-print,
+  .ibtn,
+  .tlink,
+  .seg,
+  nav.rbar,
+  .acts,
+  .back,
+  .ptr,
+  .sheet.map,
+  .sheet.dialog,
+  .scrim,
+  nav.pn,
+  .chip,
+  .dock,
+  .hb .side,
+  button.lrow,
+  .pgno,
+  header.top[data-h1='page'],
+  header.top[data-h1='large'],
+  .top .lead,
+  .top .trail,
+  .top::after {
     display: none !important;
+  }
+  /* On a bar page the bar's title is the h1: print it whole, as a plain heading. */
+  .top {
+    position: static;
+    padding: 0;
+    background: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .top .tb {
+    display: block;
+    height: auto;
+    padding: 0;
+  }
+  .top .ct {
+    max-width: none;
+    overflow: visible;
+    white-space: normal;
+    text-align: left;
+    opacity: 1;
+    font: var(--t-title);
+  }
+  .top .ct .full,
+  .top .ct .full.has-short {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+  }
+  .top .ct .short {
+    display: none;
+  }
+  /* On a large-title page the large title is the h1 (from 600 it is visually hidden, and under 600
+     it fades on scroll): print it whole, in place of the bar's aria-hidden copy. */
+  .lt {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+    padding: 0;
+  }
+  .lt h1 {
+    opacity: 1;
+    font: var(--t-title);
+  }
+  /* The Diagnose well is hidden with the dock. */
+  .dmd {
+    text-shadow: none;
+    border-color: #999;
   }
   .wrap {
     max-width: none;

@@ -148,7 +148,7 @@
     }
   }
   .rb.end {
-    color: var(--amber);
+    color: var(--amber-ink);
     font-family: var(--font-mono);
   }
   .rb.end .lbl {

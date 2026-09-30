@@ -1169,8 +1169,11 @@
 </div>
 
 <style>
+  /* --k is the layer's ring and dot colour; a heading in the layer colour reads --k-ink, the
+     text twin, where the ring colour is too light for text (the switch layer's --amber). */
   .k-sw {
     --k: var(--amber);
+    --k-ink: var(--amber-ink);
     --k-fill: var(--tint);
     --m: 12px;
   }
@@ -1376,9 +1379,11 @@
     pointer-events: none;
     animation: pulse 1.6s var(--ease-standard) forwards;
   }
+  /* The selected label sits on an opaque chip: over the photo the 80% one fell under 4.5. */
   .marker.sel span {
     display: block;
     color: var(--amber-ink);
+    background: var(--surface);
   }
   .canvas.has-sel .marker:not(.sel) {
     opacity: 0.4;
@@ -1472,25 +1477,32 @@
     line-height: 18px;
   }
   .pill {
+    --pill-tint: var(--sunk);
     flex: 0 0 auto;
     padding: 2px 8px;
     border-radius: var(--r-btn);
     font: var(--t-cap);
     font-weight: 600;
-    background: var(--sunk);
+    background: var(--pill-tint);
     color: var(--muted);
   }
   .pill.fault {
-    background: var(--bad-tint);
+    --pill-tint: var(--bad-tint);
     color: var(--bad);
   }
   .pill.ok {
-    background: var(--ok-tint);
+    --pill-tint: var(--ok-tint);
     color: var(--ok);
   }
   .pill.untested {
-    background: var(--warn-tint);
+    --pill-tint: var(--warn-tint);
     color: var(--warn);
+  }
+  /* In the parts list every status pill's tint sits on the list's own --cell, whatever the row
+     paints under it: the selected row's amber tint took the dark --bad to 4.25, and a hovered row's
+     --sunk the light --bad to 4.28 (AY-16). On --cell it is 5.58 light and 5.45 dark. */
+  .rows .row .pill {
+    background: linear-gradient(var(--pill-tint), var(--pill-tint)), var(--cell);
   }
   .desel {
     flex: 0 0 auto;
@@ -1582,7 +1594,7 @@
     margin: 16px 0 4px;
     font: var(--t-sub);
     font-weight: 600;
-    color: var(--k, var(--ink));
+    color: var(--k-ink, var(--k, var(--ink)));
   }
   .rows {
     list-style: none;
@@ -1828,7 +1840,7 @@
   }
   .list h3 {
     margin: 8px 8px 2px;
-    color: var(--k);
+    color: var(--k-ink, var(--k));
     font-weight: 600;
   }
   .list ul {

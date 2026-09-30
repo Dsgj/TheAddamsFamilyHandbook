@@ -34,11 +34,14 @@ Source: Components §07 (it matches the kit). Each light value goes into **both*
 | --sheet-cell | #28222c | #fffcf5 |
 | --seg-track | #241f28 | #e4ddcb |
 | --seg-thumb | #3b3542 | #fffcf5 |
+| --seg-edge | rgba(236,230,218,.4) | rgba(28,23,32,.5) |
 | --grabber | #4a4450 | #c9c0ad |
-| --faint | #857d8d | #6e6676 |
+| --faint | #857d8d | #645c6c |
+| --faint-ink | #918997 | #645c6c |
+| --brass-ink | #b8955f | #70552b |
 | --sep | #2c2731 | #e3dccb |
-| --amber-ink | #ff8a3d | #a8440a |
-| --amber-fill | #ff8a3d | #a8440a |
+| --amber-ink | #ff8a3d | #9e4009 |
+| --amber-fill | #ff8a3d | #9e4009 |
 | --on-amber | #1a0d05 | #fff8f0 |
 | --tint | rgba(255,138,61,.14) | rgba(201,82,15,.12) |
 | --violet-tint | rgba(201,160,220,.15) | rgba(106,45,128,.1) |
@@ -48,7 +51,7 @@ Source: Components §07 (it matches the kit). Each light value goes into **both*
 | --warn-tint | rgba(227,181,87,.16) | rgba(165,114,11,.12) |
 | --dmd-ink | #ff8a3d | #ff8a3d |
 | --dmd-dot | rgba(255,138,61,.13) | rgba(255,138,61,.13) |
-| --bar | rgba(14,11,16,.82) | rgba(239,233,218,.84) |
+| --bar | rgba(14,11,16,.82) | rgba(239,233,218,.94) |
 | --scrim | rgba(5,3,6,.56) | rgba(28,23,32,.32) |
 | --press | rgba(236,230,218,.07) | rgba(28,23,32,.06) |
 | --wire-edge | inset 0 0 0 1px rgba(255,255,255,.2) | inset 0 0 0 1px rgba(0,0,0,.35) |
@@ -56,10 +59,19 @@ Source: Components §07 (it matches the kit). Each light value goes into **both*
 | --shadow-2 | 0 12px 40px rgba(0,0,0,.55) | 0 12px 36px rgba(28,23,32,.2) |
 | --shadow-sheet | 0 -10px 40px rgba(0,0,0,.5) | 0 -8px 30px rgba(28,23,32,.16) |
 
-- Link text uses `--amber-ink` (`a { color: var(--amber-ink) }`). Today links use `var(--amber)` in both themes (base.css:17-20), so the light-theme link colour #a8440a is new.
-- Print (`@media print`, base.css:363) resets only `--shadow` today. It also needs `--amber-ink: #000`, `--shadow-1`, `--shadow-2` and `--shadow-sheet: none`, and `--raised`, `--cell`, `--sheet`, `--bar: #fff`.
+- Link text uses `--amber-ink` (`a { color: var(--amber-ink) }`), and so does every other amber text: `--amber` is the ring colour and never a text colour (§12). The light value is #9e4009 (#a8440a until audit P2 item 3), so it passes on `--tint` over `--ground` (4.70) and inside a faulted matrix cell (4.51).
+- `--seg-edge` is the chosen segment's 1 px edge (§8.3), 3:1 against the track in both themes.
+- `--faint-ink` is the text twin of `--faint`, as `--amber-ink` is of `--amber`. Faint text on a field, a cell or a raised surface (the `.field` and `.search` placeholders, an unused matrix id) takes it, and it passes 4.5 on `--surface`, `--sunk`, `--seg-track`, `--sheet-cell`, `--raised` and `--ground` in both themes. Dark `--faint` keeps #857d8d for its other uses (the tab labels on the bar, row chevrons, off-layer icons), which already passed, so dark changes only where a ratio failed; in light the two are the same.
+- `--brass-ink` is the text twin of `--brass`. Brass text (the `.hint`'s bold label, on `--brass-tint`, and the setup guide's step numbers) takes it, and it passes 4.5 on `--ground`, `--surface`, `--cell` and `--raised`, and on `--brass-tint` over the first three, in both themes. Dark `--brass` keeps #b08d57 for the rules and borders and the map's coil ring, which already passed; in light the two are the same.
+- The light `--bar` is .94 opaque (was .84), so the inks on the glass bar (the back link's `--amber-ink`, `--faint`, `--muted`, `--ink`) keep 4.5 over the darkest thing that scrolls under it, a DMD code on the dark `--dmd-well` (the back link was 3.9 at .84).
+- Print (audit DS-03) is black on white in both themes. Its tokens live in one `@media print` block at the very end of tokens.css, whose selector list `:root, :root[data-theme='light'], :root:not([data-theme='dark'])` matches the light blocks' specificity and comes after them, so it wins in every scheme and theme without `!important`. It sets:
+  - `--tabbar-h` and `--shell-w` to 0px, and `color-scheme: light`.
+  - Surfaces: `--ground`, `--surface`, `--raised`, `--cell`, `--sheet`, `--sheet-cell`, `--bar`, `--seg-track`, `--seg-thumb` and `--dmd-well` to #fff; `--sunk` to #f2f2f2.
+  - Inks: `--ink`, `--amber`, `--amber-ink`, `--amber-fill` and `--dmd-ink` to #000; `--on-amber` to #fff; `--muted` to #444; `--line` and `--sep` to #999. The other inks take their light values (`--violet` #6a2d80, `--brass` and `--brass-ink` #70552b, `--ok` #256738, `--bad` #ab2e27, `--warn` #7a5505, `--faint` and `--faint-ink` #645c6c), so a dark-theme print stays readable.
+  - `--amber-glow`, `--dmd-dot`, every tint, `--press` and `--scrim` to transparent; `--scan-filter` to none (scans print uninverted); `--wire-edge` to the light ring; `--shadow-1`, `--shadow-2` and `--shadow-sheet` to none.
+  - base.css's print block holds no tokens, only layout. It hides the chrome and the controls (the shell, fields, searches, segments, icon and text buttons, the reader toolbar `nav.rbar`, back links, the previous/next pager `nav.pn`, action groups `.acts`, action rows `button.lrow` (Show on map, Download backup, Clear all, Install the handbook, About this handbook, the recent reports; the `a.lrow` content links still print), the manual reader's page-number button `.pgno` (the bar's h1 already names the page), chips, the Diagnose dock, the pull hint, the map and dialog sheets, the scrim, the handbook section's contents card) and prints the title once, as the page's real h1. On a page that renders its own h1 (`data-h1='page'`) and on a large-title page (`data-h1='large'`) the top bar is hidden: a large-title page prints its `.lt` h1, unclipped, at full opacity and at `t-title`, not the bar's aria-hidden `div.ct` copy. On a bar page (`data-h1='bar'`) the bar's title is the h1 and stays as a plain, full-width, wrapping title (the full title, never the phone's short word). `.dmd` codes lose their glow and get a #999 border; Diagnose's `.well` is hidden with the dock. The switch and lamp matrices fit an A4 page between Chrome's default 1 cm margins (718 CSS px): a fixed layout at 100 %, 88 px row heads, 3 px by 4 px cell padding, names at 10 px, and wire labels and pins at 9 px that wrap instead of widening a column.
 
-### 1.2 Existing tokens (values unchanged; listed so this file stands alone)
+### 1.2 Existing tokens (listed so this file stands alone)
 
 | Token | Dark | Light |
 |---|---|---|
@@ -72,12 +84,14 @@ Source: Components §07 (it matches the kit). Each light value goes into **both*
 | --amber | #ff8a3d | #c9520f |
 | --amber-glow | rgba(255,138,61,.45) | transparent |
 | --violet | #c9a0dc | #6a2d80 |
-| --brass | #b08d57 | #8a6b3a |
-| --ok | #6fcb8b | #2f7d46 |
-| --bad | #f0857b | #b8322a |
-| --warn | #e3b557 | #a5720b |
+| --brass | #b08d57 | #70552b |
+| --ok | #6fcb8b | #256738 |
+| --bad | #f0857b | #ab2e27 |
+| --warn | #e3b557 | #7a5505 |
 | --dmd-well | #0a0709 | #17121a |
 | --scan-filter | invert(.9) hue-rotate(180deg) | none |
+
+- The light `--ok`, `--warn`, `--bad`, `--brass` and `--faint`, and `--faint-ink` and `--brass-ink` (§1.1) were set in audit P2 item 3 (2026-09-30) so that each ink passes 4.5 on its own tint over `--ground` (§12). The tints keep their §1.1 values. The dark `--faint` keeps #857d8d and the dark `--brass` #b08d57, and the light `--bar` went from .84 to .94 opaque (§1.1).
 
 ### 1.3 Layout tokens (Components §07, MapFitSpec)
 
@@ -463,7 +477,7 @@ dragMove keeps working
 - List section (flex 1, top hairline):
   - Header `.lh` (t-sub 600) "Switches" with "55 on the map", padding 16 32 8. Not `.t-head`: that is the global 17/22 utility.
   - `.row.two` rows: a `.code.dmd` id tile (§8.6), the name, and "Column 3, row 1".
-  - The selected row is on `--tint`, its tile `--amber-fill`, and it shows `.pill.fault`. It also carries `aria-current="true"`, the only `aria-current` in the list, so the selection isn't colour alone.
+  - The selected row is on `--tint`, its tile `--amber-fill`, and it shows `.pill.fault`. In every row (the list renders only the Fault pill) the pill's tint sits on an opaque `--cell` base, not on the row's background: the selected row's tint took the dark `--bad` to 4.25 and a hovered row's `--sunk` the light `--bad` to 4.28; on `--cell` it is 5.45 dark and 5.58 light. It also carries `aria-current="true"`, the only `aria-current` in the list, so the selection isn't colour alone.
   - The "Find a part" filter field heads the list if Q28 confirms the proposal.
 
 ### 7.8 Calibration (`?calib=1`)
@@ -520,7 +534,7 @@ dragMove keeps working
 ### 8.3 Segmented control (Components §04)
 
 - Track: 36 tall, radius 9, inset 2, gap 2, `--seg-track`.
-- Thumb: 32 tall, radius 7, `--seg-thumb`, shadow `0 1px 3px rgba(0,0,0,.28), 0 0 0 .5px rgba(0,0,0,.18)`. It slides in 200 ms (standard).
+- Thumb: 32 tall, radius 7, `--seg-thumb`, shadow `0 1px 3px rgba(0,0,0,.28), 0 0 0 1px var(--seg-edge)`. It slides in 200 ms (standard). The edge gives the chosen segment a 3:1 boundary against the track (3.26 dark, 3.12 light; audit AY-16), which the .5 px black hairline it replaces did not.
 - Labels: 15/20 weight 500; the chosen one 600.
 - Status variant:
   - OK chosen: `--ok-tint` with a 1 px `--ok` ring.
@@ -567,12 +581,12 @@ dragMove keeps working
 - `.pill`: 24 tall, radius 12, 13/18 weight 600, in ok / fault / untested variants. `.dot`: 8 px.
 - `.code`: 26 tall, min-width 36, radius 6, 14/18, letter-spacing .06em, uppercase. `.code.lg`: 40 tall, min-width 54, radius 8, 22/26.
   - `.code.dmd` puts a code on the DMD well: `.dmd` gives the look, `.code` the box. The map's list id tiles use it (§7.7).
-- `.dmd`: a dot grid (a radial gradient on a 4 px background-size) on `--dmd-well`, text in `--dmd-ink`, text-shadow `0 0 10px rgba(255,138,61,.5)`, inset rings. The DMD well stays dark in the light theme.
+- `.dmd`: a dot grid (a radial gradient of `--dmd-dot` on a 4 px background-size) on `--dmd-well`, text in `--dmd-ink`, text-shadow `0 0 6px rgba(255,138,61,.45)` in both themes, inset rings. The DMD well stays dark in the light theme, so its codes are the same bright orange with the same glow in both. Diagnose's input well (`.well`) reads the same three tokens and keeps its own 10 px glow; its placeholder is at .7 opacity. In print a `.dmd` is white, its ink black, its border #999 and there is no glow; the well is hidden with the Diagnose dock.
 - `.wire`: a swatch and the colour's name, 13/18 mono, inline, no background, no cursor, no height of its own. It is a label, not a control, so it has no chip styling.
 - `.wire i`: 26×10, radius 5, the `--wire-edge` ring, no border.
   - Colours: Brown #7B4B2A, Red #C62828, Orange #EF7D1A, Yellow #F2C230, Green #2E8B3D, Blue #2458C6, Violet #7B3FB0, Gray #8C8C8C, Black #1A1A1A, White #F7F7F7.
   - A striped wire is base 0–58%, stripe 58–76%, base 76–100%.
-- `.hint`: padding 12 14, radius 12, `--brass-tint`, 15/20 (`t-sub`); its bold label is 13/18 in brass.
+- `.hint`: padding 12 14, radius 12, `--brass-tint`, 15/20 (`t-sub`); its bold label is 13/18 in `--brass-ink`.
 
 ### 8.7 Buttons and fields (kit)
 
@@ -584,7 +598,7 @@ dragMove keeps working
 - Two bare `.btn` side by side (a sheet's actions) share the row equally while both labels fit, and stack at full width when they don't (`flex: 1 1 0; min-width: max-content` in a wrapping row): a 320 phone has 288 for the row, and "Open in Map" alone needs 165 at 17/22 600. A sheet body laid out as a grid gives its column `minmax(0, 1fr)`, so a child that starts wide (the part sheet's map crop, 340 before it measures itself) cannot hold the column past the sheet.
 - Inputs: every input, select and textarea a user reaches is at least 16px, or iOS Safari zooms the page when it takes focus. Only the `?calib=1` developer tools are exempt (§2).
   - `.field`: 44 tall, radius 6, with its border; 16/21.
-- `.search`: a pill 36 tall, radius 10, on `--seg-track`, placeholder in `--faint`, painted inside a 44 tall box by a 4 px transparent border and a padding-box background, so the hit area stays 44.
+- `.search`: a pill 36 tall, radius 10, on `--seg-track`, placeholder in `--faint-ink`, painted inside a 44 tall box by a 4 px transparent border and a padding-box background, so the hit area stays 44.
   - Its text is 16/21 (`t-callout`), not the boards' 15/20, for the 16px rule above.
   - The focus ring sits 1 outside the pill. The browser's own search decoration and cancel button are hidden.
   - `select.search` (Manuals) is the same pill, width auto, with a chevron in `--muted` drawn by two gradients. The search field keeps at least 136 beside it; on a narrower row the select wraps under the field.
@@ -770,6 +784,7 @@ See §7: Map, MapLight, MapPeek, MapPeekLight, MapExpanded, MapZoom, ShellTablet
   - "1 × #555 24-8768 · L13 Jackpot (2)".
   - "1 × #44 24-6549 · L15 Stars".
 - Each row has "Fixed". One row shows the swipe reveal.
+  - The swipe pane is `--ok` with `--on-amber` text: Fixed is a good outcome, and the only red action, "Clear all", stays `--bad`. The label "Fixed" sits at the pane's far edge (`place-items: center end`, padding-right 14), so the row uncovers it at about 60 px of drag, before the armed point (88).
 - Buttons: "Copy as text" and "Share".
 - Footer: "Mark a part Fault and it lands here. Fixed clears the fault."
 - Where the repo wins over the board (the tests and the text export depend on it; the task file, Keep → Shopping list):
@@ -893,7 +908,7 @@ Source: Rationale §08, Components and MapFitSpec.
   - "Skip to content" → `#main`.
   - `aria-current` on navigation.
   - A 2 px amber focus ring, offset 2.
-  - Light amber text is #a8440a. It is new: nothing in `src` uses it today. It lands as `--amber-ink` in tokens.css (Phase 1; §1.1), and links and amber text use it (base.css:17-20 today uses `--amber`).
+  - Light amber text is #9e4009 (`--amber-ink`, §1.1; it was #a8440a until audit P2 item 3). Links and all amber text use it.
   - The matrix's arrow keys and Enter; the e2e matrix test is "contract, not polish".
 - Headings: exactly one `<h1>` per page. appendix.spec.ts:16 reads `getByRole('heading', { level: 1 })` strictly, so a bar title and a large title can't both be h1. Base's `h1` prop picks which one is: `'large'`, `'page'` (the page's own h1; the bar title is a `div`) or `'bar'` (the manual viewer). In-page h1s go where the large title takes over (Phase 5).
 - `role=status` and `<output>` stay only where they are today: SetupGuide.svelte:30, DeviceData.svelte:94, ShoppingList.svelte:52. `/care`, `/setup` and `/shopping` run a strict `page.getByRole('status')` (care.spec.ts:6-19; setup.spec.ts:7-26, :68-70; features.spec.ts:75), so nothing rendered on every page (the shell, the tab badge, the toast host, the Workshop hub's counts) uses them. The map's zoom readout may, because it renders only on `/map`.
@@ -914,5 +929,13 @@ Source: Rationale §08, Components and MapFitSpec.
   - The keyboard legend is `role=note`.
 - Sheets and segmented controls: §8.2 and §8.3.
 - Rows and toggles: §8.4.
-- Contrast in the light theme (text on `--ground`): `--ok` 4.19, `--warn` 3.46 and `--brass` 4.08 are under 4.5. Owner question.
+- Contrast (audit P2 item 3; tests/e2e/contrast.spec.ts checks it on 15 route states in both themes, and print on eight):
+  - Every visible text node and placeholder meets 4.5 (3 at 24 px, or at 19 px and weight 600) over its composited backdrop. A state ring or the chosen segment's edge meets 3.
+  - Text never takes a ring colour. `--amber` is for rings, outlines and focus; text takes `--amber-ink`. A layer or status colour that is also text has an ink twin: the map's switch layer has `--k: var(--amber)` for its marker ring, dot and icon and `--k-ink: var(--amber-ink)` for its headings; `--brass` (rules, borders, the coil layer's ring) has `--brass-ink` for the hint's label and the setup step numbers.
+  - Status and accent inks pass on their own tint over `--ground`, the worst real surface (chips, pills, pressed buttons). The light values in §1.2 do.
+  - A dimmed state is a colour, not opacity: an unused matrix cell reads `--muted`, its id `--faint-ink`.
+  - Placeholders are `--faint-ink` at full opacity. Faint text on a field or a cell takes `--faint-ink`; `--faint` is for text on the bar or the ground, and for icons.
+  - A translucent surface passes over the darkest thing that can sit under it: the light glass bar is .94 opaque, so its inks pass over a DMD code scrolled under it.
+  - A tinted pill in a row that paints a background (a selection tint, a hover) keeps its tint on an opaque base (`linear-gradient(tint, tint), var(--cell)`), so the row's background does not stack under it: every status pill in the map list.
+  - `--on-amber` is the text on any saturated fill: `--amber-fill`, and the `--ok` swipe pane.
 - Motion: §10. Every gesture has a button: swipe back has the back link; the swipe to Fixed has the button; a sheet drag has the grabber button and Close.

@@ -137,7 +137,7 @@
     text-align: center;
     border: 1px solid var(--brass);
     border-radius: var(--r-xs);
-    color: var(--brass);
+    color: var(--brass-ink);
     font-size: 0.8em;
     margin-right: 4px;
   }
@@ -178,7 +178,7 @@
     gap: 4px 10px;
   }
   .code {
-    color: var(--amber);
+    color: var(--amber-ink);
   }
   .name {
     font-weight: 500;

@@ -73,8 +73,11 @@
   --sheet-cell: #28222c;
   --seg-track: #241f28;
   --seg-thumb: #3b3542;
+  --seg-edge: rgba(236, 230, 218, 0.4);
   --grabber: #4a4450;
   --faint: #857d8d;
+  --faint-ink: #918997;
+  --brass-ink: #b8955f;
   --sep: #2c2731;
   --amber-ink: #ff8a3d;
   --amber-fill: #ff8a3d;
@@ -210,10 +213,10 @@
   --amber: #c9520f;
   --amber-glow: transparent;
   --violet: #6a2d80;
-  --brass: #7d6033;
-  --ok: #2a7340;
-  --bad: #b8322a;
-  --warn: #875e06;
+  --brass: #70552b;
+  --ok: #256738;
+  --bad: #ab2e27;
+  --warn: #7a5505;
   --dmd-well: #17121a;
   --scan-filter: none;
   --raised: #fffcf5;
@@ -222,11 +225,14 @@
   --sheet-cell: #fffcf5;
   --seg-track: #e4ddcb;
   --seg-thumb: #fffcf5;
+  --seg-edge: rgba(28, 23, 32, 0.5);
   --grabber: #c9c0ad;
-  --faint: #6e6676;
+  --faint: #645c6c;
+  --faint-ink: #645c6c;
+  --brass-ink: #70552b;
   --sep: #e3dccb;
-  --amber-ink: #a8440a;
-  --amber-fill: #a8440a;
+  --amber-ink: #9e4009;
+  --amber-fill: #9e4009;
   --on-amber: #fff8f0;
   --tint: rgba(201, 82, 15, 0.12);
   --violet-tint: rgba(106, 45, 128, 0.1);
@@ -236,7 +242,7 @@
   --warn-tint: rgba(165, 114, 11, 0.12);
   --dmd-ink: #ff8a3d;
   --dmd-dot: rgba(255, 138, 61, 0.13);
-  --bar: rgba(239, 233, 218, 0.84);
+  --bar: rgba(239, 233, 218, 0.94);
   --scrim: rgba(28, 23, 32, 0.32);
   --press: rgba(28, 23, 32, 0.06);
   --wire-edge: inset 0 0 0 1px rgba(0, 0, 0, 0.35);
@@ -257,10 +263,10 @@
     --amber: #c9520f;
     --amber-glow: transparent;
     --violet: #6a2d80;
-    --brass: #7d6033;
-    --ok: #2a7340;
-    --bad: #b8322a;
-    --warn: #875e06;
+    --brass: #70552b;
+    --ok: #256738;
+    --bad: #ab2e27;
+    --warn: #7a5505;
     --dmd-well: #17121a;
     --scan-filter: none;
     --raised: #fffcf5;
@@ -269,11 +275,14 @@
     --sheet-cell: #fffcf5;
     --seg-track: #e4ddcb;
     --seg-thumb: #fffcf5;
+    --seg-edge: rgba(28, 23, 32, 0.5);
     --grabber: #c9c0ad;
-    --faint: #6e6676;
+    --faint: #645c6c;
+    --faint-ink: #645c6c;
+    --brass-ink: #70552b;
     --sep: #e3dccb;
-    --amber-ink: #a8440a;
-    --amber-fill: #a8440a;
+    --amber-ink: #9e4009;
+    --amber-fill: #9e4009;
     --on-amber: #fff8f0;
     --tint: rgba(201, 82, 15, 0.12);
     --violet-tint: rgba(106, 45, 128, 0.1);
@@ -283,13 +292,71 @@
     --warn-tint: rgba(165, 114, 11, 0.12);
     --dmd-ink: #ff8a3d;
     --dmd-dot: rgba(255, 138, 61, 0.13);
-    --bar: rgba(239, 233, 218, 0.84);
+    --bar: rgba(239, 233, 218, 0.94);
     --scrim: rgba(28, 23, 32, 0.32);
     --press: rgba(28, 23, 32, 0.06);
     --wire-edge: inset 0 0 0 1px rgba(0, 0, 0, 0.35);
     --shadow-1: 0 1px 0 rgba(28, 23, 32, 0.08), 0 6px 18px rgba(28, 23, 32, 0.12);
     --shadow-2: 0 12px 36px rgba(28, 23, 32, 0.2);
     --shadow-sheet: 0 -8px 30px rgba(28, 23, 32, 0.16);
+    color-scheme: light;
+  }
+}
+
+/* Print (spec §1.1, audit DS-03): black on white in both themes. The selector list matches the
+   light blocks' specificity (0,2,0) and comes after them, so it wins in every scheme and theme
+   without !important. Every ink keeps a light value (4.5 or more on white), so a dark-theme print
+   is as readable as a light one, and the scans and figures print uninverted. base.css hides the
+   chrome and the controls. */
+@media print {
+  :root,
+  :root[data-theme='light'],
+  :root:not([data-theme='dark']) {
+    --tabbar-h: 0px;
+    --shell-w: 0px;
+    --ground: #fff;
+    --surface: #fff;
+    --raised: #fff;
+    --cell: #fff;
+    --sheet: #fff;
+    --sheet-cell: #fff;
+    --bar: #fff;
+    --seg-track: #fff;
+    --seg-thumb: #fff;
+    --dmd-well: #fff;
+    --sunk: #f2f2f2;
+    --ink: #000;
+    --amber: #000;
+    --amber-ink: #000;
+    --amber-fill: #000;
+    --dmd-ink: #000;
+    --on-amber: #fff;
+    --muted: #444;
+    --line: #999;
+    --sep: #999;
+    --violet: #6a2d80;
+    --brass: #70552b;
+    --ok: #256738;
+    --bad: #ab2e27;
+    --warn: #7a5505;
+    --faint: #645c6c;
+    --faint-ink: #645c6c;
+    --brass-ink: #70552b;
+    --amber-glow: transparent;
+    --dmd-dot: transparent;
+    --tint: transparent;
+    --violet-tint: transparent;
+    --brass-tint: transparent;
+    --ok-tint: transparent;
+    --bad-tint: transparent;
+    --warn-tint: transparent;
+    --press: transparent;
+    --scrim: transparent;
+    --scan-filter: none;
+    --wire-edge: inset 0 0 0 1px rgba(0, 0, 0, 0.35);
+    --shadow-1: none;
+    --shadow-2: none;
+    --shadow-sheet: none;
     color-scheme: light;
   }
 }
