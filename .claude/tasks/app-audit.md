@@ -1,6 +1,6 @@
 # Full app audit (2026-09-29)
 
-**Status: P0 (645d614) and P1 (back behaviour) are committed on main. P2-P4 are not started.** Twelve specialist reviewers, one adversarial verifier per dimension and a completeness critic reviewed the whole app against a fresh build. There were 231 findings: 154 confirmed, 69 partly confirmed, 7 deliberate (documented decisions) and 1 refuted. Each finding below carries the verifier's recalibrated severity. The raw result, with evidence, repro scripts and a fix per finding, is in the workflow journal of session c5ab0448 (run wf_05057fc7-6a2). The rows here are enough to find each spot again.
+**Status: P0 (645d614), P1 (00c83ad, back behaviour) and P2 item 1 (dc21002, header title and back label) are committed on main. P2 items 2-5, P3 and P4 are not started.** Twelve specialist reviewers, one adversarial verifier per dimension and a completeness critic reviewed the whole app against a fresh build. There were 231 findings: 154 confirmed, 69 partly confirmed, 7 deliberate (documented decisions) and 1 refuted. Each finding below carries the verifier's recalibrated severity. The raw result, with evidence, repro scripts and a fix per finding, is in the workflow journal of session c5ab0448 (run wf_05057fc7-6a2). The rows here are enough to find each spot again.
 
 The audit started from this baseline: build OK, astro check 0 errors (16 hints, all from the deprecated `z` import), eslint clean, vitest 57/57. The e2e suite was run against the fresh build and 315 of 318 tests pass. The phone-dark push-transition test in motion.spec fails even with one worker. svelte-check finds 7 errors, and `pnpm check` does not run svelte-check.
 
@@ -61,7 +61,7 @@ The findings are grouped by root cause, so one fix usually closes several of the
 
 ## Resume
 
-P0 (645d614) and P1 are committed on main (see Progress at the end). Next is P2 item 1, the header title and back label. The P1 navigation rules are recorded in app-redesign.md, Phase 12, in the bullets dated 2026-09-29; keep them in step with any later change to motion.ts, nav-state.ts, Base.astro or Diagnose.svelte. Verify with `pnpm check`, `pnpm dlx svelte-check`, `pnpm lint`, `pnpm test`, `pnpm build` and the full e2e suite on both projects.
+P0 (645d614), P1 (00c83ad) and P2 item 1 (dc21002) are committed on main (see Progress at the end). Next is P2 item 2, the component migration. The header rules from P2 item 1 are in app-redesign-spec.md §6.5 and app-redesign.md (entry dated 2026-09-30). The P1 navigation rules are recorded in app-redesign.md, Phase 12, in the bullets dated 2026-09-29; keep them in step with any later change to motion.ts, nav-state.ts, Base.astro or Diagnose.svelte. Verify with `pnpm check`, `pnpm dlx svelte-check`, `pnpm lint`, `pnpm test`, `pnpm build` and the full e2e suite on both projects.
 
 ## Appendix: every finding
 
@@ -412,6 +412,28 @@ Leftovers, none blocking: the swipe-back fade is aborted in phone emulation ("Vi
 | e2e phone-dark | 271 passed | 295 passed, 1 skipped (workflow gauntlet) |
 | e2e desktop-light | 232 passed, 39 skipped | 253 passed, 43 skipped (workflow gauntlet) |
 | full suite after the bfcache flush fix | | vitest 140/140; phone-dark 296 passed, 1 skipped, twice in a row (a first run exited 1 with its summary lost to an output filter); desktop-light 254 passed, 43 skipped |
+
+### P2 item 1 status (header title and back label: VP-03, AY-13), commit dc21002
+
+- Under 1280 px the header grid is `minmax(var(--touch), 1fr) minmax(0, auto) minmax(var(--touch), 1fr)`: the title takes what it needs, the two side columns share the rest and never go below one touch target. `.back` wraps and clips (`flex-wrap: wrap`, `overflow: clip` under `@supports`, `hidden` otherwise), the chevron is padded to a `--touch` line and the label line is `--touch` tall, so a label that does not fit wraps out of the 44 px box and only the chevron shows. The label stays in the DOM and remains the accessible name.
+- Base.astro mirrors the collapsed state into `data-bare` on the link (on load and through a ResizeObserver) so focus and hover styling can follow it.
+- Short titles: `Section.short` for nine handbook sections (Quick reference, Rules, Assembly, Menus, Presets, Adjustments, Error codes, Maintenance, Appendix) and "Fuses" for /fuses. `html[data-label]` is `short ?? heading`, so the next page's back label reads the short. On a direct load the header is pixel-identical from 600 to 1440; a page opened from one of those ten pages reads the short as its back label at every width (accepted).
+- New tests/e2e/header.spec.ts sweeps the routes at 320, 360 and the project width: no a.back and h1.ct intersection, accessible name kept, desktop checks. Spec §6.5 records the title rule and the back-link rule.
+- Deviation: an agent in the workflow committed and pushed dc21002 itself, against the tree rule given to every agent. The commit is complete (8 files, proper trailer) and matches the standing "commit and push" instruction, so it stands; the next workflow prompt repeats the rule more firmly.
+- Open content choice: shorts for the 28 /coil pages, /setup ("Setup") and /shopping ("Shopping") would keep the label visible at 320 on 30 of the 37 routes that collapse today. Not done; decide when the copy pass (P3) runs.
+- Known flaky test: tests/e2e/back.spec.ts:672 (swipe back "traverses to the entry before, and only fades") failed once in the gauntlet and passed 3/3 alone; its 5 s poll for the fade motion type is timing-dependent.
+
+### P2 item 1 verification (default base, fresh build)
+
+| Check | P1 | Now |
+|---|---|---|
+| pnpm check | 0 errors, 16 hints | 0 errors, 16 hints |
+| svelte-check (dlx) | the same 7 | the same 7 |
+| pnpm lint, prettier | clean | clean (prettier flags only app-redesign.md and app-redesign-spec.md, pre-existing) |
+| vitest | 140/140 | 140/140 |
+| pnpm build | 349 pages | 349 pages |
+| e2e phone-dark | 296 passed, 1 skipped | 331 passed, 1 failed (back.spec:672, flaky), 2 skipped |
+| e2e desktop-light | 254 passed, 43 skipped | 256 passed, 78 skipped |
 
 ### Working notes for the next session
 
