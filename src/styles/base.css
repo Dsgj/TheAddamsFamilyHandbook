@@ -117,9 +117,12 @@ main.fullbleed {
   height: 1px;
   background: var(--sep);
 }
+/* VP-03, AY-13: the title takes its width first and the sides share the rest, each keeping a
+   touch target for the chevron or a trailing button, so the title stays centred. The 1280 block
+   replaces the columns with a left-aligned title. */
 .top .tb {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: minmax(var(--touch), 1fr) minmax(0, auto) minmax(var(--touch), 1fr);
   align-items: center;
   height: var(--topbar-h);
   padding: 0 8px;
@@ -169,7 +172,7 @@ main.fullbleed {
 .back {
   display: inline-flex;
   align-items: center;
-  height: 44px;
+  height: var(--touch);
   padding: 0 8px 0 2px;
   color: var(--amber-ink);
   font-size: 17px;
@@ -243,6 +246,49 @@ main.fullbleed {
     padding: 0;
   }
 }
+/* VP-03, AY-13: a back label that does not fit its side wraps onto a second flex line, which
+   .back clips, and the chevron stays; the label is still the link's name. `clip`, not a scroll
+   container, so find-in-page or scrollIntoView cannot scroll the label up into the box. */
+@media (max-width: 1279px) {
+  .back {
+    min-width: 0;
+    max-width: 100%;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    overflow: hidden;
+  }
+  /* In @supports, not as a second declaration: the minifier drops a duplicate property. */
+  @supports (overflow: clip) {
+    .back {
+      overflow: clip;
+    }
+  }
+  .back svg {
+    flex: none;
+    box-sizing: content-box;
+    /* the chevron's line is a touch target tall even after the label has wrapped away */
+    padding: calc((var(--touch) - 26px) / 2) 0;
+  }
+  .back > span {
+    line-height: var(--touch); /* a wrapped label starts below the box, entirely outside it */
+  }
+  /* The whole side stays the tap area, but a bare link (Base's script sets data-bare once the
+     label has wrapped away) draws its focus ring and hover pill round the chevron alone, as if
+     the label were empty, not round an empty box that ends at the title. The svg takes over the
+     link's side padding, so nothing moves. */
+  .back[data-bare] svg {
+    margin-inline: -2px -8px;
+    padding-inline: 2px 8px;
+    border-radius: 10px;
+  }
+  .back[data-bare]:focus-visible {
+    outline: none;
+  }
+  .back[data-bare]:focus-visible svg {
+    outline: 2px solid var(--amber);
+    outline-offset: -2px; /* inside the box: .back clips anything outside it */
+  }
+}
 @media (min-width: 1280px) {
   .top .tb {
     grid-template-columns: auto minmax(0, 1fr) auto;
@@ -266,6 +312,14 @@ main.fullbleed {
   }
   .back:hover {
     border-radius: 10px;
+  }
+}
+@media (hover: hover) and (max-width: 1279px) {
+  .back[data-bare]:hover {
+    background: none;
+  }
+  .back[data-bare]:hover svg {
+    background: var(--sunk);
   }
 }
 main.wide {
