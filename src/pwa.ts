@@ -20,10 +20,10 @@ const update = registerSW({
   },
   onNeedRefresh() {
     needsRefresh = true;
-    toast('update', 'A new version of the handbook is ready.');
+    toast('update', 'A new version of the app is ready.');
   },
   onOfflineReady() {
-    toast('offline', 'Ready to work offline. Scans are cached as you open them.');
+    toast('offline', 'Ready to work offline. Manual pages are saved as you open them.');
   },
 });
 
@@ -32,8 +32,8 @@ window.addEventListener('tafh:reload', () => void update(true));
 /** Pull-to-refresh: check for a new worker; the Update toast or "up to date" follows. */
 window.addEventListener('tafh:check-update', () => {
   const settle = () => {
-    if (needsRefresh) toast('update', 'A new version of the handbook is ready.');
-    else toast('info', 'The handbook is up to date.');
+    if (needsRefresh) toast('update', 'A new version of the app is ready.');
+    else toast('info', 'The app is up to date.');
   };
   if (!registration) {
     settle();

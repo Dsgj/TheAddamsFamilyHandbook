@@ -1,16 +1,16 @@
 import { expect, test } from '@playwright/test';
 import { gotoHydrated } from './helpers';
 
-test('Broken tick on Lamps feeds the shopping list until Fixed', async ({ page }) => {
+test('Fault tick on Lamps feeds the shopping list until Fixed', async ({ page }) => {
   await gotoHydrated(page, '/lamps');
-  const tick = page.getByLabel('Broken: Thing Multiball');
+  const tick = page.getByLabel('Fault: Thing Multiball');
   await expect(tick).not.toBeChecked();
   await tick.check();
   // The matrix island on the same page recolours live.
   await expect(page.locator('table.matrix td.st-fault [data-cell="11"]')).toBeVisible();
 
   await page.reload();
-  await expect(page.getByLabel('Broken: Thing Multiball')).toBeChecked();
+  await expect(page.getByLabel('Fault: Thing Multiball')).toBeChecked();
 
   await gotoHydrated(page, '/shopping');
   await expect(page.getByRole('heading', { name: 'Lamps' })).toBeVisible();
@@ -21,32 +21,45 @@ test('Broken tick on Lamps feeds the shopping list until Fixed', async ({ page }
   await expect(page.locator('textarea')).toHaveValue(
     'Lamps\n1 × #555 (24-8768): L11 Thing Multiball',
   );
+  await expect(
+    page.getByText('Mark a component Fault and it lands here. Fixed clears the fault.'),
+  ).toBeVisible();
 
   await page.getByRole('button', { name: 'Fixed: Thing Multiball' }).click();
   await expect(page.getByText('Nothing marked Fault yet')).toBeVisible();
 });
 
-test('Broken tick on Switches and Solenoids lands on the shopping list', async ({ page }) => {
+test('Fault tick on Switches and Solenoids lands on the shopping list', async ({ page }) => {
   await gotoHydrated(page, '/switches');
   // The flipper table sits in its own tab since Phase 7 of the redesign.
-  await page.getByRole('tab', { name: 'Flipper J806' }).click();
-  await page.getByLabel('Broken: Left Flipper Button').check();
+  await page.getByRole('tab', { name: 'Flippers' }).click();
+  await page.getByLabel('Fault: Left Flipper Button').check();
   await gotoHydrated(page, '/coils');
-  await page.getByLabel('Broken: Chair Kickout').check();
+  await page.getByLabel('Fault: Chair Kickout').check();
   await gotoHydrated(page, '/shopping');
   await expect(page.getByRole('heading', { name: 'Switches' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Solenoids' })).toBeVisible();
-  await expect(page.getByRole('link', { name: /C01 Chair Kickout/ })).toHaveAttribute(
+  await expect(page.getByRole('link', { name: 'SOL 01 Chair Kickout' })).toHaveAttribute(
     'href',
     /coil\/01$/,
   );
+});
+
+/* P3 item 1 of the app audit (spec §13): a solenoid's code is SOL 07 everywhere. */
+test('a Fault solenoid is listed as SOL 07', async ({ page }) => {
+  await gotoHydrated(page, '/coils');
+  await page.getByLabel('Fault: Thing Kickout', { exact: true }).check();
+  await gotoHydrated(page, '/shopping');
+  await expect(page.locator('a.lnk .code')).toHaveText('SOL 07');
+  await page.getByRole('button', { name: 'Show text' }).click();
+  await expect(page.locator('textarea')).toHaveValue(/: SOL 07 Thing Kickout$/);
 });
 
 test('the swipe pane is the OK colour and its label shows before the armed point', async ({
   page,
 }) => {
   await gotoHydrated(page, '/lamps');
-  await page.getByLabel('Broken: Thing Multiball').check();
+  await page.getByLabel('Fault: Thing Multiball').check();
   await gotoHydrated(page, '/shopping');
   const sw = page.locator('li.sw').first();
   const row = sw.locator('.row');

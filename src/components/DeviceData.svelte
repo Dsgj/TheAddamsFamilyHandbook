@@ -16,7 +16,8 @@
     replaceLoss,
   } from '~/lib/model/status.svelte';
   import { clearVerify, verifyTicks } from '~/lib/model/verify.svelte';
-  import { BackupError } from '~/lib/status-io';
+  import { agree, plural } from '~/lib/copy';
+  import { BackupError, localIsoDate } from '~/lib/status-io';
   import { watch } from '~/lib/storage';
 
   /**
@@ -60,7 +61,7 @@
     const blob = new Blob([exportStatuses()], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `tafh-status-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `tafh-status-${localIsoDate()}.json`;
     a.click();
     URL.revokeObjectURL(a.href);
     say('Downloaded');
@@ -69,9 +70,9 @@
   function read(text: string, name: string, how: 'merge' | 'replace') {
     try {
       const n = importStatuses(text, how);
-      const parts = [`${n.components} ${n.components === 1 ? 'component' : 'components'}`];
-      if (n.settings) parts.push(`${n.settings} ${n.settings === 1 ? 'setting' : 'settings'}`);
-      if (n.verified) parts.push(`${n.verified} ${n.verified === 1 ? 'check' : 'checks'}`);
+      const parts = [plural(n.components, 'component')];
+      if (n.settings) parts.push(plural(n.settings, 'setting'));
+      if (n.verified) parts.push(plural(n.verified, 'check'));
       say(`${parts.join(' and ')} read from ${name}`);
     } catch (e) {
       const reason = e instanceof BackupError ? e.reason : '';
@@ -80,7 +81,7 @@
           ? 'That backup comes from a newer version of the app.'
           : reason === 'empty'
             ? 'That file holds nothing to restore.'
-            : 'Could not read that file as a status export.',
+            : 'Could not read that file as a backup.',
         true,
       );
     }
@@ -149,16 +150,16 @@
       <span class="txt">
         <span class="ttl">
           {#if count}<span class="mono">{count}</span>
-            {count === 1 ? 'component' : 'components'} recorded.{/if}
+            {agree(count, 'component')} recorded.{/if}
           {#if settings}<span class="mono">{settings}</span>
-            {settings === 1 ? 'setting' : 'settings'} recorded.{/if}
+            {agree(settings, 'setting')} recorded.{/if}
           {#if checks}<span class="mono">{checks}</span>
-            {checks === 1 ? 'check' : 'checks'} verified.{/if}
+            {agree(checks, 'check')} verified.{/if}
           {#if empty}Nothing saved on this device yet.{/if}
         </span>
         <span class="sub">
-          Status, notes, the service log, the machine setup and Verify ticks live only in this
-          browser. Clear all also empties Recent, Recently viewed and Continue reading.
+          Download a backup before clearing site data or switching phones, then read it back here.
+          Clear all also empties Recent, Recently viewed and Continue reading.
         </span>
       </span>
     </li>
@@ -206,8 +207,7 @@
         >
           <span class="txt"
             ><span class="ttl"
-              >Really replace? {pending.lost}
-              {pending.lost === 1 ? 'entry' : 'entries'} here will be lost</span
+              >Really replace? {plural(pending.lost, 'entry', 'entries')} here will be lost</span
             ><span class="sub">Reads {pending.name}</span></span
           >
         </button>
@@ -221,7 +221,8 @@
     </li>
   </ul>
   <p class="gf">
-    Download a backup before clearing site data or switching phones, then read it back here.
+    The backup holds status, notes, the service log, setup values and the care and verify ticks.
+    Everything you record stays on this device.
     <!-- Always in the page, so a screen reader announces each new message. -->
     <span class={error ? 'bad' : 'ok'} role="status">{msg}</span>
   </p>

@@ -8,7 +8,7 @@ export const DOC_NAME: Record<DocId, string> = {
   hb: "Operator's Handbook",
   wpc: 'WPC Schematic Manual',
 };
-export const DOC_UNIT: Record<DocId, string> = { ops: 'pages', hb: 'pages', wpc: 'sheets' };
+export const DOC_UNIT: Record<DocId, string> = { ops: 'pages', hb: 'pages', wpc: 'pages' };
 
 export function isDocId(s: string): s is DocId {
   return s === 'ops' || s === 'hb' || s === 'wpc';
@@ -40,10 +40,18 @@ export function pdfPageFromLabel(label: string): number | undefined {
   return m[1] === '1' ? n + 10 : m[1] === '2' ? n + 58 : n + 102;
 }
 
-/** Human page reference: `Operations Manual p. 1-15`. */
-export function pageRefText(doc: DocId, p: number): string {
+/**
+ * A page within its document (spec §13): "p." only before a printed label, otherwise the PDF
+ * page number. `p. 1-15`, `p. E`, `PDF page 2`.
+ */
+export function pageTitleText(doc: DocId, p: number): string {
   const lab = pageLabel(doc, p);
-  return `${DOC_NAME[doc]} ${doc === 'wpc' ? 'sheet' : 'p.'} ${lab || p}`;
+  return lab ? `p. ${lab}` : `PDF page ${p}`;
+}
+
+/** Human page reference: `Operations Manual p. 1-15`, `WPC Schematic Manual PDF page 3`. */
+export function pageRefText(doc: DocId, p: number): string {
+  return `${DOC_NAME[doc]} ${pageTitleText(doc, p)}`;
 }
 
 export function pageImage(doc: DocId, p: number): string {
@@ -54,24 +62,24 @@ export function pageImage(doc: DocId, p: number): string {
 export const TOC: Record<DocId, [number, string][]> = {
   ops: [
     [1, 'Cover'],
-    [2, 'Jumpers & solenoid table'],
+    [2, 'Jumpers and solenoid table'],
     [3, 'Contents'],
     [5, 'Thing Flips calibration'],
-    [7, 'Mansion awards & rules'],
+    [7, 'Mansion awards and rules'],
     [9, 'Shot maps'],
-    [11, 'Section 1: Operation & test'],
+    [11, 'Section 1: Operation and test'],
     [12, 'Setup'],
     [14, 'Controls'],
-    [15, 'Game start & operation'],
+    [15, 'Game start and operation'],
     [17, 'Menu system'],
     [18, 'Bookkeeping'],
     [24, 'Printouts'],
     [25, 'Test menu T.1–T.13'],
     [30, 'Utilities'],
-    [32, 'Difficulty & presets'],
+    [32, 'Difficulty and presets'],
     [38, 'Adjustments'],
     [54, 'Error messages (Check Switch)'],
-    [55, 'CPU LED & sound board codes'],
+    [55, 'CPU LED and sound board codes'],
     [56, 'LED list'],
     [57, 'Fuse list'],
     [58, 'Maintenance'],
@@ -103,7 +111,7 @@ export const TOC: Record<DocId, [number, string][]> = {
     [96, 'Lower playfield parts'],
     [97, 'Switch locations'],
     [98, 'Lamp locations'],
-    [99, 'Solenoid & flasher locations'],
+    [99, 'Solenoid and flasher locations'],
     [100, 'Rubber rings'],
     [101, 'Ramps'],
     [103, 'Section 3: Schematics'],

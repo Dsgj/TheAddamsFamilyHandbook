@@ -16,9 +16,9 @@ const items = allShoppingItems();
 >
   <h1>Shopping list</h1>
   <p class="muted">
-    Everything marked Fault on this device, grouped by the part to order. Tick Broken in the tables
-    on the Lamps, Switches and Solenoids pages, or set Fault on a component card. Press Fixed here
-    when a part has been replaced.
+    Everything marked Fault on this device, grouped by the part to order. Tick Fault in the tables
+    on the Switch matrix, Lamp matrix and Solenoids and flashers pages, or set Fault on a component
+    card. Press Fixed here when a part has been replaced.
   </p>
   <ShoppingList client:load items={items} />
   <section class="kit">
@@ -78,7 +78,7 @@ const items = allShoppingItems();
     </ul>
     <p class="gf">
       What the yearly round and the appendices assume is on the bench; the same for every device, so
-      it is not tracked here. Why each one, and what not to buy, is in
+      it is not tracked here. Why each one, and what not to buy, is in{' '}
       <a href={href(`handbook/appendix#${appendixAnchor('A7')}`)}>A7 Connectors and cleaning</a>.
     </p>
   </section>

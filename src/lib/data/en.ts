@@ -12,7 +12,7 @@ const COLOUR: Record<string, string> = {
   grön: 'Green',
   blå: 'Blue',
   violett: 'Violet',
-  grå: 'Gray',
+  grå: 'Grey',
   svart: 'Black',
   vit: 'White',
 };

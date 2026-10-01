@@ -1,11 +1,13 @@
 <script lang="ts">
-  import { DATA, KIND_LABEL } from '~/lib/data/components';
-  import { DOC_NAME, type DocId } from '~/lib/pages';
+  import { componentCode, kindLine } from '~/lib/copy';
+  import { DATA } from '~/lib/data/components';
+  import { pageRefText } from '~/lib/pages';
+  import type { DocId } from '~/lib/model/types';
   import { componentHref, href, manualHref } from '~/lib/url';
 
   /**
    * The search state of the Diagnose field (spec §9.3): one word or more, no digits. Components
-   * come from the bundled data; the handbook headings, the manuals' OCR text and the parts list
+   * come from the bundled data; the handbook headings, the manuals' page text and the parts list
    * are fetched the first time they are needed (Q20 default: parts and the manuals are in).
    * `oncount` reports the result count to Diagnose, which owns the search's announcer (spec §12);
    * `onfilter` tells it a chip changed the results, which is announced even for a pre-filled query.
@@ -54,7 +56,8 @@
 
   const components: Hit[] = (() => {
     const out: Hit[] = [];
-    const hit = (code: string, label: string, sub: string, url: string) =>
+    /** `extra`: words the search still finds that the row no longer shows (old names, drivers). */
+    const hit = (code: string, label: string, sub: string, url: string, extra = '') =>
       out.push({
         group: 'components',
         id: `components:${out.length}`,
@@ -62,26 +65,26 @@
         label,
         sub,
         url,
-        text: `${code} ${label} ${sub}`.toLowerCase(),
+        text: `${code} ${label} ${sub} ${extra}`.toLowerCase(),
       });
     for (const s of DATA.switches)
       hit(
-        s.id,
+        componentCode('switch', s.id),
         s.name,
-        s.col !== null
-          ? `${KIND_LABEL.switch} · matrix column ${s.col}, row ${s.row}`
-          : `${KIND_LABEL.switch}${s.kind === 'flip' ? ' · Fliptronics' : s.kind === 'ded' ? ' · dedicated' : ''}`,
+        kindLine('switch', s),
         componentHref('switch', s.id),
+        s.kind === 'flip' ? 'Fliptronics' : '',
       );
     for (const l of DATA.lamps)
-      hit(
-        `L${l.id}`,
-        l.name,
-        `${KIND_LABEL.lamp} · matrix column ${l.col}, row ${l.row}`,
-        componentHref('lamp', l.id),
-      );
+      hit(componentCode('lamp', l.id), l.name, kindLine('lamp', l), componentHref('lamp', l.id));
     for (const c of DATA.coils)
-      hit(`SOL ${c.id}`, c.name, `${c.type} · ${c.driver}`, componentHref('coil', c.id));
+      hit(
+        componentCode('coil', c.id),
+        c.name,
+        kindLine('coil', c),
+        componentHref('coil', c.id),
+        c.driver,
+      );
     for (const f of DATA.flippers)
       hit(f.id, f.name, `Flipper coil ${f.coil}`, href('coils#flippers'));
     for (const g of DATA.gi)
@@ -96,6 +99,7 @@
     section: string;
     level: number;
     label: string;
+    page: number;
   }
   async function loadHandbook() {
     if (handbook) return;
@@ -104,7 +108,13 @@
       handbook = h.toc
         .filter((t) => t.level > 1)
         .map((t) => {
-          const sub = t.section === 'appendix' ? 'Owner service notes' : `Handbook · p. ${t.label}`;
+          // "p." only before a printed label; the headings of ops pages 2-3 have none (spec §13).
+          const appendix = t.section === 'appendix';
+          const sub = appendix
+            ? 'Handbook appendix'
+            : `Handbook · ${t.label ? `p. ${t.label}` : `PDF page ${t.page}`}`;
+          // "owner service notes": the appendix's old name, still found by the search.
+          const extra = appendix ? ' owner service notes' : '';
           return {
             group: 'handbook' as const,
             id: `handbook:${t.id}`,
@@ -112,7 +122,7 @@
             label: t.text,
             sub,
             url: href(`handbook/${t.section}#${t.id}`),
-            text: `${t.text} ${sub}`.toLowerCase(),
+            text: `${t.text} ${sub}${extra}`.toLowerCase(),
           };
         });
     } catch {
@@ -128,14 +138,13 @@
       >;
       const out: Hit[] = [];
       for (const [doc, pages] of Object.entries(ocr)) {
-        const name = DOC_NAME[doc as DocId] ?? doc;
         pages.forEach((text, i) => {
           if (!text) return;
           out.push({
             group: 'manuals',
             id: `manuals:${doc}:${i}`,
             code: '',
-            label: `${name} p. ${i + 1}`,
+            label: pageRefText(doc as DocId, i + 1),
             sub: text,
             url: manualHref(doc, i + 1),
             text: text.toLowerCase(),
@@ -267,7 +276,9 @@
       </ul>
     {/each}
     {#if !total}
-      <p class="muted none">Nothing found for “{q.trim()}”. Codes such as 32 or L55 diagnose.</p>
+      <p class="muted none">
+        No results match “{q.trim()}”. Codes such as 32, L55 or SOL 07 open the component.
+      </p>
     {/if}
   {/if}
 </div>

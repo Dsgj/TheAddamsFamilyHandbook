@@ -6,7 +6,10 @@ import { findHeading, type HeadingIndex } from '~/lib/handbook/render';
 import { handbookToc } from '~/lib/handbook/toc';
 import { href } from '~/lib/url';
 
-/** Same resolution as the setup page: `find` is a heading code or text in the Handbook. */
+/**
+ * Same resolution as the setup page: `find` is a heading code or text in the Handbook. The advice
+ * itself lives in src/data/care.ts.
+ */
 const toc = await handbookToc();
 const idx: HeadingIndex = new Map(
   toc
@@ -39,10 +42,9 @@ for (const s of CARE_STEPS) {
     noun="tasks"
   />
   <p class="muted small">
-    Ticks and dates stay on this device and go into the backup on the
-    <a href={href('shopping')}>Shopping list</a> page. The battery tick is the same one as in
-    <a href={href('setup#step-upkeep')}>Machine setup step 7</a>. The manual's own page is
-    <a href={href('handbook/maintenance')}>Maintenance Information</a>; the advice here lives in
-    <code>src/data/care.ts</code>.
+    Ticks and dates stay on this device and go into the backup on the{' '}
+    <a href={href('shopping')}>Shopping list</a> page. The battery tick is the same one as in{' '}
+    <a href={href('setup#step-upkeep')}>Machine setup step 7</a>. The manual's own page is{' '}
+    <a href={href('handbook/maintenance')}>Maintenance Information</a>.
   </p>
 </Base>

@@ -3,9 +3,16 @@ import Base from '~/layouts/Base.astro';
 import PlayfieldMap from '~/components/PlayfieldMap.svelte';
 ---
 
-<Base title="Playfield map" short="Map" nav="map" h1="bar" fullbleed>
+<Base
+  title="Playfield map"
+  short="Map"
+  nav="map"
+  h1="bar"
+  fullbleed
+  description="The playfield drawing with every switch, lamp, solenoid and shot, searchable and linked to the tables."
+>
   <Fragment slot="actions">
-    <button class="ibtn" type="button" aria-label="Find a part" data-map="find">
+    <button class="ibtn" type="button" aria-label="Search components" data-map="find">
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <circle cx="11" cy="11" r="7" /><path d="M20 20l-4-4" />
       </svg>
@@ -13,7 +20,7 @@ import PlayfieldMap from '~/components/PlayfieldMap.svelte';
     <button
       class="ibtn narrow"
       type="button"
-      aria-label="All parts on the map"
+      aria-label="All components on the map"
       aria-haspopup="dialog"
       data-map="parts"
     >

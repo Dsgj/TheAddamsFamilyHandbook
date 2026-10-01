@@ -8,6 +8,7 @@
    * ("Workshop, 4 on the shopping list"). The pill is plain text with sr-only words, never a status.
    */
   import { onMount } from 'svelte';
+  import { agree } from '~/lib/copy';
   import { allStatuses } from '~/lib/model/status.svelte';
 
   let { keys, pill = false }: { keys: string[]; pill?: boolean } = $props();
@@ -33,7 +34,10 @@
 
 {#if pill}
   {#if count}
-    <span class="cnt">{count}<span class="sr-only"> parts to order</span></span>
+    <!-- "1 part to order", "2 parts to order": the noun agrees with the count (spec §13). -->
+    <span class="cnt"
+      >{count}<span class="sr-only">{` ${agree(count, 'part')} to order`}</span></span
+    >
   {/if}
 {:else}
   <span class="badge-host" bind:this={host} aria-hidden="true">

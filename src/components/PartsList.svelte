@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { plural } from '~/lib/copy';
   import type { PartRow } from '~/lib/model/types';
   import { href, replaceUrl } from '~/lib/url';
   import SearchField from './SearchField.svelte';
@@ -111,7 +112,7 @@
   const found = $derived(
     !shown.length
       ? `No parts match “${q.trim()}”.`
-      : `${shown.length} ${shown.length === 1 ? 'row' : 'rows'}${shown.length === 300 ? ' (first 300)' : ''}`,
+      : `${plural(shown.length, 'row')}${shown.length === 300 ? ' (first 300)' : ''}`,
   );
   function clear() {
     q = '';
@@ -137,7 +138,7 @@
 <div class="parts" bind:this={root}>
   <SearchField
     label="Search parts"
-    placeholder="Part number or description"
+    placeholder="Search parts"
     bind:value={q}
     bind:input={field}
     oninput={() => {
@@ -151,8 +152,9 @@
        surface announces through a separate sr-only aria-live region instead. A search with no rows
        says so here, so the region announces the words on screen, not "0 rows". -->
   <p class="gf count" role="status">
-    {#if loading}Loading…{:else if !searching}Top-level assemblies ({shown.length} rows). Type at least
-      two characters to search all {rows.length} rows, e.g. 5768, flipper or SW-1A.{:else}{found}{/if}
+    {#if loading}Loading…{:else if !searching}Top-level assemblies ({plural(shown.length, 'row')}).
+      Type at least two characters to search all {plural(rows.length, 'row')}, e.g. 5768, flipper or
+      SW-1A.{:else}{found}{/if}
   </p>
   <div class="scroll-x">
     <!-- Spec §8.9: under 600 the rows are two-line flex rows, which drops table semantics in

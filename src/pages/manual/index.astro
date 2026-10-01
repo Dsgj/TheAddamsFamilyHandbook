@@ -5,14 +5,19 @@ import ManualSearch from '~/components/ManualSearch.svelte';
 import { DOCS, DOC_NAME, DOC_UNIT, pageCount, pageLabel, TOC } from '~/lib/pages';
 import { manualHref } from '~/lib/url';
 
-/** The Manuals index: the segmented links, the OCR search and each document's contents. */
+/** The Manuals index: the segmented links, the page-text search and each document's contents. */
 ---
 
-<Base title="Manuals" nav="manual">
+<Base
+  title="Manuals"
+  nav="manual"
+  description="The Operations Manual, Operator's Handbook and WPC Schematic Manual, page by page, with their text searchable offline."
+>
   <h1>Manuals</h1>
   <DocSeg current="manual" />
   <p class="muted">
-    Page scans of the three documents that came with the machine, with OCR text for searching.
+    The manual pages of the three documents that came with the machine, with their text for
+    searching.
   </p>
   <ManualSearch client:load />
   <div class="docs">
@@ -32,7 +37,7 @@ import { manualHref } from '~/lib/url';
                   <span class="txt">
                     <span class="ttl">{name}</span>
                   </span>
-                  <span class="val mono">{pageLabel(d, p) || `#${p}`}</span>
+                  <span class="val mono">{pageLabel(d, p) || `PDF page ${p}`}</span>
                   <svg class="chev" viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M9 5l7 7-7 7" />
                   </svg>
@@ -44,7 +49,7 @@ import { manualHref } from '~/lib/url';
       ))
     }
   </div>
-  <p class="gf">Scans are saved on the device as you open them.</p>
+  <p class="gf">Manual pages are saved on the device as you open them.</p>
 </Base>
 
 <style>

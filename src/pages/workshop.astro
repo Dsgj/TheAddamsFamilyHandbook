@@ -1,7 +1,6 @@
 ---
 import Base from '~/layouts/Base.astro';
 import WorkshopHub from '~/components/WorkshopHub.svelte';
-import { CARE_STEPS } from '~/data/care';
 import { SETUP_STEPS } from '~/data/setup';
 import { VERIFY_ITEMS } from '~/data/verify';
 import { allShoppingItems } from '~/lib/shopping';
@@ -13,7 +12,6 @@ import pkg from '../../package.json';
  * Verify, Machine setup), Appearance and the About sheet live in the WorkshopHub island; this
  * page passes it the static facts and renders the footer.
  */
-const careNext = CARE_STEPS[0]?.title ?? '';
 const setupIds = SETUP_STEPS.flatMap((s) => s.items.map((i) => i.id));
 ---
 
@@ -29,7 +27,6 @@ const setupIds = SETUP_STEPS.flatMap((s) => s.items.map((i) => i.id));
       client:load
       items={allShoppingItems()}
       version={pkg.version}
-      careNext={careNext}
       setupSteps={SETUP_STEPS.length}
       setupIds={setupIds}
       verifyIds={VERIFY_ITEMS.map((i) => i.id)}
@@ -42,7 +39,7 @@ const setupIds = SETUP_STEPS.flatMap((s) => s.items.map((i) => i.id));
       }}
     />
     <p class="gf">
-      Everything you record stays in this browser. Back it up before switching phones.
+      Everything you record stays on this device. Back it up on Device data before switching phones.
     </p>
   </div>
 </Base>

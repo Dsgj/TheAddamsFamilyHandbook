@@ -35,16 +35,16 @@ test.describe('the Handbook home', () => {
       'href',
       /handbook\/appendix#p106-1$/,
     );
-    await expect(page.getByText("The owner's own notes, not manual text.")).toBeVisible();
+    await expect(page.getByText('Notes written for this machine, not manual text.')).toBeVisible();
     await expect(page.getByText(/Pages 1-16 to 1-18 are transcribed/)).toBeVisible();
     await expect(page.locator('[data-continue]')).toBeHidden();
 
-    const field = page.getByLabel('Search the handbook and scans');
+    const field = page.getByLabel('Search the handbook', { exact: true });
     await expect(page.locator('nav.toc ul')).toHaveCount(0);
     await field.fill('flipper');
     await expect(page.locator('nav.toc li a').first()).toBeVisible();
     await expect(
-      page.getByRole('link', { name: 'Search the scans for “flipper”' }),
+      page.getByRole('link', { name: 'Search the manuals for “flipper”' }),
     ).toHaveAttribute('href', /manual\?q=flipper$/);
   });
 
@@ -58,15 +58,15 @@ test.describe('the Handbook home', () => {
     await expect(cont.getByRole('link')).toHaveAttribute('href', /handbook\/tests#pg-25$/);
   });
 
-  test('"Search the scans" hands the query to the manual search', async ({ page }) => {
+  test('"Search the manuals" hands the query to the manual search', async ({ page }) => {
     await gotoHydrated(page, '/manual?q=flipper');
-    await expect(page.getByLabel('Search manual text')).toHaveValue('flipper');
+    await expect(page.getByLabel('Search the manuals', { exact: true })).toHaveValue('flipper');
     await expect(page.locator('.msearch a[href*="/manual/"]').first()).toBeVisible();
   });
 
   // DS-01: the global .search field rule used to also match this wrapper and collapse it to
   // 36px, so a tap on a hit landed on whatever TOC link sat underneath instead.
-  test('tapping an OCR hit opens the tapped page, not a neighboring one', async ({ page }) => {
+  test('tapping a page-text hit opens the tapped page, not a neighboring one', async ({ page }) => {
     await gotoHydrated(page, '/manual?q=flipper');
     const hit = page.locator('.msearch a[href*="/manual/"]').first();
     const href = await hit.getAttribute('href');
@@ -77,27 +77,33 @@ test.describe('the Handbook home', () => {
 });
 
 test.describe('the reader', () => {
-  test('has the back link, View the scan and the bottom toolbar; Contents opens a sheet', async ({
+  test('has the back link, View the manual page and the bottom toolbar; Contents opens a sheet', async ({
     page,
   }) => {
     await gotoHydrated(page, '/handbook/tests');
     await expect(page.locator('header.top a.back')).toHaveText('Handbook');
-    await expect(page.getByRole('link', { name: 'View the scan' })).toHaveAttribute(
+    await expect(page.getByRole('link', { name: 'View the manual page' })).toHaveAttribute(
       'href',
       /manual\/ops\/25$/,
     );
     const bar = page.getByRole('navigation', { name: 'Reader' });
-    await expect(bar.getByRole('link', { name: 'Previous: Menu system & bookkeeping' })).toHaveText(
-      '1-14',
-    );
+    await expect(
+      bar.getByRole('link', { name: 'Previous: Menu system and bookkeeping' }),
+    ).toHaveText('1-14');
     await expect(bar.getByRole('link', { name: 'Next: Utilities' })).toHaveText('1-20');
     await expect(page.locator('.pg-bar').first()).toContainText('p. 1-15');
+    // The bar says the page once: the marker, then a "Manual" button named with the page.
+    const pg = page.locator('.pg-bar').first();
+    const toManual = pg.getByRole('link', { name: 'Manual p. 1-15', exact: true });
+    await expect(toManual).toHaveText('Manual');
+    await expect(toManual).toHaveAttribute('href', /manual\/ops\/25$/);
+    await expect(pg.locator('.mono')).toHaveAttribute('aria-hidden', 'true');
 
     const contents = bar.getByRole('button', { name: 'Contents' });
     await contents.click();
     const dialog = page.getByRole('dialog', { name: 'Contents' });
     await expect(dialog).toBeVisible();
-    await expect(dialog.getByLabel('Filter contents')).toBeVisible();
+    await expect(dialog.getByLabel('Search the handbook')).toBeVisible();
     await expect(dialog.getByRole('link', { name: 'Utilities' }).first()).toHaveAttribute(
       'href',
       /handbook\/utilities$/,
@@ -135,7 +141,7 @@ test.describe('the reader', () => {
 });
 
 test.describe('the manual viewer', () => {
-  test('the toolbar pages, "97 / 124" opens Go to page, and 30 + Go lands on page 30', async ({
+  test('the toolbar pages, "97 of 124" opens Go to page, and 30 + Go lands on page 30', async ({
     page,
   }) => {
     await gotoHydrated(page, '/manual/ops/97');
@@ -156,12 +162,18 @@ test.describe('the manual viewer', () => {
       'href',
       /manual\/wpc\/1$/,
     );
+    await expect(seg.getByRole('link', { name: "Operator's" })).toHaveAttribute(
+      'href',
+      /manual\/hb\/1$/,
+    );
     await expect(page.getByRole('heading', { level: 2, name: 'Contents' })).toBeVisible();
     await expect(page.locator('.lst a[aria-current="true"]')).toHaveCount(1);
-    await expect(page.getByText('Scans are saved on the device as you open them.')).toBeVisible();
+    await expect(
+      page.getByText('Manual pages are saved on the device as you open them.'),
+    ).toBeVisible();
 
     const open = tb.getByRole('button', { name: 'Go to page (97 of 124)' });
-    await expect(open).toHaveText('97 / 124');
+    await expect(open).toHaveText('97 of 124');
     await open.click();
     const dialog = page.getByRole('dialog', { name: 'Go to page' });
     await expect(dialog).toBeVisible();
@@ -233,12 +245,12 @@ test.describe('the manual viewer', () => {
     await expect.poll(rotation).toBe('180');
   });
 
-  test('"Search manual text" is on /manual and on the viewer page', async ({ page }) => {
+  test('"Search the manuals" is on /manual and on the viewer page', async ({ page }) => {
     await gotoHydrated(page, '/manual');
-    await expect(page.getByLabel('Search manual text')).toBeVisible();
+    await expect(page.getByLabel('Search the manuals', { exact: true })).toBeVisible();
     await gotoHydrated(page, '/manual/ops/25');
-    await page.getByLabel('Search manual text').scrollIntoViewIfNeeded();
-    await expect(page.getByLabel('Search manual text')).toBeVisible();
+    await page.getByLabel('Search the manuals', { exact: true }).scrollIntoViewIfNeeded();
+    await expect(page.getByLabel('Search the manuals', { exact: true })).toBeVisible();
     await expect(page.getByRole('link', { name: /Read the transcription/ })).toHaveAttribute(
       'href',
       /handbook\/tests#pg-25$/,
@@ -255,7 +267,7 @@ test('Parts: Search parts, Clear search, the row count and four columns', async 
     'Qty',
   ]);
   await expect(page.getByRole('button', { name: 'Clear search' })).toHaveCount(0);
-  await expect(page.getByText(/Descriptions are OCR from the original/)).toBeVisible();
+  await expect(page.getByText(/Descriptions are machine-read from the original/)).toBeVisible();
   await page.getByLabel('Search parts').fill('flipper');
   await expect(page.locator('.count')).toHaveText(/^\d+ rows/);
   await expect(page.locator('tbody tr').first()).toContainText(/flipper/i);

@@ -107,8 +107,8 @@ test.describe('the phone bar: back label, title and actions never overlap', () =
     await page.setViewportSize({ width: 320, height: 800 });
     await gotoHydrated(page, 'handbook/tests');
     const back = page.locator('header.top a.back');
-    await back.locator('span').evaluate((s) => (s.textContent = 'Fuses, LEDs & jumpers'));
-    await expect(back).toHaveAccessibleName('Fuses, LEDs & jumpers');
+    await back.locator('span').evaluate((s) => (s.textContent = 'Fuses, LEDs and jumpers'));
+    await expect(back).toHaveAccessibleName('Fuses, LEDs and jumpers');
     const b = (await back.boundingBox())!;
     expect(b.height).toBe(44);
     expect(b.width).toBeGreaterThanOrEqual(44);
@@ -142,7 +142,7 @@ test.describe('the phone bar: back label, title and actions never overlap', () =
     await page.setViewportSize({ width: 320, height: 800 });
     await gotoHydrated(page, 'handbook/tests');
     const back = page.locator('header.top a.back');
-    await back.locator('span').evaluate((s) => (s.textContent = 'Fuses, LEDs & jumpers'));
+    await back.locator('span').evaluate((s) => (s.textContent = 'Fuses, LEDs and jumpers'));
     expect((await measure(page)).label).toBe('hidden');
     const scrolled = await back.evaluate((a) => {
       a.querySelector('span')!.scrollIntoView({ block: 'center', inline: 'center' });
@@ -163,7 +163,7 @@ test.describe('the phone bar: back label, title and actions never overlap', () =
       // A title at the 220 px cap would leave each side 42 px at 320.
       document.querySelector('header.top .ct .full')!.textContent =
         'A title far too long for the bar at this width';
-      document.querySelector('header.top a.back span')!.textContent = 'Fuses, LEDs & jumpers';
+      document.querySelector('header.top a.back span')!.textContent = 'Fuses, LEDs and jumpers';
       await document.fonts.ready;
       const box = (q: string) => document.querySelector(q)!.getBoundingClientRect();
       return {
@@ -195,7 +195,7 @@ test.describe('a bare back link', () => {
     await expect(back).not.toHaveAttribute('data-bare');
     const at = await chevron();
 
-    await back.locator('span').evaluate((s) => (s.textContent = 'Fuses, LEDs & jumpers'));
+    await back.locator('span').evaluate((s) => (s.textContent = 'Fuses, LEDs and jumpers'));
     await expect(back).toHaveAttribute('data-bare', '');
     expect(await chevron()).toBeCloseTo(at, 1);
     await back.focus();
@@ -246,7 +246,7 @@ test.describe('the desktop bar', () => {
     const ct = page.locator('header.top .ct');
     await expect(ct).toHaveCSS('text-align', 'left');
     await expect(ct.locator('.full')).toBeVisible();
-    await expect(ct.locator('.full')).toHaveText('Menu system & bookkeeping');
+    await expect(ct.locator('.full')).toHaveText('Menu system and bookkeeping');
     await expect(ct.locator('.short')).toBeHidden();
     expect((await measure(page)).label).toBe('whole');
   });

@@ -76,10 +76,10 @@ describe('formatShopping', () => {
         '2 × #555 (24-8768): L11 Thing Multiball, L12 Left Ramp',
         '',
         'Switches',
-        '1 × no part number: SF1 Right Flipper EOS',
+        '1 × no part number: F1 Right Flipper EOS',
         '',
         'Solenoids',
-        '1 × AE-26-1200 (A-15115): C01 Chair Kickout',
+        '1 × AE-26-1200 (A-15115): SOL 01 Chair Kickout',
       ].join('\n'),
     );
   });

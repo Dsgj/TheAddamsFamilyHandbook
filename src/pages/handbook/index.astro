@@ -10,7 +10,7 @@ import { href, manualHref } from '~/lib/url';
 
 /**
  * The Handbook home (spec §9.10): the segmented links, the search field, Continue reading (filled
- * from `tafh:reading` by the page script), the operator's section list and the owner's notes.
+ * from `tafh:reading` by the page script), the operator's section list and the handbook appendix.
  */
 const toc = await handbookToc();
 const manual = SECTIONS.filter((s) => s.key !== 'appendix');
@@ -25,7 +25,12 @@ const range = (pages: number[]): string => {
 };
 ---
 
-<Base title="Handbook" nav="handbook" h1="large">
+<Base
+  title="Handbook"
+  nav="handbook"
+  h1="large"
+  description="The Operations Manual transcribed section by section, plus a handbook appendix of notes for this machine."
+>
   <DocSeg current="handbook" />
   <HandbookToc client:load items={toc} home />
 
@@ -65,13 +70,13 @@ const range = (pages: number[]): string => {
     }
   </ul>
   <p class="gf">
-    Pages 1-16 to 1-18 are transcribed from a poor scan and not yet verified. Parts (section 2) and
-    schematics (section 3) are not transcribed; open them in <a href={manualHref('ops', 59)}
-      >the manual viewer</a
+    Pages 1-16 to 1-18 are transcribed from a hard-to-read manual page and not yet verified. Parts
+    (section 2) and schematics (section 3) are not transcribed; open them in <a
+      href={manualHref('ops', 59)}>the manual viewer</a
     >.
   </p>
 
-  <h2 class="lst-h">Owner service notes</h2>
+  <h2 class="lst-h">Handbook appendix</h2>
   <ul class="lst">
     {
       Object.entries(APPENDICES).map(([code, title]) => (
@@ -89,7 +94,7 @@ const range = (pages: number[]): string => {
       ))
     }
   </ul>
-  <p class="gf">The owner's own notes, not manual text.</p>
+  <p class="gf">Notes written for this machine, not manual text.</p>
 </Base>
 
 <script>

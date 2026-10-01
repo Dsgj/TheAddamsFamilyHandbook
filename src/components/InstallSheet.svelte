@@ -28,7 +28,7 @@
   ];
 </script>
 
-<BottomSheet label="Install the handbook" detent="medium" {recede} {onclose}>
+<BottomSheet label="Install the app" detent="medium" {recede} {onclose}>
   <div class="body">
     <p>
       Adds it to your home screen. It opens full screen, like an app, and works offline in the

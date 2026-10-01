@@ -2,18 +2,19 @@
   import { onMount, untrack } from 'svelte';
   import type { DocId } from '~/lib/model/types';
   import { liveText } from '~/lib/live.svelte';
-  import { DOC_NAME, pageLabel, tocTitle } from '~/lib/pages';
+  import { plural } from '~/lib/copy';
+  import { DOC_NAME, DOCS, pageTitleText, tocTitle } from '~/lib/pages';
   import { href, manualHref } from '~/lib/url';
   import SearchField from './SearchField.svelte';
 
-  /** Full-text search over the OCR text of all three documents (fetched on first use). */
+  /** Full-text search over the page text of all three documents (fetched on first use). */
   let { doc = '' }: { doc?: DocId | '' } = $props();
   let q = $state('');
   let data = $state<Record<DocId, string[]> | null>(null);
   let loading = $state(false);
   let only = $state<DocId | ''>(untrack(() => doc));
 
-  // `/manual?q=flipper` (the Handbook home's "Search the scans for …") runs the search on load.
+  // `/manual?q=flipper` (the Handbook home's "Search the manuals for …") runs the search on load.
   onMount(() => {
     const m = /[?&]q=([^&]*)/.exec(location.search);
     if (!m) return;
@@ -46,9 +47,7 @@
     () => (q.trim().length >= 2 && data ? countLine() : ''),
   );
   const countLine = () =>
-    hits.length
-      ? `${hits.length} ${hits.length === 1 ? 'page' : 'pages'}`
-      : `No pages match “${q.trim()}”.`;
+    hits.length ? plural(hits.length, 'page') : `No pages match “${q.trim()}”.`;
   const hits = $derived.by((): Hit[] => {
     const s = q.trim().toLowerCase();
     if (!data || s.length < 2) return [];
@@ -83,17 +82,17 @@
   <p class="sr-only" aria-live="polite" aria-atomic="true">{live.text}</p>
   <div class="row">
     <SearchField
-      label="Search manual text"
-      placeholder="Search the scans"
+      label="Search the manuals"
+      placeholder="Search the manuals"
       bind:value={q}
       onfocus={ensure}
       oninput={ensure}
     />
     <select class="search sel" bind:value={only} onchange={live.arm} aria-label="Document">
-      <option value="">All documents</option>
-      <option value="ops">Operations Manual</option>
-      <option value="hb">Operator's Handbook</option>
-      <option value="wpc">WPC Schematics</option>
+      <option value="">All manuals</option>
+      {#each DOCS as d (d)}
+        <option value={d}>{DOC_NAME[d]}</option>
+      {/each}
     </select>
   </div>
   {#if loading}<p class="muted small">Loading text…</p>{/if}
@@ -105,14 +104,8 @@
       {#each hits as h (h.doc + h.page)}
         <li>
           <a href={manualHref(h.doc, h.page)}>
-            <span class="mono where"
-              >{DOC_NAME[h.doc]} · {pageLabel(h.doc, h.page)
-                ? `p. ${pageLabel(h.doc, h.page)}`
-                : `#${h.page}`}</span
-            >
-            <span class="muted small"
-              >{tocTitle(h.doc, h.page)} · {h.n} hit{h.n === 1 ? '' : 's'}</span
-            >
+            <span class="mono where">{DOC_NAME[h.doc]} · {pageTitleText(h.doc, h.page)}</span>
+            <span class="muted small">{tocTitle(h.doc, h.page)} · {plural(h.n, 'hit')}</span>
             <span class="snip">{h.snippet}</span>
           </a>
         </li>

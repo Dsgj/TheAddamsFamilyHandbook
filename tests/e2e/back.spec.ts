@@ -145,7 +145,7 @@ test.describe('the header back link', () => {
     await expect(backLink(page)).toHaveAttribute('href', /\/verify$/);
 
     await gotoHydrated(page, 'lamps');
-    await page.getByLabel('Broken: Thing Multiball').check();
+    await page.getByLabel('Fault: Thing Multiball').check();
     await gotoHydrated(page, 'shopping');
     await page.locator('main a.lnk').first().click();
     await settle(page, /\/lamp\/11$/);
@@ -168,7 +168,12 @@ test.describe('the header back link', () => {
     const s = await where(page);
     const push = await transition(
       page,
-      () => page.locator('main a.btn', { hasText: 'Scan' }).first().click(),
+      () =>
+        page
+          .locator('main')
+          .getByRole('link', { name: /^Manual (p\.|PDF page) / })
+          .first()
+          .click(),
       /\/manual\/ops\/\d+$/,
       () => page.goBack(),
       /\/handbook\/tests$/,
@@ -403,7 +408,7 @@ test.describe('Diagnose ?q', () => {
 
 test('the Map keeps the kind of the selected marker (CO-06)', async ({ page }) => {
   await gotoHydrated(page, 'map?layer=sw,lamp&id=lamp:55');
-  const lamp = page.getByRole('button', { name: /^Lamp L55,/ }).first();
+  const lamp = page.getByRole('button', { name: /^Lamp 55,/ }).first();
   await expect(lamp).toHaveAttribute('aria-pressed', 'true');
   await page
     .getByRole('group', { name: 'Layers' })
@@ -413,7 +418,7 @@ test('the Map keeps the kind of the selected marker (CO-06)', async ({ page }) =
   await expect(page).toHaveURL(/[?&]id=lamp:55(&|$)/);
   await page.reload();
   await hydrated(page);
-  await expect(page.getByRole('button', { name: /^Lamp L55,/ }).first()).toHaveAttribute(
+  await expect(page.getByRole('button', { name: /^Lamp 55,/ }).first()).toHaveAttribute(
     'aria-pressed',
     'true',
   );
@@ -424,7 +429,7 @@ test('the Map keeps the kind of the selected marker (CO-06)', async ({ page }) =
 
   // The link builders' bare form still lands on the one layer they name.
   await gotoHydrated(page, 'map?layer=lamp&id=55');
-  await expect(page.getByRole('button', { name: /^Lamp L55,/ }).first()).toHaveAttribute(
+  await expect(page.getByRole('button', { name: /^Lamp 55,/ }).first()).toHaveAttribute(
     'aria-pressed',
     'true',
   );
@@ -613,7 +618,11 @@ test.describe('without the Navigation API', () => {
   }) => {
     await gotoHydrated(page, 'handbook/tests');
     const s = await where(page);
-    await page.locator('main a.btn', { hasText: 'Scan' }).first().click();
+    await page
+      .locator('main')
+      .getByRole('link', { name: /^Manual (p\.|PDF page) / })
+      .first()
+      .click();
     await settle(page, /\/manual\/ops\/\d+$/);
     const first = Number(/(\d+)$/.exec(page.url())![1]);
     await page.keyboard.press('ArrowRight');

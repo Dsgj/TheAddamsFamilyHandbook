@@ -4,6 +4,7 @@
  * redraws the boxes after a tick here, in another tab, or when the page returns from bfcache.
  */
 import { getTick, setTick, watchVerify } from '~/lib/model/verify.svelte';
+import { shortDate } from '~/lib/status-io';
 
 export function initVerifyChecks(root: ParentNode = document) {
   const counter = root.querySelector<HTMLElement>('[data-verify-count]');
@@ -14,7 +15,7 @@ export function initVerifyChecks(root: ParentNode = document) {
     const when = li?.querySelector<HTMLElement>('.when');
     el.checked = Boolean(at);
     li?.classList.toggle('done', Boolean(at));
-    if (when) when.textContent = at ? `verified ${at.slice(0, 10)}` : '';
+    if (when) when.textContent = at ? `verified ${shortDate(at)}` : '';
   };
   const refresh = () => {
     boxes.forEach(apply);

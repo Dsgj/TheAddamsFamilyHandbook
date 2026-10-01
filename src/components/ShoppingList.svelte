@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { agree } from '~/lib/copy';
   import { allStatuses, setStatus } from '~/lib/model/status.svelte';
   import { componentHref } from '~/lib/url';
   import {
@@ -99,15 +100,15 @@
 {#if total === 0}
   <section class="empty card">
     <p>
-      Nothing marked Fault yet. Tick Broken on the Lamps, Switches or Solenoids page, or set Fault
-      on a component card.
+      Nothing marked Fault yet. Tick Fault on the Switch matrix, Lamp matrix or Solenoids and
+      flashers page, or set Fault on a component card.
     </p>
   </section>
 {:else}
   <div class="bar">
     <p class="total">
       <span class="dmd">{total}</span>
-      {total === 1 ? 'part' : 'parts'} to order
+      {agree(total, 'part')} to order
     </p>
     <div class="acts">
       <button type="button" class="btn sm" onclick={copy}>Copy as text</button>
@@ -167,7 +168,7 @@
       </ul>
     </section>
   {/each}
-  <p class="gf">Mark a part Fault and it lands here. Fixed clears the fault.</p>
+  <p class="gf">Mark a component Fault and it lands here. Fixed clears the fault.</p>
 {/if}
 
 <style>

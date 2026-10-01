@@ -12,7 +12,7 @@ export const OWNER_NOTES: Record<number, OwnerNote[]> = {
   2: [
     {
       code: 'A2',
-      text: 'The four loads on J122 (25, 26, 27, 28) have their flyback diodes tied back to the board in two pairs: gray-yellow on pins 5 and 8, violet-green on pins 6 and 9 (schematic page 3-17). A lost tieback destroys the driver transistor. The magnet transistors on page 3-9 are drawn on the wrong connector: Q44 is on J127-9, Q34 on J126-7, Q32 on J126-8.',
+      text: 'The four loads on J122 (25, 26, 27, 28) have their flyback diodes tied back to the board in two pairs: grey-yellow on pins 5 and 8, violet-green on pins 6 and 9 (schematic page 3-17). A lost tieback destroys the driver transistor. The magnet transistors on page 3-9 are drawn on the wrong connector: Q44 is on J127-9, Q34 on J126-7, Q32 on J126-8.',
     },
     {
       code: 'A6',

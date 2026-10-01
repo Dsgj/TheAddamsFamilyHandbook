@@ -145,7 +145,7 @@ function lampNote(l: Lamp): ServiceNote {
   return {
     code: 'A4',
     text:
-      `In the lamp matrix at column ${l.col} (driver ${l.colQ}, ${l.colPin}) and row ${l.row} (driver ${l.rowQ}, ${l.rowPin}). One dark lamp is the ${l.bulb} bulb (${l.bulbPart}) or its socket; a whole column or row dark is the driver transistor or the ${conn(l.colPin) ?? 'J137'} / ${conn(l.rowPin) ?? 'J133'} connector, not the bulbs. Find it in T.8 Single Lamp Test. ` +
+      `In the lamp matrix at column ${l.col} (driver ${l.colQ}, ${l.colPin}) and row ${l.row} (driver ${l.rowQ}, ${l.rowPin}). One dark lamp is the ${l.bulb ? `${l.bulb} bulb` : 'bulb'}${l.bulbPart ? ` (${l.bulbPart})` : ''} or its socket; a whole column or row dark is the driver transistor or the ${conn(l.colPin) ?? 'J137'}/${conn(l.rowPin) ?? 'J133'} connector, not the bulbs. Find it in T.8 Single Lamp Test. ` +
       'With LEDs, a faint glow on lamps that should be off is matrix ghosting: the ghost-busting ROM for this game or non-ghosting LEDs.',
   };
 }

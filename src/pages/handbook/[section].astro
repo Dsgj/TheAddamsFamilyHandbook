@@ -6,14 +6,14 @@ import PlayfieldMap from '~/components/PlayfieldMap.svelte';
 import ReaderBar from '~/components/ReaderBar.svelte';
 import { SECTIONS, isAppendixPage } from '~/lib/handbook/sections';
 import { handbookToc } from '~/lib/handbook/toc';
-import { pageLabel } from '~/lib/pages';
+import { pageLabel, pageTitleText } from '~/lib/pages';
 import { href, manualHref } from '~/lib/url';
 import { APPENDICES, appendixAnchor } from '~/data/appendix';
 import { OWNER_NOTES } from '~/data/ownerNotes';
 
 /**
  * The Handbook reader (spec §9.11): one section per page, the back link "Handbook", "View the
- * scan" in the bar, and the bottom toolbar (ReaderBar). The reader pages by section (Q17); the
+ * manual page" in the bar, and the bottom toolbar (ReaderBar). The reader pages by section (Q17); the
  * toolbar's ends carry the nearest page label of the adjacent section.
  */
 export async function getStaticPaths() {
@@ -39,6 +39,10 @@ const prevEnd = end(prev, prev?.pages.at(-1));
 const nextEnd = end(next, next?.pages[0]);
 const UNVERIFIED = new Set([26, 27, 28]);
 const scan = section.key === 'appendix' ? undefined : manualHref('ops', section.pages[0]!);
+const description =
+  section.key === 'appendix'
+    ? 'The handbook appendix: notes written for this machine, each naming its sources.'
+    : `${section.title}: a section of the handbook, transcribed from the Operations Manual.`;
 ---
 
 <Base
@@ -46,10 +50,17 @@ const scan = section.key === 'appendix' ? undefined : manualHref('ops', section.
   short={section.short}
   nav="handbook"
   back={{ path: 'handbook', label: 'Handbook' }}
+  description={description}
 >
   {
     scan && (
-      <a slot="actions" class="ibtn" href={scan} aria-label="View the scan" title="View the scan">
+      <a
+        slot="actions"
+        class="ibtn"
+        href={scan}
+        aria-label="View the manual page"
+        title="View the manual page"
+      >
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <rect x="5" y="3" width="14" height="18" rx="2" />
           <path d="M9 8h6M9 12h6M9 16h4" />
@@ -77,9 +88,9 @@ const scan = section.key === 'appendix' ? undefined : manualHref('ops', section.
       {
         section.key === 'appendix' && (
           <p class="prov warn">
-            These pages are the owner's own notes, not manual text. Each one names its sources.
-            Values marked forum come from one thread and are not verified; measure before you trust
-            them.
+            These pages are notes written for this machine, not manual text. Each one names its
+            sources. Values marked forum come from one thread and are not verified; measure before
+            you trust them.
           </p>
         )
       }
@@ -87,7 +98,8 @@ const scan = section.key === 'appendix' ? undefined : manualHref('ops', section.
         entries.map((e) => (
           <section id={`pg-${e.data.page}`}>
             <div class="pg-bar">
-              <span class="mono">
+              {/* The marker says the page once; the Manual button carries it in its name only. */}
+              <span class="mono" aria-hidden={isAppendixPage(e.data.page) ? undefined : 'true'}>
                 {isAppendixPage(e.data.page)
                   ? `Appendix ${e.data.label}`
                   : e.data.label
@@ -100,8 +112,12 @@ const scan = section.key === 'appendix' ? undefined : manualHref('ops', section.
               {isAppendixPage(e.data.page) ? (
                 <span class="small muted">owner's note</span>
               ) : (
-                <a class="btn sm" href={manualHref('ops', e.data.page)}>
-                  Scan
+                <a
+                  class="btn sm"
+                  href={manualHref('ops', e.data.page)}
+                  aria-label={`Manual ${pageTitleText('ops', e.data.page)}`}
+                >
+                  Manual
                 </a>
               )}
             </div>
@@ -109,8 +125,8 @@ const scan = section.key === 'appendix' ? undefined : manualHref('ops', section.
             {e.data.page === 9 && (
               <div class="shot-map">
                 <p class="small muted">
-                  Both shot maps (pages 9 and 10) on one drawing. Tap a letter; switch on the other
-                  layers to see the switches, lamps and coils under each shot.
+                  Both shot maps (p. E–F) on one drawing. Tap a letter; switch on the other layers
+                  to see the switches, lamps and coils under each shot.
                 </p>
                 <PlayfieldMap client:visible layer="shot" embed />
               </div>

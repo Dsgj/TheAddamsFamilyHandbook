@@ -1,8 +1,10 @@
 <script lang="ts">
-  import { KIND_LABEL, MAP_LAYER } from '~/lib/data/components';
+  import { componentCode, kindLine as kindLineOf } from '~/lib/copy';
+  import { MAP_LAYER } from '~/lib/data/components';
   import { COIL_NOTE, HINT, t } from '~/lib/data/en';
   import { positions } from '~/lib/data/positions';
   import type { Coil, Kind, Lamp, MapMeta, Switch } from '~/lib/model/types';
+  import { pageTitleText } from '~/lib/pages';
   import { componentHref, href, manualHref } from '~/lib/url';
   import MiniMap from './MiniMap.svelte';
   import StatusRow from './StatusRow.svelte';
@@ -29,22 +31,10 @@
   const mapPage = $derived(mapMeta.page);
   const pos = $derived(positions(kind, item.id));
   const isMatrix = $derived(!!sw && sw.col !== null);
-  const code = $derived(
-    kind === 'coil' ? `SOL ${item.id}` : kind === 'lamp' ? `L${item.id}` : item.id,
-  );
-  const kindLine = $derived.by(() => {
-    const parts = [KIND_LABEL[kind]];
-    if (sw && isMatrix) parts.push(`matrix column ${sw.col}, row ${sw.row}`);
-    if (sw?.kind === 'ded') parts.push('dedicated (CPU J205)');
-    if (sw?.kind === 'flip') parts.push('Fliptronics');
-    if (lamp) parts.push(`matrix column ${lamp.col}, row ${lamp.row}`);
-    if (coil) parts.push(coil.type);
-    if (lamp?.speaker) parts.push('speaker panel');
-    if ('unused' in item && item.unused) parts.push('not used');
-    if ('under' in item && item.under) parts.push('under the playfield');
-    if (coil?.cabinet) parts.push('cabinet');
-    return parts.join(' · ');
-  });
+  const code = $derived(componentCode(kind, item.id));
+  const kindLine = $derived(kindLineOf(kind, item));
+  /** "p. 2-39": the location map's printed label. */
+  const mapRef = $derived(pageTitleText('ops', mapPage));
 </script>
 
 <article class="card comp" data-kind={kind} data-id={item.id}>
@@ -114,7 +104,7 @@
     <dt>Callout</dt>
     <dd>
       {#if callouts}
-        {callouts} on <a href={manualHref('ops', mapPage)}>p. 2-{mapPage - 58}</a>
+        {callouts} on <a href={manualHref('ops', mapPage)}>{mapRef}</a>
       {:else if sw?.notShown}
         not shown on the location map
       {:else}
@@ -124,11 +114,7 @@
   </dl>
 
   {#if !compact}
-    <a
-      class="map-link"
-      href={href(`map?layer=${layer}&id=${item.id}`)}
-      aria-label="Open on the map"
-    >
+    <a class="map-link" href={href(`map?layer=${layer}&id=${item.id}`)} aria-label="Show on map">
       <MiniMap {pos} w={310} h={120} />
     </a>
   {/if}
@@ -137,7 +123,7 @@
 
   <div class="acts">
     <a class="btn sm tinted" href={href(`map?layer=${layer}&id=${item.id}`)}>Show on map</a>
-    <a class="btn sm tinted" href={manualHref('ops', mapPage)}>p. 2-{mapPage - 58}</a>
+    <a class="btn sm tinted" href={manualHref('ops', mapPage)}>Manual {mapRef}</a>
     {#if linkTitle}
       <a class="btn sm tinted" href={componentHref(kind, item.id)}>Details</a>
     {/if}

@@ -14,15 +14,15 @@ const raise = (page: Page, kind: string, text: string) =>
 test.describe('toasts', () => {
   test('one at a time, Update wins, offline leaves after 4 s, update stays', async ({ page }) => {
     await gotoHydrated(page, '/tables');
-    await raise(page, 'offline', 'Ready to work offline. Scans are cached as you open them.');
-    await raise(page, 'update', 'A new version of the handbook is ready.');
-    await raise(page, 'offline', 'Ready to work offline. Scans are cached as you open them.');
+    await raise(page, 'offline', 'Ready to work offline. Manual pages are saved as you open them.');
+    await raise(page, 'update', 'A new version of the app is ready.');
+    await raise(page, 'offline', 'Ready to work offline. Manual pages are saved as you open them.');
     const toast = page.locator('.toast');
     await expect(toast).toHaveCount(1);
-    await expect(toast).toContainText('A new version of the handbook is ready.');
+    await expect(toast).toContainText('A new version of the app is ready.');
     await expect(toast.getByRole('button', { name: 'Reload' })).toBeVisible();
     await page.waitForTimeout(4500);
-    await expect(toast).toContainText('A new version of the handbook is ready.');
+    await expect(toast).toContainText('A new version of the app is ready.');
     // The host is a live region, never a status role.
     await expect(page.locator('.toast-host')).toHaveAttribute('aria-live', 'polite');
     await expect(page.locator('.toast-host[role]')).toHaveCount(0);
@@ -40,7 +40,7 @@ test.describe('toasts', () => {
     test(`an update toast on ${path} adds no status role`, async ({ page }) => {
       await gotoHydrated(page, path);
       const before = await page.getByRole('status').count();
-      await raise(page, 'update', 'A new version of the handbook is ready.');
+      await raise(page, 'update', 'A new version of the app is ready.');
       await expect(page.locator('.toast')).toBeVisible();
       expect(await page.getByRole('status').count()).toBe(before);
     });
@@ -48,18 +48,20 @@ test.describe('toasts', () => {
 
   test('a tab under the toast host still takes the tap', async ({ page }) => {
     await gotoHydrated(page, '/tables');
-    await raise(page, 'update', 'A new version of the handbook is ready.');
+    await raise(page, 'update', 'A new version of the app is ready.');
     await expect(page.locator('.toast')).toBeVisible();
     await page.getByRole('link', { name: 'Workshop' }).first().click();
     await expect(page).toHaveURL(/\/workshop$/);
   });
 });
 
-test('an uncached scan says so offline, and "Show the text" reveals the OCR', async ({ page }) => {
+test('an uncached manual page says so offline; "Show the text" reveals its text', async ({
+  page,
+}) => {
   // Without a network the scan request fails the same way; aborting it is the deterministic form.
   await page.route('**/assets/pages/**', (r) => r.abort());
   await gotoHydrated(page, '/manual/ops/40');
-  await expect(page.getByText("This scan isn't on the device yet.")).toBeVisible();
+  await expect(page.getByText("This manual page isn't on the device yet.")).toBeVisible();
   await page.getByRole('button', { name: 'Show the text' }).click();
   await expect(page.locator('.text pre')).toBeVisible();
 });
@@ -68,9 +70,9 @@ test('the Install sheet opens from the Workshop, closes on Esc and returns focus
   page,
 }) => {
   await gotoHydrated(page, '/workshop');
-  const open = page.getByRole('button', { name: 'Install the handbook' });
+  const open = page.getByRole('button', { name: 'Install the app' });
   await open.click();
-  const dialog = page.getByRole('dialog', { name: 'Install the handbook' });
+  const dialog = page.getByRole('dialog', { name: 'Install the app' });
   await expect(dialog).toBeVisible();
   await expect(dialog.getByText('Opens without the browser bar')).toBeVisible();
   await expect(dialog.getByText('On iPhone: tap Share, then Add to Home Screen.')).toBeVisible();
@@ -88,7 +90,7 @@ test('pull-to-refresh lives on the Workshop only and ends in a toast', async ({ 
   await expect(page.locator('.toast[data-kind="offline"]')).toHaveCount(0, { timeout: 8000 });
   await page.evaluate(() => window.dispatchEvent(new CustomEvent('tafh:check-update')));
   await expect(page.locator('.toast')).toContainText(
-    /The handbook is up to date\.|A new version of the handbook is ready\./,
+    /The app is up to date\.|A new version of the app is ready\./,
     { timeout: 8000 },
   );
 });
@@ -116,7 +118,7 @@ test('offline, a query string still hits the precache and a handbook photo still
   await expect(
     page
       .locator('.t-name', { hasText: 'Switch 32' })
-      .or(page.locator('.sheet.map[aria-label="Selected part, Switch 32"]')),
+      .or(page.locator('.sheet.map[aria-label="Selected component, Switch 32"]')),
   ).toBeVisible();
 
   // The appendix is the one handbook section with photos (JPGs) rather than scan diagrams (PNGs).

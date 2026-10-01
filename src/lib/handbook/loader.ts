@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import type { Loader } from 'astro/loaders';
 import { finish, indexHeadings, parseHeader, renderPage, type Heading } from './render';
 import { SECTIONS, sectionOfPage } from './sections';
+import { plural } from '../copy';
 
 export interface HandbookEntry {
   page: number;
@@ -58,7 +59,7 @@ export function handbookLoader(dir = 'src/content/handbook'): Loader {
         });
         store.set({ id, data, rendered: { html: finish(r, idx, base) } });
       }
-      logger.info(`handbook: ${rendered.length} pages, ${idx.size} headings`);
+      logger.info(`handbook: ${plural(rendered.length, 'page')}, ${plural(idx.size, 'heading')}`);
     },
   };
 }

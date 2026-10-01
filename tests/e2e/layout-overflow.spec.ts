@@ -5,6 +5,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 import { gotoHydrated } from './helpers';
 import { TABS } from '~/lib/nav';
 import { SECTIONS } from '~/lib/handbook/sections';
+import { SETUP_STEPS } from '~/data/setup';
 
 /* P0 item 3 of the app audit (VP-01, VP-02, VL-02, AY-03, DS-12): `.hb` and `.grid-2` used a plain
    `1fr` track, which is `minmax(auto,1fr)`, so a wide table set the column's minimum and the whole
@@ -399,7 +400,7 @@ test.describe('P2-4: tables (spec §8.9)', () => {
     });
   }
 
-  test('at 600 the Broken column stays inside the solenoid wrapper', async ({ page, isMobile }) => {
+  test('at 600 the Fault column stays inside the solenoid wrapper', async ({ page, isMobile }) => {
     test.skip(isMobile, 'a desktop width');
     await at(page, 600, '/coils');
     const wrap = page.locator('.scroll-x', { has: page.locator('td.chk') }).first();
@@ -915,4 +916,26 @@ test.describe('P2-4: widths and measure (spec §3.1)', () => {
       });
     expect(r).toEqual({ lines: 1, height: 40 });
   });
+});
+
+/* P3 item 1 of the app audit (spec §13): "47 of 47 settings done" and its bar share one line on a
+ * 412 phone. With a 160 px bar the bar dropped to a second line from "10 of 47". */
+test('at 412 the /setup progress row stays one line with every setting done', async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(!isMobile, 'the phone project (412)');
+  const ids = SETUP_STEPS.flatMap((s) => s.items.map((i) => i.id));
+  expect(ids).toHaveLength(47);
+  await page.goto('setup');
+  await page.evaluate((list) => {
+    const at = '2026-09-23T00:00:00Z';
+    const all = Object.fromEntries(list.map((id) => [id, { value: '', done: true, at }]));
+    localStorage.setItem('tafh:setup', JSON.stringify(all));
+  }, ids);
+  await gotoHydrated(page, 'setup');
+  expect(page.viewportSize()!.width).toBe(412);
+  const row = page.locator('p.progress');
+  await expect(row).toContainText('47 of 47');
+  expect((await row.boundingBox())!.height).toBeLessThanOrEqual(40);
 });

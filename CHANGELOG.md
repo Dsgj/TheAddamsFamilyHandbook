@@ -2,6 +2,39 @@
 
 ## Unreleased
 
+- **One name per thing.** Fault replaces Broken on the tick column; codes are
+  32, L55 and SOL 01; one name per page; one verb per destination (Show on map,
+  Details, Manual p. n); UK spelling with Grey; dates carry the year and use
+  local time; 'n of m' progress; 'and' in titles; every page has its own
+  description. "p." stands only before a page number the manual prints, other
+  pages read "PDF page n"; the app is "The Addams Family Handbook" or "the app"
+  (TAF Handbook stays the home-screen label). The glossary and six copy rules
+  are spec §13, and `tests/unit/copy.test.ts` checks the rules on the source.
+  Words only: stored values, the backup format (version 2), the storage keys,
+  routes and anchors are unchanged, and the manual's own text keeps its words.
+  P3 item 1 of the app audit (CP-01 to CP-20, UX-06, UX-07, UX-10, CR-09).
+- **App audit fixes P0 to P2.** A full audit of the redesigned app
+  (`.claude/tasks/app-audit.md`), fixed in order. P0: the Diagnose field no
+  longer refills itself, every URL with a query string works offline, the phone
+  layout no longer widens past the screen, notes and setup values save as you
+  type and survive Back, backups are validated and include the Verify ticks,
+  the manual search opens the page you tapped, the Parts results no longer
+  vanish on duplicate rows and handbook photos are cached. P1: header and swipe
+  back go back instead of forward, Back from a card returns to the results, and
+  map links keep the kind. P2: the header title no longer overlaps the back
+  label, the component migration is finished (one button family, one search
+  field, type tokens, a z-index scale), the light theme and print use the right
+  ink, tables and the map side panel fit phone and desktop, and the map, setup
+  inputs, matrices and live counts are accessible.
+- **The app redesign, in twelve phases.** Tokens and the fitted playfield map
+  (1); map selection, the sheet and the side panel (2); hubs, the list
+  vocabulary and Appearance (3); the navigation shell with five tabs, Diagnose,
+  Map, Tables, Handbook and Workshop (4); the top bar, back links and the token
+  migration (5); the Diagnose home, results and search (6); the switch matrix
+  tabs, component detail and Recently viewed (7); the Handbook home, the reader
+  toolbar, the manual viewer and Parts (8); the Workshop screens (9); the
+  install surface (10); system states (11); motion and navigation continuity
+  (12). The design spec is `.claude/tasks/app-redesign-spec.md`.
 - **Setup guide: Add-A-Ball instead of Novelty.** The machine goes in a
   separate game room, so game length matters less and an extra ball beats a
   points bonus. The presets step now installs U.9 08, the standard adjustments
@@ -71,7 +104,7 @@
   `src/content/handbook/app1NN.md`; the loader, contents, search and `#find:`
   links treat them as handbook pages.
 
-- **Care** page (nav: Care). Cleaning and upkeep by interval, weekly to yearly,
+- **Care** page (Workshop: Care). Cleaning and upkeep by interval, weekly to yearly,
   as dated ticks on the device: balls, glass, playfield (Novus 1, no ammonia or
   solvents), plastics, rubbers, wax (carnauba, no silicone), coil sleeves, the
   manual's two grease points, connectors (DeoxIT on pins, paper through switch
@@ -88,7 +121,7 @@
   change as dated ticks, with a "later, only if needed" list for balls, NVRAM
   and hole protectors.
 
-- **Machine setup** page (nav: Setup). Presets, free play, standard adjustments,
+- **Machine setup** page (Workshop: Machine setup). Presets, free play, standard adjustments,
   high score table, the six H-4-only adjustments and the post-move utilities as
   a six-step guide with the suggested value, the reason, a link to the Handbook
   heading, a field for what the machine is actually set to and a Done tick.
@@ -128,7 +161,7 @@
   and solenoid tables writes the same device-local Fault status as the component
   cards, so the matrices and the map recolour live. The Lamps page gained a full
   lamp table (bulb type, bulb part, assembly) under the matrix.
-- **Shopping list** page (nav: Shopping list). Every component marked Fault,
+- **Shopping list** page (Workshop: Shopping list). Every component marked Fault,
   lamps grouped by bulb type with count and bulb part, switches and solenoids by
   part number with assembly, each linked to its card. Copy as text
   (`2 × #555 (24-8768): L11 Thing Multiball, L12 …`) and a Fixed button per part

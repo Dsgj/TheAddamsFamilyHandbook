@@ -6,9 +6,9 @@ import { DATA } from '~/lib/data/components';
 import { componentHref, manualHref } from '~/lib/url';
 
 /**
- * The switch matrix (spec §9.6): a tablist "Switch matrix view" with Matrix / Dedicated J205 /
- * Flipper J806. All three panels render at build time; the inactive ones carry `hidden`, so the
- * "Broken" ticks in every panel load their stored state on import.
+ * The switch matrix (spec §9.6): a tablist "Switch matrix view" with Matrix / Dedicated /
+ * Flippers; each panel heading carries the connectors. All three panels render at build time; the inactive ones carry `hidden`, so the
+ * "Fault" ticks in every panel load their stored state on import.
  */
 const matrix = DATA.switches
   .filter((s) => s.col !== null && s.row !== null)
@@ -18,12 +18,17 @@ const flip = DATA.switches.filter((s) => s.kind === 'flip');
 
 const TABS = [
   { id: 'matrix', label: 'Matrix' },
-  { id: 'j205', label: 'Dedicated J205' },
-  { id: 'j806', label: 'Flipper J806' },
+  { id: 'j205', label: 'Dedicated' },
+  { id: 'j806', label: 'Flippers' },
 ];
 ---
 
-<Base title="Switches" nav="switches">
+<Base
+  title="Switch matrix"
+  short="Switches"
+  nav="switches"
+  description="The switch matrix and the dedicated and flipper switches, with a Fault tick per switch."
+>
   <h1>Switch matrix</h1>
   <div class="seg tabs" role="tablist" aria-label="Switch matrix view">
     {
@@ -44,7 +49,9 @@ const TABS = [
 
   <div id="panel-matrix" role="tabpanel" aria-labelledby="tab-matrix" class="panel">
     <p class="muted">
-      Columns are driven from CPU J206/J207 through U20, rows read on J208/J209 through U18. Source:
+      Columns are driven from CPU J206/J207 through U20, rows read on J208/J209 through U18. Source:{
+        ' '
+      }
       <a href={manualHref('ops', 106)}>Switch Matrix p. 3-4</a>. Use the arrow keys to move between
       cells.
     </p>
@@ -62,7 +69,7 @@ const TABS = [
               <th role="columnheader">Name</th>
               <th role="columnheader">Wire</th>
               <th role="columnheader">Pin</th>
-              <th role="columnheader" class="chk">Broken</th>
+              <th role="columnheader" class="chk">Fault</th>
             </tr>
           </thead>
           <tbody role="rowgroup">
@@ -90,7 +97,7 @@ const TABS = [
                         class="fault-check"
                         data-kind="switch"
                         data-id={s.id}
-                        aria-label={`Broken: ${s.name}`}
+                        aria-label={`Fault: ${s.name}`}
                       />
                     </label>
                   </td>
@@ -105,7 +112,7 @@ const TABS = [
 
   <div id="panel-j806" role="tabpanel" aria-labelledby="tab-j806" class="panel" hidden>
     <section class="card">
-      <h2>Flipper switches (Fliptronics J806)</h2>
+      <h2>Flipper switches (Fliptronics J805/J806)</h2>
       <div class="scroll-x">
         <table class="t two" role="table">
           <thead role="rowgroup">
@@ -114,7 +121,7 @@ const TABS = [
               <th role="columnheader">Name</th>
               <th role="columnheader">Wire</th>
               <th role="columnheader">Pin</th>
-              <th role="columnheader" class="chk">Broken</th>
+              <th role="columnheader" class="chk">Fault</th>
             </tr>
           </thead>
           <tbody role="rowgroup">
@@ -142,7 +149,7 @@ const TABS = [
                         class="fault-check"
                         data-kind="switch"
                         data-id={s.id}
-                        aria-label={`Broken: ${s.name}`}
+                        aria-label={`Fault: ${s.name}`}
                       />
                     </label>
                   </td>

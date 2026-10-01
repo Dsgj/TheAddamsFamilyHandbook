@@ -7,13 +7,20 @@
   import {
     DATA,
     itemsOf,
-    KIND_LABEL,
     LAYER_KIND,
     LAYER_LABEL,
     LAYER_SOURCE,
     MAP_LAYER,
     type Layer,
   } from '~/lib/data/components';
+  import {
+    capitalise,
+    componentCode,
+    kindLine as kindLineOf,
+    agree,
+    locationLine,
+    plural,
+  } from '~/lib/copy';
   import { COIL_NOTE, HINT, t } from '~/lib/data/en';
   import { isTypingTarget } from '~/lib/keys';
   import { liveText } from '~/lib/live.svelte';
@@ -21,6 +28,7 @@
   import { allPositions, PLAYFIELD, positions, posKey } from '~/lib/data/positions';
   import { getStatus, STATUS_LABEL } from '~/lib/model/status.svelte';
   import type { Coil, Kind, Lamp, Loc, Switch } from '~/lib/model/types';
+  import { pageRefText, pageTitleText } from '~/lib/pages';
   import { componentHref, href, manualHref, parseMapId, replaceUrl } from '~/lib/url';
   import BottomSheet from './BottomSheet.svelte';
   import ComponentCard from './ComponentCard.svelte';
@@ -67,13 +75,15 @@
     coil: 'Solenoid',
     shot: 'Shot',
   };
-  /** The id as the DMD shows it. */
+  /** The id on a list tile (the exception to componentCode: the layer already names the kind). */
   const showId = (item: Item) => (item.kind === 'lamp' ? 'L' + item.id : item.id);
+  /** "Switch 32", "Lamp 55", "Solenoid 01", "Shot A": headings and accessible names (spec §13). */
+  const fullName = (item: Item) => `${KIND_WORD[item.kind]} ${item.id}`;
   /** Where the kind's table lives, for the sheet's links. */
   const TABLE: Record<Kind, [string, string]> = {
     switch: ['switches', 'Switch matrix'],
     lamp: ['lamps', 'Lamp matrix'],
-    coil: ['coils', 'Solenoid table'],
+    coil: ['coils', 'Solenoids and flashers'],
   };
   /** Selection sheet detents (spec §8.2). */
   const PEEK = 96;
@@ -90,7 +100,7 @@
    *  156 + 28 + 4 under it. */
   const CTRL_SIDE = 16 + 44 + 4;
   const CTRL_FOOT = 156 + 28 + 4;
-  /** Manual scans positioned so their playfield frame lands on the drawing's (calibration aid). */
+  /** Manual pages positioned so their playfield frame lands on the drawing's (calibration aid). */
   interface Overlay {
     src: string;
     left: number;
@@ -103,8 +113,8 @@
     sw: 'Switch map, 2-39',
     lamp: 'Lamp map, 2-40',
     coil: 'Solenoid map, 2-41',
-    shot9: 'Shots (1), PDF page 9',
-    shot10: 'Shots (2), PDF page 10',
+    shot9: `Shots (1), ${pageRefText('ops', 9)}`,
+    shot10: `Shots (2), ${pageRefText('ops', 10)}`,
   };
   const overlayFor = (l: MapLayer | undefined) => (l === 'shot' ? 'shot9' : (l ?? 'sw'));
 
@@ -166,9 +176,9 @@
   let reduced = false;
   /** The selection sheet's detent. */
   let expanded = $state(false);
-  /** The "All parts on the map" modal (phones and tablets). */
+  /** The "All components on the map" modal (phones and tablets). */
   let partsOpen = $state(false);
-  /** The "Find a part" filter (Q28). */
+  /** The "Search components" filter (Q28). */
   let q = $state('');
   /** True once the first fit has landed, so later re-fits animate and the first never does. */
   let ready = $state(false);
@@ -293,8 +303,8 @@
       mq.addEventListener('change', h);
       return () => mq.removeEventListener('change', h);
     });
-    // The top bar's buttons (map.astro, spec §6.5): "All parts on the map" opens the parts sheet;
-    // "Find a part" opens it with its field focused below 1000 and focuses the panel's field
+    // The top bar's buttons (map.astro, spec §6.5): "All components on the map" opens the list
+    // sheet; "Search components" opens it with its field focused below 1000 and focuses the panel's field
     // from 1000 (Q28).
     const onBar = (e: Event) => {
       if (embed) return;
@@ -461,44 +471,38 @@
   function markerName(item: Item, selected: boolean) {
     const st = statusOf(item);
     return (
-      KIND_WORD[item.kind] +
-      ' ' +
-      showId(item) +
+      fullName(item) +
       ', ' +
       item.name +
       (st === 'fault' ? ', Fault' : '') +
       (selected ? ', selected' : '')
     );
   }
-  /** "Switch · column 3, row 2": the kind line under a name. */
+  /** "Switch · matrix column 3, row 2": the kind line under a name (spec §13). */
   function kindLine(item: Item) {
-    const c = item.comp;
-    if (item.kind === 'switch' && c) {
-      const sw = c as Switch;
-      if (sw.col !== null) return `Switch · column ${sw.col}, row ${sw.row}`;
-      return sw.kind === 'flip' ? 'Switch · Fliptronics' : 'Switch · dedicated (CPU J205)';
+    if (item.kind === 'shot') {
+      const page = SHOTS.find((x) => x.id === item.id)?.page;
+      return page ? `Shot · ${pageTitleText('ops', page)}` : 'Shot';
     }
-    if (item.kind === 'lamp' && c)
-      return `Lamp · column ${(c as Lamp).col}, row ${(c as Lamp).row}`;
-    if (item.kind === 'coil' && c) return `Solenoid · ${(c as Coil).type}`;
-    if (item.kind === 'shot') return `Shot · PDF page ${SHOTS.find((x) => x.id === item.id)?.page}`;
-    return KIND_LABEL[item.kind];
+    return item.comp ? kindLineOf(item.kind, item.comp) : KIND_WORD[item.kind];
   }
-  /** The second line of a list row. */
+  /** The second line of a list row: where it sits, on the rows that carry one (matrix, coils). */
   function subtitle(item: Item) {
     const c = item.comp;
-    if (!c) return '';
-    if (item.kind === 'coil') return (c as Coil).type;
-    const m = c as Switch | Lamp;
-    return m.col !== null && m.col !== undefined ? `Column ${m.col}, row ${m.row}` : '';
+    if (!c || item.kind === 'shot') return '';
+    if (item.kind !== 'coil' && (c as Switch | Lamp).col == null) return '';
+    // The row's name already says "Not Used" and the row says "not on map": no third "not used".
+    return capitalise(locationLine(item.kind, { ...c, unused: false }));
   }
-  /** The "Find a part" filter: id or name (Q28). */
+  /** The "Search components" filter: id or name (Q28). */
   const findLive = liveText(
     () => q,
     () => {
       const s = q.trim();
       const n = visible.reduce((a, l) => a + itemsIn(l).filter(matches).length, 0);
-      return n ? `${n} ${n === 1 ? 'part matches' : 'parts match'}` : `No parts match “${s}”.`;
+      return n
+        ? `${plural(n, 'component')} ${agree(n, 'matches', 'match')}`
+        : `No components match “${s}”.`;
     },
   );
   function matches(item: Item) {
@@ -849,15 +853,15 @@
       >{LAYER_SOURCE[compLayers[0]]}</a
     >
   {:else if visible.length === 1 && on.has('shot')}
-    <a class="small src" href={manualHref('ops', 9)}>Playfield Shots, PDF pages 9–10</a>
+    <a class="small src" href={manualHref('ops', 9)}>Playfield Shots, Operations Manual p. E–F</a>
   {/if}
 {/snippet}
 
 {#snippet prov()}
   <p class="prov">
-    Positions were remapped from the manual's location maps (pages 2-39 to 2-41) and shot maps (PDF
-    pages 9–10), then placed by hand over the original scans. Off-playfield parts (Start button,
-    THING and credit lamps) sit on the nearest edge.
+    Positions were remapped from the manual's location maps (p. 2-39 to 2-41) and shot maps (p.
+    E–F), then placed by hand over the manual pages. Off-playfield components (Start button, THING
+    and credit lamps) sit on the nearest edge.
   </p>
 {/snippet}
 
@@ -867,8 +871,8 @@
     <h2>{shot.name}</h2>
     <p class="small">
       Shot {shot.id} on the manual's shot map,
-      <a href={manualHref('ops', shot.page)}>PDF page {shot.page}</a>. Turn on the other layers to
-      see the switches, lamps and coils under it.
+      <a href={manualHref('ops', shot.page)}>{pageTitleText('ops', shot.page)}</a>. Turn on the
+      other layers to see the switches, lamps and coils under it.
     </p>
   </article>
 {/snippet}
@@ -885,7 +889,7 @@
 {#snippet partHead(item: Item)}
   {@const st = statusOf(item)}
   <div class="ph">
-    <span class="code lg dmd">{showId(item)}</span>
+    <span class="code lg dmd">{componentCode(item.kind, item.id)}</span>
     <div class="pt">
       <h2 class="name">{item.name}</h2>
       <p class="kind muted">{kindLine(item)}</p>
@@ -950,9 +954,9 @@
     {#if coil?.note}
       <p class="prov hint">{t(COIL_NOTE, coil.note)}</p>
     {/if}
-    <nav class="more" aria-label="More about {KIND_WORD[item.kind].toLowerCase()} {showId(item)}">
+    <nav class="more" aria-label="More about {fullName(item).toLowerCase()}">
       <a class="btn sm" href={componentHref(item.kind, item.id)}>Details</a>
-      <a class="btn sm" href={manualHref('ops', page)}>Manual p. 2-{page - 58}</a>
+      <a class="btn sm" href={manualHref('ops', page)}>Manual {pageTitleText('ops', page)}</a>
       <a class="btn sm" href={href(TABLE[item.kind][0])}>{TABLE[item.kind][1]}</a>
       {#if statusOf(item) === 'fault'}
         <a class="btn sm" href={href('shopping')}>On the shopping list</a>
@@ -963,8 +967,8 @@
     {#if shot}
       <p class="small shot-note">
         Shot {shot.id} on the manual's shot map,
-        <a href={manualHref('ops', shot.page)}>PDF page {shot.page}</a>. Turn on the other layers to
-        see the switches, lamps and coils under it.
+        <a href={manualHref('ops', shot.page)}>{pageTitleText('ops', shot.page)}</a>. Turn on the
+        other layers to see the switches, lamps and coils under it.
       </p>
     {/if}
   {/if}
@@ -973,7 +977,12 @@
 <!-- The parts list with its filter: the phone sheet and the wide panel share it (spec §7.7). -->
 {#snippet partsList(inSheet: boolean)}
   <div class="parts">
-    <SearchField label="Find a part" placeholder="Find a part" autofocus={inSheet} bind:value={q} />
+    <SearchField
+      label="Search components"
+      placeholder="Search components"
+      autofocus={inSheet}
+      bind:value={q}
+    />
     {#if inSheet}
       {@render srcLink()}
       {@render prov()}
@@ -1012,14 +1021,14 @@
       {/if}
     {/each}
     {#if q.trim() && !visible.some((l) => itemsIn(l).some(matches))}
-      <p class="gf none">No parts match “{q.trim()}”.</p>
+      <p class="gf none">No components match “{q.trim()}”.</p>
     {/if}
   </div>
 {/snippet}
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="map-ui" class:embed class:wide onkeydown={(e) => onKey(e)} bind:this={mapUi}>
-  <!-- Spec §12: the find field's one announcer, debounced; the visible "No parts match" stays. -->
+  <!-- Spec §12: the find field's one announcer, debounced; the visible "No components match" stays. -->
   <p class="sr-only" aria-live="polite" aria-atomic="true">{findLive.text}</p>
   {#if calib}
     <div class="card calib" bind:this={calibEl}>
@@ -1217,7 +1226,7 @@
       {#if sheetOpen && current}
         <BottomSheet
           kind="map"
-          label="Selected part, {KIND_WORD[current.kind]} {showId(current)}"
+          label="Selected component, {fullName(current)}"
           bind:expanded
           peek={PEEK}
           full={FULL}
@@ -1232,7 +1241,11 @@
     </div>
 
     {#if wide && !embed}
-      <aside class="side panel" aria-label="Selected part and parts on the map" bind:this={panel}>
+      <aside
+        class="side panel"
+        aria-label="Selected component and components on the map"
+        bind:this={panel}
+      >
         <div class="panel-top">
           {@render srcLink()}
           {#if glassInPanel}
@@ -1257,15 +1270,13 @@
         </div>
         <section
           class="selected"
-          aria-label={current
-            ? `Selected part, ${KIND_WORD[current.kind]} ${showId(current)}`
-            : 'Selected part'}
+          aria-label={current ? `Selected component, ${fullName(current)}` : 'Selected component'}
           tabindex="-1"
           bind:this={selectedEl}
         >
           {#if current}
             <div class="ph slim">
-              <h2 class="t-name">{KIND_WORD[current.kind]} {showId(current)}</h2>
+              <h2 class="t-name">{fullName(current)}</h2>
               {@render deselectBtn()}
             </div>
           {/if}
@@ -1281,7 +1292,7 @@
             {@render emptyCard()}
           {/if}
         </section>
-        <section class="listing" aria-label="Parts on the map">
+        <section class="listing" aria-label="Components on the map">
           {@render partsList(false)}
         </section>
       </aside>
@@ -1330,7 +1341,7 @@
 
   {#if partsOpen && !embed && !wide}
     <BottomSheet
-      label="All parts on the map"
+      label="All components on the map"
       recede="header.top, .map-ui > .stage, .map-ui > .calib"
       onclose={() => (partsOpen = false)}
     >

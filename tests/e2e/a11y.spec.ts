@@ -174,13 +174,13 @@ test.describe('map keyboard model (AY-01, spec §7.5)', () => {
       (await marker.getAttribute('aria-label'))!,
     )![1]!;
     await page.keyboard.press('Enter');
-    const sel = page.locator('[aria-label^="Selected part, "]:focus');
+    const sel = page.locator('[aria-label^="Selected component, "]:focus');
     await expect(sel).toHaveCount(1);
     await expect(sel).toContainText(id);
 
     // Esc deselects and hands focus back to the part's marker.
     await page.keyboard.press('Escape');
-    await expect(page.locator('[aria-label^="Selected part, "]')).toHaveCount(0);
+    await expect(page.locator('[aria-label^="Selected component, "]')).toHaveCount(0);
     await expect(page.locator('button.marker:focus')).toHaveAttribute('data-key', key!);
   });
 
@@ -193,7 +193,7 @@ test.describe('map keyboard model (AY-01, spec §7.5)', () => {
     const pick = markers.nth(Math.floor((await markers.count()) / 2));
     await pick.click();
     await expect(pick).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.locator('[aria-label^="Selected part, "]:focus')).toHaveCount(0);
+    await expect(page.locator('[aria-label^="Selected component, "]:focus')).toHaveCount(0);
     const key = await pick.getAttribute('data-key');
     await page.locator('.scroller').focus();
     await page.keyboard.press('ArrowRight');
@@ -212,7 +212,7 @@ test.describe('map keyboard model (AY-01, spec §7.5)', () => {
     await page.keyboard.press('ArrowRight');
     const key = (await page.locator('button.marker:focus').getAttribute('data-key'))!;
     await page.keyboard.press('Enter');
-    await expect(page.locator('[aria-label^="Selected part, "]:focus')).toHaveCount(1);
+    await expect(page.locator('[aria-label^="Selected component, "]:focus')).toHaveCount(1);
     /** The marker lies outside the drawing's visible box. */
     const away = () =>
       scroller.evaluate((el, k) => {
@@ -229,7 +229,7 @@ test.describe('map keyboard model (AY-01, spec §7.5)', () => {
     }, key);
     expect(await away()).toBe(true);
     await page.getByRole('button', { name: 'Deselect' }).click();
-    await expect(page.locator('[aria-label^="Selected part, "]')).toHaveCount(0);
+    await expect(page.locator('[aria-label^="Selected component, "]')).toHaveCount(0);
     await expect(page.locator('button.marker:focus')).toHaveAttribute('data-key', key);
     await page.waitForTimeout(300);
     expect(await away()).toBe(true);
@@ -431,7 +431,7 @@ const SURFACES: Surface[] = [
     field: DIAG,
     region: 'section.diag > p[aria-live]',
     hit: ['flipper', /^\d+ results? for “flipper”$/],
-    miss: ['qqzzx', /^Nothing found for “qqzzx”$/],
+    miss: ['qqzzx', /^No results match “qqzzx”\.$/],
   },
   {
     name: 'Diagnose codes',
@@ -453,7 +453,7 @@ const SURFACES: Surface[] = [
   {
     name: 'manual',
     url: '/manual',
-    field: 'input[aria-label="Search manual text"]',
+    field: 'input[aria-label="Search the manuals"]',
     region: '.msearch > p[aria-live]',
     hit: ['flipper', /^\d+ pages?$/],
     miss: ['qqzzx', /^No pages match “qqzzx”\.$/],
@@ -471,12 +471,12 @@ const SURFACES: Surface[] = [
     url: '/map',
     open: async (page) => {
       if (!(await isWide(page)))
-        await page.getByRole('button', { name: 'All parts on the map' }).click();
+        await page.getByRole('button', { name: 'All components on the map' }).click();
     },
-    field: 'input[aria-label="Find a part"]',
+    field: 'input[aria-label="Search components"]',
     region: '.map-ui > p[aria-live]',
-    hit: ['jet', /^\d+ parts match$/],
-    miss: ['qqzzx', /^No parts match “qqzzx”\.$/],
+    hit: ['jet', /^\d+ components match$/],
+    miss: ['qqzzx', /^No components match “qqzzx”\.$/],
   },
   {
     name: 'handbook contents',
@@ -493,7 +493,7 @@ const SURFACES: Surface[] = [
           .click();
       }
     },
-    field: 'input[aria-label="Filter contents"]',
+    field: 'input[aria-label="Search the handbook"]',
     region: 'nav.toc > p[aria-live]',
     hit: ['switch', /^\d+ headings? match/],
     miss: ['qqzzx', /^No headings match “qqzzx”\.$/],
@@ -549,7 +549,7 @@ test.describe('search results are announced (AY-09, spec §12)', () => {
 
   test('one manual page is "1 page"', async ({ page }) => {
     await gotoHydrated(page, '/manual');
-    await page.locator('input[aria-label="Search manual text"]').fill('intelligence');
+    await page.locator('input[aria-label="Search the manuals"]').fill('intelligence');
     await expect(page.locator('.msearch > p[aria-live]')).toHaveText('1 page');
   });
 
@@ -887,6 +887,36 @@ test.describe('fields keep a focus ring and a 3:1 edge (AY-15, FIELD-3-1)', () =
       expect(ring.style).toBe('solid');
       expect(ring.width).toBe('2px');
       expect(ring.color).toBe(ring.amber);
+    });
+  }
+});
+
+/* P3 item 1 of the app audit (spec §13): a link in running text keeps its spaces. Astro drops
+ * the line break before an inline <a>, which glued "Source:" to its link. */
+test.describe('inline-link spacing', () => {
+  for (const path of ['/care', '/setup', '/shopping', '/switches', '/lamps', '/coils']) {
+    test(`${path}: every link in running text has a space or punctuation each side`, async ({
+      page,
+    }) => {
+      await gotoHydrated(page, path);
+      const glued = await page.locator('main a').evaluateAll((links) =>
+        links.flatMap((a) => {
+          const block = a.parentElement?.closest('p, li, dd, td, figcaption');
+          if (!block) return [];
+          const r = document.createRange();
+          r.selectNodeContents(block);
+          r.setEndBefore(a);
+          const before = r.toString().slice(-1);
+          r.selectNodeContents(block);
+          r.setStartAfter(a);
+          const after = r.toString().slice(0, 1);
+          const ok =
+            (before === '' || /[\s(“‘"'/—–-]/.test(before)) &&
+            (after === '' || /[\s.,;:!?)”’"'/—–-]/.test(after));
+          return ok ? [] : [`${before}[${a.textContent?.trim()}]${after}`];
+        }),
+      );
+      expect(glued).toEqual([]);
     });
   }
 });

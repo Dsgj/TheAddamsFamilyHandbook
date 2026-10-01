@@ -55,9 +55,9 @@ async function markSwitchFault(page: Page, id = 32) {
   await expect(fault).toHaveAttribute('aria-pressed', 'true');
 }
 
-async function tickBrokenLamp(page: Page) {
+async function tickFaultLamp(page: Page) {
   await gotoHydrated(page, '/lamps');
-  await page.getByLabel('Broken: Thing Multiball').check();
+  await page.getByLabel('Fault: Thing Multiball').check();
 }
 
 /** Runs in the page. Every visible text node and shown placeholder, composited over its DOM
@@ -291,12 +291,12 @@ const ROUTES: Route[] = [
     name: 'install sheet',
     path: '/workshop',
     prep: async (page) => {
-      await page.getByText('Install the handbook').first().click();
+      await page.getByText('Install the app').first().click();
       await expect(page.getByRole('dialog')).toBeVisible();
     },
   },
   { name: 'setup', path: '/setup' },
-  { name: 'shopping list', path: '/shopping', before: tickBrokenLamp },
+  { name: 'shopping list', path: '/shopping', before: tickFaultLamp },
 ];
 
 for (const route of ROUTES) {
@@ -459,7 +459,7 @@ const PRINT: PrintRoute[] = [
     path: '/shopping',
     h1: 'page',
     present: ['nav.shell', '.back', '.top .lead', '.acts', 'button.lrow'],
-    before: tickBrokenLamp,
+    before: tickFaultLamp,
   },
   { path: '/switch/32', h1: 'bar', present: ['.seg', '.back', 'nav.pn', 'button.lrow'] },
   { path: '/handbook', h1: 'large', present: ['.srch', '.search', '.seg'] },
@@ -479,7 +479,7 @@ const PRINT: PrintRoute[] = [
     h1: 'large',
     present: ['.seg', '.scrim', '.sheet.dialog'],
     prep: async (page) => {
-      await page.getByText('Install the handbook').first().click();
+      await page.getByText('Install the app').first().click();
       await expect(page.getByRole('dialog')).toBeVisible();
     },
   },

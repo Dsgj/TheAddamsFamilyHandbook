@@ -6,7 +6,10 @@ import { findHeading, type HeadingIndex } from '~/lib/handbook/render';
 import { handbookToc } from '~/lib/handbook/toc';
 import { href } from '~/lib/url';
 
-/** Resolve each item to its heading in the Handbook the way `#find:` links do; section as fallback. */
+/**
+ * Resolve each item to its heading in the Handbook the way `#find:` links do; section as fallback.
+ * The advice itself lives in src/data/setup.ts.
+ */
 const toc = await handbookToc();
 const idx: HeadingIndex = new Map(
   toc
@@ -39,13 +42,12 @@ for (const s of SETUP_STEPS) {
     warning={FACTORY_RESET_WARNING}
   />
   <p class="muted small">
-    Values and ticks stay on this device and go into the backup on the
-    <a href={href('shopping')}>Shopping list</a> page. The advice lives in <code
-      >src/data/setup.ts</code
-    >; the full option lists are in the Handbook under <a href={href('handbook/adjustments')}
-      >Adjustments</a
-    >, <a href={href('handbook/presets')}>Difficulty & presets</a> and <a
-      href={href('handbook/utilities')}>Utilities</a
-    >.
+    Values and ticks stay on this device and go into the backup on the{' '}
+    <a href={href('shopping')}>Shopping list</a> page. The full option lists are in the handbook under{
+      ' '
+    }
+    <a href={href('handbook/adjustments')}>Adjustments</a>,{' '}
+    <a href={href('handbook/utilities')}>Utilities</a> and{' '}
+    <a href={href('handbook/presets')}>Difficulty and presets</a>.
   </p>
 </Base>

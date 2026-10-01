@@ -33,7 +33,7 @@ test('Tables: rows, counts from the data and the search filter', async ({ page }
   await expect(hub(page).getByRole('link', { name: /Switch matrix/ })).toContainText(
     '64 matrix, 8 dedicated, 8 flipper',
   );
-  await expect(hub(page).getByRole('link', { name: /Solenoids & flashers/ })).toContainText('28');
+  await expect(hub(page).getByRole('link', { name: /Solenoids and flashers/ })).toContainText('28');
   await expect(hub(page).getByRole('link', { name: /^Fuses/ })).toContainText('25');
   await expect(page.locator('[data-recent]')).toBeHidden();
   await page.getByRole('searchbox', { name: 'Search tables' }).fill('lamp');
@@ -55,7 +55,7 @@ test('Workshop: rows and counts from the device', async ({ page }) => {
   await expect(page.locator('[data-count="verify"]')).toHaveText('0 of 13');
   await expect(hub(page).getByRole('link', { name: /Machine setup/ })).toContainText('7 steps');
   await expect(hub(page).getByRole('link', { name: /^Care/ })).toContainText(
-    'Next: every week or so',
+    'Every week to every year',
   );
   await expect(page.locator('.lrow.static', { hasText: 'Version' }).locator('.val')).toHaveText(
     '0.1.0',
@@ -91,11 +91,11 @@ test('Appearance stores Light, survives a reload, and System clears it', async (
   await expect(page.locator('html')).not.toHaveAttribute('data-theme', /./);
 });
 
-test('About this handbook opens a dialog and hands focus back', async ({ page }) => {
+test('About the app opens a dialog and hands focus back', async ({ page }) => {
   await gotoHydrated(page, '/workshop');
-  const row = page.getByRole('button', { name: 'About this handbook' });
+  const row = page.getByRole('button', { name: 'About the app' });
   await row.click();
-  const dialog = page.getByRole('dialog', { name: 'About this handbook' });
+  const dialog = page.getByRole('dialog', { name: 'About the app' });
   await expect(dialog).toBeVisible();
   await expect(dialog).toContainText('Williams Electronics Games / Midway');
   await expect(dialog).toContainText('Version 0.1.0');
