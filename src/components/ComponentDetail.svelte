@@ -301,6 +301,10 @@
     align-items: center;
     margin-bottom: 8px;
   }
+  /* Spec §8.6: the badge keeps its width; the title beside it wraps. */
+  .dh .code {
+    flex: none;
+  }
   .head {
     min-width: 0;
   }
@@ -364,6 +368,10 @@
   }
   .hint {
     margin: 10px 0 0;
+  }
+  /* The prose measure (spec §3.1) on the hint; the group footers take it from base.css (.gf). */
+  .hint {
+    max-width: var(--measure);
   }
   /* minmax(0,1fr), not the implicit auto track: the map crop starts at 340 before it measures
      itself, and an auto track would keep that as its minimum and push the sheet past a 320 phone. */

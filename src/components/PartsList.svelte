@@ -149,23 +149,44 @@
         : ''}{/if}
   </p>
   <div class="scroll-x">
-    <table class="t">
-      <thead>
-        <tr><th>Item</th><th>Part no.</th><th>Description</th><th>Qty</th></tr>
+    <!-- Spec §8.9: under 600 the rows are two-line flex rows, which drops table semantics in
+         WebKit, so the roles are explicit. -->
+    <!-- svelte-ignore a11y_no_redundant_roles -->
+    <table class="t two" role="table">
+      <!-- svelte-ignore a11y_no_redundant_roles -->
+      <thead role="rowgroup">
+        <!-- svelte-ignore a11y_no_redundant_roles -->
+        <tr role="row">
+          <th role="columnheader" class="key">Item</th>
+          <th role="columnheader">Part no.</th>
+          <th role="columnheader">Description</th>
+          <th role="columnheader">Qty</th>
+        </tr>
       </thead>
-      <tbody>
+      <!-- svelte-ignore a11y_no_redundant_roles -->
+      <tbody role="rowgroup">
         {#each shown as i (i)}
           {@const r = rows[i]!}
-          <tr class="lv{Math.min(r[1], 4)}" class:hl={r[2] === highlight} data-part={r[2]}>
-            <td class="mono muted">{r[0]}</td>
-            <td class="mono">{r[2]}</td>
-            <td style:padding-left="{10 + (searching ? 0 : (r[1] - 1) * 14)}px">
+          <!-- svelte-ignore a11y_no_redundant_roles -->
+          <tr
+            role="row"
+            class="lv{Math.min(r[1], 4)}"
+            class:hl={r[2] === highlight}
+            data-part={r[2]}
+          >
+            <td role="cell" class="key mono muted">{r[0]}</td>
+            <td role="cell" class="mono" data-h="Part no.">{r[2]}</td>
+            <td
+              role="cell"
+              class="nm"
+              style:padding-left="{10 + (searching ? 0 : (r[1] - 1) * 14)}px"
+            >
               {r[3]}
               {#if searching && path(i).length}
                 <span class="asm muted small">{path(i).join(' › ')}</span>
               {/if}
             </td>
-            <td class="mono">{r[4]}</td>
+            <td role="cell" class="mono" data-h="Qty">{r[4]}</td>
           </tr>
         {/each}
       </tbody>

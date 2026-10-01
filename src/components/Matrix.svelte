@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { untrack } from 'svelte';
+  import { tick, untrack } from 'svelte';
   import { getStatus } from '~/lib/model/status.svelte';
   import type { Kind, MatrixHeaders } from '~/lib/model/types';
   import { componentHref, href } from '~/lib/url';
@@ -37,6 +37,17 @@
   const code = (id: string) => (kind === 'lamp' ? `L${id}` : id);
   let hoverCol = $state(0);
   let hoverRow = $state(0);
+  let card = $state<HTMLElement>();
+
+  /** Spec §9.6: a keyboard selection brings its card into view above the tab bar, then the focused
+   *  cell back if both cannot fit. Instant, so reduced motion needs no branch. Only for a visible
+   *  focus: a pointer press on a cell link must not move the page between press and click. */
+  async function reveal(el: HTMLElement) {
+    if (!el.matches(':focus-visible')) return;
+    await tick();
+    card?.scrollIntoView({ block: 'nearest' });
+    el.scrollIntoView({ block: 'nearest' });
+  }
 
   function onKey(e: KeyboardEvent) {
     const c = Number(focus[0]);
@@ -62,14 +73,18 @@
   <table class="matrix" role="grid" aria-label="{kind} matrix" onkeydown={onKey}>
     <thead>
       <tr>
-        <th class="corner"><span class="muted small">row ↓ / col →</span></th>
+        <th class="corner">
+          <span class="muted small way"
+            ><span>row ↓</span> <span class="sl">/</span> <span>col →</span></span
+          >
+        </th>
         {#each N as c (c)}
           {@const h = cols[String(c)]}
           <th class="colh" class:hi={hoverCol === c} scope="col">
             <div class="hd">
               <span class="n">{c}</span>
               {#if h}<WireChip colour={h[1]} label={h[1]} /><span class="mono pin"
-                  >{h[2]}<br />{h[3]}</span
+                  ><span class="tok">{h[2]}</span><br /><span class="tok">{h[3]}</span></span
                 >{/if}
             </div>
           </th>
@@ -83,8 +98,10 @@
           <th class="rowh" class:hi={hoverRow === r} scope="row">
             <div class="hd">
               <span class="n">{r}</span>
+              <!-- Each code is a nowrap .tok (base.css): the pin wraps at the separator, never at a
+                   code's hyphen ('U18-11' in the 104 of the row header from 1000 and on paper). -->
               {#if h}<WireChip colour={h[1]} label={h[1]} /><span class="mono pin"
-                  >{h[2]} · {h[3]}</span
+                  ><span class="tok">{h[2]}</span> · <span class="tok">{h[3]}</span></span
                 >{/if}
             </div>
           </th>
@@ -102,11 +119,13 @@
                   data-cell={id}
                   tabindex={focus === id ? 0 : -1}
                   class:target={highlight === cell.id}
-                  onfocus={() => {
+                  onfocus={(e) => {
                     focus = id;
+                    const changed = selected !== cell.id;
                     selected = cell.id;
                     hoverCol = c;
                     hoverRow = r;
+                    if (changed) void reveal(e.currentTarget);
                   }}
                   onmouseenter={() => {
                     hoverCol = c;
@@ -135,7 +154,7 @@
 {#if sel}
   {@const ch = cols[String(sel.col)]}
   {@const rh = rows[String(sel.row)]}
-  <div class="card cell" data-cell-card={sel.id}>
+  <div class="card cell" data-cell-card={sel.id} bind:this={card}>
     <header>
       <span class="code lg dmd">{code(sel.id)}</span>
       <div class="head">
@@ -188,7 +207,7 @@
     font-weight: 500;
     color: var(--ink);
   }
-  /* Size only: the pin is .mono. */
+  /* Size only: the pin is .mono, and each of its codes a nowrap .tok. */
   .pin {
     font-size: 12px;
     line-height: 16px;
@@ -270,6 +289,111 @@
     gap: 12px;
     margin-top: var(--gap);
     max-width: 480px;
+    scroll-margin-bottom: calc(var(--tabbar-h) + var(--safe-bot) + 8px);
+  }
+  td a,
+  td .empty {
+    scroll-margin-top: calc(var(--topbar-h) + 8px);
+  }
+  /* Spec §9.6 "Fit". From 1000 the grid fits the column: a 112 header column, eight equal cells,
+     the names and the header wire labels wrap. The cells keep 58 as their minimum (a table cell's
+     height is a minimum). */
+  @media (min-width: 1000px) {
+    .matrix {
+      table-layout: fixed;
+      width: 100%;
+      min-width: 0;
+      border-spacing: 3px;
+    }
+    .corner {
+      width: 112px;
+    }
+    .rowh,
+    td {
+      min-width: 0;
+    }
+    .nm {
+      overflow-wrap: anywhere;
+    }
+    .hd :global(.wire) {
+      flex-wrap: wrap;
+      white-space: normal;
+    }
+  }
+  /* 600–999: the 860 grid scrolls sideways under a pinned row header. Sticky cells paint above the
+     static ones, so no z-index; the cells keep clear of the pinned column when focus moves left.
+     Screen only: A4 (718) prints the fixed grid of the print block. */
+  @media screen and (min-width: 600px) and (max-width: 999px) {
+    .corner,
+    .rowh {
+      position: sticky;
+      left: 0;
+      background: var(--ground);
+    }
+    td a,
+    td .empty {
+      scroll-margin-left: 124px;
+    }
+  }
+  /* Phone: the grid fits the width with no scroll. Cells show the id (the name stays in the link's
+     accessible name and in the card); the headers show the number over the wire's colour swatch
+     (its name stays for screen readers), and the corner keeps "row ↓" over "col →". */
+  @media (max-width: 599px) {
+    .matrix {
+      table-layout: fixed;
+      width: 100%;
+      min-width: 0;
+      border-spacing: 2px;
+    }
+    .corner {
+      width: 40px;
+    }
+    .rowh,
+    td {
+      min-width: 0;
+    }
+    td {
+      height: 44px;
+      vertical-align: middle;
+    }
+    td a,
+    td .empty {
+      display: grid;
+      place-items: center;
+      padding: 0;
+    }
+    .nm {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+    .hd .pin,
+    .way .sl {
+      display: none;
+    }
+    /* 'row ↓' is 37 wide in --t-foot: the whole 40 of the corner keeps it on one line. */
+    .corner {
+      padding-inline: 0;
+    }
+    .way {
+      display: grid;
+    }
+    .hd :global(.wire i) {
+      width: 100%;
+      max-width: 26px;
+      height: 8px;
+    }
+    .hd :global(.wire > span) {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
   }
   .cell header {
     display: flex;

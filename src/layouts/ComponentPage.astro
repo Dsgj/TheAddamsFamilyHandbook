@@ -132,7 +132,9 @@ const svc = serviceNotes(kind, item)
     border-left: 2px solid var(--brass);
     padding-left: 10px;
   }
+  /* The prose measure (spec §3.1) on the text, not the column. */
   .notes p {
+    max-width: var(--measure);
     margin: 0 0 4px;
   }
   .notes .links {

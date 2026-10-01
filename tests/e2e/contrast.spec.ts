@@ -570,12 +570,33 @@ for (const path of ['/switches', '/lamps']) {
               .map((c) => c.textContent?.trim().slice(0, 24) ?? '')
           : ['no table'],
         name: nm ? parseFloat(getComputedStyle(nm).fontSize) : 0,
+        // A header pin wraps between its codes, never inside one (U18-11 at its hyphen).
+        broken: table
+          ? [...table.querySelectorAll('.pin')].flatMap((pin) => {
+              const out: string[] = [];
+              const walk = document.createTreeWalker(pin, NodeFilter.SHOW_TEXT);
+              for (let n = walk.nextNode(); n; n = walk.nextNode())
+                for (const w of n.textContent!.matchAll(/\S+/g)) {
+                  const range = document.createRange();
+                  range.setStart(n, w.index);
+                  range.setEnd(n, w.index + w[0].length);
+                  const tops = new Set(
+                    [...range.getClientRects()]
+                      .filter((b) => b.width > 0)
+                      .map((b) => Math.round(b.top)),
+                  );
+                  if (tops.size > 1) out.push(w[0]);
+                }
+              return out;
+            })
+          : ['no table'],
       };
     });
     expect(m.page).toBeLessThanOrEqual(718);
     expect(m.right).toBeLessThanOrEqual(718);
     expect(m.clipped).toBeLessThanOrEqual(0);
     expect(m.overflowing).toEqual([]);
+    expect(m.broken).toEqual([]);
     // Still readable.
     expect(m.name).toBeGreaterThanOrEqual(9);
   });

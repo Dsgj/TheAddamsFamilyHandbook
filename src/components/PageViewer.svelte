@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { untrack } from 'svelte';
+  import { onMount, untrack } from 'svelte';
   import BottomSheet from './BottomSheet.svelte';
   import type { DocId, PageMeta } from '~/lib/model/types';
   import { pdfPageFromLabel } from '~/lib/pages';
@@ -7,9 +7,11 @@
 
   /**
    * The manual page viewer (spec §9.12). Toolbar: Previous page, "97 / 124" (opens the Go to page
-   * sheet), Next page, Rotate page, Text. Zoom out / Fit / Zoom in sit in a glass capsule floating
-   * over the scan. Pinch, Ctrl + wheel, drag to pan and the keys (← → pages, + − 0 zoom, R rotate,
-   * T text) are unchanged. Paging (Prev, Next, the arrow keys, Go to) replaces the history entry
+   * sheet), Next page, Rotate page, Text. Zoom in / Zoom out / Fit width / Fit page sit in a glass
+   * capsule that rides the viewport's foot. At a fit the page scrolls, not the stage; zoomed, the
+   * stage is the one scroller, a viewport slice tall. The fit is kept across page turns. Pinch,
+   * Ctrl + wheel, drag to pan and the keys (← → pages, + − 0 zoom, W P fit, R rotate, T text).
+   * Paging (Prev, Next, the arrow keys, Go to) replaces the history entry
    * (`replacePage`, `data-replace` for motion.ts), so Back leaves the manual instead of stepping
    * back through every page read, and the back link carries over from the page replaced.
    */
@@ -34,9 +36,40 @@
   /** A scan image failed to load: offline and not yet cached (spec §11). */
   let missing = $state(false);
   let rot = $state(0);
-  let scale = $state(0); // 0 = fit width
+  let scale = $state(0); // 0 = the fit (fitMode)
   let stage: HTMLDivElement | undefined = $state();
+  let bar: HTMLDivElement | undefined = $state();
   let fitScale = $state(0.5);
+  /** The viewport slice the zoomed stage fills, once scrolled just below the top bar. */
+  let availH = $state(0);
+
+  // Spec §9.12: fit width or fit page (the whole page in the viewport). Page from 1000, width
+  // below; a choice is kept, because every page turn loads a new document.
+  type Fit = 'width' | 'page';
+  const FIT_KEY = 'valvet:manual-fit';
+  let fitMode = $state<Fit>('width');
+  function storedFit(): Fit {
+    try {
+      const v = localStorage.getItem(FIT_KEY);
+      if (v === 'width' || v === 'page') return v;
+    } catch {
+      // Storage blocked: the default applies.
+    }
+    return matchMedia('(min-width: 1000px)').matches ? 'page' : 'width';
+  }
+  function chooseFit(m: Fit) {
+    fitMode = m;
+    scale = 0;
+    try {
+      localStorage.setItem(FIT_KEY, m);
+    } catch {
+      // Not kept: the next page falls back to the default.
+    }
+  }
+  // Read once on mount: storage and matchMedia exist only in the browser.
+  onMount(() => {
+    fitMode = storedFit();
+  });
 
   const rotated = $derived(rot % 180 !== 0);
   const effScale = $derived(scale || fitScale);
@@ -46,27 +79,60 @@
   const src = (suffix = '') =>
     href(`assets/pages/${doc}/${page}${suffix}.${doc === 'ops' && page === 1 ? 'jpg' : 'png'}`);
 
+  const rootPx = (name: string) =>
+    parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name)) || 0;
   function fit() {
     if (!stage) return;
-    const avail = stage.clientWidth - 2;
-    fitScale = Math.min(1, avail / (rotated ? H : W));
+    const tabbar = rootPx('--tabbar-h');
+    // Zoomed: the viewport less the top bar, the toolbar, 32 and the phone tab bar.
+    availH = Math.max(
+      120,
+      innerHeight - rootPx('--topbar-h') - tabbar - (bar?.offsetHeight ?? 0) - 32,
+    );
+    // Fit page: the whole scan in view as the page opens, so from the stage's own top (the
+    // heading, the document switch and the toolbar above it) to 16 above the phone tab bar.
+    const pageH = Math.max(
+      120,
+      innerHeight - (stage.getBoundingClientRect().top + scrollY) - tabbar - 16,
+    );
+    const byW = (stage.clientWidth - 2) / (rotated ? H : W);
+    const byH = (pageH - 2) / (rotated ? W : H);
+    fitScale = Math.min(1, byW, fitMode === 'page' ? byH : Infinity);
   }
   $effect(() => {
     void rot;
+    void fitMode;
     fit();
     const ro = new ResizeObserver(fit);
     if (stage) ro.observe(stage);
-    return () => ro.disconnect();
+    addEventListener('resize', fit);
+    return () => {
+      ro.disconnect();
+      removeEventListener('resize', fit);
+    };
   });
 
-  function zoomBy(f: number, cx?: number, cy?: number) {
+  /** Zoom about a viewport point (the pointer, or the middle of the stage's visible part). */
+  function zoomBy(f: number, clientX?: number, clientY?: number) {
     if (!stage) return;
     const before = effScale;
     const next = Math.min(4, Math.max(0.1, before * f));
-    const px = cx ?? stage.clientWidth / 2;
-    const py = cy ?? stage.clientHeight / 2;
-    const ax = (stage.scrollLeft + px) / before;
-    const ay = (stage.scrollTop + py) / before;
+    let r = stage.getBoundingClientRect();
+    const top = rootPx('--topbar-h');
+    const visTop = Math.max(r.top, top);
+    const visBottom = Math.min(r.bottom, innerHeight - rootPx('--tabbar-h'));
+    const cx = clientX ?? (r.left + r.right) / 2;
+    const cy = clientY ?? (visTop + visBottom) / 2;
+    const ax = (stage.scrollLeft + cx - r.left) / before;
+    const ay = (stage.scrollTop + cy - r.top) / before;
+    // Leaving a fit the stage becomes the scroller, one slice tall: if its top has scrolled under
+    // the top bar, bring it just below, so the whole slice is in view.
+    if (scale === 0 && r.top < top) {
+      scrollBy(0, r.top - top - 8);
+      r = stage.getBoundingClientRect();
+    }
+    const px = cx - r.left;
+    const py = Math.min(Math.max(cy - r.top, 0), availH);
     scale = next;
     requestAnimationFrame(() => {
       if (!stage) return;
@@ -77,8 +143,7 @@
   function onWheel(e: WheelEvent) {
     if (!e.ctrlKey && !e.metaKey) return;
     e.preventDefault();
-    const r = stage!.getBoundingClientRect();
-    zoomBy(e.deltaY < 0 ? 1.2 : 1 / 1.2, e.clientX - r.left, e.clientY - r.top);
+    zoomBy(e.deltaY < 0 ? 1.2 : 1 / 1.2, e.clientX, e.clientY);
   }
   const rotate = () => (rot = (rot + 90) % 360);
   function onKey(e: KeyboardEvent) {
@@ -88,6 +153,9 @@
     else if (e.key === '+' || e.key === '=') zoomBy(1.2);
     else if (e.key === '-') zoomBy(1 / 1.2);
     else if (e.key === '0') scale = 0;
+    else if (e.ctrlKey || e.metaKey || e.altKey) return;
+    else if (e.key === 'w' || e.key === 'W') chooseFit('width');
+    else if (e.key === 'p' || e.key === 'P') chooseFit('page');
     else if (e.key === 'r') rotate();
     else if (e.key === 't') mode = mode === 'text' ? 'image' : 'text';
   }
@@ -124,7 +192,7 @@
 <svelte:window onkeydown={onKey} />
 
 <div class="viewer">
-  <div class="tb" role="toolbar" aria-label="Page">
+  <div class="tb" role="toolbar" aria-label="Page" bind:this={bar}>
     <a
       class="ibtn"
       href={page > 1 ? manualHref(doc, page - 1) : undefined}
@@ -192,6 +260,8 @@
       <!-- svelte-ignore a11y_no_static_element_interactions (mouse drag-to-pan; keyboard and touch use scroll) -->
       <div
         class="stage"
+        class:zoomed={scale !== 0}
+        style:--avail-h={availH ? `${availH}px` : undefined}
         bind:this={stage}
         onwheel={onWheel}
         onpointerdown={down}
@@ -254,14 +324,33 @@
           <button
             class="ibtn fit"
             type="button"
-            aria-pressed={scale === 0}
-            onclick={() => (scale = 0)}>Fit</button
+            aria-label="Fit width"
+            title="Fit width (W)"
+            aria-pressed={scale === 0 && fitMode === 'width'}
+            onclick={() => chooseFit('width')}
           >
+            <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true">
+              <path d="M3 10h14M6 7l-3 3 3 3M14 7l3 3-3 3" />
+            </svg>
+          </button>
+          <button
+            class="ibtn fit"
+            type="button"
+            aria-label="Fit page"
+            title="Fit page (P)"
+            aria-pressed={scale === 0 && fitMode === 'page'}
+            onclick={() => chooseFit('page')}
+          >
+            <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true">
+              <path d="M6 3h8v14H6zM3 6v8M17 6v8" />
+            </svg>
+          </button>
         </div>
       </div>
     </div>
     <p class="muted small hint keys">
-      Ctrl + wheel or pinch to zoom, drag to pan. Keys: ← → pages, + − 0 zoom, R rotate, T text.
+      Ctrl + wheel or pinch to zoom, drag to pan. Keys: ← → pages, + − 0 zoom, W P fit width or
+      page, R rotate, T text.
     </p>
   {/if}
 </div>
@@ -343,16 +432,23 @@
   .stagewrap {
     position: relative;
   }
+  /* Spec §9.12: at a fit the stage does not scroll, so the wheel scrolls the page (VL-05). */
   .stage {
-    overflow: auto;
-    max-height: 80vh;
+    /* clip, not hidden: no scroll container, so the wheel still reaches the page. Until the
+       island fits the scan (hydration), the server-rendered half-size scan would widen the page,
+       and a phone then changes its viewport under a cross-document transition. */
+    overflow: clip;
     border: 1px solid var(--line);
     border-radius: var(--r-xs);
     background: var(--sunk);
-    cursor: grab;
     touch-action: pan-x pan-y pinch-zoom;
   }
-  .stage.dragging {
+  .stage.zoomed {
+    overflow: auto;
+    max-height: var(--avail-h, 80vh);
+    cursor: grab;
+  }
+  .stage.zoomed.dragging {
     cursor: grabbing;
   }
   .box {
@@ -378,11 +474,20 @@
     grid-column: 1 / -1;
     grid-row: 1 / -1;
   }
+  /* A zero-height sticky row at the stage's foot: the capsule rides 12 above the viewport's foot
+     (and the phone tab bar) while the page runs past it, and rests 12 inside the stage otherwise.
+     The margins keep the row out of the flow. */
   .corner {
+    position: sticky;
+    bottom: calc(12px + var(--tabbar-h) + var(--safe-bot));
+    height: 0;
+    margin: -12px 0 12px;
+    z-index: var(--z-lift-2);
+  }
+  .corner .capsule {
     position: absolute;
     right: 12px;
-    bottom: 12px;
-    z-index: var(--z-lift-2);
+    bottom: 0;
   }
   .capsule {
     display: flex;
@@ -408,12 +513,9 @@
     stroke-width: 2;
     stroke-linecap: round;
   }
-  .capsule .fit {
-    font: var(--t-foot);
-    font-weight: 600;
-  }
+  /* The fit in force reads as selected. */
   .capsule .fit[aria-pressed='true'] {
-    color: var(--muted);
+    color: var(--amber-ink);
   }
   .text pre {
     white-space: pre-wrap;

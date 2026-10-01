@@ -434,6 +434,106 @@ describe('design system source rules', () => {
     }
   });
 
+  it('(m) takes the content width, the hub column and the prose measure from their tokens', () => {
+    // Spec §3.1: one content width, one hub column, and the measure on the text blocks.
+    const decl = (file: string, selector: string, prop: string) =>
+      RULES.find(
+        (r) => r.file === file && r.selector === selector && r.at.length === 0,
+      )?.decls.find(([p]) => p === prop)?.[1];
+    expect(decl('src/styles/base.css', '.wrap', 'max-width')).toBe('var(--content-w)');
+    expect(decl('src/styles/base.css', '.hub', 'max-width')).toMatch(/var\(--hub-w\)/);
+    const prose = '.prose :where(p, ul, ol, dl, blockquote, h2, h3, h4, .owner-note)';
+    expect(decl('src/styles/base.css', prose, 'max-width')).toBe('var(--measure)');
+    expect(decl('src/layouts/ComponentPage.astro', '.notes p', 'max-width')).toBe('var(--measure)');
+    // A page's own paragraphs, a tab panel's, the group footers and the provenance notes, and the
+    // Care and Setup step text and Setup's item names.
+    expect(decl('src/styles/base.css', '.wrap > p, .panel > p, .gf, .prov', 'max-width')).toBe(
+      'var(--measure)',
+    );
+    expect(
+      decl('src/components/SetupGuide.svelte', '.intro, .warn, .why, .step > p', 'max-width'),
+    ).toBe('var(--measure)');
+    expect(decl('src/components/SetupGuide.svelte', '.name', 'max-width')).toBe('var(--measure)');
+    // No page asks for a wider column: main.wide and the wide prop are gone.
+    expect(RULES.filter((r) => /main\.wide\b/.test(r.selector)).map(where)).toEqual([]);
+    const base = readFileSync(join(ROOT, 'src/layouts/Base.astro'), 'utf8');
+    expect(base).not.toMatch(/\bwide\?:|[{,\s]wide[,}\]]/);
+    const asking = walk(join(ROOT, 'src/pages'))
+      .filter((p) => /<Base\b[^>]*\swide\b/.test(readFileSync(p, 'utf8')))
+      .map((p) => relative(ROOT, p).split('\\').join('/'));
+    expect(asking).toEqual([]);
+  });
+
+  it('(n) uses the ch unit only for the --measure token', () => {
+    // A ch length follows the font it sits in, so it is kept for the prose measure (spec §3.1).
+    const ch = RULES.flatMap((r) =>
+      r.decls
+        .filter(([, v]) => /(^|[\s(,])[\d.]+ch\b/.test(v))
+        .map(([p, v]) => `${r.file} ${r.selector} ${p}: ${v}`),
+    );
+    // 52ch: a '0' is wider than the average letter, so 52ch sets 60-80 characters a line.
+    expect(ch).toEqual(['src/styles/tokens.css :root --measure: 52ch']);
+  });
+
+  it('(o) never breaks a code token: table mono cells and .code keep to one line', () => {
+    const nowrap = (file: string, selector: string) =>
+      RULES.some(
+        (r) =>
+          r.file === file &&
+          r.at.length === 0 &&
+          r.selector
+            .split(',')
+            .map((s) => s.trim())
+            .includes(selector) &&
+          r.decls.some(([p, v]) => p === 'white-space' && v === 'nowrap'),
+      );
+    expect(nowrap('src/styles/base.css', 'table.t td.mono'), 'table.t td.mono').toBe(true);
+    expect(nowrap('src/styles/base.css', '.code'), '.code').toBe(true);
+    // A phrase cell wraps at its spaces only: each token of it is a nowrap .tok (Phrase.astro).
+    expect(nowrap('src/styles/base.css', '.tok'), '.tok').toBe(true);
+  });
+
+  it('(q) gives every alt-text content a plain content before it, for engines without the form', () => {
+    // `content: X / ''` is dropped whole where the alt-text form is unknown; the plain form before
+    // it is then the one that applies.
+    const bare = RULES.filter((r) =>
+      r.decls.some(
+        ([p, v], i) =>
+          p === 'content' &&
+          /['")]\s*\/\s*['"]/.test(v) &&
+          !r.decls.slice(0, i).some(([q, w]) => q === 'content' && !/['")]\s*\/\s*['"]/.test(w)),
+      ),
+    ).map(where);
+    expect(bare).toEqual([]);
+  });
+
+  it('(r) leaves list rows on one line: only a row that asks for it wraps', () => {
+    // A global wrap on .lrow.static moved the trailing control of every static row under its text
+    // at a narrow width; the Appearance row asks for it in WorkshopHub (spec §9.14).
+    const global = RULES.filter(
+      (r) =>
+        r.file.startsWith('src/styles/') &&
+        /\.lrow\b/.test(r.selector) &&
+        r.decls.some(([p]) => p === 'flex-wrap'),
+    ).map(where);
+    expect(global).toEqual([]);
+  });
+
+  it('(p) fits the matrix from 1000: a fixed layout, and the header wire labels wrap', () => {
+    // Spec §9.6 "Fit": the switch and lamp grids fit the column at 1440 with no sideways scroll.
+    const wide = RULES.filter(
+      (r) =>
+        r.file === 'src/components/Matrix.svelte' && r.at.includes('@media (min-width: 1000px)'),
+    );
+    const sets = (selector: RegExp, prop: string, value: string) =>
+      wide.some(
+        (r) => selector.test(r.selector) && r.decls.some(([p, v]) => p === prop && v === value),
+      );
+    expect(sets(/^\.matrix$/, 'table-layout', 'fixed'), 'table-layout: fixed').toBe(true);
+    expect(sets(/\.wire\b/, 'white-space', 'normal'), '.wire white-space').toBe(true);
+    expect(sets(/\.wire\b/, 'flex-wrap', 'wrap'), '.wire flex-wrap').toBe(true);
+  });
+
   it('defines the tokens and classes the components build on', () => {
     const tokens = readFileSync(join(ROOT, 'src/styles/tokens.css'), 'utf8');
     const names = [

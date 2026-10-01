@@ -1,5 +1,6 @@
 ---
 import Base from '~/layouts/Base.astro';
+import Phrase from '~/components/Phrase.astro';
 import WireChip from '~/components/WireChip.svelte';
 import { DATA } from '~/lib/data/components';
 import { COIL_NOTE, t, wireEn } from '~/lib/data/en';
@@ -8,7 +9,7 @@ import { componentHref, manualHref } from '~/lib/url';
 const groups = ['High Power', 'Low Power', 'Flasher'] as const;
 ---
 
-<Base title="Solenoids" nav="coils" wide>
+<Base title="Solenoids" nav="coils">
   <h1>Solenoids &amp; flashers</h1>
   <p class="muted">
     Source: <a href={manualHref('ops', 108)}>Solenoid/Flasher Table p. 3-6</a> and
@@ -22,52 +23,75 @@ const groups = ['High Power', 'Low Power', 'Flasher'] as const;
       <section class="card grp">
         <h2>{g}</h2>
         <div class="scroll-x">
-          <table class="t">
-            <thead>
-              <tr>
+          <table class="t two" role="table">
+            <thead role="rowgroup">
+              <tr role="row">
                 <>
-                  <th>#</th>
-                  <th>Name</th>
-                  <th>Wire</th>
-                  <th>Pin</th>
-                  <th>Driver</th>
-                  <th>Coil</th>
-                  <th>Fuse</th>
-                  <th />
-                  <th>Broken</th>
+                  <th role="columnheader" class="key">
+                    #
+                  </th>
+                  <th role="columnheader">Name</th>
+                  <th role="columnheader">Wire</th>
+                  <th role="columnheader">Pin</th>
+                  <th role="columnheader">Driver</th>
+                  <th role="columnheader">Coil</th>
+                  <th role="columnheader">Fuse</th>
+                  <th role="columnheader">
+                    <span class="sr-only">Location</span>
+                  </th>
+                  <th role="columnheader" class="chk">
+                    Broken
+                  </th>
                 </>
               </tr>
             </thead>
-            <tbody>
+            <tbody role="rowgroup">
               {DATA.coils
                 .filter((c) => c.type === g)
                 .map((c) => (
-                  <tr>
-                    <td>
+                  <tr role="row">
+                    <td role="cell" class="key">
                       <a class="mono" href={componentHref('coil', c.id)}>
                         {c.id}
                       </a>
                     </td>
-                    <td>
+                    <td role="cell" class="nm">
                       {c.name}
-                      {c.note && <span class="muted small"> · {t(COIL_NOTE, c.note)}</span>}
+                      {c.note && (
+                        <span class="note muted small">
+                          <span class="sep"> · </span>
+                          {t(COIL_NOTE, c.note)}
+                        </span>
+                      )}
                     </td>
-                    <td>
+                    <td role="cell" data-h="Wire">
                       <WireChip colour={c.wireEn} />
                     </td>
-                    <td class="mono">{c.pin}</td>
-                    <td class="mono">{c.driver}</td>
-                    <td class="mono">{c.part}</td>
-                    <td class="mono small">{c.fuse}</td>
-                    <td class="muted small">{c.cabinet ? 'cabinet' : c.under ? 'under' : ''}</td>
-                    <td class="chk">
-                      <input
-                        type="checkbox"
-                        class="fault-check"
-                        data-kind="coil"
-                        data-id={c.id}
-                        aria-label={`Broken: ${c.name}`}
-                      />
+                    <td role="cell" class="mono phrase" data-h="Pin">
+                      <Phrase text={c.pin} />
+                    </td>
+                    <td role="cell" class="mono" data-h="Driver">
+                      {c.driver}
+                    </td>
+                    <td role="cell" class="mono phrase" data-h="Coil">
+                      <Phrase text={c.part} />
+                    </td>
+                    <td role="cell" class="mono small phrase" data-h="Fuse">
+                      <Phrase text={c.fuse} />
+                    </td>
+                    <td role="cell" class="muted small" data-h="Location">
+                      {c.cabinet ? 'in cabinet' : c.under ? 'under playfield' : ''}
+                    </td>
+                    <td role="cell" class="chk">
+                      <label class="chk-hit">
+                        <input
+                          type="checkbox"
+                          class="fault-check"
+                          data-kind="coil"
+                          data-id={c.id}
+                          aria-label={`Broken: ${c.name}`}
+                        />
+                      </label>
                     </td>
                   </tr>
                 ))}
@@ -78,31 +102,47 @@ const groups = ['High Power', 'Low Power', 'Flasher'] as const;
     ))
   }
 
-  <div class="grid-2">
+  <div class="pair">
     <section class="card">
       <h2 id="flippers">Flipper coils</h2>
       <div class="scroll-x">
-        <table class="t">
-          <thead
-            ><tr
-              ><th>#</th><th>Name</th><th>Wire</th><th>Pin</th><th>Coil</th><th>Assembly</th><th
-                >Fuse</th
-              ></tr
-            ></thead
-          >
-          <tbody>
+        <table class="t two" role="table">
+          <thead role="rowgroup">
+            <tr role="row">
+              <th role="columnheader" class="key">#</th>
+              <th role="columnheader">Name</th>
+              <th role="columnheader">Wire</th>
+              <th role="columnheader">Pin</th>
+              <th role="columnheader">Coil</th>
+              <th role="columnheader">Assembly</th>
+              <th role="columnheader">Fuse</th>
+            </tr>
+          </thead>
+          <tbody role="rowgroup">
             {
               DATA.flippers.map((f) => (
-                <tr>
-                  <td class="mono">{f.id}</td>
-                  <td>{f.name}</td>
-                  <td>
+                <tr role="row">
+                  <td role="cell" class="key mono">
+                    {f.id}
+                  </td>
+                  <td role="cell" class="nm">
+                    {f.name}
+                  </td>
+                  <td role="cell" data-h="Wire">
                     <WireChip colour={wireEn(f.wire)} />
                   </td>
-                  <td class="mono">{f.pin}</td>
-                  <td class="mono">{f.coil}</td>
-                  <td class="mono">{f.assy}</td>
-                  <td class="small">{f.fuse}</td>
+                  <td role="cell" class="mono phrase" data-h="Pin">
+                    <Phrase text={f.pin} />
+                  </td>
+                  <td role="cell" class="mono phrase" data-h="Coil">
+                    <Phrase text={f.coil} />
+                  </td>
+                  <td role="cell" class="mono phrase" data-h="Assembly">
+                    <Phrase text={f.assy} />
+                  </td>
+                  <td role="cell" class="small" data-h="Fuse">
+                    {f.fuse}
+                  </td>
                 </tr>
               ))
             }
@@ -118,27 +158,43 @@ const groups = ['High Power', 'Low Power', 'Flasher'] as const;
     <section class="card">
       <h2 id="gi">General illumination</h2>
       <div class="scroll-x">
-        <table class="t">
-          <thead
-            ><tr
-              ><th>String</th><th>Name</th><th>Wire</th><th>Pin</th><th>Triac</th><th>Bulb</th><th
-                >Fuse</th
-              ></tr
-            ></thead
-          >
-          <tbody>
+        <table class="t two" role="table">
+          <thead role="rowgroup">
+            <tr role="row">
+              <th role="columnheader" class="key">String</th>
+              <th role="columnheader">Name</th>
+              <th role="columnheader">Wire</th>
+              <th role="columnheader">Pin</th>
+              <th role="columnheader">Triac</th>
+              <th role="columnheader">Bulb</th>
+              <th role="columnheader">Fuse</th>
+            </tr>
+          </thead>
+          <tbody role="rowgroup">
             {
               DATA.gi.map((g) => (
-                <tr>
-                  <td class="mono">{g.id}</td>
-                  <td>{g.name}</td>
-                  <td>
+                <tr role="row">
+                  <td role="cell" class="key mono">
+                    {g.id}
+                  </td>
+                  <td role="cell" class="nm">
+                    {g.name}
+                  </td>
+                  <td role="cell" data-h="Wire">
                     <WireChip colour={wireEn(g.wire)} />
                   </td>
-                  <td class="mono">{g.pin}</td>
-                  <td class="mono">{g.driver}</td>
-                  <td class="mono">{g.bulb}</td>
-                  <td class="small">{g.fuse}</td>
+                  <td role="cell" class="mono phrase" data-h="Pin">
+                    <Phrase text={g.pin} />
+                  </td>
+                  <td role="cell" class="mono" data-h="Triac">
+                    {g.driver}
+                  </td>
+                  <td role="cell" class="mono phrase" data-h="Bulb">
+                    <Phrase text={g.bulb} />
+                  </td>
+                  <td role="cell" class="small" data-h="Fuse">
+                    {g.fuse}
+                  </td>
                 </tr>
               ))
             }
@@ -156,5 +212,12 @@ const groups = ['High Power', 'Low Power', 'Flasher'] as const;
 <style>
   .grp {
     margin-bottom: var(--gap);
+  }
+  /* Spec §8.9: the flipper and GI tables stack at every width. Side by side they scrolled at 1000
+     and broke their part numbers at 1440 (VP-05). */
+  .pair {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--gap);
   }
 </style>

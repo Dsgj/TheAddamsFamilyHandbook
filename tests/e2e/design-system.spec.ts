@@ -127,7 +127,9 @@ test.describe('the toast clears the bottom chrome', () => {
 
   test('on Diagnose it clears the sticky dock, and stays down when the dock sits higher', async ({
     page,
+    isMobile,
   }) => {
+    test.skip(!isMobile, 'the bottom dock is below 1000 (spec §9.1)');
     const bottom = (b: { y: number; height: number }) => b.y + b.height;
     // Long results: the dock sticks above the tab bar, and the toast rises to 10 above it.
     await gotoHydrated(page, '/?q=32');
@@ -149,6 +151,26 @@ test.describe('the toast clears the bottom chrome', () => {
     // A search with no hits: the dock follows the short page, so the toast is not lifted at all.
     await gotoHydrated(page, '/?q=zzqx');
     await expect(page.locator('.diag')).toHaveAttribute('data-mode', 'search');
+    await showToast(page);
+    const lift = await page.evaluate(() =>
+      document.documentElement.style.getPropertyValue('--toast-lift'),
+    );
+    expect(lift).toBe('');
+  });
+
+  test('on desktop Diagnose the field sits above the results and the toast is not lifted', async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(isMobile, 'from 1000 the field is at the top of the column (spec §9.1)');
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await gotoHydrated(page, '/?q=32');
+    await expect(page.locator('.diag')).toHaveAttribute('data-mode', 'results');
+    const dock = page.locator('.diag .dock');
+    expect(await dock.evaluate((el) => getComputedStyle(el).position)).toBe('static');
+    const field = await box(page, '.diag .dock');
+    const first = await box(page, '.diag article.card');
+    expect(field.y + field.height, 'the field above the results').toBeLessThanOrEqual(first.y);
     await showToast(page);
     const lift = await page.evaluate(() =>
       document.documentElement.style.getPropertyValue('--toast-lift'),

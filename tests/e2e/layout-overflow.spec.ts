@@ -169,3 +169,750 @@ test.describe('wide handbook tables scroll in their own wrapper instead of being
     expect(wrappers.some((w) => w.scrollWidth > w.clientWidth)).toBe(true);
   });
 });
+
+/* P2 item 4 of the app audit (VP-04, VP-12, VL-06, VL-07, VL-01, VL-04, VL-05, VL-08, VL-09,
+   VL-10, VP-05, VP-06, VP-07, UX-15, VP-08): tables, matrices and large screens. Each width runs
+   on one project: phone widths on phone-dark, widths from 600 on desktop-light. */
+const onWidth = (width: number) =>
+  test.skip(({ isMobile }) => isMobile !== width < 600, 'each width runs on one project');
+
+async function at(page: Page, width: number, url: string, height = 900) {
+  await page.setViewportSize({ width, height });
+  await gotoHydrated(page, url);
+}
+
+const rootPx = (page: Page, name: string) =>
+  page.evaluate(
+    (n) => parseFloat(getComputedStyle(document.documentElement).getPropertyValue(n)) || 0,
+    name,
+  );
+
+// The two switch tabs are not neighbours: a hash-only goto would not reload the page.
+const TABLE_PAGES = ['/switches#j205', '/lamps', '/switches#j806', '/coils', '/parts', '/fuses'];
+const MATRICES = ['/switches', '/lamps'];
+const cellLink = (page: Page, id: string) => page.locator(`table.matrix [data-cell="${id}"]`);
+const matrixWrap = (page: Page) => page.locator('.scroll-x', { has: page.locator('table.matrix') });
+/** The words of the shown `sel` elements whose line boxes sit on more than one line: a code token
+ *  (J208-1, U18-11) must not break inside itself, at its hyphen or anywhere else. */
+const brokenTokens = (page: Page, sel: string) =>
+  page.locator(sel).evaluateAll((els) =>
+    els
+      .filter((el) => (el as HTMLElement).offsetParent !== null)
+      .flatMap((el) => {
+        const out: string[] = [];
+        const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+        for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+          for (const m of n.textContent!.matchAll(/\S+/g)) {
+            const range = document.createRange();
+            range.setStart(n, m.index);
+            range.setEnd(n, m.index + m[0].length);
+            const tops = new Set<number>();
+            for (const b of range.getClientRects()) if (b.width > 0) tops.add(Math.round(b.top));
+            if (tops.size > 1) out.push(m[0]);
+          }
+        }
+        return out;
+      }),
+  );
+
+test.describe('P2-4: no horizontal page scroll at any width', () => {
+  const pages = [
+    ...TABLE_PAGES,
+    '/tables',
+    '/workshop',
+    '/map?layer=sw&id=32',
+    '/coil/01',
+    '/manual/ops/106',
+    '/handbook/tests',
+    '/care',
+    '/setup',
+    '/',
+  ];
+  for (const width of [320, 360, 412, 600, 1000, 1280, 1366, 1440]) {
+    test.describe(`${width}px`, () => {
+      onWidth(width);
+      test('tables, matrices, hubs, map, manual, handbook, care and Diagnose fit', async ({
+        page,
+      }) => {
+        for (const url of pages) {
+          await at(page, width, url);
+          expect(await scrollWidthOf(page), url).toBeLessThanOrEqual(width);
+        }
+        for (const url of MATRICES) {
+          await at(page, width, url);
+          await cellLink(page, '32').focus();
+          expect(await scrollWidthOf(page), `${url}, cell 32`).toBeLessThanOrEqual(width);
+        }
+      });
+    });
+  }
+});
+
+test.describe('P2-4: tables (spec §8.9)', () => {
+  test('every column has a header', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'width-independent');
+    for (const url of TABLE_PAGES) {
+      await gotoHydrated(page, url);
+      const blank = await page
+        .locator('table.t th')
+        .evaluateAll((ths) => ths.filter((th) => !th.textContent?.trim()).length);
+      expect(blank, url).toBe(0);
+    }
+  });
+
+  for (const width of [320, 360, 412]) {
+    test.describe(`${width}px`, () => {
+      onWidth(width);
+      test('rows fit: no scroll, no broken code, 44 ticks in view', async ({ page }) => {
+        for (const url of TABLE_PAGES) {
+          await at(page, width, url);
+          const r = await page.evaluate((w) => {
+            const shown = (el: Element) => (el as HTMLElement).offsetParent !== null;
+            // The line boxes of each word: a code token (J205-1, 24-8768) must not break.
+            const brokenWords = (el: Element) => {
+              const out: string[] = [];
+              const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+              for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+                for (const m of n.textContent!.matchAll(/\S+/g)) {
+                  const range = document.createRange();
+                  range.setStart(n, m.index);
+                  range.setEnd(n, m.index + m[0].length);
+                  const tops = new Set<number>();
+                  for (const b of range.getClientRects())
+                    if (b.width > 0) tops.add(Math.round(b.top));
+                  if (tops.size > 1) out.push(m[0]);
+                }
+              }
+              return out;
+            };
+            const hits = [...document.querySelectorAll('.chk-hit')]
+              .filter(shown)
+              .map((l) => l.getBoundingClientRect());
+            let overlaps = 0;
+            for (let i = 1; i < hits.length; i++) {
+              const a = hits[i - 1]!;
+              const b = hits[i]!;
+              if (a.bottom > b.top + 0.5 && a.right > b.left && b.right > a.left) overlaps++;
+            }
+            return {
+              scrolls: [...document.querySelectorAll('.scroll-x')]
+                .filter(shown)
+                .filter((s) => s.scrollWidth > s.clientWidth).length,
+              broken: [...document.querySelectorAll('table.t td.mono, table.t td > .mono')]
+                .filter(shown)
+                .flatMap(brokenWords),
+              small: hits.filter((b) => b.width < 44 || b.height < 44).length,
+              off: hits.filter((b) => b.right > w).length,
+              overlaps,
+            };
+          }, width);
+          expect(r, url).toEqual({ scrolls: 0, broken: [], small: 0, off: 0, overlaps: 0 });
+        }
+      });
+
+      test('two-line rows: id and tick on the first line, body-face labels, no empty pair', async ({
+        page,
+      }) => {
+        for (const url of ['/coils', '/lamps']) {
+          await at(page, width, url);
+          const r = await page.evaluate(() => {
+            const shown = (el: Element) => (el as HTMLElement).offsetParent !== null;
+            const firstLine = (el: Element) => {
+              const range = document.createRange();
+              range.selectNodeContents(el);
+              const b = [...range.getClientRects()].find((x) => x.width > 0)!;
+              return (b.top + b.bottom) / 2;
+            };
+            const rows = [...document.querySelectorAll('table.t.two tbody tr')].filter(shown);
+            let off = 0;
+            for (const tr of rows) {
+              const [key, nm, hit] = ['td.key', 'td.nm', '.chk-hit'].map((s) =>
+                tr.querySelector(s),
+              );
+              if (!key || !nm || !hit) continue;
+              const line = firstLine(nm);
+              const h = hit.getBoundingClientRect();
+              off = Math.max(
+                off,
+                Math.abs(firstLine(key) - line),
+                Math.abs((h.top + h.bottom) / 2 - line),
+              );
+            }
+            const pairs = [
+              ...document.querySelectorAll<HTMLElement>('table.t.two td[data-h]'),
+            ].filter(shown);
+            const body = getComputedStyle(document.body).fontFamily;
+            return {
+              rows: rows.length > 0,
+              off: off <= 4,
+              empty: pairs.filter((td) => !td.textContent!.trim()).map((td) => td.dataset.h),
+              dotted: [...document.querySelectorAll('table.t.two td.nm .note')]
+                .filter(shown)
+                .filter((n) => (n as HTMLElement).innerText.trim().startsWith('·')).length,
+              monoLabels: pairs.filter((td) => getComputedStyle(td, '::before').fontFamily !== body)
+                .length,
+              location: [
+                ...new Set(
+                  pairs
+                    .filter((td) => td.dataset.h === 'Location')
+                    .map((td) => td.textContent!.trim()),
+                ),
+              ].sort(),
+            };
+          });
+          expect(r, url).toEqual({
+            rows: true,
+            off: true,
+            empty: [],
+            dotted: 0,
+            monoLabels: 0,
+            location: url === '/coils' ? ['in cabinet', 'under playfield'] : [],
+          });
+        }
+      });
+
+      test('the tables keep their rows for assistive tech', async ({ page }) => {
+        for (const url of TABLE_PAGES) {
+          await at(page, width, url);
+          const table = page.locator('table.t:visible').first();
+          await expect(table.locator('tbody tr').first()).toBeAttached();
+          const trs = await table.locator('tbody tr').count();
+          await expect(table.getByRole('row'), url).toHaveCount(trs + 1);
+        }
+      });
+    });
+  }
+
+  for (const width of [1000, 1280, 1440]) {
+    test(`at ${width} no table scrolls sideways`, async ({ page, isMobile }) => {
+      test.skip(isMobile, 'a desktop width');
+      for (const url of TABLE_PAGES) {
+        await at(page, width, url);
+        const over = await page.evaluate(() =>
+          [...document.querySelectorAll('.scroll-x')]
+            .filter((s) => (s as HTMLElement).offsetParent !== null)
+            .filter((s) => s.scrollWidth > s.clientWidth)
+            .map((s) => `${s.scrollWidth}/${s.clientWidth}`),
+        );
+        expect(over, url).toEqual([]);
+      }
+    });
+  }
+
+  test('at 600 the Broken column stays inside the solenoid wrapper', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'a desktop width');
+    await at(page, 600, '/coils');
+    const wrap = page.locator('.scroll-x', { has: page.locator('td.chk') }).first();
+    const edges = () =>
+      wrap.evaluate((w) => {
+        const chk = w.querySelector('tbody tr:last-child td.chk')!;
+        return [chk.getBoundingClientRect().right, w.getBoundingClientRect().right];
+      });
+    const [chk, box] = await edges();
+    expect(chk).toBeLessThanOrEqual(box! + 0.5);
+    await wrap.evaluate((w) => (w.scrollLeft = w.scrollWidth));
+    const [chk2, box2] = await edges();
+    expect(chk2).toBeLessThanOrEqual(box2! + 0.5);
+  });
+});
+
+test.describe('P2-4: matrices (spec §9.6)', () => {
+  for (const width of [1000, 1280, 1440]) {
+    test(`fit the column with no sideways scroll at ${width}`, async ({ page, isMobile }) => {
+      test.skip(isMobile, 'a desktop width');
+      for (const url of MATRICES) {
+        await at(page, width, url);
+        const [sw, cw] = await matrixWrap(page).evaluate((w) => [w.scrollWidth, w.clientWidth]);
+        expect(sw, url).toBeLessThanOrEqual(cw!);
+        // The header pins wrap between codes, never inside one: 'J208-1 · U18-11' broke after
+        // U18's hyphen in the 104 of the fixed row-header column.
+        expect(await brokenTokens(page, 'table.matrix .pin'), url).toEqual([]);
+      }
+    });
+  }
+  for (const width of [320, 360, 412]) {
+    test.describe(`${width}px`, () => {
+      onWidth(width);
+      test('fit the phone with 24 × 44 cells, the wire swatches and the row/col hint', async ({
+        page,
+      }) => {
+        for (const url of MATRICES) {
+          await at(page, width, url);
+          const r = await matrixWrap(page).evaluate((w) => {
+            const cells = [...w.querySelectorAll('tbody td')].map((td) =>
+              td.getBoundingClientRect(),
+            );
+            const corner = w.querySelector('.corner')!.getBoundingClientRect();
+            return {
+              scrolls: w.scrollWidth > w.clientWidth,
+              narrow: cells.filter((b) => b.width < 24).length,
+              short: cells.filter((b) => b.height < 44).length,
+              // Every row and column header keeps its wire's colour.
+              noSwatch: [...w.querySelectorAll('.colh, .rowh')].filter((h) => {
+                const b = h.querySelector('.wire i')?.getBoundingClientRect();
+                return !b || b.width < 8 || b.height < 6;
+              }).length,
+              // The corner reads 'row ↓' over 'col →', each on one line inside it.
+              hint: [...w.querySelectorAll('.corner .way > span')]
+                .filter((s) => getComputedStyle(s).display !== 'none')
+                .map((s) => {
+                  const range = document.createRange();
+                  range.selectNodeContents(s);
+                  const b = s.getBoundingClientRect();
+                  const inside = b.left >= corner.left - 0.5 && b.right <= corner.right + 0.5;
+                  return `${s.textContent} ${range.getClientRects().length} ${inside}`;
+                }),
+            };
+          });
+          expect(r, url).toEqual({
+            scrolls: false,
+            narrow: 0,
+            short: 0,
+            noSwatch: 0,
+            hint: ['row ↓ 1 true', 'col → 1 true'],
+          });
+        }
+      });
+    });
+  }
+  for (const [width, height] of [
+    [412, 839],
+    [1000, 900],
+  ] as const) {
+    test.describe(`${width}×${height}`, () => {
+      onWidth(width);
+      test('a keyboard selection brings the card into view, the cell too', async ({ page }) => {
+        for (const url of MATRICES) {
+          await at(page, width, url, height);
+          await cellLink(page, '88').focus();
+          const limit = height - (await rootPx(page, '--tabbar-h'));
+          const top = await rootPx(page, '--topbar-h');
+          await expect
+            .poll(() =>
+              page.locator('[data-cell-card]').evaluate((c) => c.getBoundingClientRect().bottom),
+            )
+            .toBeLessThanOrEqual(limit + 0.5);
+          const cell = (await cellLink(page, '88').boundingBox())!;
+          expect(cell.y, url).toBeGreaterThanOrEqual(top - 0.5);
+          expect(cell.y + cell.height, url).toBeLessThanOrEqual(limit + 0.5);
+        }
+      });
+    });
+  }
+  test('at 768 the row headers stay pinned while focus moves right', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'a desktop width');
+    for (const url of MATRICES) {
+      await at(page, 768, url);
+      await cellLink(page, '88').focus();
+      const wrapLeft = await matrixWrap(page).evaluate((w) => w.getBoundingClientRect().left);
+      const lefts = await page
+        .locator('table.matrix th.rowh')
+        .evaluateAll((ths) => ths.map((th) => th.getBoundingClientRect().left));
+      expect(Math.min(...lefts), url).toBeGreaterThanOrEqual(wrapLeft - 0.5);
+    }
+  });
+});
+
+test.describe('P2-4: the map from 1000 (spec §7.4, §7.7)', () => {
+  test.skip(({ isMobile }) => isMobile, 'desktop widths');
+  for (const [width, height] of [
+    [1000, 900],
+    [1000, 1080],
+    [1000, 1200],
+    [1024, 1366],
+    [1280, 900],
+    [1366, 768],
+    [1366, 900],
+    [1440, 900],
+    [1440, 1080],
+  ] as const) {
+    test(`${width}×${height}: one panel scroller, the card in reach, the glass off the drawing`, async ({
+      page,
+    }) => {
+      await at(page, width, '/map?layer=sw&id=32', height);
+      await expect(page.locator('.marker.sel')).toBeVisible();
+      const aside = page.locator('aside.side');
+      // The card need not fit a short panel at once: it is whole (no scroller or clip of its own)
+      // and the panel's one scroller reaches its foot.
+      const panel = () =>
+        aside.evaluate((a) => {
+          const scrollers = [a, ...a.querySelectorAll('*')]
+            .filter((e) => {
+              const o = getComputedStyle(e).overflowY;
+              return (o === 'auto' || o === 'scroll') && e.scrollHeight > e.clientHeight + 1;
+            })
+            .map((e) => (e === a ? 'aside' : e.className));
+          const card = a.querySelector('.selected');
+          const last = card?.lastElementChild;
+          if (!card || !last) return { scrollers, clipped: true, reached: false };
+          const clipped = card.scrollHeight > card.clientHeight + 1;
+          const from = a.scrollTop;
+          const below = last.getBoundingClientRect().bottom - a.getBoundingClientRect().bottom;
+          if (below > 0) a.scrollTop += below;
+          const reached =
+            last.getBoundingClientRect().bottom <= a.getBoundingClientRect().bottom + 0.5;
+          a.scrollTop = from;
+          return { scrollers, clipped, reached };
+        });
+      const whole = { scrollers: ['aside'], clipped: false, reached: true };
+      expect(await panel(), 'a marker').toEqual(whole);
+
+      // No dead band under the list; the last row's card shows at the panel's top.
+      await aside.evaluate((a) => (a.scrollTop = a.scrollHeight));
+      const [listBottom, asideBottom] = await aside.evaluate((a) => [
+        a.querySelector('.listing')!.getBoundingClientRect().bottom,
+        a.getBoundingClientRect().bottom,
+      ]);
+      expect(listBottom, 'the list reaches the foot').toBeGreaterThanOrEqual(asideBottom! - 1);
+      await aside.locator('.listing .row').last().click();
+      await expect.poll(() => aside.evaluate((a) => a.scrollTop)).toBe(0);
+      expect(await panel(), 'the last list row').toEqual(whole);
+
+      // Every glass control, the zoom capsule (.corner) included, clears the drawing.
+      const glass = await page.evaluate(() => {
+        const img = document.querySelector('.canvas img')!.getBoundingClientRect();
+        return ['.layers-list', '.readout', '.legend', '.corner'].map((s) => {
+          const r = document.querySelector(s)?.getBoundingClientRect();
+          if (!r) return [s, false];
+          const x = Math.min(r.right, img.right) - Math.max(r.left, img.left);
+          const y = Math.min(r.bottom, img.bottom) - Math.max(r.top, img.top);
+          return [s, x > 0 && y > 0];
+        });
+      });
+      expect(glass).toEqual([
+        ['.layers-list', false],
+        ['.readout', false],
+        ['.legend', false],
+        ['.corner', false],
+      ]);
+
+      const layers = page.getByRole('group', { name: 'Layers' });
+      await expect(layers).toHaveCount(1);
+      for (const b of await layers.getByRole('button').all()) {
+        const box = (await b.boundingBox())!;
+        expect(Math.min(box.width, box.height)).toBeGreaterThanOrEqual(44);
+      }
+    });
+  }
+  for (const width of [1280, 1440]) {
+    test(`${width}: the handbook embed keeps its glass off the drawing`, async ({ page }) => {
+      await at(page, width, '/handbook/rules');
+      const embed = page.locator('#pg-9 .shot-map');
+      await embed.scrollIntoViewIfNeeded();
+      await expect(embed.locator('.canvas img')).toBeVisible();
+      const r = await embed.evaluate((e) => {
+        const img = e.querySelector('.canvas img')!.getBoundingClientRect();
+        return ['.layers-list', '.legend'].map((s) => {
+          const b = e.querySelector(s)?.getBoundingClientRect();
+          if (!b) return 0;
+          const x = Math.max(0, Math.min(b.right, img.right) - Math.max(b.left, img.left));
+          const y = Math.max(0, Math.min(b.bottom, img.bottom) - Math.max(b.top, img.top));
+          return x * y;
+        });
+      });
+      expect(r).toEqual([0, 0]);
+    });
+  }
+});
+
+test.describe('P2-4: the manual viewer (spec §9.12)', () => {
+  test.beforeEach(async ({ page }) => {
+    // Once per test, so the default fit applies but a choice survives the page turn.
+    await page.addInitScript(() => {
+      try {
+        if (sessionStorage.getItem('p24-fit-reset')) return;
+        sessionStorage.setItem('p24-fit-reset', '1');
+        localStorage.removeItem('valvet:manual-fit');
+      } catch {
+        // Storage blocked: the default applies.
+      }
+    });
+  });
+  for (const width of [412, 1000, 1440]) {
+    test.describe(`${width}px`, () => {
+      onWidth(width);
+      test('at the fit the page scrolls, not the stage, and the capsule is in view', async ({
+        page,
+      }) => {
+        await at(page, width, '/manual/ops/106');
+        const stage = page.locator('.viewer .stage');
+        await expect(stage.locator('img').first()).toBeVisible();
+        const nested = await page.locator('.viewer').evaluate((v) =>
+          [...v.querySelectorAll('*')]
+            .filter((e) => {
+              const o = getComputedStyle(e).overflowY;
+              return (o === 'auto' || o === 'scroll') && e.scrollHeight > e.clientHeight + 1;
+            })
+            .map((e) => e.className),
+        );
+        expect(nested).toEqual([]);
+        const vh = page.viewportSize()!.height;
+        const capsule = (await page.getByRole('group', { name: 'Zoom' }).boundingBox())!;
+        expect(capsule.y).toBeGreaterThanOrEqual(0);
+        expect(capsule.y + capsule.height).toBeLessThanOrEqual(vh);
+        const box = (await stage.boundingBox())!;
+        await page.mouse.move(box.x + box.width / 2, Math.min(box.y + 40, vh - 80));
+        await page.mouse.wheel(0, 400);
+        await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(0);
+      });
+    });
+  }
+  for (const [width, height] of [
+    [412, 839],
+    [1000, 900],
+    [1280, 720],
+    [1366, 768],
+    [1440, 900],
+  ] as const) {
+    test.describe(`${width}×${height}`, () => {
+      onWidth(width);
+      test('fit page shows the whole scan as the page opens', async ({ page }) => {
+        await at(page, width, '/manual/ops/106', height);
+        const fitPage = page.getByRole('button', { name: 'Fit page', exact: true });
+        if ((await fitPage.getAttribute('aria-pressed')) !== 'true') await fitPage.click();
+        await expect(fitPage).toHaveAttribute('aria-pressed', 'true');
+        const stage = page.locator('.viewer .stage');
+        await expect(stage.locator('img').first()).toBeVisible();
+        const foot = height - (await rootPx(page, '--tabbar-h'));
+        await expect
+          .poll(() => stage.evaluate((s) => s.getBoundingClientRect().bottom))
+          .toBeLessThanOrEqual(foot);
+        expect(await page.evaluate(() => scrollY)).toBe(0);
+      });
+    });
+  }
+  test('the chosen fit is kept across a page turn', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'a desktop width');
+    await at(page, 1440, '/manual/ops/106');
+    const fitWidth = page.getByRole('button', { name: 'Fit width', exact: true });
+    await expect(page.getByRole('button', { name: 'Fit page', exact: true })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await fitWidth.click();
+    await expect(fitWidth).toHaveAttribute('aria-pressed', 'true');
+    await page.getByRole('link', { name: 'Next page' }).click();
+    await expect(page).not.toHaveURL(/\/106\/?$/);
+    await expect(page.locator('astro-island[ssr][client="load"]')).toHaveCount(0);
+    await expect(fitWidth).toHaveAttribute('aria-pressed', 'true');
+  });
+});
+
+test.describe('P2-4: the Diagnose field (spec §9.1)', () => {
+  for (const width of [1000, 1440]) {
+    test(`${width}: the field is at the top of the column in every mode`, async ({
+      page,
+      isMobile,
+    }) => {
+      test.skip(isMobile, 'a desktop width');
+      await at(page, width, '/');
+      const dock = page.locator('.diag .dock');
+      const home = await dock.evaluate((d) => ({
+        top: d.getBoundingClientRect().top,
+        position: getComputedStyle(d).position,
+      }));
+      expect(home.top).toBeLessThan(450);
+      expect(home.position).not.toBe('sticky');
+      await at(page, width, '/?q=32');
+      await expect(statusRow(page)).toBeVisible();
+      const res = await dock.evaluate((d) => ({
+        top: d.getBoundingClientRect().top,
+        width: d.getBoundingClientRect().width,
+        position: getComputedStyle(d).position,
+        card: document.querySelector('.diag article.card')!.getBoundingClientRect().top,
+      }));
+      expect(res.position).not.toBe('sticky');
+      expect(res.top).toBeLessThan(res.card);
+      expect(res.width).toBeLessThanOrEqual(720);
+    });
+    test(`${width}: Enter keeps the field in view for the next code`, async ({
+      page,
+      isMobile,
+    }) => {
+      test.skip(isMobile, 'a desktop width');
+      await at(page, width, '/');
+      const input = page.getByLabel('Test report or display message');
+      await input.fill('32');
+      await input.press('Enter');
+      await expect(statusRow(page)).toBeVisible();
+      // Focus leaves the field for the results heading, and the scroll goes with it.
+      await expect(input).not.toBeFocused();
+      const top = await rootPx(page, '--topbar-h');
+      const box = (await input.boundingBox())!;
+      expect(box.y).toBeGreaterThanOrEqual(top);
+      expect(box.y + box.height).toBeLessThanOrEqual(page.viewportSize()!.height);
+    });
+  }
+  test('412: the phone keeps the docked hero and the sticky bar', async ({ page, isMobile }) => {
+    test.skip(!isMobile, 'a phone width');
+    await at(page, 412, '/', 839);
+    const dock = page.locator('.diag .dock');
+    const bottom = await dock.evaluate((d) => d.getBoundingClientRect().bottom);
+    const tabTop = 839 - (await rootPx(page, '--tabbar-h'));
+    expect(bottom).toBeGreaterThan(tabTop - 40);
+    expect(bottom).toBeLessThanOrEqual(tabTop);
+    await at(page, 412, '/?q=32', 839);
+    await expect(statusRow(page)).toBeVisible();
+    expect(await dock.evaluate((d) => getComputedStyle(d).position)).toBe('sticky');
+  });
+});
+
+test.describe('P2-4: widths and measure (spec §3.1)', () => {
+  for (const width of [1000, 1280, 1440]) {
+    test(`${width}: text blocks set 60-80 characters a line, the embed the article width`, async ({
+      page,
+      isMobile,
+    }) => {
+      test.skip(isMobile, 'a desktop width');
+      // Characters a line, spaces included, read from the layout: every line is at most 80 (a
+      // block's last too, so a one-line block cannot run long unseen), and the full lines (not a
+      // block's last) average at least 60.
+      const lines = (sel: string) =>
+        page.locator(sel).evaluateAll((els) => {
+          const counts: number[] = [];
+          const lasts: number[] = [];
+          for (const el of els.filter((e) => (e as HTMLElement).offsetParent !== null)) {
+            const perLine = new Map<number, number>();
+            const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+            let space = true;
+            for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+              const s = n.textContent!;
+              for (let i = 0; i < s.length; i++) {
+                const blank = /\s/.test(s[i]!);
+                if (blank && space) continue;
+                space = blank;
+                const range = document.createRange();
+                range.setStart(n, i);
+                range.setEnd(n, i + 1);
+                const b = range.getClientRects()[0];
+                if (!b || b.width === 0) continue;
+                const k = Math.round(b.top / 4);
+                perLine.set(k, (perLine.get(k) ?? 0) + 1);
+              }
+            }
+            const ordered = [...perLine.entries()].sort((a, b) => a[0] - b[0]).map((e) => e[1]);
+            counts.push(...ordered.slice(0, -1));
+            lasts.push(...ordered.slice(-1));
+          }
+          return [counts, lasts] as const;
+        });
+      // The least number of full lines each set must have, so a check is not vacuous. The last
+      // three are a few long lines: the matrix note, the bench note and Setup's longest item names.
+      for (const [url, sel, least] of [
+        ['/handbook/tests', '.prose p', 3],
+        ['/coil/01', '.notes p', 3],
+        ['/care', 'main > p, .intro, .why, .step > p, .prov', 3],
+        ['/setup', 'main > p, .intro, .why, .step > p, .prov', 3],
+        ['/coils', 'main > p, .prov', 3],
+        ['/switches', '.panel > p', 1],
+        ['/shopping', '.gf', 1],
+        ['/setup', '.item .name', 1],
+      ] as const) {
+        await at(page, width, url);
+        const [counts, lasts] = await lines(sel);
+        expect(Math.max(...counts, ...lasts), `${url} ${sel}`).toBeLessThanOrEqual(80);
+        expect(counts.length, `${url} ${sel}`).toBeGreaterThanOrEqual(least);
+        const mean = counts.reduce((a, b) => a + b, 0) / counts.length;
+        expect(mean, `${url} ${sel}`).toBeGreaterThanOrEqual(60);
+      }
+      // The measure narrows the text only: the matrix beside the note and a Setup row's suggested
+      // value and Set field keep their column.
+      await at(page, width, '/switches');
+      const [grid, panel] = await page.evaluate(() => [
+        document.querySelector('#panel-matrix .scroll-x')!.getBoundingClientRect().width,
+        document.querySelector('#panel-matrix')!.getBoundingClientRect().width,
+      ]);
+      expect(Math.abs(grid! - panel!)).toBeLessThanOrEqual(1);
+      await at(page, width, '/setup');
+      const narrowed = await page
+        .locator('.item .vals')
+        .evaluateAll(
+          (vs) =>
+            vs.filter(
+              (v) =>
+                Math.abs(
+                  v.getBoundingClientRect().width -
+                    v.closest('.body')!.getBoundingClientRect().width,
+                ) > 1,
+            ).length,
+        );
+      expect(narrowed).toBe(0);
+      await at(page, width, '/handbook/rules');
+      const [embed, article] = await page.evaluate(() => [
+        document.querySelector('#pg-9 .shot-map')!.getBoundingClientRect().width,
+        document.querySelector('article.prose')!.getBoundingClientRect().width,
+      ]);
+      expect(Math.abs(embed! - article!)).toBeLessThanOrEqual(1);
+    });
+  }
+  for (const width of [320, 412, 600, 1000, 1440]) {
+    test.describe(`${width}px`, () => {
+      onWidth(width);
+      test('hub lists and the search pill start at the content edge', async ({ page }) => {
+        for (const url of ['/tables', '/workshop']) {
+          await at(page, width, url);
+          const r = await page.evaluate(() => {
+            const main = document.querySelector('main')!;
+            const pad = parseFloat(getComputedStyle(main).paddingLeft);
+            const left = (s: string) =>
+              [...document.querySelectorAll(s)]
+                .find((e) => (e as HTMLElement).offsetParent !== null)
+                ?.getBoundingClientRect().left;
+            return {
+              edge: main.getBoundingClientRect().left + pad,
+              lst: left('.hub .lst')!,
+              srch: left('.hub .srch') ?? null,
+            };
+          });
+          expect(Math.abs(r.lst - r.edge), `${url} list`).toBeLessThanOrEqual(1);
+          if (r.srch !== null) {
+            expect(Math.abs(r.srch - r.edge), `${url} search`).toBeLessThanOrEqual(1);
+          }
+        }
+      });
+    });
+  }
+  // 430 is an iPhone Pro Max; the control moves under the label below a 413 row (a 445 viewport).
+  for (const width of [320, 412, 419, 420, 430, 444, 445, 460, 599]) {
+    test.describe(`${width}px`, () => {
+      onWidth(width);
+      test('the Appearance label stays whole and clear of its control', async ({ page }) => {
+        await at(page, width, '/workshop');
+        const r = await page.evaluate(() => {
+          const labelEl = document.querySelector('#appearance-label')!;
+          const label = labelEl.getBoundingClientRect();
+          const rowEl = labelEl.closest('.lrow')!;
+          const seg = rowEl.querySelector('.seg')!.getBoundingClientRect();
+          const row = rowEl.getBoundingClientRect();
+          const range = document.createRange();
+          range.selectNodeContents(labelEl);
+          const tops = new Set([...range.getClientRects()].map((b) => Math.round(b.top)));
+          const x = Math.max(0, Math.min(label.right, seg.right) - Math.max(label.left, seg.left));
+          const y = Math.max(0, Math.min(label.bottom, seg.bottom) - Math.max(label.top, seg.top));
+          const under = seg.top >= label.bottom - 0.5;
+          return {
+            lines: tops.size,
+            overlap: x * y,
+            // Under the label it starts at the label's edge; beside it, after the label.
+            aligned: under ? Math.abs(seg.left - label.left) <= 2 : seg.left >= label.right,
+            over: seg.right - row.right <= 0,
+          };
+        });
+        expect(r).toEqual({ lines: 1, overlap: 0, aligned: true, over: true });
+      });
+    });
+  }
+  test('320: the code badge stays on one line', async ({ page, isMobile }) => {
+    test.skip(!isMobile, 'a phone width');
+    await at(page, 320, '/coil/01', 800);
+    const r = await page
+      .locator('.code.lg')
+      .first()
+      .evaluate((el) => {
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        return { lines: range.getClientRects().length, height: el.getBoundingClientRect().height };
+      });
+    expect(r).toEqual({ lines: 1, height: 40 });
+  });
+});

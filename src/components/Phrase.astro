@@ -1,0 +1,14 @@
+---
+/**
+ * A code phrase in a table cell (spec §8.9): it wraps at its spaces and never inside a token, so
+ * 'F111 Flasher Secondary (5A S.B.)' can take two lines while 'J126-7' and '(5A S.B.)' stay whole.
+ * The cell carries `phrase` (white-space: normal); each token is a nowrap `.tok`.
+ */
+interface Props {
+  text: string | number | null | undefined;
+}
+// A token is a run of non-space characters; a bracketed group is one token, spaces and all.
+const tokens = String(Astro.props.text ?? '').match(/(?:\([^)]*\)|\S)+/g) ?? [];
+---
+
+{tokens.map((t, i) => [i > 0 ? ' ' : '', <span class="tok">{t}</span>])}

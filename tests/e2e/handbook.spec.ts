@@ -188,20 +188,32 @@ test.describe('the manual viewer', () => {
     await expect(page).toHaveURL(/manual\/ops\/97$/);
   });
 
-  test('zoom capsule and Rotate page act on the scan; the keys still work', async ({ page }) => {
+  test('zoom capsule and Rotate page act on the scan; the keys still work', async ({
+    page,
+    isMobile,
+  }) => {
+    // The default fit (spec §9.12): fit page from 1000, fit width below. A kept choice is cleared.
+    await page.addInitScript(() => {
+      try {
+        localStorage.removeItem('valvet:manual-fit');
+      } catch {
+        // No storage: the default applies anyway.
+      }
+    });
+    const defaultFit = isMobile ? 'Fit width' : 'Fit page';
     await gotoHydrated(page, '/manual/ops/25');
     const scan = page.locator('.sheet.scan');
     await expect(page.locator('.stage img').first()).toBeVisible();
     const fitW = (await scan.boundingBox())!.width;
     const zoom = page.getByRole('group', { name: 'Zoom' });
-    for (const name of ['Zoom in', 'Zoom out', 'Fit']) {
-      const b = (await zoom.getByRole('button', { name }).boundingBox())!;
+    for (const name of ['Zoom in', 'Zoom out', 'Fit width', 'Fit page']) {
+      const b = (await zoom.getByRole('button', { name, exact: true }).boundingBox())!;
       expect(b.width).toBeGreaterThanOrEqual(44);
       expect(b.height).toBeGreaterThanOrEqual(44);
     }
     await zoom.getByRole('button', { name: 'Zoom in' }).click();
     await expect.poll(async () => (await scan.boundingBox())!.width).toBeGreaterThan(fitW + 1);
-    await zoom.getByRole('button', { name: 'Fit' }).click();
+    await zoom.getByRole('button', { name: defaultFit, exact: true }).click();
     await expect
       .poll(async () => Math.round((await scan.boundingBox())!.width))
       .toBe(Math.round(fitW));

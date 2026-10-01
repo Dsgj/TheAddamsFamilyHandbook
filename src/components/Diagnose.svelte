@@ -14,6 +14,7 @@
   import { lampSharedCauses, sharedCauses } from '~/lib/shared-cause';
   import { href, replaceUrl } from '~/lib/url';
   import { onMount, tick, untrack } from 'svelte';
+  import { MediaQuery } from 'svelte/reactivity';
   import ComponentCard from './ComponentCard.svelte';
   import DiagnoseSearch from './DiagnoseSearch.svelte';
 
@@ -215,7 +216,9 @@
   // put, since lifting it by the dock's height would land it on the dock. Measured on scroll,
   // resize and a resize of the dock or the view, and written only when the value changes.
   let dock: HTMLElement | undefined = $state();
-  const docked = $derived(mode !== 'home');
+  // From 1000 the field sits at the top of the column (spec §9.1): no bottom dock to clear.
+  const wideQ = new MediaQuery('(min-width: 1000px)');
+  const docked = $derived(mode !== 'home' && !wideQ.current);
   const TOAST_BAND = 80; // the 10 gap and a toast of up to two lines (60), with room to spare
   $effect(() => {
     if (!docked || !dock || !root) return;
@@ -261,7 +264,10 @@
     await tick();
     if (resultsHead) {
       resultsHead.focus({ preventScroll: true });
-      resultsHead.scrollIntoView({ block: 'start' });
+      // Under 1000 the results take the column under the sticky bar. From 1000 the field sits at
+      // the top of the column, so the page moves only as far as the heading needs: the field
+      // stays in view for the next code (spec §9.1).
+      resultsHead.scrollIntoView({ block: wideQ.current ? 'nearest' : 'start' });
     } else field?.focus();
   }
   function onKey(e: KeyboardEvent) {
@@ -328,6 +334,37 @@
     <p class="intro">
       Type what the machine shows: a test report, a Check Switch message or single codes.
     </p>
+  {/if}
+
+  <!-- Spec §9.1: the field comes first in the DOM at every width. Below 1000 it is ordered to
+       the foot (the docked hero, the sticky bar); from 1000 it stays at the top of the column. -->
+  <div class="dock" bind:this={dock}>
+    <label class="lbl" for="codes">Test report or display message</label>
+    <textarea
+      id="codes"
+      class="well mono"
+      rows="1"
+      autocomplete="off"
+      autocapitalize="characters"
+      spellcheck="false"
+      placeholder="32 68 F1 F3"
+      bind:this={field}
+      bind:value={input}
+      onkeydown={onKey}
+      onblur={onBlur}
+    ></textarea>
+    <div class="acts">
+      {#if canPaste}
+        <button class="btn" type="button" onclick={paste}>Paste</button>
+      {/if}
+      <button class="btn primary go" type="button" onclick={diagnose}>Diagnose</button>
+    </div>
+    {#if mode === 'home'}
+      <p class="or">Or type a word to search everything.</p>
+    {/if}
+  </div>
+
+  {#if mode === 'home'}
     <nav class="tiles" aria-label="Quick links">
       <a class="tile" href={href('map')}>
         <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -457,32 +494,6 @@
       {/each}
     </div>
   {/if}
-
-  <div class="dock" bind:this={dock}>
-    <label class="lbl" for="codes">Test report or display message</label>
-    <textarea
-      id="codes"
-      class="well mono"
-      rows="1"
-      autocomplete="off"
-      autocapitalize="characters"
-      spellcheck="false"
-      placeholder="32 68 F1 F3"
-      bind:this={field}
-      bind:value={input}
-      onkeydown={onKey}
-      onblur={onBlur}
-    ></textarea>
-    <div class="acts">
-      {#if canPaste}
-        <button class="btn" type="button" onclick={paste}>Paste</button>
-      {/if}
-      <button class="btn primary go" type="button" onclick={diagnose}>Diagnose</button>
-    </div>
-    {#if mode === 'home'}
-      <p class="or">Or type a word to search everything.</p>
-    {/if}
-  </div>
 </section>
 
 <style>
@@ -502,6 +513,7 @@
     }
   }
   .intro {
+    max-width: var(--measure);
     margin: 0 0 16px;
     color: var(--muted);
   }
@@ -662,9 +674,11 @@
     }
   }
 
-  /* The DMD field (spec §9.1) and its buttons. On the home it sits at the bottom of the section;
-     over results and search it floats above the tab bar. */
+  /* The DMD field (spec §9.1) and its buttons. Below 1000, on the home it sits at the bottom of the
+     section and over results and search it floats above the tab bar; it comes first in the DOM, so
+     `order` puts it at the foot. */
   .dock {
+    order: 1;
     margin-top: auto;
     padding-top: 16px;
   }
@@ -677,6 +691,24 @@
     background: var(--bar);
     -webkit-backdrop-filter: blur(20px) saturate(1.5);
     backdrop-filter: blur(20px) saturate(1.5);
+  }
+  /* From 1000 the field is at the top of the column in every mode, in flow and capped at 720 (the
+     bottom dock covered the result cards, VL-08). */
+  @media (min-width: 1000px) {
+    .diag {
+      min-height: 0;
+    }
+    .dock,
+    .diag:not([data-mode='home']) .dock {
+      order: 0;
+      position: static;
+      max-width: 720px;
+      margin: 0 0 var(--gap);
+      padding: 0;
+      background: none;
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
   }
   .lbl {
     display: block;
