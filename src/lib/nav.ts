@@ -47,9 +47,9 @@ export const TABS: Tab[] = [
     subs: [
       { label: 'Switch matrix', path: 'switches', nav: 'switches' },
       { label: 'Lamp matrix', path: 'lamps', nav: 'lamps' },
-      { label: 'Solenoids & flashers', path: 'coils', nav: 'coils' },
+      { label: 'Solenoids and flashers', path: 'coils', nav: 'coils' },
       { label: 'Fuses', path: 'fuses', nav: 'fuses' },
-      { label: 'LEDs & jumpers', path: 'fuses#leds' },
+      { label: 'LEDs and jumpers', path: 'fuses#leds' },
     ],
   },
   {

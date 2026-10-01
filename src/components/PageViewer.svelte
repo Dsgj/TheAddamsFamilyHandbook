@@ -3,11 +3,11 @@
   import BottomSheet from './BottomSheet.svelte';
   import { isTypingTarget } from '~/lib/keys';
   import type { DocId, PageMeta } from '~/lib/model/types';
-  import { DOC_NAME, pdfPageFromLabel } from '~/lib/pages';
+  import { pageRefText, pdfPageFromLabel } from '~/lib/pages';
   import { href, manualHref, replacePage } from '~/lib/url';
 
   /**
-   * The manual page viewer (spec §9.12). Toolbar: Previous page, "97 / 124" (opens the Go to page
+   * The manual page viewer (spec §9.12). Toolbar: Previous page, "97 of 124" (opens the Go to page
    * sheet), Next page, Rotate page, Text. Zoom in / Zoom out / Fit width / Fit page sit in a glass
    * capsule that rides the viewport's foot. At a fit the page scrolls, not the stage; zoomed, the
    * stage is the one scroller, a viewport slice tall. The fit is kept across page turns. Pinch,
@@ -34,7 +34,7 @@
 
   const [, W, H, tiled] = $derived(meta);
   let mode = $state<'image' | 'text'>('image');
-  /** A scan image failed to load: offline and not yet cached (spec §11). */
+  /** A page image failed to load: offline and not yet cached (spec §11). */
   let missing = $state(false);
   let rot = $state(0);
   let scale = $state(0); // 0 = the fit (fitMode)
@@ -225,7 +225,7 @@
         jump = String(page);
         bad = false;
         go = true;
-      }}>{page} / {count}</button
+      }}>{page} of {count}</button
     >
     <a
       class="ibtn"
@@ -265,17 +265,18 @@
     <div class="card text">
       {#if text}
         <p class="prov">
-          OCR text, unedited. Use it for search and copy; check the scan for anything that matters.
+          Machine-read text, unedited. Use it for search and copy; check the page image for anything
+          that matters.
         </p>
         <pre>{text}</pre>
       {:else}
-        <p class="muted">No OCR text for this page.</p>
+        <p class="muted">No text for this page.</p>
       {/if}
     </div>
   {:else}
     {#if missing}
       <div class="card nocache">
-        <p>This scan isn't on the device yet. Open it once while you have a connection.</p>
+        <p>This manual page isn't on the device yet. Open it once while you have a connection.</p>
         <button type="button" class="btn sm" onclick={() => (mode = 'text')}>Show the text</button>
       </div>
     {/if}
@@ -290,7 +291,7 @@
         tabindex={scale !== 0 ? 0 : undefined}
         role={scale !== 0 ? 'region' : undefined}
         aria-label={scale !== 0
-          ? `${DOC_NAME[doc]} page ${page}, zoomed, arrow keys scroll`
+          ? `${pageRefText(doc, page)}, zoomed, arrow keys scroll`
           : undefined}
         style:--avail-h={availH ? `${availH}px` : undefined}
         bind:this={stage}
@@ -323,7 +324,7 @@
             {:else if tiled}
               <img
                 src={src('_o')}
-                alt="{doc} page {page}"
+                alt={pageRefText(doc, page)}
                 draggable="false"
                 class="full"
                 onerror={() => (missing = true)}
@@ -331,7 +332,7 @@
             {:else}
               <img
                 src={src()}
-                alt="{doc} page {page}"
+                alt={pageRefText(doc, page)}
                 draggable="false"
                 class="full"
                 onerror={() => (missing = true)}

@@ -1,4 +1,5 @@
 import type { ComponentStatus, Kind } from './model/types';
+import { componentCode } from '~/lib/copy';
 import { DATA } from '~/lib/data/components';
 
 /** Compact per-component row the Shopping list island receives (keeps components.json out of the bundle). */
@@ -29,9 +30,8 @@ export const KIND_TITLE: Record<Kind, string> = {
   switch: 'Switches',
   coil: 'Solenoids',
 };
-const KIND_PREFIX: Record<Kind, string> = { lamp: 'L', switch: 'S', coil: 'C' };
-
-export const itemRef = (i: ShoppingItem) => `${KIND_PREFIX[i.kind]}${i.id}`;
+/** The component's code as the tables print it: "32", "L55", "SOL 01" (spec §13). */
+export const itemRef = (i: ShoppingItem) => componentCode(i.kind, i.id);
 
 function groupKey(i: ShoppingItem): [label: string, part: string] {
   if (i.kind === 'lamp') return [i.bulb || NO_PART, i.part];

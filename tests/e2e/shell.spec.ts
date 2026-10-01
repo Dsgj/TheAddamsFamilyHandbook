@@ -167,9 +167,9 @@ test.describe('sidebar', () => {
     await expect(subs).toHaveText([
       'Switch matrix',
       'Lamp matrix',
-      'Solenoids & flashers',
+      'Solenoids and flashers',
       'Fuses',
-      'LEDs & jumpers',
+      'LEDs and jumpers',
       'Handbook',
       'Manuals',
       'Parts',
@@ -195,7 +195,7 @@ test.describe('sidebar', () => {
     await gotoHydrated(page, '/switch/32');
     await page.getByRole('button', { name: 'Fault' }).click();
     await expect(nav(page).locator('.subs a', { hasText: 'Shopping list' })).toHaveAccessibleName(
-      'Shopping list 1 parts to order',
+      'Shopping list 1 part to order',
     );
     await expect(page.getByRole('status')).toHaveCount(0);
   });
@@ -324,12 +324,12 @@ test.describe('top bar on phones', () => {
     await expect(h1.locator('.short')).toBeVisible();
     await expect(h1.locator('.short')).toHaveText('Map');
     await expect(page.locator('main > .lt')).toHaveCount(0);
-    await expect(page.getByRole('button', { name: 'Find a part' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'All parts on the map' })).toBeVisible();
-    await page.getByRole('button', { name: 'Find a part' }).click();
-    const dialog = page.getByRole('dialog', { name: 'All parts on the map' });
+    await expect(page.getByRole('button', { name: 'Search components' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'All components on the map' })).toBeVisible();
+    await page.getByRole('button', { name: 'Search components' }).click();
+    const dialog = page.getByRole('dialog', { name: 'All components on the map' });
     await expect(dialog).toBeVisible();
-    await expect(dialog.getByRole('searchbox', { name: 'Find a part' })).toBeFocused();
+    await expect(dialog.getByRole('searchbox', { name: 'Search components' })).toBeFocused();
   });
 
   test('/handbook/menus anchors land below the bar', async ({ page }) => {
@@ -356,17 +356,17 @@ test.describe('top bar from 600', () => {
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Tables');
   });
 
-  test('/map at 1440: "Find a part" focuses the panel field; no "All parts" button', async ({
+  test('/map at 1440: "Search components" focuses the panel field; no "All components" button', async ({
     page,
   }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await gotoHydrated(page, '/map');
     await expect(page.getByRole('heading', { level: 1 })).toHaveAccessibleName('Playfield map');
     await expect(page.locator('header.top h1 .short')).toBeHidden();
-    await expect(page.getByRole('button', { name: 'All parts on the map' })).toHaveCount(0);
-    await page.getByRole('button', { name: 'Find a part' }).click();
+    await expect(page.getByRole('button', { name: 'All components on the map' })).toHaveCount(0);
+    await page.getByRole('button', { name: 'Search components' }).click();
     await expect(
-      page.getByRole('complementary').getByRole('searchbox', { name: 'Find a part' }),
+      page.getByRole('complementary').getByRole('searchbox', { name: 'Search components' }),
     ).toBeFocused();
   });
 
@@ -378,5 +378,56 @@ test.describe('top bar from 600', () => {
       .poll(() => page.locator('#p17-2').evaluate((el) => el.getBoundingClientRect().top))
       .toBeGreaterThanOrEqual(bar.y + bar.height - 1);
     expect(Math.abs((await scrollPaddingTop(page)) - (bar.height + 12))).toBeLessThanOrEqual(1);
+  });
+});
+
+/* P3 item 1 of the app audit (spec §13): one name per page, and every page says what it is. */
+test.describe('page names and descriptions', () => {
+  const DEFAULT = 'Offline service companion for The Addams Family pinball.';
+  const description = (html: string) =>
+    /<meta name="description" content="([^"]*)"/.exec(html)?.[1];
+
+  test('a page is titled by its name', async ({ page }) => {
+    await gotoHydrated(page, '/switches');
+    await expect(page).toHaveTitle('Switch matrix · The Addams Family Handbook');
+    await gotoHydrated(page, '/coils');
+    await expect(page).toHaveTitle('Solenoids and flashers · The Addams Family Handbook');
+  });
+
+  test('every route has a description of its own', async ({ request }) => {
+    // One sample per route file in src/pages; data/handbook.json.ts is a JSON endpoint.
+    const routes = [
+      '',
+      'map',
+      'switches',
+      'lamps',
+      'coils',
+      'fuses',
+      'tables',
+      'parts',
+      'handbook',
+      'handbook/tests',
+      'handbook/appendix',
+      'manual',
+      'manual/ops/25',
+      'switch/32',
+      'lamp/11',
+      'coil/01',
+      'shopping',
+      'verify',
+      'care',
+      'setup',
+      'workshop',
+    ];
+    const seen = new Map<string, string>();
+    for (const route of routes) {
+      const d = description(await (await request.get(route)).text());
+      expect(d, route).toBeTruthy();
+      expect(d, route).not.toBe(DEFAULT);
+      expect(seen.get(d!), `${route} repeats ${seen.get(d!)}`).toBeUndefined();
+      seen.set(d!, route);
+    }
+    // The 404 page alone keeps the site's default.
+    expect(description(await (await request.get('no-such-page')).text())).toBe(DEFAULT);
   });
 });

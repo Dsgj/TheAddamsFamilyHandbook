@@ -279,16 +279,31 @@ export function merge(
   return out;
 }
 
-/** Short date for the service log, e.g. "20 Sep". */
+/** Month names for dates. Fixed, not Intl: en-GB renders September as "Sept". */
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/**
+ * The app's one date format (spec §13), in the device's local time: "21 Sep 2026". Used by the
+ * service log, the care and setup ticks, the verify ticks and the Recent list.
+ */
 export function shortDate(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
-  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+/**
+ * `YYYY-MM-DD` in local time, for the backup's file name. The name stays ISO so backups sort by
+ * date in a file list; local, so a backup made just after midnight is not named for yesterday.
+ */
+export function localIsoDate(d = new Date()): string {
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
 
 export const nowIso = () => new Date().toISOString();
 
-/** "Today", "Yesterday" or "23 Sep", for the Recent list (spec §9.1). */
+/** "Today", "Yesterday" or "23 Sep 2026", for the Recent list (spec §9.1). */
 export function whenLabel(iso: string, now = new Date()): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
@@ -296,5 +311,5 @@ export function whenLabel(iso: string, now = new Date()): string {
   const diff = Math.round((day(now) - day(d)) / 86_400_000);
   if (diff <= 0) return 'Today';
   if (diff === 1) return 'Yesterday';
-  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+  return shortDate(iso);
 }

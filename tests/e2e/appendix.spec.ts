@@ -13,10 +13,12 @@ test('component pages link to the owner appendices and the handbook shows them l
 
   await first.click();
   await expect(page).toHaveURL(/handbook\/appendix#p10\d-\d+/);
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText(/Appendix/);
-  await expect(page.locator('.prov.warn')).toContainText("owner's own notes");
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Handbook appendix');
+  await expect(page.locator('.prov.warn')).toContainText(
+    'These pages are notes written for this machine, not manual text.',
+  );
   await expect(page.locator('.pg-bar').first()).toContainText('Appendix A1');
-  await expect(page.locator('.pg-bar a', { hasText: 'Scan' })).toHaveCount(0);
+  await expect(page.locator('.pg-bar a', { hasText: /^Manual\b/ })).toHaveCount(0);
 
   await gotoHydrated(page, '/switch/21');
   await expect(page.locator('.notes').getByRole('link').first()).toHaveText(/A3 Switches/);

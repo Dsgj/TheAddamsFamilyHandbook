@@ -206,6 +206,52 @@ Baseline before Phase 1 (from `playfield-map.md`, last green run):
     - Handbook page refs (major, AY-12). On /handbook/quick the 106 refs measured 9-33 × 19 in 33-tall rows, and on the phone 16 failed WCAG 2.5.8 ("1-2" and "3" have centres 21 apart). A page ref in a `.prose` cell (a link to a `#pg-` anchor or a /manual/ page) is now an inline-block at least 24 wide with 3 px over and under its 20 px line, taken back by the margin: 24-33 × 26 in the same 33 rows, with no wrap in its cell, since a second line 20 below put two refs 20 apart. 6 px filled the row but pushed the focus ring's bottom edge out of the table's scroller on a last row; 7 overlapped the next row. Print sets them inline again. The 44 sweep allows a `.prose td > a[href]` only when it is at least 24 wide and no other target in its table is centred nearer than 24; "see A6 Flippers" on /handbook/appendix (77 × 19 on desktop) passes that way. No other handbook section has a link in a table cell.
     - Manual search (minor, AY-09). The Document select calls `arm()` on `change`, so on /manual?q=flipper choosing the Operator's Handbook announces "3 pages". The handbook contents, the map's list and /tables have no pre-filled query, and /parts announces on its `role=status` line, so none of them has the gap.
     - design-system.spec's "Go" check waits for the sheet's rise to finish and rounds the height, which read 49.99994 mid-rise about once in ten runs.
+- **One name per thing** (2026-10-01, audit P3 item 1: CP-01 to CP-20, UX-06, UX-07, UX-10, CR-09). The new spec §13 holds the glossary and six rules (state words, codes, p. and PDF page, inline-link spacing, page names, Source links); §6.4, §6.5, §6.6, §7.5, §7.6, §7.7, §8.2, §8.6, §8.7, §8.8, §8.9, §9.2, §9.6–§9.16, §11 and §12 take the new labels. Words only: stored values, the backup format (version 2), the storage keys, routes, ids, anchors and `src/content/**` are unchanged. `tests/unit/copy.test.ts` reads the source against rules (a) to (l), and the README against three more checks; `copy-helpers.test.ts` and status-io's dates block test the helpers; new e2e checks sit in tables, shopping, diagnose, storage, shell, a11y and layout-overflow. Each new check failed on a build of the sources before the change (31 e2e runs in the two projects, 15 unit tests, and copy-helpers, which cannot load without `src/lib/copy.ts`) and passes with it.
+  - **Kept, by decision:**
+    - The backup file name stays an ISO date, `tafh-status-YYYY-MM-DD.json`, now from the local date (`localIsoDate`): it sorts by name and is a file name, not prose.
+    - Map markers and the 32 px map list tiles show the bare id. So do the per-kind tables' "#" columns and the matrix grid cells: the column is headed "#", and a prefix would widen the tables at 1000 and up.
+    - The calibration overlay (`?calib=1`) is developer-only and keeps its `src/data/positions.json` reference (allow-listed in copy.test.ts).
+    - "TAF Handbook" stays the home-screen label (manifest `short_name`, `apple-mobile-web-app-title`): the full name truncates under an icon. Everywhere else the app is "The Addams Family Handbook" or "the app".
+    - `DOC_NAME` is unchanged: it holds the documents' own titles. So are the Operator's Handbook's page titles in the manual contents ("Solenoid table" is its page 6) and the appendix notes in `src/content` ("Setup step 3" in A2).
+    - Undo for the shopping list's "Fixed" is out of scope; the button and the swipe still clear the status at once.
+  - **Where the build differs from the reviewed design:**
+    - The helpers live in `src/lib/copy.ts`, not components.ts, with `KIND_LABEL` moved there and re-exported: an island can import them without pulling components.json into its bundle. `locationLine(kind, item, opts?)` takes the kind and a structural `Located` type, so a matrix cell works too. The card and the detail page show the bulb on its own row; a Related row passes `{ bulb: true }`, so a lamp reads "Lamp · bulb #555" in place of its matrix place and the row stays one line on a phone. A flipper or dedicated switch names the connector from its pin: the buttons read "flipper (J805)", the EOS switches "flipper (J806)".
+    - Location parts are lower case after the kind ("Switch · matrix column 3, row 2"); `capitalise` starts a line that stands alone. The map list subtitle uses it only where a subtitle existed (solenoids, matrix cells), and leaves out "not used", which the row's name and "not on map" already say.
+    - The manual contents' value column reads the printed label or "PDF page n".
+    - TabBadge, the shopping list total and Device data keep the number where it is drawn (the pill, the DMD digits, the mono span) and agree the noun with `agree(n, one, many?)`, since `plural()` would print the number twice. The words are the same: "1 part to order".
+    - DiagnoseSearch keeps the driver, "Fliptronics" and "owner service notes" as hidden keywords in the haystack, so old searches still hit. Diagnose's example rows keep "SOL 7", because they show what the parser accepts; its provenance line reads "SOL 01–28".
+    - The map's provenance text says "p. 2-39 to 2-41" and the shot notes "p. E–F", because PDF pages 9 and 10 print the labels E and F.
+    - PageViewer's image alt is `${DOC_NAME} ${pageTitleText}` and the zoomed stage's name uses `pageRefText`. The manual page's `short` is `pageTitleText`.
+    - 404 says "That page is not in the app."; the update toasts say "A new version of the app is ready." and "The app is up to date."
+    - The handbook appendix's title is "Handbook appendix", so its description is "The handbook appendix: notes written for this machine, each naming its sources." instead of the design's template, which would repeat the title.
+    - Verify's "Transcription" link becomes "Test menu", and its links use `pageRefText`. Its "Setup step 3/5/6" links become "Machine setup step 3/5/6" with step 7; the design listed only step 7.
+    - WireChip keeps a tooltip only when the kit's abbreviation differs from the full name, Gray and Grey counted as the same.
+    - The manual page keeps "Read the transcription" (handbook.spec reads it).
+    - Fuses reads "the manual page is <link>"; Setup's links are reordered so a sentence has one "and"; the site footer reads "Manual text and pages are ©" rather than "manual pages", which would say "manual" twice; HandbookToc's field is "Search the handbook" in both modes; /tables keeps its hidden static "No tables match." line, which the script fills with the query.
+    - appendix.ts writes "the J137/J133 connector" without spaces, and the handbook loader's build log uses `plural`: rules (b) and (e) read every source file.
+    - WorkshopHub loses the `careNext` prop, since the Care row's sub line is now fixed ("Every week to every year").
+    - copy.test.ts rule (f) also reads the contents' `[page, 'title']` tuples, and rule (h) is narrowed to a whole `` `#${x}` `` or `'#' + page`, so CSS selectors and anchors are not read as copy.
+    - A component card now has two links named "Show on map", the mini-map and the action button, both to the same map URL; diagnose.spec counts two and checks each href.
+    - In the tests: the design put the state-word checks in switches.spec, which does not exist, so they and the verbs check are in tables.spec. The /switches Fault check names "Left Flipper Button", because switch 32 is a matrix cell with no tick.
+    - Rule (d)'s line-break form ("word", line break, `<a`) applies to `.astro` files only. Astro drops that line break, so the words run together; Svelte 5 keeps it as one space, and eslint's `svelte/no-useless-mustaches` rejects `{' '}` in a `.svelte` file. A `.svelte` file still fails on a word written right against `<a`. So PlayfieldMap's shot notes ("on the manual's shot map,", line break, link) carry no `{' '}`.
+    - TabBadge's hidden text is one template literal, `` {` ${agree(count, 'part')} to order`} ``: Svelte trims the space at the start of an element, so HEAD's `<span class="sr-only"> parts to order</span>` compiled with no space after the count.
+  - **Review fixes** (two adversarial reviews of the change, same day). Each fix has a check that failed on a build of the tree before it: 8 e2e tests in both projects (16 runs) and 10 unit tests.
+    - Flipper switches name their own connector: "flipper (J805)" for the buttons F2/F4/F6/F8, "flipper (J806)" for the EOS switches. The first cut said J806 for all eight. `/switches` heads the table "Flipper switches (Fliptronics J805/J806)" and the README says the same. copy-helpers checks every flipper and dedicated switch in components.json against its pin.
+    - Related rows on a component page name a lamp's bulb again ("Lamp · bulb #555"), in place of the matrix place: the full line wraps to two lines on a Pixel 7.
+    - The map list subtitle no longer repeats "not used" ("11 Not Used · Matrix column 1, row 1 · not on map").
+    - The handbook page bar says the page once: the marker "p. 1-15" (aria-hidden beside the button) and a "Manual" button named "Manual p. 1-15".
+    - The appendix warning reads "These pages are notes written for this machine, not manual text.", like the Handbook home; copy.test rule (k) bans "owner's own notes".
+    - The shopping list footer says "Mark a component Fault"; rule (j) now also bans "Mark/Tick/Set a part" and "a part Fault/OK".
+    - Every `n === 1 ? … : …` count ternary goes through `agree()` or `plural()` (DeviceData ×3, HandbookToc, PlayfieldMap, ShoppingList, TabBadge, /tables). Rule (e) now reads the code inside markup expressions for a ternary on 1 whose two words differ only by a plural ending or share a stem, so the markup no longer hides them.
+    - Rule (c) also bans a lower-case "broken" in copy (none existed).
+    - The flipper-supply Source line on `/coils` names its page, "Flipper Circuits p. 3-10"; spec rule 6 and copy.test rule (l) ban a bare "Source: p. …" link.
+    - The README says "page images" and "manual location map" where it said scan(s), and copy.test reads the README for scan(s), US spellings and the flipper connectors.
+    - Verify's intro names the two sources once: "Places where the manual's pages and its parts list disagree" (it said "the manual, the parts list and the manual pages").
+    - Not changed: the `/coils` flasher rows on a phone are one line taller (106 → 128 px), because the full wire names push the pin pair to its own line. That is §8.9's rule that a label and value pair wraps whole, and the reviewer judged it acceptable. Changing it would change the layout rule for every table.
+  - **Recheck fixes** (the reviewer's second pass, same day).
+    - The `/switches` segments read Matrix / Dedicated / Flippers. "Flipper J806" named one connector for switches that sit on J805 (the buttons) and J806 (the EOS switches), and "Dedicated J205" overflowed its segment at 360 px. The segment names the group; each panel heading carries the connectors (§6.6, §9.6; tables.spec and shopping.spec updated).
+    - The lamp service note (appendix.ts, A4) writes the bulb only when the lamp has one. Lamps 41, 76 and 88 have no bulb in components.json and printed "the bulb () or its socket".
+    - The CHANGELOG counts six copy rules, as §13.2 does, and the Diagnose Recent examples in §9 carry the year ("23 Sep 2026").
 
 ## Routes
 
@@ -232,7 +278,7 @@ Baseline before Phase 1 (from `playfield-map.md`, last green run):
 | `/404` | none | keeps its TILT page (Q9) | — |
 | `/data/handbook.json` | none | data endpoint, unchanged | — |
 
-Some things open as sheets with no URL of their own: Show on map, Add to shopping list, Go to page, Install, All parts on the map and About this handbook. The map layers are floating toggles.
+Some things open as sheets with no URL of their own: Show on map, Add to shopping list, Go to page, Install, All components on the map and About the app (labels as of 2026-10-01). The map layers are floating toggles.
 
 ## Keep
 
@@ -283,7 +329,7 @@ Some things open as sheets with no URL of their own: Show on map, Add to shoppin
 - **Handbook.**
   - Menu-map links (`.mmap a`) resolve to `#pN-NN`.
   - The owner appendices show last, and component pages link to them.
-  - The reader keeps `.pg-bar` per page (the first reads "Appendix A1" on `/handbook/appendix`, with no "Scan" link) and the appendix's `.prov.warn` "owner's own notes" (appendix.spec.ts:16-19).
+  - The reader keeps `.pg-bar` per page (the first reads "Appendix A1" on `/handbook/appendix`, with no "Scan" link) and the appendix's `.prov.warn` "notes written for this machine" (appendix.spec.ts:16-21; "owner's own notes" until 2026-10-01).
   - The shot map is embedded after page 9 (`#pg-9 .shot-map`).
 - **Parts.** The search is labelled "Search parts" and the rows sit in a `tbody`.
 - **Map.**

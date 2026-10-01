@@ -20,18 +20,14 @@ export function find(kind: Kind, id: string): AnyComponent | undefined {
   return COILS.get(id);
 }
 
-export const KIND_LABEL: Record<Kind, string> = {
-  switch: 'Switch',
-  lamp: 'Lamp',
-  coil: 'Solenoid',
-};
+export { KIND_LABEL } from '~/lib/copy';
 export type Layer = 'sw' | 'lamp' | 'coil';
 export const MAP_LAYER: Record<Kind, Layer> = { switch: 'sw', lamp: 'lamp', coil: 'coil' };
 export const LAYER_KIND: Record<Layer, Kind> = { sw: 'switch', lamp: 'lamp', coil: 'coil' };
 export const LAYER_LABEL: Record<Layer, string> = {
   sw: 'Switches',
   lamp: 'Lamps',
-  coil: 'Solenoids & flashers',
+  coil: 'Solenoids and flashers',
 };
 export const LAYER_SOURCE: Record<Layer, string> = {
   sw: 'Switch Locations, p. 2-39',

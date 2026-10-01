@@ -300,20 +300,31 @@ test.describe('the result card', () => {
     await expect(card.locator('.code.lg')).toHaveText('32');
     await expect(card.locator('h2')).toContainText('Upper Right Jet');
     await expect(card.locator('.kind')).toContainText('Switch · matrix column');
-    await expect(card.getByRole('link', { name: 'Open on the map' })).toBeVisible();
+    await expect(card.locator('a.map-link')).toHaveAccessibleName('Show on map');
     await expect(card.getByRole('group', { name: 'Test status' }).getByRole('button')).toHaveText([
       'OK',
       'Fault',
       'Not tested',
     ]);
-    await expect(card.getByRole('link', { name: 'Show on map' })).toHaveAttribute(
-      'href',
-      /map\?layer=sw&id=32$/,
-    );
+    await expect(card.getByRole('link', { name: 'Show on map', exact: true })).toHaveCount(2);
+    for (const link of await card.getByRole('link', { name: 'Show on map', exact: true }).all())
+      await expect(link).toHaveAttribute('href', /map\?layer=sw&id=32$/);
     await expect(card.getByRole('link', { name: 'Details' })).toHaveAttribute(
       'href',
       /switch\/32$/,
     );
-    await expect(card.locator('.acts').getByRole('link', { name: /^p\. 2-/ })).toBeVisible();
+    await expect(
+      card.locator('.acts').getByRole('link', { name: /^Manual p\. 2-\d+$/ }),
+    ).toBeVisible();
   });
+});
+
+/* P3 item 1 of the app audit (spec §13): "p." only before a printed page label. */
+test('a handbook heading on an unnumbered page names its PDF page', async ({ page }) => {
+  await gotoHydrated(page, '/');
+  await field(page).fill('jumper charts');
+  const hit = page.locator('a.lrow', {
+    has: page.locator('.ttl', { hasText: /^Jumper Charts$/ }),
+  });
+  await expect(hit.first().locator('.sub')).toHaveText('Handbook · PDF page 2');
 });

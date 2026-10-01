@@ -33,7 +33,7 @@
 
 <p class="muted intro">{intro}</p>
 <p class="progress" role="status">
-  <span class="dmd small">{done} / {ids.length}</span>
+  <span class="dmd small">{done} of {ids.length}</span>
   <span class="muted">{noun} done</span>
   <progress max={ids.length} value={done} aria-label="Progress"></progress>
 </p>
@@ -45,7 +45,7 @@
       <header>
         <h2><span class="n">{n + 1}</span> {s.title}</h2>
         <span class="mono small menu">{s.menu}</span>
-        <span class="muted small">{stepDone(s)} / {s.items.length}</span>
+        <span class="muted small">{stepDone(s)} of {s.items.length}</span>
       </header>
       <p class="muted small">{s.intro}</p>
       <ul class="items">
@@ -120,8 +120,9 @@
     gap: 10px;
     flex-wrap: wrap;
   }
+  /* 140, not 160: "47 of 47 settings done" and the bar share one line at 412 (spec §13). */
   progress {
-    flex: 1 1 160px;
+    flex: 1 1 140px;
     height: 8px;
     accent-color: var(--ok);
   }

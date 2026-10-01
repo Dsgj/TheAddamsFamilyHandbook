@@ -18,7 +18,7 @@ test('map marker opens the component card', async ({ page }) => {
     .click();
   await expect(
     page.locator(
-      'aside article.comp[data-id="32"], section[aria-label^="Selected part"][data-id="32"]',
+      'aside article.comp[data-id="32"], section[aria-label^="Selected component"][data-id="32"]',
     ),
   ).toBeVisible();
   await expect(page).toHaveURL(/id=switch:32/);
@@ -47,7 +47,7 @@ test('handbook menu map links resolve', async ({ page }) => {
   await expect(page).toHaveURL(/#p\d+-\d+/);
 });
 
-test('manual viewer navigates and shows OCR text', async ({ page }) => {
+test('manual viewer navigates and shows the page text', async ({ page }) => {
   await gotoHydrated(page, '/manual/ops/25');
   await expect(page.locator('.stage img').first()).toBeVisible();
   await page.getByRole('button', { name: 'Text' }).click();
@@ -92,7 +92,7 @@ test('layers combine and the shot layer opens a shot card', async ({ page }) => 
     .click();
   await expect(
     page.locator(
-      'aside article.shot-card[data-id="K"], section[aria-label^="Selected part"][data-id="K"]',
+      'aside article.shot-card[data-id="K"], section[aria-label^="Selected component"][data-id="K"]',
     ),
   ).toBeVisible();
   await page

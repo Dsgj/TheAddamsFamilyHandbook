@@ -34,7 +34,7 @@
   <input
     class="field note"
     type="text"
-    placeholder="Note (stays on this device)"
+    placeholder="Note"
     aria-label="Note"
     bind:value={note}
     oninput={(e) => setNote(kind, id, e.currentTarget.value, { defer: true })}

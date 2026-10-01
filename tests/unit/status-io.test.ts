@@ -6,11 +6,14 @@ import {
   deserialize,
   deserializeAll,
   HISTORY_MAX,
+  localIsoDate,
   lostEntries,
   merge,
   mergeVerify,
   nextStatus,
   serialize,
+  shortDate,
+  whenLabel,
 } from '~/lib/status-io';
 import type { ComponentStatus } from '~/lib/model/types';
 
@@ -209,5 +212,27 @@ describe('lostEntries', () => {
     const items = { 'lamp:11': st('lamp:11', 'ok', '2026-09-03') };
     expect(lostEntries(cur, applyBackup(cur, { items }, 'replace'))).toBe(1);
     expect(lostEntries(cur, { items: {}, setup: {}, verify: {} })).toBe(3);
+  });
+});
+
+// Spec §13: one date format, with the year, in the device's local time. Built from local Date
+// parts so the tests hold in any time zone.
+describe('dates', () => {
+  it('reads day, short month and year in local time, never "Sept"', () => {
+    expect(shortDate(new Date(2025, 11, 31, 23, 30).toISOString())).toBe('31 Dec 2025');
+    expect(shortDate(new Date(2026, 8, 21, 0, 30).toISOString())).toBe('21 Sep 2026');
+    expect(shortDate('not a date')).toBe('');
+  });
+
+  it('falls back to the dated form after Yesterday', () => {
+    const now = new Date(2026, 8, 23, 12, 0);
+    expect(whenLabel(new Date(2026, 8, 23, 0, 5).toISOString(), now)).toBe('Today');
+    expect(whenLabel(new Date(2026, 8, 22, 23, 55).toISOString(), now)).toBe('Yesterday');
+    expect(whenLabel(new Date(2026, 8, 21, 0, 30).toISOString(), now)).toBe('21 Sep 2026');
+  });
+
+  it('names the backup file by the local date', () => {
+    expect(localIsoDate(new Date(2026, 0, 1, 0, 30))).toBe('2026-01-01');
+    expect(localIsoDate(new Date(2025, 11, 31, 23, 59))).toBe('2025-12-31');
   });
 });

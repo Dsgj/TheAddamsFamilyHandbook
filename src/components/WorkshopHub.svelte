@@ -11,11 +11,11 @@
   import BottomSheet from './BottomSheet.svelte';
   import InstallSheet from './InstallSheet.svelte';
   import { isStandalone } from '~/lib/install';
+  import { plural } from '~/lib/copy';
 
   let {
     items,
     version,
-    careNext,
     setupSteps,
     setupIds,
     verifyIds,
@@ -23,7 +23,6 @@
   }: {
     items: ShoppingItem[];
     version: string;
-    careNext: string;
     setupSteps: number;
     setupIds: string[];
     verifyIds: string[];
@@ -135,7 +134,7 @@
         {@render tile(ICON.care)}
         <span class="txt">
           <span class="ttl">Care</span>
-          <span class="sub">Next: {careNext.charAt(0).toLowerCase() + careNext.slice(1)}</span>
+          <span class="sub">Every week to every year</span>
         </span>
         {@render chev()}
       </a>
@@ -145,7 +144,7 @@
         {@render tile(ICON.setup)}
         <span class="txt">
           <span class="ttl">Machine setup</span>
-          <span class="sub">{setupSteps} steps</span>
+          <span class="sub">{plural(setupSteps, 'step')}</span>
         </span>
         <span class="val" data-count="setup"
           >{setupDone ? `${setupDone} of ${setupIds.length}` : ''}</span
@@ -175,7 +174,7 @@
         {@render tile(ICON.data)}
         <span class="txt">
           <span class="ttl">Device data</span>
-          <span class="sub">Back up status, notes and setup</span>
+          <span class="sub">Back up or restore this device</span>
         </span>
         {@render chev()}
       </a>
@@ -197,7 +196,7 @@
       {:else}
         <button class="lrow" type="button" aria-haspopup="dialog" onclick={() => (install = true)}>
           {@render tile(ICON.install)}
-          <span class="txt"><span class="ttl">Install the handbook</span></span>
+          <span class="txt"><span class="ttl">Install the app</span></span>
           {@render chev()}
         </button>
       {/if}
@@ -216,7 +215,7 @@
     <li>
       <button class="lrow" type="button" aria-haspopup="dialog" onclick={() => (about = true)}>
         {@render tile(ICON.info)}
-        <span class="txt"><span class="ttl">About this handbook</span></span>
+        <span class="txt"><span class="ttl">About the app</span></span>
         {@render chev()}
       </button>
     </li>
@@ -232,15 +231,15 @@
 
 {#if about}
   <BottomSheet
-    label="About this handbook"
-    title="About this handbook"
+    label="About the app"
+    title="About the app"
     detent="medium"
     recede="header.top, .hub-body, main > .lt, .hub > .gf, footer.foot"
     onclose={() => (about = false)}
   >
     <div class="about">
       <p>
-        The Addams Family Handbook is a private service tool for one machine. Manual text and scans
+        The Addams Family Handbook is a private service tool for one machine. Manual text and pages
         are © Williams Electronics Games / Midway; hints marked as such are the owner's own
         experience.
       </p>

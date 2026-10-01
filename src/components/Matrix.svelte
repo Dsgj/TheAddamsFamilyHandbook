@@ -1,5 +1,6 @@
 <script lang="ts">
   import { tick, untrack } from 'svelte';
+  import { componentCode, kindLine } from '~/lib/copy';
   import { getStatus, STATUS_LABEL } from '~/lib/model/status.svelte';
   import type { Kind, MatrixHeaders } from '~/lib/model/types';
   import { componentHref, href } from '~/lib/url';
@@ -33,8 +34,6 @@
   let selected = $state<string>(untrack(() => highlight));
   const sel = $derived(cells.find((c) => c.id === selected));
   const layer = kind === 'switch' ? 'sw' : kind === 'lamp' ? 'lamp' : 'coil';
-  const label = kind === 'switch' ? 'Switch' : kind === 'lamp' ? 'Lamp' : 'Solenoid';
-  const code = (id: string) => (kind === 'lamp' ? `L${id}` : id);
   let hoverCol = $state(0);
   let hoverRow = $state(0);
   let card = $state<HTMLElement>();
@@ -83,7 +82,7 @@
           <th class="colh" class:hi={hoverCol === c} scope="col">
             <div class="hd">
               <span class="n">{c}</span>
-              {#if h}<WireChip colour={h[1]} label={h[1]} /><span class="mono pin"
+              {#if h}<WireChip colour={h[1]} /><span class="mono pin"
                   ><span class="tok">{h[2]}</span><br /><span class="tok">{h[3]}</span></span
                 >{/if}
             </div>
@@ -100,7 +99,7 @@
               <span class="n">{r}</span>
               <!-- Each code is a nowrap .tok (base.css): the pin wraps at the separator, never at a
                    code's hyphen ('U18-11' in the 104 of the row header from 1000 and on paper). -->
-              {#if h}<WireChip colour={h[1]} label={h[1]} /><span class="mono pin"
+              {#if h}<WireChip colour={h[1]} /><span class="mono pin"
                   ><span class="tok">{h[2]}</span> · <span class="tok">{h[3]}</span></span
                 >{/if}
             </div>
@@ -176,10 +175,10 @@
   {@const rh = rows[String(sel.row)]}
   <div class="card cell" data-cell-card={sel.id} bind:this={card}>
     <header>
-      <span class="code lg dmd">{code(sel.id)}</span>
+      <span class="code lg dmd">{componentCode(kind, sel.id)}</span>
       <div class="head">
         <h2>{sel.name}</h2>
-        <p class="kind">{label} · matrix column {sel.col}, row {sel.row}</p>
+        <p class="kind">{kindLine(kind, sel)}</p>
       </div>
     </header>
     <dl class="wiring">
@@ -193,7 +192,7 @@
       </dd>
     </dl>
     <div class="acts">
-      <a class="btn sm tinted" href={componentHref(kind, sel.id)}>Open</a>
+      <a class="btn sm tinted" href={componentHref(kind, sel.id)}>Details</a>
       <a class="btn sm tinted" href={href(`map?layer=${layer}&id=${sel.id}`)}>Show on map</a>
     </div>
   </div>

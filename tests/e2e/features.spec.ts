@@ -1,5 +1,8 @@
 import { expect, test } from '@playwright/test';
-import { gotoHydrated } from './helpers';
+import { dayLabel, gotoHydrated } from './helpers';
+
+// Dates show in the device's local time (spec §13); pin the zone so they are predictable.
+test.use({ timezoneId: 'Europe/Stockholm' });
 
 test('diagnose flags two lamps in one column as a driver problem', async ({ page }) => {
   await gotoHydrated(page, '/');
@@ -92,10 +95,13 @@ test('device data needs two taps to clear everything', async ({ page }) => {
 
 test('verify checklist ticks persist on the device', async ({ page }) => {
   await gotoHydrated(page, '/verify');
+  await expect(page.locator('h1 + p')).toContainText(
+    "Places where the manual's pages and its parts list disagree, or where the data was placed by hand.",
+  );
   const box = page.locator('input.verify-check[data-id="flasher-count"]');
   await box.check();
   await expect(page.locator('[data-verify-count]')).toContainText('1 of');
-  await expect(box.locator('xpath=ancestor::li')).toContainText('verified 20');
+  await expect(box.locator('xpath=ancestor::li')).toContainText(`verified ${dayLabel(new Date())}`);
   await page.reload();
   await expect(page.locator('input.verify-check[data-id="flasher-count"]')).toBeChecked();
   await expect(page.locator('[data-verify-count]')).toContainText('1 of');

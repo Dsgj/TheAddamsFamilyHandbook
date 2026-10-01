@@ -13,10 +13,15 @@ const cells = DATA.lamps.map((l) => ({
 }));
 ---
 
-<Base title="Lamps" nav="lamps">
+<Base
+  title="Lamp matrix"
+  short="Lamps"
+  nav="lamps"
+  description="The lamp matrix with bulb numbers and a Fault tick per lamp."
+>
   <h1>Lamp matrix</h1>
   <p class="muted">
-    Columns from J137/J138 (Q90–Q98), rows from J133/J134 (Q80–Q88). Source:
+    Columns from J137/J138 (Q90–Q98), rows from J133/J134 (Q80–Q88). Source:{' '}
     <a href={manualHref('ops', 104)}>Lamp Matrix p. 3-2</a>. Lamps marked speaker sit in the speaker
     panel, not on the playfield.
   </p>
@@ -25,8 +30,8 @@ const cells = DATA.lamps.map((l) => ({
   <section class="card lamps">
     <h2>All lamps</h2>
     <p class="muted small">
-      Tick Broken to mark a lamp Fault on this device; it turns red in the matrix and on the map and
-      lands on the <a href={href('shopping')}>shopping list</a> with its bulb type.
+      Tick Fault to put the lamp on the <a href={href('shopping')}>shopping list</a> with its bulb type.
+      It turns red in the matrix and on the map.
     </p>
     <div class="scroll-x">
       <table class="t two" role="table">
@@ -37,7 +42,7 @@ const cells = DATA.lamps.map((l) => ({
             <th role="columnheader">Bulb</th>
             <th role="columnheader">Part</th>
             <th role="columnheader">Assembly</th>
-            <th role="columnheader" class="chk">Broken</th>
+            <th role="columnheader" class="chk">Fault</th>
           </tr>
         </thead>
         <tbody role="rowgroup">
@@ -73,7 +78,7 @@ const cells = DATA.lamps.map((l) => ({
                       class="fault-check"
                       data-kind="lamp"
                       data-id={l.id}
-                      aria-label={`Broken: ${l.name}`}
+                      aria-label={`Fault: ${l.name}`}
                     />
                   </label>
                 </td>

@@ -99,7 +99,7 @@ test.describe('the toast clears the bottom chrome', () => {
   test('on the phone map it sits above the peeking sheet', async ({ page, isMobile }) => {
     test.skip(!isMobile, 'the map sheet is phone only');
     await gotoHydrated(page, '/map?layer=sw&id=32');
-    const sheet = 'section.sheet[aria-label^="Selected part"]';
+    const sheet = 'section.sheet[aria-label^="Selected component"]';
     await expect(page.locator(sheet)).toHaveAttribute('data-id', '32');
     await showToast(page);
     const toast = await box(page, '.toast');
@@ -116,13 +116,13 @@ test.describe('the toast clears the bottom chrome', () => {
     // safe-bot and so grows by it; the toast's lift must carry it too, at both detents.
     await gotoHydrated(page, '/map?layer=sw&id=32');
     await page.addStyleTag({ content: ':root { --safe-bot: 34px !important; }' });
-    const sheet = page.locator('section.sheet[aria-label^="Selected part"]');
+    const sheet = page.locator('section.sheet[aria-label^="Selected component"]');
     await expect(sheet).toHaveAttribute('data-id', '32');
     await showToast(page);
     const gap = async () => {
       await sheet.evaluate((el) => Promise.all(el.getAnimations().map((a) => a.finished)));
       const toast = await box(page, '.toast');
-      const top = await box(page, 'section.sheet[aria-label^="Selected part"]');
+      const top = await box(page, 'section.sheet[aria-label^="Selected component"]');
       return top.y - (toast.y + toast.height);
     };
     expectGap(await gap(), 'peek');
@@ -310,8 +310,8 @@ test.describe('on a 320 phone', () => {
     const sheet = page.getByRole('dialog');
     await expect(sheet).toBeVisible();
     const links = [
-      sheet.getByRole('link', { name: 'Open in Map' }),
-      sheet.getByRole('link', { name: 'Manual page' }),
+      sheet.getByRole('link', { name: 'Show on map' }),
+      sheet.getByRole('link', { name: /^Manual p\. / }),
     ];
     await links[1]!.scrollIntoViewIfNeeded();
     const within = async () => {

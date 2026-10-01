@@ -3,9 +3,9 @@
  * backup file are shared: tick when done and the date stays on the device. Untick and tick again
  * next time.
  *
- * Sources: the manual's Maintenance Information page (Handbook → LEDs, fuses & maintenance) for
+ * Sources: the manual's Maintenance Information page (Handbook → LEDs, fuses and maintenance) for
  * lubrication points, switch contacts and cleaners; the yearly inspection order and the
- * connector rules from the owner's service brief (Handbook appendix A7); the rest is common
+ * connector rules from the owner's service brief (handbook appendix A7); the rest is common
  * practice for a Diamond Plate playfield. Edit this file when the advice changes.
  */
 import type { SetupStep } from './setup';
@@ -14,7 +14,7 @@ export const CARE_INTRO =
   'Clean, dry, and look while you are in there. Tick an item when done; the date stays on this device so the next person sees when it was last done. Untick and tick again next time.';
 
 export const CARE_WARNING =
-  'Never oil or grease a coil plunger, coil sleeve or flipper. No WD-40 or 5-56 anywhere in the machine; the film attracts dust and gums up. The only grease is a dab on the slingshot arm pivots and the ball shooter lane feeder pivots, see Twice a year. Power off before touching connectors or boards. Contact cleaner is for intact contacts that are dirty; a browned, loose or melted connector is replaced, never sprayed. Look and measure first, clean second: Handbook appendix A7.';
+  'Never oil or grease a coil plunger, coil sleeve or flipper. No WD-40 or 5-56 anywhere in the machine; the film attracts dust and gums up. The only grease is a dab on the slingshot arm pivots and the ball shooter lane feeder pivots, see Twice a year. Power off before touching connectors or boards. Contact cleaner is for intact contacts that are dirty; a browned, loose or melted connector is replaced, never sprayed. Look and measure first, clean second: handbook appendix A7.';
 
 export const CARE_STEPS: SetupStep[] = [
   {
@@ -27,7 +27,7 @@ export const CARE_STEPS: SetupStep[] = [
         id: 'care-balls',
         name: 'Wipe the balls and look for pits, nicks or rust',
         suggested: '',
-        why: 'The four magnets magnetise the balls and they carry grit across the playfield. A damaged ball sands the playfield; replace it, never polish it. Pinballs come in six-packs, see Setup step 7.',
+        why: 'The four magnets magnetise the balls and they carry grit across the playfield. A damaged ball sands the playfield; replace it, never polish it. Pinballs come in six-packs, see Machine setup step 7.',
         find: '',
       },
       {
@@ -103,7 +103,7 @@ export const CARE_STEPS: SetupStep[] = [
     title: 'Twice a year',
     menu: 'Playfield up, power off',
     intro:
-      'Wax, wear parts and the only two places that get grease. When cleaning around the plastics is no longer enough, the full strip-down is Handbook appendix A8.',
+      'Wax, wear parts and the only two places that get grease. When cleaning around the plastics is no longer enough, the full strip-down is handbook appendix A8.',
     items: [
       {
         id: 'care-wax',
@@ -154,7 +154,7 @@ export const CARE_STEPS: SetupStep[] = [
     title: 'Every year',
     menu: 'Power off, backbox open',
     intro:
-      'Inspection first, in this order, cleaning last. Each item is ordered by how expensive the fault is if missed. Appendix A7 in the Handbook has the connector rules and the products.',
+      'Inspection first, in this order, cleaning last. Each item is ordered by how expensive the fault is if missed. Appendix A7 in the handbook has the connector rules and the products.',
     items: [
       {
         id: 'care-battery-area',
@@ -167,7 +167,7 @@ export const CARE_STEPS: SetupStep[] = [
         id: 'care-tieback',
         name: 'Inspect J122 and both diode tieback groups, then continuity-test them',
         suggested: '',
-        why: 'Priority 2. J122 feeds the Thing motor, Thing eject, bookcase motor and swamp release. Their flyback diodes tie back in two pairs: gray-yellow on pins 5 and 8 (25 and 27), violet-green on pins 6 and 9 (26 and 28), manual schematic 3-17. A lost tieback kills the driver transistor and can lock the load on. Look at the housing, the IDC terminals, the header pins, the board solder and the wire ends at the loads. Power off, J122 unplugged: the tieback wire itself reads close to 0 Ω pin to load; a reading through a winding is several ohms and is fine. Run the solenoid test on all four afterwards.',
+        why: 'Priority 2. J122 feeds the Thing motor, Thing eject, bookcase motor and swamp release. Their flyback diodes tie back in two pairs: grey-yellow on pins 5 and 8 (25 and 27), violet-green on pins 6 and 9 (26 and 28), manual schematic 3-17. A lost tieback kills the driver transistor and can lock the load on. Look at the housing, the IDC terminals, the header pins, the board solder and the wire ends at the loads. Power off, J122 unplugged: the tieback wire itself reads close to 0 Ω pin to load; a reading through a winding is several ohms and is fine. Run the solenoid test on all four afterwards.',
         alt: 'A doubtful IDC terminal or a browned pin is replaced with a crimped Trifurcon terminal and a new header, not cleaned.',
         find: 'A2',
       },
@@ -190,7 +190,7 @@ export const CARE_STEPS: SetupStep[] = [
         id: 'batteries',
         name: 'NVRAM module at U8 seated, no batteries fitted',
         suggested: '',
-        why: 'Same tick as Setup step 7. This machine has no batteries to replace (observed 2026-09-24, photo); check that the NVRAM module sits square in U8 and that no old cells have found their way into the holder.',
+        why: 'Same tick as Machine setup step 7. This machine has no batteries to replace (observed 2026-09-24, photo); check that the NVRAM module sits square in U8 and that no old cells have found their way into the holder.',
         find: '',
       },
       {

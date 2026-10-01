@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { agree, plural } from '~/lib/copy';
   import { liveText } from '~/lib/live.svelte';
   import { href } from '~/lib/url';
   import SearchField from './SearchField.svelte';
@@ -6,8 +7,8 @@
   import type { TocItem } from '~/lib/handbook/types';
   /**
    * The handbook contents: a filter field over every heading. On the Handbook home (`home`) the
-   * field is the page's search ("Search the handbook and scans"): the list shows only while a
-   * query is typed, and a last row hands the same query to the scans' OCR search on /manual.
+   * field is the page's search ("Search the handbook"): the list shows only while a query is
+   * typed, and a last row hands the same query to the manuals' page-text search on /manual.
    */
   let {
     items,
@@ -29,18 +30,14 @@
     () => {
       const n = shown.length;
       if (!n) return `No headings match “${query}”.`;
-      return `${n} ${n === 1 ? 'heading matches' : 'headings match'}`;
+      return `${plural(n, 'heading')} ${agree(n, 'matches', 'match')}`;
     },
   );
 </script>
 
 <nav class="toc" class:home aria-label="Handbook contents">
   <p class="sr-only" aria-live="polite" aria-atomic="true">{live.text}</p>
-  <SearchField
-    label={home ? 'Search the handbook and scans' : 'Filter contents'}
-    placeholder={home ? 'Search the handbook and scans' : 'Find a heading, e.g. B.1 or EOS'}
-    bind:value={q}
-  />
+  <SearchField label="Search the handbook" placeholder="Search the handbook" bind:value={q} />
   {#if !home || query}
     <ul>
       {#each shown as i (i.id)}
@@ -54,7 +51,7 @@
       {#if !shown.length}<li class="muted small none">No headings match “{query}”.</li>{/if}
       {#if home}
         <li class="scans">
-          <a href={scans}>Search the scans for “{query}”</a>
+          <a href={scans}>Search the manuals for “{query}”</a>
         </li>
       {/if}
     </ul>

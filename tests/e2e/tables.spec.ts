@@ -8,7 +8,7 @@ test.describe('the switch matrix tabs', () => {
   test('the tablist moves aria-selected with a click and the arrow keys', async ({ page }) => {
     await gotoHydrated(page, '/switches');
     const tabs = page.getByRole('tab');
-    await expect(tabs).toHaveText(['Matrix', 'Dedicated J205', 'Flipper J806']);
+    await expect(tabs).toHaveText(['Matrix', 'Dedicated', 'Flippers']);
     await expect(tabs.first()).toHaveAttribute('aria-selected', 'true');
     await expect(page.locator('#panel-matrix')).toBeVisible();
     await expect(page.locator('#panel-j205')).toBeHidden();
@@ -19,8 +19,8 @@ test.describe('the switch matrix tabs', () => {
       );
     }
 
-    await page.getByRole('tab', { name: 'Dedicated J205' }).click();
-    await expect(page.getByRole('tab', { name: 'Dedicated J205' })).toHaveAttribute(
+    await page.getByRole('tab', { name: 'Dedicated' }).click();
+    await expect(page.getByRole('tab', { name: 'Dedicated' })).toHaveAttribute(
       'aria-selected',
       'true',
     );
@@ -29,12 +29,16 @@ test.describe('the switch matrix tabs', () => {
     await expect(page.getByRole('heading', { name: 'Dedicated switches (J205)' })).toBeVisible();
 
     await page.keyboard.press('ArrowRight');
-    await expect(page.getByRole('tab', { name: 'Flipper J806' })).toBeFocused();
-    await expect(page.getByRole('tab', { name: 'Flipper J806' })).toHaveAttribute(
+    await expect(page.getByRole('tab', { name: 'Flippers' })).toBeFocused();
+    await expect(page.getByRole('tab', { name: 'Flippers' })).toHaveAttribute(
       'aria-selected',
       'true',
     );
     await expect(page.locator('#panel-j806')).toBeVisible();
+    // The buttons are wired to J805 and the EOS switches to J806 (components.json pins).
+    await expect(
+      page.getByRole('heading', { name: 'Flipper switches (Fliptronics J805/J806)' }),
+    ).toBeVisible();
     await page.keyboard.press('ArrowRight');
     await expect(page.getByRole('tab', { name: 'Matrix' })).toHaveAttribute(
       'aria-selected',
@@ -44,23 +48,23 @@ test.describe('the switch matrix tabs', () => {
     await expect(page.locator('#panel-j806')).toBeVisible();
   });
 
-  test('every Broken tick is in the DOM on a fresh load and keeps its stored state', async ({
+  test('every Fault tick is in the DOM on a fresh load and keeps its stored state', async ({
     page,
   }) => {
     await gotoHydrated(page, '/switches');
     await expect(page.locator('input.fault-check')).toHaveCount(16);
-    await page.getByRole('tab', { name: 'Flipper J806' }).click();
-    await page.getByLabel('Broken: Left Flipper Button').check();
+    await page.getByRole('tab', { name: 'Flippers' }).click();
+    await page.getByLabel('Fault: Left Flipper Button').check();
     await page.reload();
     // The tick in the hidden panel is restored on import, before the tab is opened.
     await expect(page.locator('input.fault-check:checked')).toHaveCount(1);
     await expect(page.locator('input.fault-check:checked')).toHaveAttribute(
       'aria-label',
-      'Broken: Left Flipper Button',
+      'Fault: Left Flipper Button',
     );
   });
 
-  test('a focused cell shows its card with Open and Show on map', async ({ page }) => {
+  test('a focused cell shows its card with Details and Show on map', async ({ page }) => {
     await gotoHydrated(page, '/switches');
     await expect(page.locator('[data-cell-card]')).toHaveCount(0);
     await page.locator('[data-cell="32"]').focus();
@@ -69,7 +73,10 @@ test.describe('the switch matrix tabs', () => {
     await expect(card.locator('.code.lg')).toHaveText('32');
     await expect(card.locator('h2')).toHaveText('Upper Right Jet');
     await expect(card).toContainText('matrix column 3, row 2');
-    await expect(card.getByRole('link', { name: 'Open' })).toHaveAttribute('href', /switch\/32$/);
+    await expect(card.getByRole('link', { name: 'Details' })).toHaveAttribute(
+      'href',
+      /switch\/32$/,
+    );
     await expect(card.getByRole('link', { name: 'Show on map' })).toHaveAttribute(
       'href',
       /map\?layer=sw&id=32$/,
@@ -80,6 +87,13 @@ test.describe('the switch matrix tabs', () => {
 });
 
 test.describe('the component detail page', () => {
+  test('a flipper switch names the connector it is wired to', async ({ page }) => {
+    await gotoHydrated(page, '/switch/F2');
+    await expect(page.locator('.detail .kind')).toContainText('Flipper (J805)');
+    await gotoHydrated(page, '/switch/F1');
+    await expect(page.locator('.detail .kind')).toContainText('Flipper (J806)');
+  });
+
   test('carries the spec anatomy and keeps its contracts', async ({ page }) => {
     await gotoHydrated(page, '/switch/32');
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Switch 32');
@@ -108,7 +122,11 @@ test.describe('the component detail page', () => {
       'href',
       /coil\/10$/,
     );
-    await expect(page.getByText('Status, notes and the log stay on this device.')).toBeVisible();
+    // A related lamp names its bulb in place of its matrix place, on one line (spec §9.7).
+    const lampSub = page.getByRole('link', { name: /Upper Right Jet.*Lamp/ }).locator('.sub');
+    await expect(lampSub).toHaveText('Lamp · bulb #555');
+    expect((await lampSub.boundingBox())!.height).toBeLessThanOrEqual(22);
+    await expect(page.getByText('Everything you record stays on this device.')).toBeVisible();
     await expect(page.locator('.notes')).toContainText('Appendices');
     await expect(page.locator('.notes').getByRole('link').first()).toHaveAttribute(
       'href',
@@ -151,13 +169,13 @@ test.describe('the component detail page', () => {
     await gotoHydrated(page, '/switch/32');
     const open = page.getByRole('button', { name: 'Show on map' });
     await open.click();
-    const dialog = page.getByRole('dialog', { name: 'Upper Right Jet / Switch 32' });
+    const dialog = page.getByRole('dialog', { name: 'Switch 32 · Upper Right Jet' });
     await expect(dialog).toBeVisible();
-    await expect(dialog.getByRole('link', { name: 'Open in Map' })).toHaveAttribute(
+    await expect(dialog.getByRole('link', { name: 'Show on map' })).toHaveAttribute(
       'href',
       /map\?layer=sw&id=32$/,
     );
-    await expect(dialog.getByRole('link', { name: 'Manual page' })).toHaveAttribute(
+    await expect(dialog.getByRole('link', { name: /^Manual p\. 2-/ })).toHaveAttribute(
       'href',
       /manual\/ops\/\d+$/,
     );
@@ -195,4 +213,36 @@ test('visiting a component puts it first under Recently viewed on /tables', asyn
   await page.getByRole('searchbox', { name: 'Search tables' }).fill('jackpot');
   await expect(page.locator('[data-recent] .lrow:visible')).toHaveCount(1);
   await expect(page.locator('[data-recent] .lrow:visible')).toContainText('L13');
+});
+
+/* P3 item 1 of the app audit (spec §13): one state word and one verb per destination. */
+test.describe('one name per thing', () => {
+  for (const [path, name] of [
+    ['/switches', 'Left Flipper Button'],
+    ['/lamps', 'Thing Multiball'],
+    ['/coils', 'Chair Kickout'],
+  ] as const) {
+    test(`${path}: the tick column is Fault`, async ({ page }) => {
+      await gotoHydrated(page, path);
+      await expect(page.locator('main table th', { hasText: /^Fault$/ }).first()).toBeAttached();
+      await expect(page.locator('main table th', { hasText: /Broken/ })).toHaveCount(0);
+      await expect(page.getByLabel(`Fault: ${name}`, { exact: true })).toHaveCount(1);
+    });
+  }
+
+  test('Details, Show on map and Manual p. n are the only verbs', async ({ page }) => {
+    await gotoHydrated(page, '/switches');
+    await page.locator('[data-cell="32"]').focus();
+    const card = page.locator('[data-cell-card="32"]');
+    await expect(card.getByRole('link', { name: 'Details', exact: true })).toHaveCount(1);
+    await expect(card.getByRole('link', { name: 'Show on map', exact: true })).toHaveCount(1);
+    await expect(card.getByRole('link', { name: /^Open/ })).toHaveCount(0);
+
+    await gotoHydrated(page, '/switch/32');
+    await page.getByRole('button', { name: 'Show on map' }).click();
+    const sheet = page.getByRole('dialog');
+    await expect(sheet.getByRole('link', { name: 'Show on map', exact: true })).toHaveCount(1);
+    await expect(sheet.getByRole('link', { name: /^Manual p\. 2-\d+$/ })).toHaveCount(1);
+    await expect(sheet.getByRole('link', { name: /^Open|^Manual page$/ })).toHaveCount(0);
+  });
 });

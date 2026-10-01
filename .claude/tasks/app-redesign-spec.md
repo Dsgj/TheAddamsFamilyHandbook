@@ -71,7 +71,7 @@ Source: Components §07 (it matches the kit). Each light value goes into **both*
   - Surfaces: `--ground`, `--surface`, `--raised`, `--cell`, `--sheet`, `--sheet-cell`, `--bar`, `--seg-track`, `--seg-thumb` and `--dmd-well` to #fff; `--sunk` to #f2f2f2.
   - Inks: `--ink`, `--amber`, `--amber-ink`, `--amber-fill` and `--dmd-ink` to #000; `--on-amber` to #fff; `--muted` to #444; `--line` and `--sep` to #999; `--field-line` to #767676 (4.54 on white, 4.06 on #f2f2f2). The other inks take their light values (`--violet` #6a2d80, `--brass` and `--brass-ink` #70552b, `--ok` #256738, `--bad` #ab2e27, `--warn` #7a5505, `--faint` and `--faint-ink` #645c6c), so a dark-theme print stays readable.
   - `--amber-glow`, `--dmd-dot`, every tint, `--press` and `--scrim` to transparent; `--scan-filter` to none (scans print uninverted); `--wire-edge` to the light ring; `--shadow-1`, `--shadow-2` and `--shadow-sheet` to none.
-  - base.css's print block holds no tokens, only layout. It hides the chrome and the controls (the shell, fields, searches, segments, icon and text buttons, the reader toolbar `nav.rbar`, back links, the previous/next pager `nav.pn`, action groups `.acts`, action rows `button.lrow` (Show on map, Download backup, Clear all, Install the handbook, About this handbook, the recent reports; the `a.lrow` content links still print), the manual reader's page-number button `.pgno` (the bar's h1 already names the page), chips, the Diagnose dock, the pull hint, the map and dialog sheets, the scrim, the handbook section's contents card) and prints the title once, as the page's real h1. On a page that renders its own h1 (`data-h1='page'`) and on a large-title page (`data-h1='large'`) the top bar is hidden: a large-title page prints its `.lt` h1, unclipped, at full opacity and at `t-title`, not the bar's aria-hidden `div.ct` copy. On a bar page (`data-h1='bar'`) the bar's title is the h1 and stays as a plain, full-width, wrapping title (the full title, never the phone's short word). `.dmd` codes lose their glow and get a #999 border; Diagnose's `.well` is hidden with the dock. The switch and lamp matrices fit an A4 page between Chrome's default 1 cm margins (718 CSS px): a fixed layout at 100 %, 88 px row heads, 3 px by 4 px cell padding, names at 10 px, and wire labels and pins at 9 px that wrap instead of widening a column.
+  - base.css's print block holds no tokens, only layout. It hides the chrome and the controls (the shell, fields, searches, segments, icon and text buttons, the reader toolbar `nav.rbar`, back links, the previous/next pager `nav.pn`, action groups `.acts`, action rows `button.lrow` (Show on map, Download backup, Clear all, Install the app, About the app, the recent reports; the `a.lrow` content links still print), the manual reader's page-number button `.pgno` (the bar's h1 already names the page), chips, the Diagnose dock, the pull hint, the map and dialog sheets, the scrim, the handbook section's contents card) and prints the title once, as the page's real h1. On a page that renders its own h1 (`data-h1='page'`) and on a large-title page (`data-h1='large'`) the top bar is hidden: a large-title page prints its `.lt` h1, unclipped, at full opacity and at `t-title`, not the bar's aria-hidden `div.ct` copy. On a bar page (`data-h1='bar'`) the bar's title is the h1 and stays as a plain, full-width, wrapping title (the full title, never the phone's short word). `.dmd` codes lose their glow and get a #999 border; Diagnose's `.well` is hidden with the dock. The switch and lamp matrices fit an A4 page between Chrome's default 1 cm margins (718 CSS px): a fixed layout at 100 %, 88 px row heads, 3 px by 4 px cell padding, names at 10 px, and wire labels and pins at 9 px that wrap instead of widening a column.
 
 ### 1.2 Existing tokens (listed so this file stands alone)
 
@@ -278,10 +278,10 @@ The five tabs, in job order:
   - The current row: `--tint`, `--amber-ink`, weight 600.
   - Sub-rows: 44 tall (36 until audit AY-12, 2026-10-01), padding-left 46, radius 8, 15/20, `--muted`. The 44 is real height (`min-height`): the 13 rows are contiguous, so a `::after` would add no target. The sidebar then runs past 900 at 1440 × 900 and scrolls (it is `overflow: auto`).
 - Sub-rows per tab:
-  - Tables: Switch matrix, Lamp matrix, Solenoids & flashers, Fuses, LEDs & jumpers.
+  - Tables: Switch matrix, Lamp matrix, Solenoids and flashers, Fuses, LEDs and jumpers.
   - Handbook: Handbook, Manuals, Parts.
   - Workshop: Shopping list (count pill), Verify, Care, Machine setup, Device data.
-- Shopping count pill: mono 12, 20 tall, radius 10, `--tint` / `--amber-ink`, followed by the sr-only text " parts to order". It's plain text inside the link: no `role=status` and no `<output>`, because the sidebar renders on every page (§12).
+- Shopping count pill: mono 12, 20 tall, radius 10, `--tint` / `--amber-ink`, followed by the sr-only text " to order" after `plural(n, 'part')` ("1 part to order", §13). It's plain text inside the link: no `role=status` and no `<output>`, because the sidebar renders on every page (§12).
 - The Device data sub-row follows Q7 (its own page, a section on `/workshop`, or `/shopping` as today).
 
 ### 6.5 Top bar (Components §02)
@@ -311,18 +311,18 @@ The five tabs, in job order:
   - Pages with no h1 today (ComponentPage, the manual viewer) and `/map`: the compact title is the h1.
 - Tablet header (ShellTablet): 50 tall, a bottom hairline, `.tb-title` (e.g. "Map"), trailing ibtns.
 - Desktop header (ShellDesktop): 56 tall, padding 0 8 0 24, h1 Fell 24/30 (e.g. "Playfield map"), trailing ibtns.
-- Map's trailing ibtns: "Find a part" at every width (Map, ShellTablet, ShellDesktop); "All parts on the map" on phones only (Map), since from 1000 the side panel holds the list.
+- Map's trailing ibtns: "Search components" at every width (Map, ShellTablet, ShellDesktop); "All components on the map" on phones only (Map), since from 1000 the side panel holds the list.
 - What moves where:
   - QuickSearch moves into Diagnose.
   - `#theme-toggle` (Base.astro:75-77, its script :100-115, and the print rule base.css:384) moves into Workshop → Appearance.
   - ComponentPage's `<div class="crumbs small muted">` (`src/layouts/ComponentPage.astro:40`) becomes the back link.
   - `scroll-padding-top` (base.css:8) becomes `calc(var(--safe-top) + var(--topbar-h) + 12px)`.
-  - The footer (Base.astro:92-99) stays on every page but `/map`; its paragraph also goes into Workshop → About this handbook. `#sw-status` (:98) leaves it (§8.8).
+  - The footer (Base.astro:92-99) stays on every page but `/map`; its paragraph also goes into Workshop → About the app. `#sw-status` (:98) leaves it (§8.8).
 - Hover styles sit inside `@media (hover: hover)`, so a tap never leaves a hover tint (base.css:21, :139, :214 today).
 
 ### 6.6 Side panel (ShellTablet, ShellDesktop)
 
-- `aside aria-label="Selected part and parts on the map"`, 400 wide (tablet; 420 from 1280), on the page ground (`--ground` through `--panel-bg`, audit P2 item 4), left hairline.
+- `aside aria-label="Selected component and components on the map"`, 400 wide (tablet; 420 from 1280), on the page ground (`--ground` through `--panel-bg`, audit P2 item 4), left hairline.
 - On the tablet it sits at left 780, top 24, 796 tall.
 - Contents: see §7.7.
 
@@ -348,7 +348,7 @@ Source: MapFitSpec, unless noted.
 - The bug this fixes: a 358×776 canvas sits inside a 658-tall scroller (`max-height: 78vh`, PlayfieldMap.svelte:493), so 118 px is cut off and the card sits below the fold.
 - In Playwright, env() safe areas are 0. Tests assert the rule, not the board numbers.
 - In code the top part of the rule is measured, not summed: `stageH = 100dvh − stageTop − tabbar − safe-bot`, where `stageTop` is the scroller's document top. Before Phase 5 the old header and, from 1000 in calibration, the docked card sit above the stage, and the fixed topbar sum would overflow.
-- `/map` is full bleed: no `.wrap` padding or max-width (base.css:81-85) and no footer (Base.astro:92-99). The page itself never scrolls at any width: `document.documentElement.scrollHeight ≤ innerHeight + 1`. The parts list lives in the side panel from 1000 (capped at the stage height, scrolling inside) and in the "All parts on the map" sheet below 1000; nothing sits under the stage.
+- `/map` is full bleed: no `.wrap` padding or max-width (base.css:81-85) and no footer (Base.astro:92-99). The page itself never scrolls at any width: `document.documentElement.scrollHeight ≤ innerHeight + 1`. The parts list lives in the side panel from 1000 (capped at the stage height, scrolling inside) and in the "All components on the map" sheet below 1000; nothing sits under the stage.
 - Code proposal (MapFitSpec):
 
 ```text
@@ -398,10 +398,10 @@ dragMove keeps working
   - `button.glass.t-cap`, text "4 faults on the map", `aria-label="Show faults, 4"`.
   - Bottom-left of the stage: left 12. The Map board draws it at top 632 (bottom 658, about 103 above the stage bottom, level with the control column's lower capsule), not 12 above the stage bottom; Q27 confirms the position with its action. 26 tall, radius 13, gap 6, padding 0 10.
   - What it does isn't drawn **[confirm on board Map]**.
-- Top bar: title "Map" with two ibtns, "Find a part" and "All parts on the map". Until the Phase 5 top bar exists, "All parts on the map" is an interim 44×44 `.glass` ibtn at the top of the right column.
-- "All parts on the map" opens a sheet on phones; on wide screens it is the panel's list.
-  - The phone sheet is a modal BottomSheet (§8.2; detent not drawn) holding today's aside content, so nothing sits under the stage: a "Find a part" field that filters rows by id or name (Q28), the layer-source link (Q25), the provenance paragraph (`.prov`, PlayfieldMap.svelte:384-388), then the rows per visible layer. Picking a row closes the sheet and selects the part.
-  - What the "Find a part" ibtn does isn't drawn **[confirm on board Map]**. The proposal (Q28): it opens the same list with that field focused.
+- Top bar: title "Map" with two ibtns, "Search components" and "All components on the map". Until the Phase 5 top bar exists, "All components on the map" is an interim 44×44 `.glass` ibtn at the top of the right column.
+- "All components on the map" opens a sheet on phones; on wide screens it is the panel's list.
+  - The phone sheet is a modal BottomSheet (§8.2; detent not drawn) holding today's aside content, so nothing sits under the stage: a "Search components" field that filters rows by id or name (Q28), the layer-source link (Q25), the provenance paragraph (`.prov`, PlayfieldMap.svelte:384-388), then the rows per visible layer. Picking a row closes the sheet and selects the part.
+  - What the "Search components" ibtn does isn't drawn **[confirm on board Map]**. The proposal (Q28): it opens the same list with that field focused.
 - The fixed `#sw-status` line (§8.8) sits above the control column and passes pointer events through, except on its Reload button.
 
 ### 7.4 Controls, wide (ShellTablet, ShellDesktop)
@@ -458,14 +458,14 @@ dragMove keeps working
   - 1.6 s, standard ease, scale 1→2.2, opacity .9→0, **once**. Today it loops (`PlayfieldMap.svelte:608`); owner question.
   - None under reduced motion.
 - Names:
-  - "Switch 32, Upper Right Jet", "Lamp L13, …", "Solenoid 7, …", "Shot K, …".
+  - "Switch 32, Upper Right Jet", "Lamp 13, …", "Solenoid 07, …", "Shot K, …" (`${KIND_LABEL} ${id}`, §13).
   - A faulted marker adds ", Fault". The selected one adds ", selected" and `aria-pressed="true"`.
   - Today's names are "32 Upper Right Jet" (PlayfieldMap.svelte:346). `tests/e2e/smoke.spec.ts:16,:81` match on them. The list rows share that name today (:400-408), and `.first()` picks the marker because the canvas comes first in the DOM; keep that order.
 - Keyboard (audit AY-01, 2026-10-01; tests/e2e/a11y.spec.ts):
   - The drawing (`div.scroller`, `role=region`, tabindex 0) is the map's one tab stop. Every marker button has `tabindex="-1"` and stays a named `<button>` with `aria-pressed`, so a virtual cursor still reaches it; the list rows are the second route. Under `?calib=1` (§7.8) every marker is a tab stop and the arrows nudge the focused one, so the cursor below is off there.
   - The arrow cursor runs on the scroller or a marker. It has one entry per rendered position on the visible layers, in reading order (y, then x). ← and → step and wrap; ↑ and ↓ take the nearest entry above or below within 12 % of the width sideways, else the reading order. From the scroller the first arrow focuses the selected part's first marker, or the first entry when nothing is selected. Shift with an arrow pans 80 (the scroller only); `+ − 0 Esc` are as before.
   - A focused marker has `scroll-margin: 44px` and sits at `--z-lift-4` (as `.sel`), so a jet under a lamp comes on top while it has focus.
-  - Enter or Space on a marker is its click and selects it. A keyboard click (`detail === 0`) then moves focus to the selection: the phone sheet (`section.sheet.map`) or the wide `section.selected`, both `tabindex="-1"` and named "Selected part, Switch 32". The embed and calibration keep focus on the marker; a pointer selection leaves focus where it is.
+  - Enter or Space on a marker is its click and selects it. A keyboard click (`detail === 0`) then moves focus to the selection: the phone sheet (`section.sheet.map`) or the wide `section.selected`, both `tabindex="-1"` and named "Selected component, Switch 32". The embed and calibration keep focus on the marker; a pointer selection leaves focus where it is.
   - Esc or Deselect with focus in the sheet or the panel's card returns focus to the part's first marker (the scroller when its layer is off), and the next arrow goes on from it. Esc and a keyboard Deselect scroll that marker into view; a clicked or tapped Deselect focuses it with `preventScroll`, so the drawing stays where the user panned it (audit P2 item 5 review).
   - Keys typed in a field, or with Ctrl, Cmd or Alt held, do nothing (`isTypingTarget`, §12).
   - The legend reads "↑↓←→ markers · ⇧↑↓←→ pan · ⏎ select · Esc deselect · + − zoom · 0 fit".
@@ -473,7 +473,7 @@ dragMove keeps working
 ### 7.6 Phone selection sheet (MapPeek, MapExpanded, Components §03)
 
 - Peek (96):
-  - `section aria-label="Selected part, Switch 32"` (a section, not a dialog). It sits at bottom 83 (above the tab bar), 96 tall, z-index 28.
+  - `section aria-label="Selected component, Switch 32"` (a section, not a dialog). It sits at bottom 83 (above the tab bar), 96 tall, z-index 28.
   - Surface: `--sheet`, radius 20 20 0 0, `--shadow-sheet`.
   - Grabber: a `button.grabber` labelled "Expand details" / "Collapse details" with `aria-expanded`. It is 36×5 (radius 3) with an 88×44 hit area, margin 6 auto 0: a `::after` reaches 10 above and below the 24 bar, into the sheet's top edge and the gap over the head (88×24 until audit AY-12, 2026-10-01). A tap toggles it.
   - Header row: 56 tall, margin-top 9, padding 0 16, gap 10. It holds:
@@ -501,7 +501,7 @@ dragMove keeps working
 
 ### 7.7 Wide side panel (ShellTablet, ShellDesktop)
 
-- Selected-part section: 530 tall, padding 0 16. It is named "Selected part, Switch 32" while a part is selected ("Selected part" otherwise) and takes focus on a keyboard selection (§7.5).
+- Selected-part section: 530 tall, padding 0 16. It is named "Selected component, Switch 32" while a part is selected ("Selected component" otherwise) and takes focus on a keyboard selection (§7.5).
   - Header (56): "Switch 32" and a Deselect ibtn.
   - `.code.lg.dmd`; the name in `.t-title`; the kind line in `.t-foot`.
   - `.seg.status` (margin-top 16): OK / Fault / Not tested, each with a dot.
@@ -513,7 +513,7 @@ dragMove keeps working
   - Header `.lh` (t-sub 600) "Switches" with "55 on the map", padding 16 32 8. Not `.t-head`: that is the global 17/22 utility.
   - `.row.two` rows: a `.code.dmd` id tile (§8.6), the name, and "Column 3, row 1".
   - The selected row is on `--tint`, its tile `--amber-fill`, and it shows `.pill.fault`. In every row (the list renders only the Fault pill) the pill's tint sits on an opaque `--cell` base, not on the row's background: the selected row's tint took the dark `--bad` to 4.25 and a hovered row's `--sunk` the light `--bad` to 4.28; on `--cell` it is 5.45 dark and 5.58 light. It also carries `aria-current="true"`, the only `aria-current` in the list, so the selection isn't colour alone.
-  - The "Find a part" filter field heads the list if Q28 confirms the proposal.
+  - The "Search components" filter field heads the list if Q28 confirms the proposal.
 - One scroll column (audit P2 item 4, VL-01):
   - The aside is the stage height and the only scroller. The selected part (never clipped) and the list run in it, and the list runs to the panel's foot.
   - The `.lh` list header sticks at the panel's top on the panel ground. The 32 fade is a sticky overlay at the panel's foot that takes no space.
@@ -558,7 +558,7 @@ dragMove keeps working
 | Modal medium | ≈470, over `--scrim` | Install (≈470 on the Install board) |
 | Modal large | top at 57; the parent recedes | Show on map (SwitchMapSheet, per Motion) |
 
-- The detents for Go to page, Add to shopping list, All parts on the map and the phone calibration sheet aren't stated **[confirm on boards ManualViewer, SwitchShop, Map, MapFitSpec]**.
+- The detents for Go to page, Add to shopping list, All components on the map and the phone calibration sheet aren't stated **[confirm on boards ManualViewer, SwitchShop, Map, MapFitSpec]**.
 
 - Surface: `--sheet` with `--r-lg` top corners; rows use `--sheet-cell`; `--shadow-sheet`. Bottom padding 34 (`.sheet`).
 - Head (`.sheet-head`): 52 tall, 3 columns. Title (`.sheet-title`): 17/22, weight 600.
@@ -580,7 +580,7 @@ dragMove keeps working
   - Fault chosen: `--bad-tint` with a `--bad` ring.
   - Not tested: the neutral thumb.
   - It keeps `role=group aria-label="Test status"` and `aria-pressed`. Pressing the chosen value again clears it.
-- Tabs variant: switches.astro gets `role=tablist` "Switch matrix view" with Matrix / Dedicated J205 / Flipper J806, using `aria-selected`, `aria-controls` and the arrow keys.
+- Tabs variant: switches.astro gets `role=tablist` "Switch matrix view" with Matrix / Dedicated / Flippers (each panel heading carries its connectors, J205 and Fliptronics J805/J806), using `aria-selected`, `aria-controls` and the arrow keys.
 - Links variant: Handbook / Manuals / Parts are links with `aria-current`.
 - Appearance variant: System / Dark / Light (Workshop).
 
@@ -624,7 +624,7 @@ dragMove keeps working
 - `.dmd`: a dot grid (a radial gradient of `--dmd-dot` on a 4 px background-size) on `--dmd-well`, text in `--dmd-ink`, text-shadow `0 0 6px rgba(255,138,61,.45)` in both themes, inset rings. The DMD well stays dark in the light theme, so its codes are the same bright orange with the same glow in both. Diagnose's input well (`.well`) reads the same three tokens and keeps its own 10 px glow; its placeholder is at .7 opacity. In print a `.dmd` is white, its ink black, its border #999 and there is no glow; the well is hidden with the Diagnose dock.
 - `.wire`: a swatch and the colour's name, 13/18 mono, inline, no background, no cursor, no height of its own. It is a label, not a control, so it has no chip styling.
 - `.wire i`: 26×10, radius 5, the `--wire-edge` ring, no border.
-  - Colours: Brown #7B4B2A, Red #C62828, Orange #EF7D1A, Yellow #F2C230, Green #2E8B3D, Blue #2458C6, Violet #7B3FB0, Gray #8C8C8C, Black #1A1A1A, White #F7F7F7.
+  - Colours: Brown #7B4B2A, Red #C62828, Orange #EF7D1A, Yellow #F2C230, Green #2E8B3D, Blue #2458C6, Violet #7B3FB0, Grey #8C8C8C, Black #1A1A1A, White #F7F7F7.
   - A striped wire is base 0–58%, stripe 58–76%, base 76–100%.
 - `.hint`: padding 12 14, radius 12, `--brass-tint`, 15/20 (`t-sub`); its bold label is 13/18 in `--brass-ink`.
 
@@ -635,7 +635,7 @@ dragMove keeps working
   - `.btn[aria-pressed='true']`: `--tint` with an inset `--amber-ink` ring, as `.chip.on`. `.btn:disabled`: opacity .45. On hover-capable pointers, hover brightens by 1.08. Focus is the global `:focus-visible` ring.
   - `.btn.mono` sets the mono face (SetupGuide's suggested value).
 - `.btn.sm`: 36 tall and at least 44 wide (a one-glyph value such as Setup's "3" or "YES", audit AY-12), padding 0 14, radius 10, 15/20 weight 500. A `::after` that reaches 4 above and below gives every small button a 44 hit area, alone or in a row. Rows of small buttons keep a gap of at least 8, so the zones meet but don't overlap. `.btn.small` is an alias for one release.
-- Two bare `.btn` side by side (a sheet's actions) share the row equally while both labels fit, and stack at full width when they don't (`flex: 1 1 0; min-width: max-content` in a wrapping row): a 320 phone has 288 for the row, and "Open in Map" alone needs 165 at 17/22 600. A sheet body laid out as a grid gives its column `minmax(0, 1fr)`, so a child that starts wide (the part sheet's map crop, 340 before it measures itself) cannot hold the column past the sheet.
+- Two bare `.btn` side by side (a sheet's actions) share the row equally while both labels fit, and stack at full width when they don't (`flex: 1 1 0; min-width: max-content` in a wrapping row): a 320 phone has 288 for the row, and "Open in Map" (now "Show on map") alone needed 165 at 17/22 600. A sheet body laid out as a grid gives its column `minmax(0, 1fr)`, so a child that starts wide (the part sheet's map crop, 340 before it measures itself) cannot hold the column past the sheet.
 - Inputs: every input, select and textarea a user reaches is at least 16px, or iOS Safari zooms the page when it takes focus. Only the `?calib=1` developer tools are exempt (§2).
   - `.field`: 44 tall, radius 6, a 1 px `--field-line` border (3:1, §1.1); 16/21.
   - Focus turns the border `--amber` and shows the global ring; nothing sets `outline: none` (unit check u). A text field matches `:focus-visible` on every focus, a tap included, so the ring is its focus indicator (audit AY-15, 2026-10-01).
@@ -654,7 +654,7 @@ dragMove keeps working
 - It sits 10 above the tab bar. One toast at a time; Update ready wins.
   - It also sits 10 above a reader toolbar or a map sheet. The host's bottom adds `var(--toast-lift, 0px)`, and the islands set that on the root: the reader toolbar 62 (its 52 and the 10 gap), the phone map sheet its height at the current detent (peek or expanded, plus the safe-bot its body pads with; never the live drag height), and Diagnose the distance from its sticky dock's top to the tab bar while the dock reaches into the toast's resting band (80 above the bar). When the dock sits higher (short results, or scrolled to the end) the toast stays at rest, since a fixed lift would land it on the dock. Modal sheets never lift it.
   - The host is `--z-toast` (40), under `--z-modal` (60); see §4 "Stacking".
-- Offline ready: "Ready to work offline. Scans are cached as you open them." It leaves after 4 s.
+- Offline ready: "Ready to work offline. Manual pages are saved as you open them." It leaves after 4 s.
 - Update ready: "A new version of the handbook is ready." with "Reload". It leaves only on Reload.
 - Motion: 200 ms standard with a 12 px rise. Under reduced motion it only fades.
 - Semantics: the host is a `div` with `aria-live="polite"` and `aria-atomic="true"`, never `role=status` or `<output>`. It renders on every page, and `/care`, `/setup` and `/shopping` run a strict `getByRole('status')` (§12).
@@ -667,15 +667,15 @@ dragMove keeps working
   - A code, pin or part number never breaks mid-token: `table.t td.mono, table.t td.chk, table.t .mono { white-space: nowrap }`. The name column gives way.
   - A code phrase (a fuse's "F111 Flasher Secondary (5A S.B.)", a flasher's "20-9247 12V", a flipper's pins "J126-7 / J125-8", an LED's "CPU D19") is a `td.phrase` (`white-space: normal`) whose tokens are nowrap `.tok` spans (Phrase.astro; a bracketed group is one token). It wraps at its spaces only, so the solenoid tables fit the column at 1000 and 1280 and the LED table fits 320 (audit P2 item 4 review).
   - Every column has a header. A header with nothing to show gets sr-only text (the solenoid Location column).
-  - Cells carry role classes: `td.key` (the id), `td.nm` (the name, its note in `span.note`) and `td.chk` (Broken).
-  - The Broken tick is an 18 box in a 44 × 44 `label.chk-hit`, which is the whole cell (`td.chk` is 44 tall with no padding), so rows never share a target.
+  - Cells carry role classes: `td.key` (the id), `td.nm` (the name, its note in `span.note`) and `td.chk` (Fault).
+  - The Fault tick is an 18 box in a 44 × 44 `label.chk-hit`, which is the whole cell (`td.chk` is 44 tall with no padding), so rows never share a target.
 - From 600, plain tables:
   - A table wider than its `.scroll-x` (the solenoid tables at 600–800) scrolls with `td.key` pinned at the left and `td.chk` at the right.
   - The pinned cells paint `--tbl-bg` (the ground, or `--cell` in a card) and follow the row hover (inside `(hover: hover)`) and `row-fault`. They need no z-index.
   - The flipper and GI tables stack at every width.
 - Under 600, the tables with class `t two` (J205, J806, lamps, the solenoid tables, flipper, GI, parts) become lists of two-line rows:
   - They carry explicit ARIA (`role=table`, `rowgroup`, `row`, `columnheader`, `cell`), because a changed `display` drops table semantics in WebKit. The thead is sr-only and still names every column.
-  - Line 1 holds the id, the name (wrapping, with the note under it) and the Broken tick at the right edge.
+  - Line 1 holds the id, the name (wrapping, with the note under it) and the Fault tick at the right edge.
     - The row aligns to its top. Beside the 44 tick the id and the name take 12 top padding, so the id and the tick sit on the name's first line however long the note.
     - The note drops its " · " separator (`.sep`), which shows only where the note runs on in the name's line (from 600).
   - Line 2 holds the other cells as `t-foot` pairs, each prefixed by its header from `data-h`.
@@ -696,8 +696,8 @@ dragMove keeps working
 - Today's other home links (index.astro:15-40) move to the hubs the boards draw for them: Test menu and Error messages → `/handbook`; Fuses → `/tables`; Verify, Setup and Care → `/workshop`; the map layer links → the Map tab. Each stays on `/` until its hub row exists.
 - Recent:
   - "Check Switch 68 – 1 switch · 1 marked Fault – Yesterday".
-  - "L13 L15 – 2 lamps · both marked Fault – 23 Sep".
-  - "SOL 7 – 1 solenoid – 12 Sep".
+  - "L13 L15 – 2 lamps · both marked Fault – 23 Sep 2026".
+  - "SOL 7 – 1 solenoid – 12 Sep 2026".
   - Recording isn't drawn. Because diagnosis is live, an entry is recorded on "Diagnose", on Enter, or when the field loses focus with at least one recognised code; the same normalised input moves to the top (Q16).
 - On first run, examples show instead of Recent: "32 68 F1 F3", "Check Switch 32", "L11 L12 L13", "SOL 7".
 - The field is the hero, docked low:
@@ -731,7 +731,7 @@ dragMove keeps working
   - LLF Lower Left Flipper, Flipper coil FL-15411.
   - F101 Lower Left Flipper, Fuse · 3A S.B.
   - Then "Show all 20 components".
-- Handbook: A6 Flippers (Owner service notes); Flippers (Handbook · p. 2).
+- Handbook: A6 Flippers (Handbook appendix); Flippers (Handbook · PDF page 2, since the quick-reference page prints no number).
 - Parts: flipper ring-red 23-6519-4; flipper w/shaft yellow 20-9250-6.
 
 ### 9.4 Map screens
@@ -743,23 +743,23 @@ See §7: Map, MapLight, MapPeek, MapPeekLight, MapExpanded, MapZoom, ShellTablet
 - Large title "Tables", with a search field "Search tables".
 - Recently viewed: 32 Upper Right Jet Switch; 68 Vault Switch; L13 Jackpot (2) Lamp.
 - Matrices: Switch matrix "64 matrix, 8 dedicated, 8 flipper"; Lamp matrix "64 lamps".
-- Drivers: Solenoids & flashers 28; Flipper coils 4; General illumination 5 strings.
+- Drivers: Solenoids and flashers 28; Flipper coils 4; General illumination 5 strings.
 - Boards: Fuses 25; Diagnostic LEDs 10; Jumper charts.
 - Take the counts from `src/data`. Where the data and the board differ, the data wins; note it.
 
 ### 9.6 Switch matrix (SwitchMatrix, SwitchMatrixLight)
 
 - Pushed from "Tables"; title "Switch matrix"; a Search ibtn.
-- Tablist "Switch matrix view": Matrix / Dedicated J205 / Flipper J806.
+- Tablist "Switch matrix view": Matrix / Dedicated / Flippers. The segment names the group; the panel heading under it carries the connectors (J205; Fliptronics J805/J806), because the flipper buttons are on J805 and the EOS switches on J806.
 - Grid "Switch matrix, 8 columns by 8 rows":
-  - Column headers: Green-Brown, Green-Red, Green-Orange, Green-Yellow, Green-Black, Green-Blue, Green-Violet, Green-Gray.
-  - Row headers: White-Brown, White-Red, White-Orange, White-Yellow, White-Green, White-Blue, White-Violet, White-Gray.
+  - Column headers: Green-Brown, Green-Red, Green-Orange, Green-Yellow, Green-Black, Green-Blue, Green-Violet, Green-Grey.
+  - Row headers: White-Brown, White-Red, White-Orange, White-Yellow, White-Green, White-Blue, White-Violet, White-Grey.
 - Unused cells: 11, 12, 23, 28, 46, 52, 83, 88.
 - Status (audit AY-07, 2026-10-01). The border colour is never the only cue:
   - Name: a cell with a status is named "13 Start Button, Fault" (an `aria-label` on the link: id, name and `STATUS_LABEL`, "OK", "Fault" or "Not tested"). An sr-only span after the name is out of flow, and Chrome read it as "13 Start Button , Fault".
   - Mark: an `i.mk` (`aria-hidden`) at the link's top right holds a check, a cross or a question mark in the status ink the border uses, 12 at 4 from 600 and 10 at 3 under it. The link is `position: relative`; the mark is absolute, so the A4 fit is unchanged.
   - An unused cell has neither ("12 Not Used").
-- Selecting a cell shows a card: 32 Upper Right Jet with its wiring, and the buttons "Open" and "Show on map".
+- Selecting a cell shows a card: 32 Upper Right Jet with its wiring, and the buttons "Details" and "Show on map".
 - Fit (audit P2 item 4: VP-12, VL-06), for the switch and the lamp matrix:
   - From 1000 the grid fits the column with no sideways scroll. It has `table-layout: fixed`, a 112 header column and eight equal cells; the names break anywhere and the header wire labels wrap. Cells keep 58 as their minimum height.
     - A header pin wraps between its codes, never inside one: each code is a nowrap `.tok` (base.css), the row header's two joined by " · ", the column header's split by a `<br>` (2026-10-01). "J208-1 · U18-11" and "J208-5 · U19-11" broke after U18's and U19's hyphen in the row header's 104 from 1000 and on A4; they now break at the separator.
@@ -782,7 +782,7 @@ See §7: Map, MapLight, MapPeek, MapPeekLight, MapExpanded, MapZoom, ShellTablet
 - Location: "Show on map", "Callout 32 on p. 2-39". Then the hint.
 - "On the same jet bumper": Upper Right Jet, Lamp · bulb #555, L22; Upper Right Jet, Solenoid · Low Power, SOL 10.
 - Service log: 12 Sep OK.
-- Footer: "Status, notes and the log stay on this device."
+- Footer: "Everything you record stays on this device."
 - Today's ComponentPage prev/next pager (ComponentPage.astro:68-80) isn't drawn **[confirm on board Switch]**.
 - What stays (the tests read it): the `.notes` block "Service notes" with its appendix links (ComponentPage.astro:44-65; appendix.spec.ts:7-12, :21-22); the "Service log" list, found by label (features.spec.ts:29-39); and exactly one visible button containing "Fault" plus one named "OK" (smoke.spec.ts:61-66; features.spec.ts:31-32, :43-45). SwitchShop's "Just mark Fault" may exist only while its sheet is open.
 - The page has no h1 today; the compact top-bar title becomes its h1 (§6.5).
@@ -792,7 +792,7 @@ See §7: Map, MapLight, MapPeek, MapPeekLight, MapExpanded, MapZoom, ShellTablet
 - A modal sheet at the large detent: "Upper Right Jet / Switch 32" with Close.
 - A cropped map showing the neighbours 31, 33, 34, 44a/b and 61, with switch markers at 46 px.
 - "Callout 32 on p. 2-39".
-- Buttons: "Open in Map" (→ `/map?layer=sw&id=32`) and "Manual page".
+- Buttons: "Show on map" (→ `/map?layer=sw&id=32`) and "Manual p. 2-39".
 
 ### 9.9 Add to shopping list (SwitchShop)
 
@@ -806,26 +806,27 @@ See §7: Map, MapLight, MapPeek, MapPeekLight, MapExpanded, MapZoom, ShellTablet
 
 ### 9.10 Handbook home (HandbookHome)
 
-- Segmented links: Handbook / Manuals / Parts. A search field "Search the handbook and scans".
+- Segmented links: Handbook / Manuals / Parts. A search field "Search the handbook".
 - Continue reading: "Test menu p. 1-15".
 - Operations Manual, operator's section:
-  - Quick reference & contents.
-  - Rules & shot maps A–F.
-  - Assembly & operation 1-1–1-6.
-  - Menu system & bookkeeping 1-7–1-14.
+  - Quick reference and contents.
+  - Rules and shot maps A–F.
+  - Assembly and operation 1-1–1-6.
+  - Menu system and bookkeeping 1-7–1-14.
   - Test menu 1-15–1-19.
   - Utilities.
-  - Difficulty & presets 1-22–1-26.
+  - Difficulty and presets 1-22–1-26.
   - Adjustments A.1–A.5 1-28–1-43.
-  - Error messages & codes 1-44–1-45.
-  - LEDs, fuses & maintenance 1-46–1-48.
-- Note: "Pages 1-16 to 1-18 are transcribed from a poor scan and not yet verified."
-- Owner service notes A1–A8: Multimeter basics; Coils, magnets and motors; Switches and optos; Lamps, flashers and GI; Power driver board; Flippers; Connectors and cleaning; Shopping out the playfield.
-- Footer: "The owner's own notes, not manual text."
+  - Error messages and codes 1-44–1-45.
+  - LEDs, fuses and maintenance 1-46–1-48.
+- Note: "Pages 1-16 to 1-18 are transcribed from a hard-to-read manual page and not yet verified."
+- Handbook appendix A1–A8: Multimeter basics; Coils, magnets and motors; Switches and optos; Lamps, flashers and GI; Power driver board; Flippers; Connectors and cleaning; Shopping out the playfield.
+- Footer: "Notes written for this machine, not manual text."
 
 ### 9.11 Reader (HandbookReader)
 
-- Back link "Handbook". Title "Test menu p. 1-15". A "View the scan" action.
+- Back link "Handbook". Title "Test menu p. 1-15". A "View the manual page" action.
+- Page bar, one per manual page in a section: the marker "p. 1-15" ("PDF page n" with no printed number), the "transcription not verified" badge where it applies, and a "Manual" button named "Manual p. 1-15"; the marker is `aria-hidden` beside the button. An appendix page reads "Appendix A1" and "owner's note", with no button. The appendix section opens with "These pages are notes written for this machine, not manual text. Each one names its sources."
 - Bottom toolbar: "1-14" (previous), "Contents", "Text size", "1-16" (next).
 - Headings (audit AY-14, 2026-10-01): a section's level-2 headings render as `h2` and deeper ones as `h3` (render.ts; they went h1 → h3 → h4). `.prose > section > h2` has the old h3 look (`t-name`, `--violet`) and `> h3` the old h4 look (`t-head`). The selectors are scoped to the rendered sections, so the rules page's shot-map embed keeps its own card `h2`.
 - The owner's note is `aside.owner-note role=note aria-label="Owner's note"`: a named note, not a complementary landmark inside the article.
@@ -834,13 +835,13 @@ See §7: Map, MapLight, MapPeek, MapPeekLight, MapExpanded, MapZoom, ShellTablet
 ### 9.12 Manual viewer (ManualViewer)
 
 - Back link "Manuals". Title "Operations Manual p. 2-39". A "Text" button (smoke:49 clicks "Text").
-- Toolbar: "Previous page", "97 / 124" (opens Go to page), "Next page", "Rotate page".
+- Toolbar: "Previous page", "97 of 124" (opens Go to page), "Next page", "Rotate page".
 - Go to page sheet: "Done", a Page field, "Go".
 - Document segmented control: Operations / Handbook / Schematics.
 - Contents: Unique parts 2-33 … Ramps 2-43.
-- Footer: "Scans are saved on the device as you open them."
+- Footer: "Manual pages are saved on the device as you open them."
 - Not drawn, but it stays (the task file, Keep → Manual viewer):
-  - Zoom: "Zoom in", "Zoom out", "Fit width" and "Fit page" sit in a `.glass` capsule, `role=group aria-label="Zoom"`, with 44 px buttons, bottom-right over the scan like the Map's (§7.3) **[confirm on board ManualViewer]**. The fit in force is `aria-pressed` and reads in `--amber-ink`. "Rotate page" replaces today's Rotate.
+  - Zoom: "Zoom in", "Zoom out", "Fit width" and "Fit page" sit in a `.glass` capsule, `role=group aria-label="Zoom"`, with 44 px buttons, bottom-right over the page like the Map's (§7.3) **[confirm on board ManualViewer]**. The fit in force is `aria-pressed` and reads in `--amber-ink`. "Rotate page" replaces today's Rotate.
   - Fits (audit P2 item 4, VL-05): fit width, or fit page, which puts the whole page in view as the page opens: from the stage's own document top (under the heading, the document switch and the toolbar) to 16 above the viewport's foot and the phone tab bar.
     - Zoomed, the stage is one slice: the viewport less the top bar, the toolbar, 32 and the phone tab bar.
     - The default is fit page from 1000 and fit width below.
@@ -853,28 +854,28 @@ See §7: Map, MapLight, MapPeek, MapPeekLight, MapExpanded, MapZoom, ShellTablet
     - The buttons' titles name their keys: "Previous page (←)", "Next page (→)", "Rotate page (R)", "Text (T)", "Zoom in (+)", "Zoom out (−)", "Fit width (W)", "Fit page (P)". The fit in force also names `0`, which returns to it: "Fit width (W, 0)" or "Fit page (P, 0)".
     - Zoomed, the stage is a tab stop (`tabindex=0`, `role=region`, named "Operations Manual page 5, zoomed, arrow keys scroll"), and while it has focus the arrows scroll it, 40 a press, instead of turning the page. They stop at its edges: the handler scrolls the stage itself and cancels the key, so the window never scrolls (on the phone the browser chained the arrow to the window once a short stage hit its end). Touch and wheel still chain. At a fit it has no tabindex, so `0` pressed on it drops focus to the body.
     - At an end, Previous or Next is `role=link aria-disabled=true` with no href: a disabled link, not a tab stop.
-  - ManualSearch ("Search manual text", OCR full text) on this page (`manual/[doc]/[page].astro:40`) and on `/manual` (manual/index.astro:13).
+  - ManualSearch ("Search the manuals", the machine-read page text) on this page (`manual/[doc]/[page].astro:40`) and on `/manual` (manual/index.astro:13).
 
 ### 9.13 Parts (Parts)
 
 - The segmented links, then "Search parts" and "Clear search".
-- "52 rows". Note: "Descriptions are OCR from the original and may have small errors."
+- "52 rows". Note: "Descriptions are machine-read from the original and unedited, so they may have small errors."
 - Columns: Item / Part no. / Description / Qty. Keep the `<table>`; smoke:58 reads `tbody tr`. Under 600 its rows are two-line rows (§8.9).
 
 ### 9.14 Workshop hub (Workshop)
 
-- Rows: Shopping list 4; Verify "5 of 13"; Care "Next: every week or so"; Machine setup "7 steps".
+- Rows: Shopping list 4; Verify "5 of 13"; Care "Every week to every year"; Machine setup "7 steps".
 - This device:
   - Appearance: a segmented control named "Toggle theme" with System / Dark / Light.
     - The row wraps when it is narrower than 413: tile 30 + gap 12 + label 92 + gap 12 + control 235 + row padding 32. The row is the viewport less the 32 page gutter, so it wraps under a 445 viewport, 430 (an iPhone Pro Max) included (audit P2 item 4: VP-07, UX-15, and the review).
     - It is a container query on the "This device" list, so the label never breaks mid-word: the label keeps its one-line width (`min-width: max-content`), and the control drops onto its own line, indented to the text column (tile 30 + gap 12).
     - Only this row wraps. Other `.lrow.static` rows keep their trailing control on the first line.
-  - Device data: "Back up status, notes and setup". It links to Device data's current home (`/shopping`, where features.spec opens it) until Q7 settles.
+  - Device data: "Back up or restore this device". It links to Device data's current home (`/shopping`, where features.spec opens it) until Q7 settles.
   - Offline: "Ready".
   - Install app. Hidden until Phase 11 (the install sheet, §9.16).
-- About: Version 0.1.0; About this handbook.
+- About: Version 0.1.0; About the app.
   - The Version comes from package.json.
-  - "About this handbook" opens a modal sheet holding the site footer's copyright paragraph word for word (Base.astro:93-97) and the Version. Its contents aren't drawn.
+  - "About the app" opens a modal sheet holding the site footer's copyright paragraph word for word (Base.astro:93-97) and the Version. Its contents aren't drawn.
 - Footer: "Everything you record stays in this browser. Back it up before switching phones."
 - Count sources: Shopping list from the status store (`groupFaults`); Verify from the `tafh:verify` ticks, read through a new `src/lib/verify-store.ts` (verify-check.ts:5-15 keeps the key and loader private and runs `initVerifyChecks()` on import, :54, so the hub can't import it); Machine setup from `setupItems()` (src/lib/model/setup.svelte.ts:55).
 - No count on the hub uses `role=status` or `<output>` (§12).
@@ -891,18 +892,18 @@ See §7: Map, MapLight, MapPeek, MapPeekLight, MapExpanded, MapZoom, ShellTablet
 - Each row has "Fixed". One row shows the swipe reveal.
   - The swipe pane is `--ok` with `--on-amber` text: Fixed is a good outcome, and the only red action, "Clear all", stays `--bad`. The label "Fixed" sits at the pane's far edge (`place-items: center end`, padding-right 14), so the row uncovers it at about 60 px of drag, before the armed point (88).
 - Buttons: "Copy as text" and "Share".
-- Footer: "Mark a part Fault and it lands here. Fixed clears the fault."
+- Footer: "Mark a component Fault and it lands here. Fixed clears the fault."
 - Where the repo wins over the board (the tests and the text export depend on it; the task file, Keep → Shopping list):
   - The lamp group is titled **Lamps**, not "Bulbs" (`KIND_TITLE`, src/lib/shopping.ts:26-30).
   - Each group is a `section.grp` with an `<h2>`.
-  - The item link text is `{itemRef} {name}`: "S32 Upper Right Jet", "L13 Jackpot (2)", "C01 Chair Kickout" (shopping.ts:31-33).
+  - The item link text is `{itemRef} {name}`: "32 Upper Right Jet", "L13 Jackpot (2)", "SOL 01 Chair Kickout" (`componentCode`, §13).
   - Each row keeps its "Fixed: {name}" button, so the swipe is never the only way.
-  - The empty state stays "Nothing marked Fault yet"; "Show text" and its textarea stay; the export text is unchanged.
+  - The empty state stays "Nothing marked Fault yet"; "Show text" and its textarea stay; the export text keeps its format and takes the §13 codes (`1 × AE-26-1200 (A-15115): SOL 01 Chair Kickout`).
   - The "Service kit" section (shopping.astro:50-96) stays below the list, restyled as a group.
 
 ### 9.16 Install (Install)
 
-- A modal medium sheet, ≈470 tall: "Install the handbook" with Close.
+- A modal medium sheet, ≈470 tall: "Install the app" with Close.
 - Body: "Adds it to your home screen. It opens full screen, like an app, and works offline in the workshop."
 - Checklist: "Opens without the browser bar" / "Works with no signal" / "Updates itself when you are online".
 - Button "Install".
@@ -992,7 +993,7 @@ Source: Native, Install, Update.
 - Warning: black-translucent keeps the status-bar clock white on the light theme. Test on an iPhone before release.
 - System states:
   - Offline ready and Update ready are toasts (§8.8).
-  - Scan not cached: inline, "This scan isn't on the device yet. Open it once while you have a connection.", with a "Show the text" button.
+  - Scan not cached: inline, "This manual page isn't on the device yet. Open it once while you have a connection.", with a "Show the text" button.
   - Install: a sheet (§9.16).
   - Cache: `tafh-scans` is the runtime cache for `/assets/pages/`, 600 entries for one year (astro.config.ts:57-58, in place). HTML, JS, CSS and data are precached.
 - Touch:
@@ -1021,7 +1022,7 @@ Source: Rationale §08, Components and MapFitSpec.
   - It is in the DOM from the first render, in a component that is always mounted (never in an `{#if}`, never `hidden`).
   - It is empty on load, also for a pre-filled `?q=`. Its text is written 400 ms after the query or its result last changed, and clearing the query clears it at once. A filter chip or select changes the result without typing, so it calls `arm()` first and a pre-filled query's count is then read (Diagnose's chips, through DiagnoseSearch's `onfilter`; the manual search's Document select, on `change`, 2026-10-01). The handbook contents, the map's list and /tables have no pre-filled query, and /parts announces on its `role=status` line.
   - No visible count line carries `aria-live`, so nothing is read twice or on every keystroke.
-  - Texts: Diagnose search "36 results for “flipper”" or "Nothing found for “q”", and in codes mode the results summary or "No codes recognised". The region lives in Diagnose.svelte, because DiagnoseSearch mounts only in search mode. Manuals: "36 pages", "1 page" or "No pages match “q”.". Handbook contents: "N headings match" or "No headings match “q”.". The map's Find a part: "N parts match" or "No parts match “q”.". Tables: "N tables" or "No tables match “q”.".
+  - Texts: Diagnose search "36 results for “flipper”" or "No results match “q”.", and in codes mode the results summary or "No codes recognised". The region lives in Diagnose.svelte, because DiagnoseSearch mounts only in search mode. Manuals: "36 pages", "1 page" or "No pages match “q”.". Handbook contents: "N headings match" or "No headings match “q”.". The map's Search components: "N components match" or "No components match “q”.". Tables: "N tables" or "No tables match “q”.".
 - Links (audit AY-06, 2026-10-01): a text link is underlined (1 px, offset 3, skip-ink), so colour is never its only cue: `:is(a:not([class]), a.small, .prose a, .owner-note a):not(.btn, .seg > a)`. Buttons, segmented links and the navigation rows (their classes are scoped) keep their own shape. Print takes the underline off again, since the href follows an external link there.
 - Focus never lands under a bar (audit AY-02, 2026-10-01). `html` has `scroll-padding-top` for the top bar and `scroll-padding-bottom: calc(var(--tabbar-h) + var(--safe-bot) + 12px + var(--toast-lift, 0px))`. A focused control or an in-page jump therefore clears the tab bar and whatever `--toast-lift` says sits on it (the Diagnose dock, the reader bar). No control adds a bottom scroll margin of its own (unit check v).
   - A sideways-scrolling row scrolls a focused child into view itself: Chrome leaves a half-hidden chip half-hidden when Tab reaches it. DiagnoseSearch's chips call `scrollIntoView({ block: 'nearest', inline: 'nearest' })` on focus.
@@ -1063,3 +1064,46 @@ Source: Rationale §08, Components and MapFitSpec.
   - A tinted pill in a row that paints a background (a selection tint, a hover) keeps its tint on an opaque base (`linear-gradient(tint, tint), var(--cell)`), so the row's background does not stack under it: every status pill in the map list.
   - `--on-amber` is the text on any saturated fill: `--amber-fill`, and the `--ok` swipe pane.
 - Motion: §10. Every gesture has a button: swipe back has the back link; the swipe to Fixed has the button; a sheet drag has the grabber button and Close.
+
+## 13. Copy
+
+Audit P3 item 1, "One name per thing" (CP-01 to CP-20, UX-06, UX-07, UX-10, CR-09), 2026-10-01. One word for each thing, in every screen, label, accessible name, toast and meta description. Words only: the stored values (`ok`, `fault`, `untested`), the backup format (`EXPORT_VERSION` 2), the storage keys (`tafh:status`, `tafh:setup`, `tafh:verify`, `tafh:reading`, `tafh:recent`, `tafh:viewed`), routes, ids, anchors and content file names never change. `src/content/**` and quoted manual names (menu items, 'Center Staircase', 'Set Time & Date') keep the manual's words. The helpers live in `src/lib/copy.ts` (`KIND_LABEL`, `plural`, `componentCode`, `locationLine`, `kindLine`, `capitalise`), `src/lib/pages.ts` (`pageTitleText`, `pageRefText`), `src/lib/status-io.ts` (`shortDate`, `whenLabel`, `localIsoDate`) and `src/lib/wire.ts` (`wireName`). `tests/unit/copy.test.ts` reads the source and fails on a losing variant.
+
+### 13.1 Glossary
+
+| Thing | Term | Not | Rule |
+|---|---|---|---|
+| Component state | OK · Fault · Not tested | Broken, Not Tested | The tick column is headed "Fault" and each tick is named "Fault: {name}". Log events: OK, Fault, Not tested, Cleared. "Fixed" is the shopping-list action only. |
+| Component code | `32`, `L55`, `SOL 01`, `F101`, `GI 1`, `F1` | C01, S32, SF1, SOL 1, "Lamp L55" | `componentCode(kind, id)`; the code parser is unchanged. Headings and accessible names use `${KIND_LABEL} ${id}`: "Switch 32", "Lamp 55", "Solenoid 01". Map markers and the 32 px map list tiles show the bare id. |
+| Machine component | component | part (for a switch, lamp or solenoid), "Selected part", "Mark a part Fault" | "part" is a catalogue entry with a part number (Parts, "parts to order"). Map: "Search components", "Selected component", "Selected component and components on the map", "All components on the map". The shopping list footer: "Mark a component Fault and it lands here. Fixed clears the fault." |
+| Page name | one name per page (rule 5) | Switches, Lamps and Solenoids as titles, "Solenoid table", "Parts list", "Verify in the machine", "Setup step 7" | Switch matrix · Lamp matrix · Solenoids and flashers · Fuses, LEDs and jumpers · Parts · Verify · Machine setup step 7. |
+| Handbook | Handbook (the tab, a title) / the handbook (running text) | Owner service notes, owner's handbook, transcription, "the owner's own notes" | "Handbook appendix" for the notes after the manual's pages: "appendix A7 in the handbook", "handbook appendix A7". The appendix is "notes written for this machine, not manual text", on the Handbook home and in the appendix's warning. A short note under a manual page stays the "Owner's note" (§9.11). |
+| The three documents | the manuals; `DOC_NAME` in full | scans, scan, OCR, "Schematics", a bare "Handbook" for hb | Operations Manual, Operator's Handbook, WPC Schematic Manual. A page of one is a "manual page": "View the manual page", "Search the manuals", "Manual pages are saved on the device as you open them." |
+| Text layer | page text; machine-read | OCR text | "Machine-read text, unedited", "No text for this page." |
+| App | The Addams Family Handbook / the app | this handbook, TAF Handbook in copy | "Install the app", "About the app", "A new version of the app is ready." TAF Handbook stays only as the manifest `short_name` and the Apple title. |
+| Verb to the map | Show on map | Open on the map, Open in Map | Also the mini-map's accessible name. |
+| Verb to a component page | Details | Open | — |
+| Verb to a manual page | Manual p. {label} / Manual PDF page {n} | Manual page, a bare "p. 2-39" button, Scan | The callout line stays "Callout 32 on p. 2-39". The handbook page bar already shows the marker "p. 1-15", so its button reads "Manual" and is named "Manual p. 1-15"; the marker is `aria-hidden` there, so the page is said once. |
+| Page reference | `{DOC_NAME} p. {label}` / `{DOC_NAME} PDF page {n}` (rule 3) | `#n`, sheet n, "p. ii" | `DOC_UNIT.wpc` is "pages". |
+| Spelling | UK: colour, grey, centre, labelled, cancelled | color, gray, center | CSS, DOM options, class names (`.btn.gray`) and identifiers are not copy. Manual quotes keep theirs. |
+| Progress | `{done} of {total}` | `{done} / {total}` | Also "{done} of {total} verified" and the reader's "97 of 124". |
+| Date | `21 Sep 2026` | 20 Sep, 2026-09-20, Sept | Local time, fixed month names (`shortDate`), never Intl (en-GB renders "Sept"). The log says Today and Yesterday first (`whenLabel`). The backup file name keeps a local ISO date (`localIsoDate`). |
+| Search field | label = placeholder = "Search {things}" | Find a part, Filter contents, Search manual text, Search the scans, Part number or description | Diagnose keeps its example placeholder "32 68 F1 F3". |
+| Empty search | `No {things} match “{q}”.` | Nothing found for, No tables match. | In the same element and live region as the count. The shopping list keeps "Nothing marked Fault yet". |
+| Count | `plural(n, one, many?)`; `agree(n, one, many?)` for the word alone | `n === 1 ? … : …` ternaries, `hit{s}`, a fixed " parts" | "1 part", "2 parts", "0 results", "1 entry", "2 entries". `agree` is for a noun or verb whose number is drawn apart (the TabBadge pill, the DMD total, Device data's mono digits) and for the verb after a count ("1 heading matches", "2 headings match"). |
+| Heading | sentence case with "and" | & in an app-authored title | Manual menu names keep their '&'. |
+| Wire colour | the full name, Grey | Vio, Brn, Gry, Gray | `wireName` expands each part: "Violet-Brown", "Green-Grey". |
+| Location line | `locationLine(kind, item, opts?)` | "flipper (J806)" for every flipper switch | "matrix column 3, row 2", "dedicated (CPU J205)", "flipper (J805)" or "flipper (J806)" from the switch's pin (the buttons are on J805, the EOS switches on J806), the coil type, "speaker panel", "not used", "under the playfield", "cabinet", joined with " · " and lower case after the kind ("Switch · matrix column 3, row 2"); `capitalise` when it stands alone. A Related row passes `{ bulb: true }`: a lamp with a bulb reads "Lamp · bulb #555" in place of its matrix place, so the row stays one line on a phone. The map list subtitle leaves out "not used", which the row's name and "not on map" already say. |
+| Backup | backup (noun), back up (verb) | status export | "Back up or restore this device", "Could not read that file as a backup." |
+| Device | Everything you record stays on this device. | Status, notes and the log stay on this device. | — |
+| Care row | "Every week to every year" | Next: every week or so | — |
+| Meta description | one per page, each its own | the default on every page | Base.astro's default description is only for 404. |
+
+### 13.2 Rules
+
+1. **State words.** A component is OK, Fault or Not tested. The table tick that sets Fault is the Fault tick, in its header ("Fault"), its accessible name ("Fault: Upper Right Jet") and in prose ("Tick Fault in the tables"). Broken is not a state.
+2. **Codes.** A switch is `32`, a lamp `L55`, a solenoid `SOL 01` wherever a code is shown: cards, chips, search hits, the shopping list and its text. A sentence or an accessible name uses the kind and the id instead: "Switch 32", "Lamp 55", "Solenoid 01". Fuses, GI strings and flipper switches keep the id the manual prints.
+3. **p. and PDF page.** "p." stands only before a page number the manual prints ("Operations Manual p. 1-15", "Manual p. 2-39"). A page with no printed number is "PDF page n" ("Operations Manual PDF page 2", "Handbook · PDF page 2"). Never "#n", "sheet n" or "p. ii".
+4. **Inline-link spacing.** A link inside a sentence has a space, or opening punctuation, before it and a space or closing punctuation after it. In Astro, write `{' '}` before an inline `<a>` that starts a new source line, since Astro drops that newline.
+5. **Page names.** Each page has one name: its title, its h1, its tab or row label and the links to it agree. The bar's short word is the `short` prop (Switches, Lamps, Solenoids, Fuses), used only where the full name does not fit and as the back label. Titles read "{name} · The Addams Family Handbook".
+6. **Source links.** A "Source:" link names the page it opens, like its siblings: "Fuse List p. 1-47", "Lamp Matrix p. 3-2", "Flipper Circuits p. 3-10". Never a bare "p. 3-10" after "Source:" (copy.test rule (l)). A callout line keeps its short form, "Callout 32 on p. 2-39".

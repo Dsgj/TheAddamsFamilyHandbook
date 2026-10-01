@@ -281,7 +281,7 @@ test('reduced motion: fit and the zoom steps land without a transform animation'
 
 /* ---------- Phase 2: the selection sheet, the parts sheet and the wide panel ---------- */
 
-const SHEET = 'section.sheet[aria-label^="Selected part"]';
+const SHEET = 'section.sheet[aria-label^="Selected component"]';
 const box = async (page: Page, sel: string) => {
   const b = await page.locator(sel).boundingBox();
   expect(b, `${sel} has a box`).not.toBeNull();
@@ -300,10 +300,10 @@ test.describe('phone selection sheet', () => {
   }) => {
     await gotoHydrated(page, '/map?layer=sw&id=32');
     const sheet = page.locator(SHEET);
-    await expect(sheet).toHaveAttribute('aria-label', 'Selected part, Switch 32');
+    await expect(sheet).toHaveAttribute('aria-label', 'Selected component, Switch 32');
     await expect(sheet).toHaveAttribute('data-id', '32');
     await expect(sheet.getByRole('heading', { level: 2 })).toHaveText('Upper Right Jet');
-    await expect(sheet.getByText('Switch · column')).toBeVisible();
+    await expect(sheet.getByText('Switch · matrix column 3, row 2')).toBeVisible();
     const grab = sheet.getByRole('button', { name: 'Expand details' });
     await expect(grab).toHaveAttribute('aria-expanded', 'false');
     await expect.poll(() => fitted(page)).toBe(true);
@@ -347,7 +347,9 @@ test.describe('phone selection sheet', () => {
     await expect(grab).toHaveAttribute('aria-expanded', 'true');
     await expect.poll(async () => near((await box(page, SHEET)).height, 416)).toBe(true);
     await expect(sheet.getByRole('heading', { name: 'Wiring' })).toBeVisible();
-    await expect(sheet.getByRole('navigation', { name: 'More about switch 32' })).toBeVisible();
+    await expect(
+      sheet.getByRole('navigation', { name: 'More about switch 32', exact: true }),
+    ).toBeVisible();
     await expect(page.locator('.map-controls .column')).toBeHidden();
     // The selected marker stays in the band above the sheet.
     await expect
@@ -383,11 +385,11 @@ test.describe('phone selection sheet', () => {
 
   test('the parts sheet filters, picks and hands focus back', async ({ page }) => {
     await gotoHydrated(page, '/map?layer=sw');
-    const opener = page.getByRole('button', { name: 'All parts on the map' });
+    const opener = page.getByRole('button', { name: 'All components on the map' });
     await opener.click();
-    const dialog = page.getByRole('dialog', { name: 'All parts on the map' });
+    const dialog = page.getByRole('dialog', { name: 'All components on the map' });
     await expect(dialog).toBeVisible();
-    const find = dialog.getByRole('searchbox', { name: 'Find a part' });
+    const find = dialog.getByRole('searchbox', { name: 'Search components' });
     await expect(find).toBeFocused();
     await find.fill('jet');
     const rows = dialog.locator('.rows .row');
@@ -396,7 +398,10 @@ test.describe('phone selection sheet', () => {
     await dialog.getByRole('button', { name: /^32\s+Upper Right Jet/ }).click();
     await expect(dialog).toHaveCount(0);
     await expect(opener).toBeFocused();
-    await expect(page.locator(SHEET)).toHaveAttribute('aria-label', 'Selected part, Switch 32');
+    await expect(page.locator(SHEET)).toHaveAttribute(
+      'aria-label',
+      'Selected component, Switch 32',
+    );
     await expect(
       page.locator(SHEET).getByRole('button', { name: 'Expand details' }),
     ).toHaveAttribute('aria-expanded', 'false');
@@ -447,7 +452,7 @@ test.describe('wide panel', () => {
   test('holds the selected part and the list; the selected row is current', async ({ page }) => {
     await gotoHydrated(page, '/map?layer=sw&id=32');
     const panel = page.getByRole('complementary', {
-      name: 'Selected part and parts on the map',
+      name: 'Selected component and components on the map',
     });
     await expect(panel).toBeVisible();
     expect(near((await panel.boundingBox())!.width, 420)).toBe(true);
@@ -456,12 +461,22 @@ test.describe('wide panel', () => {
     await expect(panel.locator('[aria-current="true"]')).toHaveCount(1);
     await expect(panel.locator('[aria-current="true"]')).toContainText('Upper Right Jet');
     await expect(page.locator(SHEET)).toHaveCount(0);
-    await expect(page.getByRole('button', { name: 'All parts on the map' })).toHaveCount(0);
-    // Find a part narrows the list.
-    await panel.getByRole('searchbox', { name: 'Find a part' }).fill('zzz');
+    await expect(page.getByRole('button', { name: 'All components on the map' })).toHaveCount(0);
+    // Search components narrows the list.
+    await panel.getByRole('searchbox', { name: 'Search components' }).fill('zzz');
     await expect(panel.locator('.rows .row')).toHaveCount(0);
-    await panel.getByRole('searchbox', { name: 'Find a part' }).fill('32');
+    await panel.getByRole('searchbox', { name: 'Search components' }).fill('32');
     await expect(panel.locator('.rows .row').first()).toContainText('Upper Right Jet');
+  });
+
+  test('a list row says "not used" once, in its name', async ({ page }) => {
+    await gotoHydrated(page, '/map?layer=sw');
+    const panel = page.getByRole('complementary', {
+      name: 'Selected component and components on the map',
+    });
+    const row = panel.getByRole('button', { name: /^11\s+Not Used/ });
+    await expect(row.locator('.sub')).toHaveText('Matrix column 1, row 1');
+    await expect(row).toContainText('not on map');
   });
 
   test('a Fault persists across a reload and names the marker', async ({ page }) => {
@@ -482,7 +497,7 @@ test.describe('wide panel', () => {
   test('nothing selected shows the Playfield card and the provenance', async ({ page }) => {
     await gotoHydrated(page, '/map');
     const panel = page.getByRole('complementary', {
-      name: 'Selected part and parts on the map',
+      name: 'Selected component and components on the map',
     });
     await expect(panel.getByRole('heading', { name: 'Playfield' })).toBeVisible();
     await expect(panel.locator('.prov')).toBeVisible();

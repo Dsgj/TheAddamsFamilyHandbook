@@ -3,7 +3,7 @@
 ![The Addams Family logo](docs/readme/addams-family-logo.png)
 
 Service companion for one Bally _The Addams Family_ pinball machine (1992, WPC)
-`DIAGNOSE · MAP · MATRICES · HANDBOOK · MANUALS · PARTS · OFFLINE`
+`DIAGNOSE · MAP · TABLES · HANDBOOK · WORKSHOP · OFFLINE`
 
 [![Live site](https://img.shields.io/badge/live-dsgj.github.io-FF8A3D?style=flat-square&labelColor=0E0B10)](https://dsgj.github.io/TheAddamsFamilyHandbook/)
 [![Deploy to GitHub Pages](https://img.shields.io/github/actions/workflow/status/Dsgj/TheAddamsFamilyHandbook/deploy.yml?branch=main&style=flat-square&label=deploy&labelColor=0E0B10&color=B08D57)](https://github.com/Dsgj/TheAddamsFamilyHandbook/actions/workflows/deploy.yml)
@@ -18,11 +18,15 @@ Service companion for one Bally _The Addams Family_ pinball machine (1992, WPC)
 
 ---
 
-**The Addams Family Handbook** is an interactive service manual for a single
-Bally _The Addams Family_ pinball machine. Type what the machine tells you, get
-the wiring, the location on the playfield, the manual page and a note about what
-usually goes wrong. It is a static Astro site with Svelte islands, installable
-as a PWA and fully usable offline under the playfield glass.
+**The Addams Family Handbook** is a service app for a single Bally _The Addams
+Family_ pinball machine. Type what the machine tells you, get the wiring, the
+location on the playfield, the manual page and a note about what usually goes
+wrong. It is a static Astro site with Svelte islands, installable as a PWA and
+fully usable offline under the playfield glass.
+
+The app is organised in five tabs (Diagnose, Map, Tables, Handbook, Workshop),
+the result of a twelve-phase redesign in September 2026 and of the app audit
+that followed it (fixes P0–P3, see the [changelog](CHANGELOG.md)).
 
 |      Diagnose       |       Playfield map       | Switch matrix |
 | :-----------------: | :-----------------------: | :-----------: |
@@ -49,26 +53,29 @@ header._
   combination, at three zoom levels. The selected part pulses and the rest
   dims; markers take the colour of their status. Positions were remapped from
   the manual's three location maps and two shot maps, then placed by hand by
-  the owner against the original scans. `?layer=sw,shot&id=K` in the URL, so a
+  the owner against the manual pages. `?layer=sw,shot&id=K` in the URL, so a
   link opens the same view, and the rules section of the handbook embeds the
   map with the shots on. `?calib=1` is the calibration mode: drag or arrow-key
-  markers over a frame-aligned overlay of the original scan and copy the JSON
+  markers over a frame-aligned overlay of the manual page and copy the JSON
   into `src/data/positions.json`.
-- **Matrices & tables.** 8×8 switch and lamp matrices with keyboard navigation.
-  Dedicated tables for J205, Fliptronics J806, solenoids, flashers, flipper
-  coils, GI, fuses by board, LEDs and the jumper pointer.
-- **Handbook.** 56 transcribed pages in 10 sections with page markers, scan
-  links, menu map and a searchable table of contents. `#find:` and `#goto:`
-  links resolve at build time.
-- **Manuals.** Viewer for the three scanned documents (ops 124 pp, handbook 12
-  pp, WPC schematics 14 pp with tiles). Fit, zoom, rotate, text mode and OCR
-  search across all of them.
+- **Tables.** The switch matrix and the lamp matrix (8×8) with keyboard
+  navigation, and tables for the dedicated switches (J205), the flipper
+  switches (Fliptronics J805/J806), solenoids and flashers, flipper coils, GI, fuses
+  by board, LEDs and jumpers. Codes read the same everywhere: switch `32`,
+  lamp `L55`, solenoid `SOL 01`.
+- **Handbook.** 64 transcribed pages (56 from the Operations Manual, 8
+  appendix) in 11 sections with page markers, links to the manual pages, a menu
+  map and a searchable table of contents. `#find:` and `#goto:` links resolve
+  at build time.
+- **Manuals.** Viewer for the three manuals (Operations Manual 124 pages,
+  Operator's Handbook 12 pages, WPC Schematic Manual 14 pages with tiles). Fit,
+  zoom, rotate, a text mode and a search of the page text across all of them.
 - **Parts.** 2 562 rows with assembly path. Search from two characters.
-- **Quick search.** Components and handbook headings from the header on every
-  page.
+- **Search.** A word typed on Diagnose searches components, handbook headings,
+  the manuals' page text and parts at once.
 - **Status.** OK / Fault / Not tested and a note per component, stored on the
-  device, with a service log of the last changes. A Broken tick in the lamp,
-  switch and solenoid tables sets Fault in one tap.
+  device, with a dated service log of the last changes. A Fault tick in the
+  lamp, switch and solenoid tables sets Fault in one tap.
 - **Shopping list.** Every part marked Fault, grouped by bulb type or part
   number with counts and assembly, linked to the cards. Copy as text, and a
   Fixed button per part so it doubles as a work list.
@@ -81,15 +88,18 @@ header._
 - **Care.** Cleaning and upkeep by interval (weekly, monthly, twice a year,
   yearly) with the product or method per item, what the manual says, and a dated
   tick per item stored on the device.
-- **Appendix.** Owner service notes after the manual in the Handbook: multimeter
-  basics, coils, switches and optos, lamps and GI, the power driver board,
+- **Handbook appendix.** Notes written for this machine, after the manual's
+  pages in the handbook: multimeter basics, coils, switches and optos, lamps and GI, the power driver board,
   flippers, connectors and cleaning, shopping out the playfield. Sourced per section; linked from every
   component page as "Service notes".
-- **Device data.** Download every status as a JSON backup and read it back on
-  another phone, merge or replace.
+- **Device data.** Download a backup of everything recorded on the device
+  (status, notes, the service log, setup values, care and verify ticks) and
+  read it back on another phone, merge or replace.
+- **Workshop.** The hub for the shopping list, Verify, care, machine setup,
+  device data, the appearance setting, installing the app and About the app.
 - **Offline.** Manifest, icons, precached shell, data, the playfield drawing
-  and figures. Scans (manual pages and calibration overlays) are cached on
-  first view.
+  and figures. Manual pages (and the calibration overlays) are saved on the
+  device on first view.
 
 ## Quick start
 
@@ -106,7 +116,7 @@ pnpm preview
 | --------------- | ------------------------------------------------------- |
 | `pnpm check`    | `astro check` + `tsc --noEmit`                          |
 | `pnpm lint`     | ESLint (Astro + Svelte)                                 |
-| `pnpm test`     | Vitest: codes, shared cause, handbook build             |
+| `pnpm test`     | Vitest: codes, shared cause, handbook build, copy rules |
 | `pnpm test:e2e` | Playwright smoke, phone-dark and desktop-light projects |
 
 ## Deploy
@@ -133,7 +143,7 @@ kit/handbook  ─►  src/content/handbook             │
 kit/docs      ─►  kit-docs                         ┘
 @fontsource   ─►  public/fonts                        pnpm fonts
 icon.svg      ─►  public/icons/*.png (+ iOS splash)    pnpm icons
-scans         ─►  page thumbnails (optional)          pnpm thumbs
+page images   ─►  page thumbnails (optional)          pnpm thumbs
 ```
 
 Handbook pages are rendered by a custom content loader
@@ -148,12 +158,13 @@ Three things are this repo's own and not synced from the kit:
   the clean drawing `public/assets/maps/playfield.png`, keyed `kind:id`
   (`switch`, `lamp`, `coil`, `shot`), normalised 0–1. Seeded from the kit's
   `loc` callouts and the shot-map arrow tips, then calibrated by hand in
-  `/map?calib=1`. The kit's `loc` stays untouched; the three scanned location
+  `/map?calib=1`. The kit's `loc` stays untouched; the manual's three location
   maps it refers to are kept only as calibration overlays.
 - [`src/data/shots.ts`](src/data/shots.ts): the lettered shots A–S with their
   manual page.
-- [`src/data/overlays.json`](src/data/overlays.json): where each scan sits over
-  the drawing so its playfield frame lines up (computed once by frame detection).
+- [`src/data/overlays.json`](src/data/overlays.json): where each manual location
+  map sits over the drawing so its playfield frame lines up (computed once by
+  frame detection).
 
 ## Project layout
 
@@ -162,7 +173,11 @@ src/
 ├── components/   Svelte islands: Diagnose, PlayfieldMap, Matrix, PageViewer, …
 ├── data/         kit/ (synced), positions.json, shots.ts, overlays.json, owner data
 ├── lib/          codes, shared cause, handbook loader, data mapping, positions, status
-├── pages/        diagnose (index), map, matrices, parts, handbook, manual
+├── pages/        21 routes: index (Diagnose), map, tables, switches, lamps,
+│                 coils, fuses, switch/[id], lamp/[id], coil/[id], handbook/index,
+│                 handbook/[section], manual/index, manual/[doc]/[page], parts,
+│                 workshop, shopping, verify, care, setup, 404; plus
+│                 data/handbook.json.ts (a JSON endpoint, not a page)
 ├── styles/       tokens.css (palette, type, spacing), base.css
 └── content/      handbook pages (synced from the kit)
 public/           data, assets, fonts, icons (synced or generated), brand/logo.webp
@@ -194,8 +209,10 @@ toggle. Tokens live in [`src/styles/tokens.css`](src/styles/tokens.css).
 Recorded from the owner (§10 of the build prompt):
 
 - UI language is **English throughout**.
-- App name is **The Addams Family Handbook**, short name **TAF Handbook**
-  (renamed from Valvet on 2026-09-23; the project folder keeps its old name).
+- App name is **The Addams Family Handbook**, "the app" in running text. The
+  short name **TAF Handbook** is only the home-screen label (manifest
+  `short_name` and the Apple title). Renamed from Valvet on 2026-09-23; the
+  project folder keeps its old name.
   Deploy target is GitHub Pages.
 - Service log and photos stay local on the device (M2+). Per-component status
   lives in `localStorage` under `tafh:status` until M2 introduces the storage
@@ -210,8 +227,8 @@ Recorded from the owner (§10 of the build prompt):
   `minimumReleaseAge: 0` so current releases install.
 - Repo
   [Dsgj/TheAddamsFamilyHandbook](https://github.com/Dsgj/TheAddamsFamilyHandbook)
-  is public by owner decision. The scans are Williams/Midway copyright material;
-  the owner accepted publishing them.
+  is public by owner decision. The manual page images are Williams/Midway
+  copyright material; the owner accepted publishing them.
 
 ## Roadmap
 

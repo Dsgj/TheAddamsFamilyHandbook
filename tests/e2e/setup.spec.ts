@@ -4,14 +4,14 @@ import { gotoHydrated } from './helpers';
 
 test('setup guide records values and ticks on the device', async ({ page }) => {
   await gotoHydrated(page, '/setup');
-  await expect(page.getByRole('status')).toContainText('0 /');
+  await expect(page.getByRole('status')).toContainText('0 of 47');
 
   const item = page.locator('.item', { hasText: 'Tournament Play' });
   await item.getByRole('button', { name: 'YES' }).click();
   await expect(item.getByRole('textbox')).toHaveValue('YES');
   // The tick's name carries the menu code (audit AY-10): two items share a name elsewhere.
   await item.getByLabel('Done: A.1 26 Tournament Play').check();
-  await expect(page.getByRole('status')).toContainText('1 /');
+  await expect(page.getByRole('status')).toContainText('1 of 47');
   await expect(item).toHaveClass(/done/);
   await expect(item.getByRole('link', { name: 'handbook' })).toHaveAttribute(
     'href',
@@ -21,10 +21,10 @@ test('setup guide records values and ticks on the device', async ({ page }) => {
   const task = page.locator('.item', { hasText: 'remove the glass' });
   await expect(task.getByRole('textbox')).toHaveCount(0);
   await task.getByRole('checkbox').check();
-  await expect(page.getByRole('status')).toContainText('2 /');
+  await expect(page.getByRole('status')).toContainText('2 of 47');
 
   await page.reload();
-  await expect(page.getByRole('status')).toContainText('2 /');
+  await expect(page.getByRole('status')).toContainText('2 of 47');
   await expect(
     page.locator('.item', { hasText: 'Tournament Play' }).getByRole('textbox'),
   ).toHaveValue('YES');
@@ -70,7 +70,7 @@ test('setup values travel in the backup file', async ({ page }) => {
   await page.getByRole('button', { name: /^Really replace\? 1 entry here will be lost/ }).click();
   await expect(page.getByRole('status')).toContainText('0 components and 2 settings read');
   await gotoHydrated(page, '/setup');
-  await expect(page.getByRole('status')).toContainText('2 /');
+  await expect(page.getByRole('status')).toContainText('2 of 47');
   await expect(
     page.locator('.item', { hasText: 'Custom Message' }).first().getByRole('textbox'),
   ).toHaveValue('');

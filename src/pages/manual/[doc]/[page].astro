@@ -4,13 +4,22 @@ import PageViewer from '~/components/PageViewer.svelte';
 import ManualSearch from '~/components/ManualSearch.svelte';
 import ocr from '~/data/kit/ocr-text.json';
 import type { DocId } from '~/lib/model/types';
-import { DOC_NAME, DOCS, PAGES, pageCount, pageLabel, tocTitle, TOC } from '~/lib/pages';
+import {
+  DOC_NAME,
+  DOCS,
+  PAGES,
+  pageCount,
+  pageLabel,
+  pageTitleText,
+  tocTitle,
+  TOC,
+} from '~/lib/pages';
 import { sectionOfPage } from '~/lib/handbook/sections';
 import { href, manualHref } from '~/lib/url';
 
 /**
  * The manual viewer page (spec §9.12): the document segmented control, the viewer island with
- * its toolbar, the contents around this page, the footer line and the OCR search.
+ * its toolbar, the contents around this page, the footer line and the page-text search.
  */
 export function getStaticPaths() {
   return DOCS.flatMap((doc) =>
@@ -20,10 +29,12 @@ export function getStaticPaths() {
 const { doc, meta } = Astro.props as { doc: DocId; meta: (typeof PAGES)['ops'][number] };
 const page = meta[0];
 const text = (ocr as Record<DocId, string[]>)[doc][page - 1] ?? '';
-const label = pageLabel(doc, page);
+/** "p. 1-15" before a printed label, "PDF page 2" where the page prints none (spec §13). */
+const pageTitle = pageTitleText(doc, page);
 const title = tocTitle(doc, page);
 const sec = doc === 'ops' ? sectionOfPage(page) : undefined;
-const SHORT: Record<DocId, string> = { ops: 'Operations', hb: 'Handbook', wpc: 'Schematics' };
+/** The segment words. The scanned hb document is "Operator's", never bare "Handbook" (the tab). */
+const SHORT: Record<DocId, string> = { ops: 'Operations', hb: "Operator's", wpc: 'Schematics' };
 
 /** The contents around this page: the current entry and up to three on either side. */
 const toc = TOC[doc];
@@ -40,8 +51,9 @@ const around = toc.slice(from, from + 7).map(([p, name], i) => ({
 ---
 
 <Base
-  title={`${DOC_NAME[doc]} ${label ? 'p. ' + label : '#' + page}`}
-  short={label ? `p. ${label}` : `#${page}`}
+  title={`${DOC_NAME[doc]} ${pageTitle}`}
+  short={pageTitle}
+  description={`${DOC_NAME[doc]} ${pageTitle}, the page image with its text.`}
   nav="manual"
   h1="bar"
   back={{ path: 'manual', label: 'Manuals' }}
@@ -67,7 +79,7 @@ const around = toc.slice(from, from + 7).map(([p, name], i) => ({
               <a class="lrow" href={href(`handbook/${sec.key}#pg-${page}`)}>
                 <span class="txt">
                   <span class="ttl">Read the transcription</span>
-                  <span class="sub">{sec.title}, in the Handbook</span>
+                  <span class="sub">{sec.title}, in the handbook</span>
                 </span>
                 <svg class="chev" viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M9 5l7 7-7 7" />
@@ -88,7 +100,7 @@ const around = toc.slice(from, from + 7).map(([p, name], i) => ({
                 <span class="txt">
                   <span class="ttl">{e.name}</span>
                 </span>
-                <span class="val mono">{pageLabel(doc, e.p) || `#${e.p}`}</span>
+                <span class="val mono">{pageLabel(doc, e.p) || `PDF page ${e.p}`}</span>
                 <svg class="chev" viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M9 5l7 7-7 7" />
                 </svg>
@@ -107,7 +119,7 @@ const around = toc.slice(from, from + 7).map(([p, name], i) => ({
           </a>
         </li>
       </ul>
-      <p class="gf">Scans are saved on the device as you open them.</p>
+      <p class="gf">Manual pages are saved on the device as you open them.</p>
     </section>
     <section>
       <h2 class="lst-h">Search</h2>

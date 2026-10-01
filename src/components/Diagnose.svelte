@@ -1,6 +1,7 @@
 <script lang="ts">
   import { appendixAnchor } from '~/data/appendix';
   import { parseCodes, type ParsedCode } from '~/lib/codes';
+  import { componentCode, plural } from '~/lib/copy';
   import { DATA, find, KIND_LABEL } from '~/lib/data/components';
   import {
     clearRecent,
@@ -36,8 +37,8 @@
       const s = input.trim();
       if (mode === 'search')
         return searchCount
-          ? `${searchCount} ${searchCount === 1 ? 'result' : 'results'} for “${s}”`
-          : `Nothing found for “${s}”`;
+          ? `${plural(searchCount, 'result')} for “${s}”`
+          : `No results match “${s}”.`;
       if (mode === 'results') return found.length ? summary() : 'No codes recognised';
       return '';
     },
@@ -183,14 +184,7 @@
 
   const EXAMPLES = ['32 68 F1 F3', 'Check Switch 32', 'L11 L12 L13', 'SOL 7'];
   const label = (p: ParsedCode) => (p.kind === 'unknown' ? p.raw : `${KIND_LABEL[p.kind]} ${p.id}`);
-  const codeText = (p: ParsedCode) =>
-    p.kind === 'unknown'
-      ? p.raw
-      : p.kind === 'lamp'
-        ? `L${p.id}`
-        : p.kind === 'coil'
-          ? `SOL ${p.id}`
-          : p.id;
+  const codeText = (p: ParsedCode) => (p.kind === 'unknown' ? p.raw : componentCode(p.kind, p.id));
 
   /** "1 switch · 1 marked Fault", "2 lamps · both marked Fault", "1 solenoid". */
   function summary(): string {
@@ -203,9 +197,10 @@
     }
     const kinds = (['switch', 'lamp', 'coil'] as const)
       .filter((k) => n[k])
-      .map(
-        (k) =>
-          `${n[k]} ${k === 'switch' ? (n[k] === 1 ? 'switch' : 'switches') : k === 'lamp' ? (n[k] === 1 ? 'lamp' : 'lamps') : n[k] === 1 ? 'solenoid' : 'solenoids'}`,
+      .map((k) =>
+        k === 'switch'
+          ? plural(n[k], 'switch', 'switches')
+          : plural(n[k], k === 'lamp' ? 'lamp' : 'solenoid'),
       )
       .join(', ');
     const total = found.length;
@@ -449,8 +444,7 @@
     <div class="rbar">
       <button type="button" class="tlink" onclick={clear}>Clear</button>
       <h2 class="rh" bind:this={resultsHead} tabindex="-1">
-        {parsed.length}
-        {parsed.length === 1 ? 'code' : 'codes'}
+        {plural(parsed.length, 'code')}
       </h2>
       <button type="button" class="tlink" onclick={share}>
         {shared === 'copied' ? 'Copied' : shared === 'shared' ? 'Shared' : 'Share results'}
@@ -470,7 +464,7 @@
         shownMissing.length
           ? ` and ${missing.length - shownMissing.length} more`
           : ''}. Matrix switches are 11–88, dedicated D1–D8, flipper F1–F8, lamps L11–L88, solenoids
-        SOL 1–28.
+        SOL 01–28.
       </p>
     {/if}
 

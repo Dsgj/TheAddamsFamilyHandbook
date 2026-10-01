@@ -23,6 +23,32 @@ export const WIRE_COLOURS: Record<string, string> = {
   Wht: '#F7F7F7',
 };
 
+/**
+ * Full colour names for the manual's abbreviations (spec §13: wire colours are spelled out, UK
+ * spelling). The solenoid table prints `Vio-Brn`; the app shows `Violet-Brown`.
+ */
+export const WIRE_NAME: Record<string, string> = {
+  Blk: 'Black',
+  Blu: 'Blue',
+  Brn: 'Brown',
+  Grn: 'Green',
+  Gry: 'Grey',
+  Gray: 'Grey',
+  Org: 'Orange',
+  Orn: 'Orange',
+  Vio: 'Violet',
+  Wht: 'White',
+  Yel: 'Yellow',
+};
+
+/** `Vio-Brn` → `Violet-Brown`, `Gray` → `Grey`; full names and unknown parts pass through. */
+export function wireName(colour: string): string {
+  return String(colour)
+    .split('-')
+    .map((w) => WIRE_NAME[w.trim()] ?? w.trim())
+    .join('-');
+}
+
 /** CSS background for a `Base-Stripe` wire colour string. */
 export function wireBackground(en: string): string {
   const [a = '', b] = String(en).split('-');

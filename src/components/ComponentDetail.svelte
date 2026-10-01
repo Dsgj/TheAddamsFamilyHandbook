@@ -10,12 +10,14 @@
 
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { capitalise, componentCode, kindLine as kindLineOf, locationLine } from '~/lib/copy';
   import { KIND_LABEL, MAP_LAYER } from '~/lib/data/components';
   import { COIL_NOTE, HINT, t } from '~/lib/data/en';
   import { positions } from '~/lib/data/positions';
   import { recordViewed } from '~/lib/model/recent.svelte';
   import { getStatus, setStatus, shortDate, STATUS_LABEL } from '~/lib/model/status.svelte';
   import type { Coil, Kind, Lamp, MapMeta, StatusValue, Switch } from '~/lib/model/types';
+  import { pageTitleText } from '~/lib/pages';
   import { href, manualHref } from '~/lib/url';
   import BottomSheet from './BottomSheet.svelte';
   import MiniMap from './MiniMap.svelte';
@@ -42,25 +44,13 @@
   const layer = $derived(MAP_LAYER[kind]);
   const callouts = $derived(item.loc.map((l) => l.l).join(', '));
   const mapPage = $derived(mapMeta.page);
-  const pageLabel = $derived(`p. 2-${mapPage - 58}`);
+  /** "p. 2-39": the location map's printed label. */
+  const mapRef = $derived(pageTitleText('ops', mapPage));
   const pos = $derived(positions(kind, item.id));
   const isMatrix = $derived(!!sw && sw.col !== null);
-  const code = $derived(
-    kind === 'coil' ? `SOL ${item.id}` : kind === 'lamp' ? `L${item.id}` : item.id,
-  );
-  const kindLine = $derived.by(() => {
-    const parts: string[] = [];
-    if (sw && isMatrix) parts.push(`Matrix column ${sw.col}, row ${sw.row}`);
-    if (sw?.kind === 'ded') parts.push('Dedicated (CPU J205)');
-    if (sw?.kind === 'flip') parts.push('Fliptronics');
-    if (lamp) parts.push(`Matrix column ${lamp.col}, row ${lamp.row}`);
-    if (coil) parts.push(coil.type);
-    if (lamp?.speaker) parts.push('speaker panel');
-    if ('unused' in item && item.unused) parts.push('not used');
-    if ('under' in item && item.under) parts.push('under the playfield');
-    if (coil?.cabinet) parts.push('cabinet');
-    return parts.join(' · ');
-  });
+  const code = $derived(componentCode(kind, item.id));
+  /** The header line starts a sentence: "Matrix column 3, row 2", "Flipper (J806)". */
+  const kindLine = $derived(capitalise(locationLine(kind, item)));
   const current = $derived(getStatus(kind, item.id));
   const status = $derived<StatusValue | ''>(current?.status ?? '');
   const statusLabel = $derived(status ? STATUS_LABEL[status] : 'Not tested');
@@ -79,7 +69,7 @@
   }
 
   onMount(() => {
-    const sub = `${KIND_LABEL[kind]} · ${kindLine.replace(/^Matrix/, 'matrix')}`;
+    const sub = kindLineOf(kind, item);
     recordViewed({ kind, id: item.id, code, name: item.name, sub });
   });
 </script>
@@ -191,7 +181,7 @@
         {#if callouts}
           <a class="lrow" href={manualHref('ops', mapPage)}>
             <span class="txt">
-              <span class="ttl">Callout {callouts} on {pageLabel}</span>
+              <span class="ttl">Callout {callouts} on {mapRef}</span>
             </span>
             <svg class="chev" viewBox="0 0 14 14" aria-hidden="true"><path d="M5 2l5 5-5 5" /></svg>
           </a>
@@ -253,13 +243,13 @@
     {:else}
       <p class="gf">No status changes yet.</p>
     {/if}
-    <p class="gf">Status, notes and the log stay on this device.</p>
+    <p class="gf">Everything you record stays on this device.</p>
   </section>
 </div>
 
 {#if mapOpen}
   <BottomSheet
-    label="{item.name} / {KIND_LABEL[kind]} {item.id}"
+    label="{KIND_LABEL[kind]} {item.id} · {item.name}"
     detent="large"
     recede="header.top, .detail, .notes, .pn, footer.foot"
     onclose={() => (mapOpen = false)}
@@ -277,14 +267,14 @@
       </div>
       <p class="callout">
         {#if callouts}
-          Callout {callouts} on {pageLabel}
+          Callout {callouts} on {mapRef}
         {:else}
           Not on the location map
         {/if}
       </p>
       <div class="acts">
-        <a class="btn primary" href={href(`map?layer=${layer}&id=${item.id}`)}>Open in Map</a>
-        <a class="btn" href={manualHref('ops', mapPage)}>Manual page</a>
+        <a class="btn primary" href={href(`map?layer=${layer}&id=${item.id}`)}>Show on map</a>
+        <a class="btn" href={manualHref('ops', mapPage)}>Manual {mapRef}</a>
       </div>
     </div>
   </BottomSheet>

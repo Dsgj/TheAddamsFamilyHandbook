@@ -1,6 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
-import { gotoHydrated } from './helpers';
+import { dayLabel, gotoHydrated } from './helpers';
+
+// Dates show in the device's local time (spec §13); pin the zone so they are predictable.
+test.use({ timezoneId: 'Europe/Stockholm' });
 
 /**
  * Device data survives the ways a phone leaves a page (system Back, bfcache), a second tab, a
@@ -128,13 +131,9 @@ test('a page restored from the back/forward cache shows and keeps later marks', 
 
 test.describe('replace everything refuses a file that is not a backup', () => {
   const bad: [string, string, string][] = [
-    ['theme.json', '{"theme":"dark"}', 'Could not read that file as a status export.'],
-    ['array.json', '[1,2,3]', 'Could not read that file as a status export.'],
-    [
-      'other.json',
-      '{"app":"x","version":1,"items":{}}',
-      'Could not read that file as a status export.',
-    ],
+    ['theme.json', '{"theme":"dark"}', 'Could not read that file as a backup.'],
+    ['array.json', '[1,2,3]', 'Could not read that file as a backup.'],
+    ['other.json', '{"app":"x","version":1,"items":{}}', 'Could not read that file as a backup.'],
     [
       'newer.json',
       '{"app":"tafh","version":99,"items":{}}',
@@ -345,7 +344,7 @@ test('Verify ticks travel in the backup and go with Clear all', async ({ page })
   const box = page.locator('input.verify-check[data-id="flasher-count"]');
   await expect(box).toBeChecked();
   await expect(box.locator('xpath=ancestor::li')).toContainText(
-    `verified ${file.verify['flasher-count']?.slice(0, 10)}`,
+    `verified ${dayLabel(file.verify['flasher-count']!)}`,
   );
 });
 
@@ -396,4 +395,28 @@ test('asks once to keep storage, on the first mark and not on load', async ({ pa
   await expect.poll(calls).toBe(1);
   await page.waitForTimeout(200);
   expect(await calls()).toBe(1);
+});
+
+/* P3 item 1 of the app audit (spec §13): dates carry the year and read in the device's own time
+ * zone, so a change at 00:30 in Stockholm is dated that day, not the day before in UTC. */
+test('the service log and Verify date in local time, with the year', async ({ page }) => {
+  const at = '2025-12-31T23:30:00Z';
+  await seed(page, {
+    'switch:32': { ...fault('switch:32'), at, history: [{ status: 'fault', at }] },
+  });
+  await page.evaluate(() =>
+    localStorage.setItem(
+      'tafh:verify',
+      JSON.stringify({ 'flasher-count': '2026-09-20T22:30:00Z' }),
+    ),
+  );
+  await gotoHydrated(page, '/switch/32');
+  await expect(page.getByRole('list', { name: 'Service log' }).locator('.when')).toHaveText([
+    '1 Jan 2026',
+  ]);
+  expect(dayLabel(at)).toBe('1 Jan 2026');
+  await gotoHydrated(page, '/verify');
+  await expect(
+    page.locator('input.verify-check[data-id="flasher-count"]').locator('xpath=ancestor::li'),
+  ).toContainText('verified 21 Sep 2026');
 });

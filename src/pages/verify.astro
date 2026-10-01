@@ -2,6 +2,8 @@
 import Base from '~/layouts/Base.astro';
 import { VERIFY_ITEMS as ITEMS } from '~/data/verify';
 const groups = [...new Set(ITEMS.map((i) => i.group))];
+// Source: kit-docs/KNOWN-ISSUES.md. When an item is settled, correct the data and remove it there
+// and in src/data/verify.ts.
 ---
 
 <Base
@@ -9,9 +11,9 @@ const groups = [...new Set(ITEMS.map((i) => i.group))];
   nav="verify"
   description="Open questions in the data that need a look at the real machine, as a checklist."
 >
-  <h1>Verify in the machine</h1>
+  <h1>Verify</h1>
   <p class="muted">
-    Places where the manual, the parts list and the scans disagree, or where the data was placed by
+    Places where the manual's pages and its parts list disagree, or where the data was placed by
     hand. Tick an item when you have checked it on the machine. Ticks stay on this device.{' '}
     <span class="mono" data-verify-count></span>
   </p>
@@ -38,10 +40,6 @@ const groups = [...new Set(ITEMS.map((i) => i.group))];
       </section>
     ))
   }
-  <p class="muted small">
-    Source: <code>kit-docs/KNOWN-ISSUES.md</code>. When an item is settled, correct the data and
-    remove it there and here.
-  </p>
 </Base>
 
 <style>
