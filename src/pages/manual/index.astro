@@ -65,12 +65,19 @@ import { manualHref } from '~/lib/url';
     margin-left: 0;
     margin-right: 0;
   }
+  /* Spec §12: the document link is a 44 target. Its box rises into the heading's top margin, so
+     the text keeps its place just over the list and the box never reaches the first row. */
   .lst-h {
     display: flex;
     justify-content: space-between;
+    align-items: flex-end;
     gap: 8px;
+    margin-top: 0;
   }
   .lst-h a {
+    display: inline-flex;
+    align-items: flex-end;
+    min-height: var(--touch);
     color: inherit;
   }
   .lst-h .n {

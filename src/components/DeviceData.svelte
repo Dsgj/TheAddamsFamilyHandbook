@@ -247,9 +247,11 @@
     color: var(--muted);
     cursor: default;
   }
+  /* The row is the file input's target: 44 tall at least (audit AY-12). */
   .file {
     position: relative;
     overflow: hidden;
+    min-height: 44px;
   }
   .file input {
     position: absolute;
@@ -265,7 +267,7 @@
     flex: 0 1 auto;
     width: auto;
     max-width: 58%;
-    min-height: 36px;
+    min-height: 44px;
     padding: 2px 8px;
   }
   .bad {

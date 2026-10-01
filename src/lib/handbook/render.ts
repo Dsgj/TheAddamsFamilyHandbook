@@ -54,7 +54,8 @@ export function renderPage(page: number, body: string, label: string): RenderedP
       const id = `p${page}-${k}`;
       const level: 2 | 3 = Number(lvl) <= 2 ? 2 : 3;
       headings.push({ id, level, text: stripTags(inner), page });
-      const tag = level === 2 ? 'h3' : 'h4';
+      // Under the page's h1: h2 for a level-2 heading, h3 below it (spec §9.11, audit AY-14).
+      const tag = level === 2 ? 'h2' : 'h3';
       return `<${tag} id="${id}">${inner}</${tag}>`;
     },
   );

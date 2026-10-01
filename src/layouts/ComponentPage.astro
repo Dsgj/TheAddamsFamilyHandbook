@@ -137,10 +137,18 @@ const svc = serviceNotes(kind, item)
     max-width: var(--measure);
     margin: 0 0 4px;
   }
+  /* Spec §12: the appendix links are a list, not running text, so each is a real 44 target and
+     none reaches the pager below. */
   .notes .links {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px 12px;
+    align-items: center;
+    gap: 0 12px;
+  }
+  .notes .links a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--touch);
   }
   .pn {
     display: flex;

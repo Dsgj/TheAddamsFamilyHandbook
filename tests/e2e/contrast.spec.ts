@@ -435,7 +435,9 @@ function printed(hidden: string[]) {
       shown(e),
       getComputedStyle(e).filter,
     ]),
-    inks: [...document.querySelectorAll('.prose h3, .pg-bar .mono, .pg-bar .st-untested')]
+    inks: [
+      ...document.querySelectorAll('.prose > section > h2, .pg-bar .mono, .pg-bar .st-untested'),
+    ]
       .slice(0, 12)
       .map((e) => [e.textContent?.trim().slice(0, 24) ?? '', getComputedStyle(e).color]),
   };

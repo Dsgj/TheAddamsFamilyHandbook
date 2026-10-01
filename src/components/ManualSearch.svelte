@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount, untrack } from 'svelte';
   import type { DocId } from '~/lib/model/types';
+  import { liveText } from '~/lib/live.svelte';
   import { DOC_NAME, pageLabel, tocTitle } from '~/lib/pages';
   import { href, manualHref } from '~/lib/url';
   import SearchField from './SearchField.svelte';
@@ -17,6 +18,7 @@
     const m = /[?&]q=([^&]*)/.exec(location.search);
     if (!m) return;
     q = decodeURIComponent(m[1]!.replace(/\+/g, ' '));
+    live.rebase(); // a pre-filled ?q= is never announced (spec §12)
     void ensure();
   });
 
@@ -37,6 +39,16 @@
     snippet: string;
     n: number;
   }
+  /** Spec §12, audit AY-09: the count line, announced 400 ms after the query last changed. The
+   *  Document select arms it, so a new document on a pre-filled ?q= is announced too. */
+  const live = liveText(
+    () => q,
+    () => (q.trim().length >= 2 && data ? countLine() : ''),
+  );
+  const countLine = () =>
+    hits.length
+      ? `${hits.length} ${hits.length === 1 ? 'page' : 'pages'}`
+      : `No pages match “${q.trim()}”.`;
   const hits = $derived.by((): Hit[] => {
     const s = q.trim().toLowerCase();
     if (!data || s.length < 2) return [];
@@ -68,6 +80,7 @@
      underneath instead of the hit (DS-01). The .srch wraps the input only, so its clear button
      never lands on the select. -->
 <div class="msearch">
+  <p class="sr-only" aria-live="polite" aria-atomic="true">{live.text}</p>
   <div class="row">
     <SearchField
       label="Search manual text"
@@ -76,7 +89,7 @@
       onfocus={ensure}
       oninput={ensure}
     />
-    <select class="search sel" bind:value={only} aria-label="Document">
+    <select class="search sel" bind:value={only} onchange={live.arm} aria-label="Document">
       <option value="">All documents</option>
       <option value="ops">Operations Manual</option>
       <option value="hb">Operator's Handbook</option>
@@ -86,7 +99,7 @@
   {#if loading}<p class="muted small">Loading text…</p>{/if}
   {#if q.trim().length >= 2 && data}
     <p class="muted small">
-      {hits.length ? `${hits.length} pages` : `No pages match “${q.trim()}”.`}
+      {countLine()}
     </p>
     <ul class="hits">
       {#each hits as h (h.doc + h.page)}

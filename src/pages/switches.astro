@@ -162,6 +162,7 @@ const TABS = [
 
 <script>
   import '~/lib/fault-check';
+  import { isTypingTarget } from '~/lib/keys';
 
   // The tablist (spec §8.3, tabs variant): a click or the arrow keys move aria-selected and show
   // the matching panel; Home and End jump to the ends. `#j205` / `#j806` open that tab directly.
@@ -180,6 +181,8 @@ const TABS = [
   tabs.forEach((t, i) => {
     t.addEventListener('click', () => select(i));
     t.addEventListener('keydown', (e) => {
+      // One guard (spec §12, audit AY-11): Alt+arrow stays the browser's Back, never a tab move.
+      if (isTypingTarget(e.target) || e.altKey || e.ctrlKey || e.metaKey) return;
       const n = tabs.length;
       let to = -1;
       if (e.key === 'ArrowRight' || e.key === 'ArrowDown') to = (i + 1) % n;

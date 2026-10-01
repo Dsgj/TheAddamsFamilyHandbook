@@ -344,7 +344,10 @@
   .map.dragging {
     transition: none;
   }
+  /* The grabber's hit area is 88×44 (spec §7.6, audit AY-12): the ::after reaches 10 px above
+     and below the 24 px bar, into the sheet's top edge and the gap over the head. */
   .grab {
+    position: relative;
     flex: 0 0 auto;
     display: grid;
     place-items: center;
@@ -357,6 +360,11 @@
     cursor: grab;
     touch-action: none;
     border-radius: var(--r-full);
+  }
+  .grab::after {
+    content: '';
+    position: absolute;
+    inset: -10px 0;
   }
   .grab:active {
     cursor: grabbing;

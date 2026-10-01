@@ -9,7 +9,8 @@ test('setup guide records values and ticks on the device', async ({ page }) => {
   const item = page.locator('.item', { hasText: 'Tournament Play' });
   await item.getByRole('button', { name: 'YES' }).click();
   await expect(item.getByRole('textbox')).toHaveValue('YES');
-  await item.getByLabel('Done: Tournament Play').check();
+  // The tick's name carries the menu code (audit AY-10): two items share a name elsewhere.
+  await item.getByLabel('Done: A.1 26 Tournament Play').check();
   await expect(page.getByRole('status')).toContainText('1 /');
   await expect(item).toHaveClass(/done/);
   await expect(item.getByRole('link', { name: 'handbook' })).toHaveAttribute(

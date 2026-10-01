@@ -7,8 +7,14 @@
    * The search state of the Diagnose field (spec §9.3): one word or more, no digits. Components
    * come from the bundled data; the handbook headings, the manuals' OCR text and the parts list
    * are fetched the first time they are needed (Q20 default: parts and the manuals are in).
+   * `oncount` reports the result count to Diagnose, which owns the search's announcer (spec §12);
+   * `onfilter` tells it a chip changed the results, which is announced even for a pre-filled query.
    */
-  let { q }: { q: string } = $props();
+  let {
+    q,
+    oncount,
+    onfilter,
+  }: { q: string; oncount?: (n: number) => void; onfilter?: () => void } = $props();
 
   type Group = 'components' | 'handbook' | 'manuals' | 'parts';
   interface Hit {
@@ -207,6 +213,7 @@
     return all.filter((g) => g.hits.length && (group === 'all' || group === g.group));
   });
   const total = $derived(results.reduce((n, g) => n + g.hits.length, 0));
+  $effect(() => oncount?.(total));
   const shown = (g: { group: Group; hits: Hit[] }) =>
     group === 'all' && expanded !== g.group ? g.hits.slice(0, TOP) : g.hits.slice(0, CAP);
 </script>
@@ -219,7 +226,12 @@
         class="chip"
         class:on={group === g.key}
         aria-pressed={group === g.key}
-        onclick={() => ((group = g.key), (expanded = null))}
+        onclick={() => {
+          onfilter?.();
+          group = g.key;
+          expanded = null;
+        }}
+        onfocus={(e) => e.currentTarget.scrollIntoView({ block: 'nearest', inline: 'nearest' })}
       >
         {g.label}
       </button>
@@ -261,6 +273,8 @@
 </div>
 
 <style>
+  /* The row scrolls sideways on a phone. Chrome does not scroll it to a chip that Tab reaches
+     half-hidden, so each chip scrolls itself into view on focus (spec §12, audit AY-02). */
   .chips {
     display: flex;
     gap: 8px;
@@ -271,10 +285,11 @@
   .chips::-webkit-scrollbar {
     display: none;
   }
-  /* The chip is 32 tall; the hit area stays 44 (spec §8.6). */
+  /* The chip is 32 tall; the hit area stays 44 tall (spec §8.6) and 44 wide (audit AY-12). */
   .chip {
     position: relative;
     flex: none;
+    min-width: 44px;
   }
   .chip::after {
     content: '';

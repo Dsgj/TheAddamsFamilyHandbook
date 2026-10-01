@@ -40,6 +40,7 @@ Source: Components §07 (it matches the kit). Each light value goes into **both*
 | --faint-ink | #918997 | #645c6c |
 | --brass-ink | #b8955f | #70552b |
 | --sep | #2c2731 | #e3dccb |
+| --field-line | #726b7a | #7f7769 |
 | --amber-ink | #ff8a3d | #9e4009 |
 | --amber-fill | #ff8a3d | #9e4009 |
 | --on-amber | #1a0d05 | #fff8f0 |
@@ -61,13 +62,14 @@ Source: Components §07 (it matches the kit). Each light value goes into **both*
 
 - Link text uses `--amber-ink` (`a { color: var(--amber-ink) }`), and so does every other amber text: `--amber` is the ring colour and never a text colour (§12). The light value is #9e4009 (#a8440a until audit P2 item 3), so it passes on `--tint` over `--ground` (4.70) and inside a faulted matrix cell (4.51).
 - `--seg-edge` is the chosen segment's 1 px edge (§8.3), 3:1 against the track in both themes.
+- `--field-line` is a field's edge (§8.7): the `.field` border and the `.search` pill's inset ring. It is at least 3:1 over `--sunk`, `--cell`, `--surface`, `--ground`, `--seg-track` and `--sheet` in both themes, and over `--sheet-cell` and `--raised` in dark (unit check u; audit FIELD-3-1, 2026-10-01). `--line` stays the hairline for cards, rules and the tick row; as a field edge it was 1.25 on dark `--sunk` and 1.19 on light.
 - `--faint-ink` is the text twin of `--faint`, as `--amber-ink` is of `--amber`. Faint text on a field, a cell or a raised surface (the `.field` and `.search` placeholders, an unused matrix id) takes it, and it passes 4.5 on `--surface`, `--sunk`, `--seg-track`, `--sheet-cell`, `--raised` and `--ground` in both themes. Dark `--faint` keeps #857d8d for its other uses (the tab labels on the bar, row chevrons, off-layer icons), which already passed, so dark changes only where a ratio failed; in light the two are the same.
 - `--brass-ink` is the text twin of `--brass`. Brass text (the `.hint`'s bold label, on `--brass-tint`, and the setup guide's step numbers) takes it, and it passes 4.5 on `--ground`, `--surface`, `--cell` and `--raised`, and on `--brass-tint` over the first three, in both themes. Dark `--brass` keeps #b08d57 for the rules and borders and the map's coil ring, which already passed; in light the two are the same.
 - The light `--bar` is .94 opaque (was .84), so the inks on the glass bar (the back link's `--amber-ink`, `--faint`, `--muted`, `--ink`) keep 4.5 over the darkest thing that scrolls under it, a DMD code on the dark `--dmd-well` (the back link was 3.9 at .84).
 - Print (audit DS-03) is black on white in both themes. Its tokens live in one `@media print` block at the very end of tokens.css, whose selector list `:root, :root[data-theme='light'], :root:not([data-theme='dark'])` matches the light blocks' specificity and comes after them, so it wins in every scheme and theme without `!important`. It sets:
   - `--tabbar-h` and `--shell-w` to 0px, and `color-scheme: light`.
   - Surfaces: `--ground`, `--surface`, `--raised`, `--cell`, `--sheet`, `--sheet-cell`, `--bar`, `--seg-track`, `--seg-thumb` and `--dmd-well` to #fff; `--sunk` to #f2f2f2.
-  - Inks: `--ink`, `--amber`, `--amber-ink`, `--amber-fill` and `--dmd-ink` to #000; `--on-amber` to #fff; `--muted` to #444; `--line` and `--sep` to #999. The other inks take their light values (`--violet` #6a2d80, `--brass` and `--brass-ink` #70552b, `--ok` #256738, `--bad` #ab2e27, `--warn` #7a5505, `--faint` and `--faint-ink` #645c6c), so a dark-theme print stays readable.
+  - Inks: `--ink`, `--amber`, `--amber-ink`, `--amber-fill` and `--dmd-ink` to #000; `--on-amber` to #fff; `--muted` to #444; `--line` and `--sep` to #999; `--field-line` to #767676 (4.54 on white, 4.06 on #f2f2f2). The other inks take their light values (`--violet` #6a2d80, `--brass` and `--brass-ink` #70552b, `--ok` #256738, `--bad` #ab2e27, `--warn` #7a5505, `--faint` and `--faint-ink` #645c6c), so a dark-theme print stays readable.
   - `--amber-glow`, `--dmd-dot`, every tint, `--press` and `--scrim` to transparent; `--scan-filter` to none (scans print uninverted); `--wire-edge` to the light ring; `--shadow-1`, `--shadow-2` and `--shadow-sheet` to none.
   - base.css's print block holds no tokens, only layout. It hides the chrome and the controls (the shell, fields, searches, segments, icon and text buttons, the reader toolbar `nav.rbar`, back links, the previous/next pager `nav.pn`, action groups `.acts`, action rows `button.lrow` (Show on map, Download backup, Clear all, Install the handbook, About this handbook, the recent reports; the `a.lrow` content links still print), the manual reader's page-number button `.pgno` (the bar's h1 already names the page), chips, the Diagnose dock, the pull hint, the map and dialog sheets, the scrim, the handbook section's contents card) and prints the title once, as the page's real h1. On a page that renders its own h1 (`data-h1='page'`) and on a large-title page (`data-h1='large'`) the top bar is hidden: a large-title page prints its `.lt` h1, unclipped, at full opacity and at `t-title`, not the bar's aria-hidden `div.ct` copy. On a bar page (`data-h1='bar'`) the bar's title is the h1 and stays as a plain, full-width, wrapping title (the full title, never the phone's short word). `.dmd` codes lose their glow and get a #999 border; Diagnose's `.well` is hidden with the dock. The switch and lamp matrices fit an A4 page between Chrome's default 1 cm margins (718 CSS px): a fixed layout at 100 %, 88 px row heads, 3 px by 4 px cell padding, names at 10 px, and wire labels and pins at 9 px that wrap instead of widening a column.
 
@@ -274,7 +276,7 @@ The five tabs, in job order:
 - Rows:
   - Top-level rows: 44 tall, padding 0 12, radius 10, gap 12, icon 22, 15/20 weight 500, `--ink`. Groups are 8 apart.
   - The current row: `--tint`, `--amber-ink`, weight 600.
-  - Sub-rows: 36 tall, padding-left 46, radius 8, 15/20, `--muted`.
+  - Sub-rows: 44 tall (36 until audit AY-12, 2026-10-01), padding-left 46, radius 8, 15/20, `--muted`. The 44 is real height (`min-height`): the 13 rows are contiguous, so a `::after` would add no target. The sidebar then runs past 900 at 1440 × 900 and scrolls (it is `overflow: auto`).
 - Sub-rows per tab:
   - Tables: Switch matrix, Lamp matrix, Solenoids & flashers, Fuses, LEDs & jumpers.
   - Handbook: Handbook, Manuals, Parts.
@@ -302,7 +304,7 @@ The five tabs, in job order:
   - 44 tall, padding 0 8 0 2.
   - A real `<a href>` to the parent.
   - Under 1280: wraps (svg padded to --touch, label line-height --touch), `overflow: clip` (`hidden` as the fallback; not a scroll container, so find-in-page cannot scroll the label in), max-width 100 %. A collapsed link keeps its whole side as the tap area; Base's script sets `data-bare` on it, and the focus ring (inset) and the hover pill are then drawn round the chevron only (the svg takes over the 2/8 side padding, 36×44), not round the empty rest of the side.
-- Icon button (`.ibtn`): 44×44, radius 22, glyph 24. Text link (`.tlink`): 44 tall, 17/22, 8 side padding.
+- Icon button (`.ibtn`): 44×44, radius 22, glyph 24. Text link (`.tlink`): 44 tall and at least 44 wide (audit AY-12), 17/22, 8 side padding, its label centred.
 - Markup: a `<header>`. Every page has exactly one h1 (appendix.spec.ts:16 runs a strict level-1 heading query), so the bar's title is the h1 only where the page has none of its own:
   - Tab roots (`/`, `/tables`, `/handbook`, `/workshop`): the large title is the h1; the compact title is `aria-hidden`; the in-page h1 goes.
   - Pages with their own h1 today (`grep -rln '<h1' src/pages`): the bar's title is `aria-hidden` and not a heading.
@@ -459,13 +461,21 @@ dragMove keeps working
   - "Switch 32, Upper Right Jet", "Lamp L13, …", "Solenoid 7, …", "Shot K, …".
   - A faulted marker adds ", Fault". The selected one adds ", selected" and `aria-pressed="true"`.
   - Today's names are "32 Upper Right Jet" (PlayfieldMap.svelte:346). `tests/e2e/smoke.spec.ts:16,:81` match on them. The list rows share that name today (:400-408), and `.first()` picks the marker because the canvas comes first in the DOM; keep that order.
+- Keyboard (audit AY-01, 2026-10-01; tests/e2e/a11y.spec.ts):
+  - The drawing (`div.scroller`, `role=region`, tabindex 0) is the map's one tab stop. Every marker button has `tabindex="-1"` and stays a named `<button>` with `aria-pressed`, so a virtual cursor still reaches it; the list rows are the second route. Under `?calib=1` (§7.8) every marker is a tab stop and the arrows nudge the focused one, so the cursor below is off there.
+  - The arrow cursor runs on the scroller or a marker. It has one entry per rendered position on the visible layers, in reading order (y, then x). ← and → step and wrap; ↑ and ↓ take the nearest entry above or below within 12 % of the width sideways, else the reading order. From the scroller the first arrow focuses the selected part's first marker, or the first entry when nothing is selected. Shift with an arrow pans 80 (the scroller only); `+ − 0 Esc` are as before.
+  - A focused marker has `scroll-margin: 44px` and sits at `--z-lift-4` (as `.sel`), so a jet under a lamp comes on top while it has focus.
+  - Enter or Space on a marker is its click and selects it. A keyboard click (`detail === 0`) then moves focus to the selection: the phone sheet (`section.sheet.map`) or the wide `section.selected`, both `tabindex="-1"` and named "Selected part, Switch 32". The embed and calibration keep focus on the marker; a pointer selection leaves focus where it is.
+  - Esc or Deselect with focus in the sheet or the panel's card returns focus to the part's first marker (the scroller when its layer is off), and the next arrow goes on from it. Esc and a keyboard Deselect scroll that marker into view; a clicked or tapped Deselect focuses it with `preventScroll`, so the drawing stays where the user panned it (audit P2 item 5 review).
+  - Keys typed in a field, or with Ctrl, Cmd or Alt held, do nothing (`isTypingTarget`, §12).
+  - The legend reads "↑↓←→ markers · ⇧↑↓←→ pan · ⏎ select · Esc deselect · + − zoom · 0 fit".
 
 ### 7.6 Phone selection sheet (MapPeek, MapExpanded, Components §03)
 
 - Peek (96):
   - `section aria-label="Selected part, Switch 32"` (a section, not a dialog). It sits at bottom 83 (above the tab bar), 96 tall, z-index 28.
   - Surface: `--sheet`, radius 20 20 0 0, `--shadow-sheet`.
-  - Grabber: a `button.grabber` labelled "Expand details" / "Collapse details" with `aria-expanded`. It is 36×5 (radius 3) with an 88×24 hit area, margin 6 auto 0. A tap toggles it.
+  - Grabber: a `button.grabber` labelled "Expand details" / "Collapse details" with `aria-expanded`. It is 36×5 (radius 3) with an 88×44 hit area, margin 6 auto 0: a `::after` reaches 10 above and below the 24 bar, into the sheet's top edge and the gap over the head (88×24 until audit AY-12, 2026-10-01). A tap toggles it.
   - Header row: 56 tall, margin-top 9, padding 0 16, gap 10. It holds:
     - `.code.lg.dmd` "32".
     - An h2 in Fell 20/24, "Upper Right Jet".
@@ -491,7 +501,7 @@ dragMove keeps working
 
 ### 7.7 Wide side panel (ShellTablet, ShellDesktop)
 
-- Selected-part section: 530 tall, padding 0 16.
+- Selected-part section: 530 tall, padding 0 16. It is named "Selected part, Switch 32" while a part is selected ("Selected part" otherwise) and takes focus on a keyboard selection (§7.5).
   - Header (56): "Switch 32" and a Deselect ibtn.
   - `.code.lg.dmd`; the name in `.t-title`; the kind line in `.t-foot`.
   - `.seg.status` (margin-top 16): OK / Fault / Not tested, each with a dot.
@@ -624,11 +634,12 @@ dragMove keeps working
   - Variants: `.primary` (`--amber-fill`; its text is `--on-amber`, §1.4), `.tinted` (`--tint`, `--amber-ink`), `.gray` (the base, spelled out), `.plain` (no background, `--amber-ink`).
   - `.btn[aria-pressed='true']`: `--tint` with an inset `--amber-ink` ring, as `.chip.on`. `.btn:disabled`: opacity .45. On hover-capable pointers, hover brightens by 1.08. Focus is the global `:focus-visible` ring.
   - `.btn.mono` sets the mono face (SetupGuide's suggested value).
-- `.btn.sm`: 36 tall, padding 0 14, radius 10, 15/20 weight 500. A `::after` that reaches 4 above and below gives every small button a 44 hit area, alone or in a row. Rows of small buttons keep a gap of at least 8, so the zones meet but don't overlap. `.btn.small` is an alias for one release.
+- `.btn.sm`: 36 tall and at least 44 wide (a one-glyph value such as Setup's "3" or "YES", audit AY-12), padding 0 14, radius 10, 15/20 weight 500. A `::after` that reaches 4 above and below gives every small button a 44 hit area, alone or in a row. Rows of small buttons keep a gap of at least 8, so the zones meet but don't overlap. `.btn.small` is an alias for one release.
 - Two bare `.btn` side by side (a sheet's actions) share the row equally while both labels fit, and stack at full width when they don't (`flex: 1 1 0; min-width: max-content` in a wrapping row): a 320 phone has 288 for the row, and "Open in Map" alone needs 165 at 17/22 600. A sheet body laid out as a grid gives its column `minmax(0, 1fr)`, so a child that starts wide (the part sheet's map crop, 340 before it measures itself) cannot hold the column past the sheet.
 - Inputs: every input, select and textarea a user reaches is at least 16px, or iOS Safari zooms the page when it takes focus. Only the `?calib=1` developer tools are exempt (§2).
-  - `.field`: 44 tall, radius 6, with its border; 16/21.
-- `.search`: a pill 36 tall, radius 10, on `--seg-track`, placeholder in `--faint-ink`, painted inside a 44 tall box by a 4 px transparent border and a padding-box background, so the hit area stays 44.
+  - `.field`: 44 tall, radius 6, a 1 px `--field-line` border (3:1, §1.1); 16/21.
+  - Focus turns the border `--amber` and shows the global ring; nothing sets `outline: none` (unit check u). A text field matches `:focus-visible` on every focus, a tap included, so the ring is its focus indicator (audit AY-15, 2026-10-01).
+- `.search`: a pill 36 tall, radius 10, on `--seg-track`, placeholder in `--faint-ink`, painted inside a 44 tall box by a 4 px transparent border and a padding-box background, so the hit area stays 44. Its edge is an inset 1 px `--field-line` ring at the padding box (`box-shadow`), 3:1 on the ground; `select.search` has it too (FIELD-3-1).
   - Its text is 16/21 (`t-callout`), not the boards' 15/20, for the 16px rule above.
   - The focus ring sits 1 outside the pill. The browser's own search decoration and cancel button are hidden.
   - `select.search` (Manuals) is the same pill, width auto, with a chevron in `--muted` drawn by two gradients. The search field keeps at least 136 beside it; on a narrower row the select wraps under the field.
@@ -744,6 +755,10 @@ See §7: Map, MapLight, MapPeek, MapPeekLight, MapExpanded, MapZoom, ShellTablet
   - Column headers: Green-Brown, Green-Red, Green-Orange, Green-Yellow, Green-Black, Green-Blue, Green-Violet, Green-Gray.
   - Row headers: White-Brown, White-Red, White-Orange, White-Yellow, White-Green, White-Blue, White-Violet, White-Gray.
 - Unused cells: 11, 12, 23, 28, 46, 52, 83, 88.
+- Status (audit AY-07, 2026-10-01). The border colour is never the only cue:
+  - Name: a cell with a status is named "13 Start Button, Fault" (an `aria-label` on the link: id, name and `STATUS_LABEL`, "OK", "Fault" or "Not tested"). An sr-only span after the name is out of flow, and Chrome read it as "13 Start Button , Fault".
+  - Mark: an `i.mk` (`aria-hidden`) at the link's top right holds a check, a cross or a question mark in the status ink the border uses, 12 at 4 from 600 and 10 at 3 under it. The link is `position: relative`; the mark is absolute, so the A4 fit is unchanged.
+  - An unused cell has neither ("12 Not Used").
 - Selecting a cell shows a card: 32 Upper Right Jet with its wiring, and the buttons "Open" and "Show on map".
 - Fit (audit P2 item 4: VP-12, VL-06), for the switch and the lamp matrix:
   - From 1000 the grid fits the column with no sideways scroll. It has `table-layout: fixed`, a 112 header column and eight equal cells; the names break anywhere and the header wire labels wrap. Cells keep 58 as their minimum height.
@@ -753,7 +768,8 @@ See §7: Map, MapLight, MapPeek, MapPeekLight, MapExpanded, MapZoom, ShellTablet
     - The headers show the number over the wire's colour swatch (up to 26 × 8); the colour's name and the pin stay for screen readers only (audit P2 item 4 review).
     - The corner keeps the hint as "row ↓" over "col →", on the corner's whole 40 (no inline padding), each on one line.
   - The selected-cell card stays in flow under the grid.
-    - A keyboard selection (`:focus-visible`) scrolls the card into view above the tab bar (`scroll-margin-bottom`: tab bar + safe-bottom + 8), then brings the focused cell back (`scroll-margin-top`: top bar + 8) if both do not fit.
+    - A keyboard selection (`:focus-visible`) scrolls the card into view above the tab bar (the page's `scroll-padding-bottom`, §12; the cell's own `scroll-margin-bottom` went with audit AY-02, since the two added up), then brings the focused cell back (`scroll-margin-top`: top bar + 8) if both do not fit.
+    - Under 600 the cell link and `.empty` are at least 44 tall (`min-height`), so the grid is about 16 taller.
     - The scroll is instant, so reduced motion needs no branch. A pointer press does not move the page.
   - Print is unchanged (contrast.spec's A4 check).
 
@@ -811,6 +827,9 @@ See §7: Map, MapLight, MapPeek, MapPeekLight, MapExpanded, MapZoom, ShellTablet
 
 - Back link "Handbook". Title "Test menu p. 1-15". A "View the scan" action.
 - Bottom toolbar: "1-14" (previous), "Contents", "Text size", "1-16" (next).
+- Headings (audit AY-14, 2026-10-01): a section's level-2 headings render as `h2` and deeper ones as `h3` (render.ts; they went h1 → h3 → h4). `.prose > section > h2` has the old h3 look (`t-name`, `--violet`) and `> h3` the old h4 look (`t-head`). The selectors are scoped to the rendered sections, so the rules page's shot-map embed keeps its own card `h2`.
+- The owner's note is `aside.owner-note role=note aria-label="Owner's note"`: a named note, not a complementary landmark inside the article.
+- Contents: the section's "Contents" `summary` is a 44 line (`min-height` and `line-height`, so the disclosure marker stays), and the contents rows (`HandbookToc li a`) are 44 tall.
 
 ### 9.12 Manual viewer (ManualViewer)
 
@@ -828,7 +847,12 @@ See §7: Map, MapLight, MapPeek, MapPeekLight, MapExpanded, MapZoom, ShellTablet
     - A chosen fit is kept in `localStorage` (`valvet:manual-fit`, `width` | `page`, every access in try/catch), because every page turn loads a new document.
   - One scroller: at a fit the stage does not scroll, so the plain wheel scrolls the page. Zoomed, the stage is the one scroller, one viewport slice tall.
   - The capsule rides a zero-height sticky row at the stage's foot. It stays 12 above the viewport's foot (and the phone tab bar) while the page runs past it, and rests 12 inside the stage otherwise.
-  - Pinch, Ctrl + wheel, drag to pan, and the keys ← → `+` `−` `0` `W` `P` `R` `T`. `0` returns to the current fit; `W` and `P` choose one and are ignored with Ctrl, Cmd or Alt. The key hint shows from 1000 or under `(hover: hover)`.
+  - Pinch, Ctrl + wheel, drag to pan, and the keys ← → `+` `−` `0` `W` `P` `R` `T`. `0` returns to the current fit; `W` and `P` choose one and are ignored with Ctrl, Cmd or Alt. The key hint shows from 1000 or under `(hover: hover)`. It reads "Keys: ← → pages, + − zoom, 0 back to the fit, W P fit width or page, R rotate, T text."
+  - Keys (audit AY-11, 2026-10-01):
+    - One guard comes first: no key acts while typing in a field (`isTypingTarget`, §12) or with Ctrl, Cmd or Alt held (Alt+← is Back, Ctrl+= the browser's zoom). Shift passes (Shift+P is P).
+    - The buttons' titles name their keys: "Previous page (←)", "Next page (→)", "Rotate page (R)", "Text (T)", "Zoom in (+)", "Zoom out (−)", "Fit width (W)", "Fit page (P)". The fit in force also names `0`, which returns to it: "Fit width (W, 0)" or "Fit page (P, 0)".
+    - Zoomed, the stage is a tab stop (`tabindex=0`, `role=region`, named "Operations Manual page 5, zoomed, arrow keys scroll"), and while it has focus the arrows scroll it, 40 a press, instead of turning the page. They stop at its edges: the handler scrolls the stage itself and cancels the key, so the window never scrolls (on the phone the browser chained the arrow to the window once a short stage hit its end). Touch and wheel still chain. At a fit it has no tabindex, so `0` pressed on it drops focus to the body.
+    - At an end, Previous or Next is `role=link aria-disabled=true` with no href: a disabled link, not a tab stop.
   - ManualSearch ("Search manual text", OCR full text) on this page (`manual/[doc]/[page].astro:40`) and on `/manual` (manual/index.astro:13).
 
 ### 9.13 Parts (Parts)
@@ -986,19 +1010,34 @@ Source: Native, Install, Update.
 Source: Rationale §08, Components and MapFitSpec.
 
 - The contract that stays (Rationale §08):
-  - "Skip to content" → `#main`.
+  - "Skip to content" → `#main`. It is `a.skip.sr-only`; with focus (`:focus`, so a programmatic focus shows it too) it is a 44-tall `--amber-fill` pill in `--on-amber` text, fixed in the top bar (top: safe-top + (bar − 44) / 2; left: the shell width + 16) at `--z-toast` (audit AY-05, 2026-10-01). Its ring is drawn inside it (2 px `--on-amber`, offset −4): on the phone the pill fills the 44 bar from the viewport's top edge, so a ring outside it would be clipped, and an amber ring on the amber fill would not reach 3:1. While it has focus it covers the bar's back link and title; it is gone once focus moves on.
   - `aria-current` on navigation.
   - A 2 px amber focus ring, offset 2.
   - Light amber text is #9e4009 (`--amber-ink`, §1.1; it was #a8440a until audit P2 item 3). Links and all amber text use it.
   - The matrix's arrow keys and Enter; the e2e matrix test is "contract, not polish".
 - Headings: exactly one `<h1>` per page. appendix.spec.ts:16 reads `getByRole('heading', { level: 1 })` strictly, so a bar title and a large title can't both be h1. Base's `h1` prop picks which one is: `'large'`, `'page'` (the page's own h1; the bar title is a `div`) or `'bar'` (the manual viewer). In-page h1s go where the large title takes over (Phase 5).
-- `role=status` and `<output>` stay only where they are today: SetupGuide.svelte:30, DeviceData.svelte:94, ShoppingList.svelte:52. `/care`, `/setup` and `/shopping` run a strict `page.getByRole('status')` (care.spec.ts:6-19; setup.spec.ts:7-26, :68-70; features.spec.ts:75), so nothing rendered on every page (the shell, the tab badge, the toast host, the Workshop hub's counts) uses them. The map's zoom readout may, because it renders only on `/map`.
+- `role=status` and `<output>` stay only where they are today: SetupGuide's `p.progress`, DeviceData's message (the `span[role=status]`), ShoppingList's `span.ok`, and PartsList's row count (`p.gf.count`, missing from this list until audit P2 item 5; "1 row", "N rows", or "No parts match “q”." when a search finds nothing). `/care`, `/setup` and `/shopping` run a strict `page.getByRole('status')` (care.spec.ts:6-19; setup.spec.ts:7-26, :68-70; features.spec.ts:75), so nothing rendered on every page (the shell, the tab badge, the toast host, the Workshop hub's counts) uses them. The map's zoom readout may, because it renders only on `/map`.
+- Live regions (audit AY-09, 2026-10-01). Every other search surface announces its count through one sr-only `<p aria-live="polite" aria-atomic="true">` with no `role` (`liveText`, src/lib/live.svelte.ts; tables.astro writes its own):
+  - It is in the DOM from the first render, in a component that is always mounted (never in an `{#if}`, never `hidden`).
+  - It is empty on load, also for a pre-filled `?q=`. Its text is written 400 ms after the query or its result last changed, and clearing the query clears it at once. A filter chip or select changes the result without typing, so it calls `arm()` first and a pre-filled query's count is then read (Diagnose's chips, through DiagnoseSearch's `onfilter`; the manual search's Document select, on `change`, 2026-10-01). The handbook contents, the map's list and /tables have no pre-filled query, and /parts announces on its `role=status` line.
+  - No visible count line carries `aria-live`, so nothing is read twice or on every keystroke.
+  - Texts: Diagnose search "36 results for “flipper”" or "Nothing found for “q”", and in codes mode the results summary or "No codes recognised". The region lives in Diagnose.svelte, because DiagnoseSearch mounts only in search mode. Manuals: "36 pages", "1 page" or "No pages match “q”.". Handbook contents: "N headings match" or "No headings match “q”.". The map's Find a part: "N parts match" or "No parts match “q”.". Tables: "N tables" or "No tables match “q”.".
+- Links (audit AY-06, 2026-10-01): a text link is underlined (1 px, offset 3, skip-ink), so colour is never its only cue: `:is(a:not([class]), a.small, .prose a, .owner-note a):not(.btn, .seg > a)`. Buttons, segmented links and the navigation rows (their classes are scoped) keep their own shape. Print takes the underline off again, since the href follows an external link there.
+- Focus never lands under a bar (audit AY-02, 2026-10-01). `html` has `scroll-padding-top` for the top bar and `scroll-padding-bottom: calc(var(--tabbar-h) + var(--safe-bot) + 12px + var(--toast-lift, 0px))`. A focused control or an in-page jump therefore clears the tab bar and whatever `--toast-lift` says sits on it (the Diagnose dock, the reader bar). No control adds a bottom scroll margin of its own (unit check v).
+  - A sideways-scrolling row scrolls a focused child into view itself: Chrome leaves a half-hidden chip half-hidden when Tab reaches it. DiagnoseSearch's chips call `scrollIntoView({ block: 'nearest', inline: 'nearest' })` on focus.
+- Keys (audits AY-01 and AY-11, 2026-10-01): every page-wide key handler (the map, §7.5; the manual viewer, §9.12; the matrix page) ignores keys typed in a field (`isTypingTarget` in src/lib/keys.ts: an input, textarea, select or contenteditable) and keys with Ctrl, Cmd or Alt held (unit check s).
 - Landmarks:
   - `nav aria-label="Sections"` (tab bar, rail, sidebar).
   - `<header>` for the top bar; the large title is the h1.
   - `main#main`.
   - The panel `aside`.
-- Targets: 44 minimum everywhere, including chips. Markers keep their visible size as buttons; their 44 hit area is the canvas rule in §7.5 (nearest centre within 22 px; a drag over 6 px never selects).
+- Targets: 44 minimum everywhere, including chips (audit AY-12, 2026-10-01; tests/e2e/a11y.spec.ts measures 26 pages in both projects: the home page with two `?q=` searches, the switch, coil and lamp lists and a page of each, fuses, verify, five handbook pages, the manual index and a manual page, parts, tables, workshop, setup, shopping, care, the map and the 404). A control passes when it is 44 both ways, when its label is, or when a 44 box over it (centred, or flush with one of its edges) hits only the control or its label at all four corners.
+  - A `::after` adds hit area only where there is free space: `.seg > a, .seg > button` reach 6 above and below a 32 segment; `.btn.sm` reaches 4; the sheet grabber reaches 10; DiagnoseSearch's chips are also at least 44 wide. A centred `::after` makes ComponentCard's title link and the callout's `dd` links 44 (over the card padding, the kind line and the gap). A table's key-column link (`table.t td.key > a`) gets a 44 box anchored at its left edge, since the scroller clips anything left of it and the rows are 45 apart.
+  - Contiguous rows get real height (`min-height: 44px`): the sidebar sub-rows, the handbook contents rows and `summary`, Setup's `.set` label (the field stays 34; the label focuses it), StatusRow's note field, DeviceData's mode select and file label, ShoppingList's `a.lnk`, the phone matrix cell link, and these lists of links, which are not running text: the handbook menu cards' entries (`.mcard li > a`), a component page's appendix links (`.notes .links a`), /verify's links, the manual index's section headings (`.lst-h a`, rising into the heading's top margin), the map's list rows (`.row`, 36 until audit P2 item 5) and its source link (`.src`), and Setup's "handbook" link.
+  - A label is part of its control's target: a 22 checkbox in a 44 `label.tick` passes.
+  - Allowed under 44: markers (below); links in running text (WCAG 2.5.8's inline exception; they carry the underline), meaning a link in a `p`, `li`, `td`, `dd`, `.why`, `.owner-note` or `.ctext` whose own text, links and buttons left out, has at least three words, and which is not in a `nav`, a heading or a `.links` list; a link in a handbook table cell (`.prose td > a`) that meets WCAG 2.5.8: at least 24 wide, with no other target in its table centred nearer than 24 (2026-10-01, the next bullet); the phone matrix cells, at least 24 wide and 44 tall (§9.6); the skip link while it is not focused.
+  - The quick reference's page refs ("1-2, 3", links to a `#pg-` anchor or a /manual/ page in a `.prose` cell) measured 9-33 × 19 in 33-tall rows, and on the phone 16 sat 21 apart. Each is an inline-block at least 24 wide with 3 px over and under its 20 px line, taken back by the margin: 24-33 × 26 in the same 33 rows, with the focus ring inside the table's scroller. Their cell never wraps, since a second line 20 below put two refs 20 apart. Print sets them inline again.
+  - Markers keep their visible size as buttons; their 44 hit area is the canvas rule in §7.5 (nearest centre within 22 px; a drag over 6 px never selects).
 - Hover: no hover-only affordances. Hover styles sit inside `@media (hover: hover)` so a tap doesn't leave them stuck: today's `a:hover` (base.css:21), `.btn:hover` (:139) and `table.t tbody tr:hover` (:214) move there (Phase 5).
 - Names:
   - The badge link: "Workshop, N on the shopping list".
@@ -1008,6 +1047,10 @@ Source: Rationale §08, Components and MapFitSpec.
   - Fit uses `aria-disabled` at 1×.
   - The zoom readout has the sr-only "Zoom level".
   - The keyboard legend is `role=note`.
+  - Matrix cells: §9.6. The owner's note: §9.11. The zoomed manual stage: §9.12.
+  - Machine setup (audit AY-10, 2026-10-01). An item's `{ref}` is "{code} {name}" for a menu code ("A.1 20 Custom Message"), else its name. Custom Message is in the list twice, so the code keeps every name unique.
+    - The Set field is `aria-labelledby` its visible "Set to" and an sr-only ref, which reads "Set to A.1 20 Custom Message" and keeps the label in the name.
+    - The suggestion button is "{value}, suggested for {ref}", the handbook link "{ref} in the handbook", and the tick "Done: {ref}".
 - Sheets and segmented controls: §8.2 and §8.3.
 - Rows and toggles: §8.4.
 - Contrast (audit P2 item 3; tests/e2e/contrast.spec.ts checks it on 15 route states in both themes, and print on eight):

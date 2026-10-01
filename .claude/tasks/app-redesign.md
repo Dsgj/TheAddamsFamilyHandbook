@@ -3,14 +3,14 @@
 **Status 2026-09-28: complete. Phases 1–12 implemented, each with a green gauntlet, merged to `main` (fast-forward, `d27cd47..02c7447`) and pushed to `origin/main`. Deviations and decisions sit under each phase; the open questions below not marked answered were settled by the plan's defaults (named in the phase notes) and can be reopened as follow-up work.**
 
 - Spec (all values): `.claude/tasks/app-redesign-spec.md`.
-- Design canvas: https://claude.ai/artifact/UafRUTDKLxz4RYNuLmeeuh.
+- Design canvas: <https://claude.ai/artifact/UafRUTDKLxz4RYNuLmeeuh>.
 - This plan supersedes an earlier workshop-mode slice (`.claude/tasks/mobile-redesign.md` plus diffs in `tokens.css` and `base.css`). That slice was never committed: it sits only in the `addams-handbook-mobile-redesign-fc850f` worktree, not on `main` (see Q1).
 
 ## How to run a phase
 
 1. One phase per session.
 2. Start by reading this file, the spec and `git status`. Read only the files the phase names; don't rescan the repo.
-3. Open the boards the phase names with the Artifact tool: action "read", url https://claude.ai/artifact/UafRUTDKLxz4RYNuLmeeuh, path "project/<Board>.dc.html". The canvas is private to the owner's claude.ai account. If it can't be read, the spec file is authoritative.
+3. Open the boards the phase names with the Artifact tool: action "read", url <https://claude.ai/artifact/UafRUTDKLxz4RYNuLmeeuh>, path "project/<Board>.dc.html". The canvas is private to the owner's claude.ai account. If it can't be read, the spec file is authoritative.
 4. If an open question blocks the phase (the tag after each question), ask the owner first.
 5. Finish with the gauntlet green:
    - First time in a worktree: it has no `node_modules` (only the main checkout does). Run `pnpm install --frozen-lockfile` (as CI does, `.github/workflows/deploy.yml:27`), then `pnpm exec playwright install chromium` if the browsers are missing.
@@ -35,7 +35,7 @@ Baseline before Phase 1 (from `playfield-map.md`, last green run):
 - **Tabs.** Five tabs in job order:
 
   | Tab | Replaces |
-  |---|---|
+  | --- | --- |
   | Diagnose | Diagnose and the header search |
   | Map | Map |
   | Tables | Switches, Lamps, Solenoids, Fuses |
@@ -47,7 +47,7 @@ Baseline before Phase 1 (from `playfield-map.md`, last green run):
 - **Breakpoints.**
 
   | Width | Navigation | Map selection |
-  |---|---|---|
+  | --- | --- | --- |
   | < 600 | tab bar | bottom sheet |
   | 600–999 | 80 px rail | bottom sheet |
   | 1000–1279 | rail | 400 px side panel |
@@ -158,11 +158,59 @@ Baseline before Phase 1 (from `playfield-map.md`, last green run):
   - **Recheck fixes** (2026-10-01, the two issues the recheck after the review fixes left). Each check failed on a build with its fix taken out.
     - Matrix pins (major): from 1000 the fixed 112 row-header column (104 inside) broke "U18-11" and "U19-11" after the hyphen in "J208-1 · U18-11" and "J208-5 · U19-11", on A4 as well. Each code of a header pin is now a nowrap `.tok` (the class Phrase.astro uses), so the pin wraps at " · " (the column header's at its `<br>`). The P2-4 matrices e2e at 1000, 1280 and 1440 and the A4 print test now fail any pin word on two lines; both matrices pass, the lamp matrix also before the fix.
     - Measure (VL-09): the matrix note on /switches, the bench note on /shopping and Setup's longest item name set 115–142, 148–176 and 113–141 characters a line from 1000. `.panel > p` and `.gf` join `.wrap > p, .prov` in base.css (ComponentDetail's own `.gf` measure is dropped as a duplicate), and SetupGuide's `.name` takes the measure, not `.body`, so the suggested value and the Set field keep the row. They now set 63–65, 64–67 and 62–73. The measure e2e covers the three blocks, counts a block's last line toward the 80 (a one-line block ran long unseen), and checks that the matrix keeps the panel's width and each Setup row's values keep the row's.
+- **Accessibility** (2026-10-01, audit P2 item 5: AY-01, AY-02, AY-05, AY-06, AY-07, AY-09, AY-10, AY-11, AY-12, AY-14, AY-15, FIELD-3-1). Spec §1.1, §6.4, §7.5, §7.6, §7.7, §8.7, §9.6, §9.11, §9.12 and §12 carry the rules. The new `tests/e2e/a11y.spec.ts` checks them in both projects, and the unit lint gains checks (s) to (v). Each new check failed on a build of the sources before the change, except the guards below.
+  - **Map keyboard** (AY-01). The drawing is the map's one tab stop and the arrows walk the markers (each `tabindex=-1`, a reading-order cursor), instead of 148 marker stops. Calibration keeps every marker a stop, because its arrows nudge the focused marker. A keyboard selection moves focus to the phone sheet or the wide card, now named "Selected part, Switch 32"; Esc or Deselect brings it back to the marker. The embed keeps focus on the marker.
+  - **Focus under the bars** (AY-02). `html`'s `scroll-padding-bottom` adds the tab bar and `--toast-lift` (the Diagnose dock, the reader bar). The matrix cell's own bottom scroll margin goes, since the two added up.
+  - **Skip link** (AY-05). With focus it is a 44-tall amber pill centred in the top bar, right of the rail or sidebar.
+  - **Underlines** (AY-06). Classless links, the small refs, and links in prose and owner's notes are underlined. Buttons and segmented links are not.
+  - **Matrix status** (AY-07). A cell's status is in its name ("13 Start Button, Fault") and in a corner mark, not only in the border colour.
+  - **Announcements** (AY-09). Each search surface has one sr-only polite region, written 400 ms after the last change and silent on load and for a pre-filled `?q=`. `role=status` stays where it was; PartsList's count joins the spec's list.
+  - **Setup names** (AY-10). The code and name make every field, suggestion, handbook link and tick unique, and "Set to" stays in the field's name.
+  - **Manual viewer keys** (AY-11). One guard (typing, Ctrl, Cmd, Alt) runs before any key, the titles name the keys, the zoomed stage is a named tab stop that the arrows scroll, and the ends are disabled links. `isTypingTarget` (src/lib/keys.ts) is shared with the map and the matrix page.
+  - **44 targets** (AY-12). A `::after` adds hit area where there is room, contiguous rows get real height, and a label counts as its control's target. The allow-list is in §12.
+  - **Headings and the note** (AY-14). Handbook sections go h1 → h2 → h3, and the owner's note is a named `role=note`.
+  - **Fields** (AY-15, FIELD-3-1). The new `--field-line` draws the `.field` border and the `.search` ring at 3:1 or more, and a focused field keeps the global ring.
+  - **Where the build differs from the reviewed design:**
+    - The matrix name is an `aria-label` on the cell link, not an sr-only span: the span is out of flow, and Chrome read "13 Start Button , Fault".
+    - DiagnoseSearch's chips scroll themselves into view on focus. The tab walk on /?q=flipper found the "Parts" chip half off-screen, because Chrome does not scroll a sideways-scrolling row to a focused child.
+    - The handbook contents `summary` is a 44 line (`min-height` and `line-height`), not `display: flex`, which would drop its disclosure marker. ShoppingList's `a.lnk` gets `min-height: 44px` with 9 px vertical padding. DeviceData's file input takes its 44 from its `.file` label. Setup's `.set` stays flex with `min-height: 44px`.
+    - `.skip:focus` adds `text-decoration: none`, or the new underline rule would underline the pill. Print's `a` reset shares a rule with the underline selector.
+    - Diagnose's announcer gets the search count from DiagnoseSearch through an `oncount` callback. The map's announcer says "1 part matches" for one match (the design gave only the plural).
+    - switches.astro's matrix key handler also takes the Ctrl, Cmd and Alt guard.
+    - In the tests:
+      - The 44 sweep counts a label holding the control as its target, and allows a handbook table's page refs in their cell (`.prose td > a[href]`; "1-2, 3" is two links in one cell, so the first draft's `:only-child` was too narrow; since the recheck, only at 24 wide and 24 from any other target's centre). The design's /device page does not exist; DeviceData is swept on /care.
+      - The focus check tests the first line of a wrapped link.
+      - OK is set on switch 15, because 12 is unused.
+      - /parts keeps its old `role=status`, so it is exempt from "silent on load". Its empty search reads "No parts match “q”." (the review fixes below; it read "0 rows").
+      - The owner's-note check runs where a note is present: /handbook/rules has none.
+      - The underline check needs an inline link on every page but /handbook/rules, which has none.
+      - Two existing checks asserted the old values. setup.spec ticks "Done: A.1 26 Tournament Play": the design expected Tournament Play to have no code. shell.spec measures the sidebar sub-row at 44 (§6.4).
+  - **Guards.** Some new checks pass before the change as well:
+    - the matrix arrow walk on /switches (the cell's scroll margin did then what the page padding does now);
+    - the `role=status` counts on /care, /setup, /shopping and /workshop;
+    - the /parts announcement;
+    - the underline check on /handbook/rules;
+    - on the phone, the 44 sweep on /, /care, /handbook/quick, /map and /tables. Desktop failed on each of these pages.
+  - **Review fixes** (2026-10-01, the dynamic and static review of P2 item 5). Each new or changed check below failed in both projects on a build with every fix taken out, and passes with them.
+    - 44 sweep (major, AY-12). It measures 26 pages, up from 13 (§12 lists them). "Inline" now means running text: a link in a `p`, `li`, `td`, `dd`, `.why`, `.owner-note` or `.ctext` with at least three words of its own text around it, not in a `nav`, a heading or a `.links` list; `a.small` is no longer allowed. A control also passes when a 44 box flush with one of its edges, not only a centred one, hits only it or its label. Before the fixes 12 pages failed (/?q=12%2013, /care, /coil/01, /coils, /handbook/menus, /handbook/rules, /lamp/11, /lamps, /manual, /setup, /switch/12, /verify).
+      - Real 44 height for lists and rows: the menu cards' entries, a component page's appendix links, /verify's links (also 44 wide), the manual index's section headings, the map's list rows (36 before) and source link, and Setup's "handbook" link. `.tlink` is 44 wide as well as tall.
+      - A centred `::after` for ComponentCard's title link and the callout's `dd` links. A table's key-column link gets a 44 box anchored at its left edge: a centred one was clipped by the `.scroll-x` scroller, 0–10 px to its left.
+    - Skip link. Its ring is inside the pill in `--on-amber` (outline offset −4). On the phone the pill starts at the viewport's top edge, so the outside ring was clipped (4 px over), and on desktop the amber ring on the amber fill was 1.47:1. The check now asserts the ring sits inside the viewport and meets 3:1 on the fill.
+    - /parts empty search reads "No parts match “q”." on the `role=status` line, not "0 rows"; the separate "No parts match" paragraph goes, so it is not said twice.
+    - Manuals say "1 page", not "1 pages" (both the visible line and the announcement). The announcement check accepts `/^\d+ pages?$/`, and a new check searches "intelligence", which matches one page.
+    - Diagnose: a chip pressed after a pre-filled `?q=` is announced. `liveText` gains `arm()`, which DiagnoseSearch calls through a new `onfilter` prop before it changes the group.
+    - Manual viewer: the fit button in force names `0` in its title ("Fit width (W, 0)"), and the legend reads "0 back to the fit". On a zoomed stage the arrows scroll the stage by 40 in the handler and cancel the key, so they stop at its edges: on the phone, with about 33 px to scroll, ArrowDown went on to scroll the window.
+    - Map: a clicked or tapped Deselect returns focus to the marker with `preventScroll`, so the drawing stays where it was panned. Esc and a keyboard Deselect (click `detail` 0) still scroll the marker into view.
+    - Not changed, by decision: the focused skip pill covers the phone bar's back link and title. It shows only while it has focus, and only the focused element must stay unhidden (WCAG 2.4.11); the 44 bar has no free 44 space beside them. The review also let a handbook table's page refs ("1-2, 3") stay allowed as dense table data, "about 24 × 33"; that was the cell, and the recheck fixes below size the links instead.
+  - **Recheck fixes** (2026-10-01, the recheck after the review fixes). The first two checks failed in both projects with their fix taken out, and pass with it.
+    - Handbook page refs (major, AY-12). On /handbook/quick the 106 refs measured 9-33 × 19 in 33-tall rows, and on the phone 16 failed WCAG 2.5.8 ("1-2" and "3" have centres 21 apart). A page ref in a `.prose` cell (a link to a `#pg-` anchor or a /manual/ page) is now an inline-block at least 24 wide with 3 px over and under its 20 px line, taken back by the margin: 24-33 × 26 in the same 33 rows, with no wrap in its cell, since a second line 20 below put two refs 20 apart. 6 px filled the row but pushed the focus ring's bottom edge out of the table's scroller on a last row; 7 overlapped the next row. Print sets them inline again. The 44 sweep allows a `.prose td > a[href]` only when it is at least 24 wide and no other target in its table is centred nearer than 24; "see A6 Flippers" on /handbook/appendix (77 × 19 on desktop) passes that way. No other handbook section has a link in a table cell.
+    - Manual search (minor, AY-09). The Document select calls `arm()` on `change`, so on /manual?q=flipper choosing the Operator's Handbook announces "3 pages". The handbook contents, the map's list and /tables have no pre-filled query, and /parts announces on its `role=status` line, so none of them has the gap.
+    - design-system.spec's "Go" check waits for the sheet's rise to finish and rounds the height, which read 49.99994 mid-rise about once in ten runs.
 
 ## Routes
 
 | Route | Tab | Presentation | Nav key today |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `/` | Diagnose | tab root, home; `?q=` prefills | diagnose |
 | `/map` | Map | tab root, fitted; `?layer=`, `?id=`, `?calib=1` | map |
 | `/switches` | Tables | pushed; segments Matrix / Dedicated J205 / Flipper J806 | switches |
@@ -254,7 +302,7 @@ Some things open as sheets with no URL of their own: Show on map, Add to shoppin
   - Selectors known to move:
 
     | Location | Selector | Moves in |
-    |---|---|---|
+    | --- | --- | --- |
     | smoke:16, :81 | marker names | Phase 2 |
     | smoke:19, :84 | `aside …` | Phase 2 |
     | smoke:68-74 | the "Toggle theme" button on `/` | Phase 3 |
@@ -499,6 +547,7 @@ Some things open as sheets with no URL of their own: Show on map, Add to shoppin
 ### [x] Phase 5: top bar, back links and token migration
 
 **Done 2026-09-25.** Deviations and notes:
+
 - One `header.top` for every page, driven by a `h1` prop on Base (`large` | `page` | `bar`). Tab roots render the large title in `main > .lt` and Base's inline script drives `--ct`/`--lt` from the scroll position (40–52 fade, hairline at 52, reduced motion swaps at 52). From 600 the `.lt` row is clipped (sr-only style) so the bar carries the title, and the compact title is always opaque.
 - Back links come from `PARENT` in `~/lib/nav` by nav key; ComponentPage, the manual viewer and 404 pass explicit `back` props (component pages use the plural list label: Switches, Lamps, Solenoids). The manual viewer keeps a one-line doc link under the bar so the doc is still reachable.
 - The old header brand row, its QuickSearch mount and the `--topbar-h` ResizeObserver are gone; the token is static per breakpoint. QuickSearch mounts on `index.astro` until Phase 6 replaces it. Q10 sidebar search still omitted.
@@ -553,6 +602,7 @@ Some things open as sheets with no URL of their own: Show on map, Add to shoppin
 ### [x] Phase 6: Diagnose home, results and search (the entry point)
 
 **Done 2026-09-25.** Deviations and notes:
+
 - Q16 default: Recent keeps 8 entries under `tafh:recent`, recorded on Diagnose, Enter (one-line field) or blur, only when at least one code was recognised. The top entry's counts re-sync when a card is marked Fault while the same input stays in the field.
 - The "Recent reports" bar button clears the field and focuses the Recent/Try heading (via a `tafh:diag` document event from the page script).
 - Q20 default: Parts and the manuals' OCR text are searched too; the handbook TOC, OCR text and parts list are fetched lazily the first time the search state opens.
@@ -601,6 +651,7 @@ Some things open as sheets with no URL of their own: Show on map, Add to shoppin
 ### [x] Phase 7: Tables screens and component detail
 
 **Done 2026-09-25.** Deviations and notes:
+
 - `/switches`: the tablist "Switch matrix view" (Matrix / Dedicated J205 / Flipper J806) with `aria-selected`, `aria-controls`, roving tabindex, arrow keys, Home/End; `#j205` / `#j806` open that tab. All three panels render at build time, inactive ones `hidden`, so every `input.fault-check` (16) loads its state. The Search ibtn of §9.6 is not drawn (Diagnose search covers it).
 - The matrix cell card shows for the highlighted cell and then for whichever cell has focus (keyboard); a tap on a cell still opens the page directly, so "Open" mainly serves keyboard and pointer users.
 - Component detail is a new island `ComponentDetail.svelte` (§9.7): header with the code, kind line and the live status word, the status `.seg` and Note, then Wiring, Parts (part + assembly), Location (Show on map, "Callout N on p. 2-NN", the hint), Related, Service log and the device note. `ComponentPage.astro` keeps the `.notes` block and the appendix links. No "More" button (nothing defined for it); the back link stays the list page (not "Results").
@@ -645,6 +696,7 @@ Some things open as sheets with no URL of their own: Show on map, Add to shoppin
 ### [x] Phase 8: Handbook, Manuals, Parts
 
 **Done 2026-09-25.** Deviations and notes:
+
 - Segmented links: a new `DocSeg.astro` (`nav[aria-label="Handbook, Manuals or Parts"]`, `a[aria-current="page"]`) on `/handbook`, `/manual` and `/parts`; base.css now styles `.seg > a` like `.seg > button`.
 - Handbook home (§9.10): the search field is the TOC widget in `home` mode ("Search the handbook and scans"): it filters headings while typing and ends with "Search the scans for …", which opens `/manual?q=` (ManualSearch now reads `q` on load). Continue reading is one entry under `tafh:reading` (new `src/lib/model/reading.ts`), written by the reader on load and as page bars scroll through the upper viewport (Q16-style: last page seen). The sections list shows the printed page range where it is contiguous (Utilities and Quick reference show none).
 - Reader (§9.11): back link "Handbook", "View the scan" `.ibtn` in the bar (first page of the section, none for the appendix), the fixed bottom toolbar `ReaderBar.svelte` (`nav[aria-label="Reader"]`, `.glass`). Q17 default: it pages by section; the ends show the adjacent section's nearest page label ("1-14" / "1-20" for Test menu) with `aria-label="Previous: …"`. Contents opens the TOC in a large sheet; Text size opens a medium sheet with Small / Default / Large (`tafh:text`, `data-text` on `<html>`, applied by an inline script before paint). The desktop Contents aside stays from 960; below that the sheet replaces it. The sheet recedes only the bar and footer (a scaled tall article would shift the text).
@@ -791,6 +843,7 @@ Done 2026-09-25. Toast.svelte (one host in Base, `aria-live=polite`, no status r
 ### [x] Phase 12: motion and navigation continuity
 
 Done 2026-09-25. Decisions and deviations:
+
 - Q11 → cross-document view transitions (`@view-transition { navigation: auto }`), no Astro ClientRouter: the worker, hydration and every page script stay as they are. The type (push/pop/tab/fade) is set in an inline `pagereveal` listener in Base's head from the `tafh:prev` record (motion.ts writes it on pagehide) or the history direction; CSS keys on `html:active-view-transition-type(...)`.
 - Named captures: top bar (`topbar`), shell (`shell`) and toast host (`toast`) cross-fade in place; the root slides on push/pop and cross-fades on a tab tap. `<link rel="expect" href="#main" blocking="render">` so the new snapshot is complete.
 - Chrome skips the cross-document transition while the worker precaches on a first visit, and now and then under parallel test load (never with one worker); the page falls back to a plain swap. The transition-reading tests wait for `serviceWorker.ready` and, on an observed skip (`window.tafhMotion.type === 'none'`), step back and repeat the navigation.

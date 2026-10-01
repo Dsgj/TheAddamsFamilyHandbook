@@ -8,6 +8,7 @@
     recentEntries,
     recordRecent,
   } from '~/lib/model/recent.svelte';
+  import { liveText } from '~/lib/live.svelte';
   import { whenLabel } from '~/lib/status-io';
   import { getStatus } from '~/lib/model/status.svelte';
   import type { Lamp, Switch } from '~/lib/model/types';
@@ -24,6 +25,23 @@
    */
   let { initial = '' }: { initial?: string } = $props();
   let input = $state(untrack(() => initial));
+  /** DiagnoseSearch's result count (it mounts only in search mode; this component owns the
+   *  announcer, spec §12). */
+  let searchCount = $state(0);
+  /** Spec §12, audit AY-09: the search count, or the codes' summary, announced politely 400 ms
+   *  after the field last changed; never for the entry the page loaded with. */
+  const live = liveText(
+    () => input,
+    () => {
+      const s = input.trim();
+      if (mode === 'search')
+        return searchCount
+          ? `${searchCount} ${searchCount === 1 ? 'result' : 'results'} for “${s}”`
+          : `Nothing found for “${s}”`;
+      if (mode === 'results') return found.length ? summary() : 'No codes recognised';
+      return '';
+    },
+  );
   let hydrated = $state(false);
   let canPaste = $state(false);
   let shared = $state<'' | 'copied' | 'shared'>('');
@@ -83,6 +101,7 @@
     // backspace-to-empty or Recent, since those set `input` to the very state this reads past.
     const q = new URLSearchParams(location.search).get('q');
     if (q && !input) input = q;
+    live.rebase();
     // A `?q=` on load is committed (a cold link, a tab link, a reload); the address is normalised
     // to the one form either way.
     committed = !!q && !!input.trim();
@@ -330,6 +349,7 @@
 </script>
 
 <section class="diag" data-mode={mode} bind:this={root}>
+  <p class="sr-only" aria-live="polite" aria-atomic="true">{live.text}</p>
   {#if mode === 'home'}
     <p class="intro">
       Type what the machine shows: a test report, a Check Switch message or single codes.
@@ -424,7 +444,7 @@
       <button type="button" class="tlink" onclick={clear}>Clear search</button>
       <button type="button" class="tlink" onclick={cancelSearch}>Cancel</button>
     </div>
-    <DiagnoseSearch q={input} />
+    <DiagnoseSearch q={input} oncount={(n) => (searchCount = n)} onfilter={live.arm} />
   {:else}
     <div class="rbar">
       <button type="button" class="tlink" onclick={clear}>Clear</button>

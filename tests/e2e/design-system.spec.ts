@@ -56,13 +56,18 @@ test('a bare .btn is 50 tall with a 12 radius: "Go" in the Go to page sheet', as
     .getByRole('toolbar', { name: 'Page' })
     .getByRole('button', { name: /Go to page/ })
     .click();
-  const go = page.getByRole('dialog', { name: 'Go to page' }).getByRole('button', { name: 'Go' });
+  const dialog = page.getByRole('dialog', { name: 'Go to page' });
+  const go = dialog.getByRole('button', { name: 'Go' });
   await expect(go).toBeVisible();
+  // Measured once the sheet has risen: mid-rise its translateY leaves the height a hair short.
+  await dialog.evaluate((el) =>
+    Promise.all(el.getAnimations({ subtree: true }).map((a) => a.finished)),
+  );
   const s = await go.evaluate((el) => {
     const cs = getComputedStyle(el);
     return { height: el.getBoundingClientRect().height, radius: cs.borderTopLeftRadius };
   });
-  expect(s.height).toBeGreaterThanOrEqual(50);
+  expect(Math.round(s.height)).toBe(50);
   expect(s.radius).toBe('12px');
 });
 

@@ -3,9 +3,12 @@
 *::after {
   box-sizing: border-box;
 }
+/* Focus and in-page jumps never land under a bar (spec §12, audit AY-02): the top bar above; the
+   tab bar below, plus whatever --toast-lift says sits on it (the Diagnose dock, the reader bar). */
 html {
   -webkit-text-size-adjust: 100%;
   scroll-padding-top: calc(var(--safe-top) + var(--topbar-h) + 12px);
+  scroll-padding-bottom: calc(var(--tabbar-h) + var(--safe-bot) + 12px + var(--toast-lift, 0px));
 }
 body {
   margin: 0;
@@ -25,6 +28,15 @@ a {
   a:hover {
     text-decoration: underline;
   }
+}
+/* Text links carry an underline, so colour is never the only cue (spec §12, audit AY-06): a
+   classless link, the small refs ("handbook", "p. 2-1") and every link in prose or an owner's
+   note. Buttons and segmented links keep their own shape. */
+:is(a:not([class]), a.small, .prose a, .owner-note a):not(.btn, .seg > a) {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-skip-ink: auto;
 }
 /* Headings on the type scale (spec §2): the in-page h1 is the large title, h2 the title, h3 the
    name, h4 the section head. */
@@ -78,6 +90,32 @@ textarea {
   overflow: hidden;
   clip: rect(0 0 0 0);
   white-space: nowrap;
+}
+/* The skip link (spec §12, audit AY-05): sr-only until it has focus, then a 44-tall amber pill
+   centred in the top bar, right of the rail or sidebar. :focus, not :focus-visible, so a
+   programmatic focus shows it too. Its ring is drawn inside it in --on-amber: on the phone the
+   pill fills the 44 bar from the viewport's top edge, which would clip a ring outside it. */
+.skip:focus {
+  position: fixed;
+  top: calc(var(--safe-top) + (var(--topbar-h) - 44px) / 2);
+  left: calc(var(--shell-w) + 16px);
+  z-index: var(--z-toast);
+  width: auto;
+  height: 44px;
+  padding: 0 16px;
+  margin: 0;
+  clip: auto;
+  overflow: visible;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  background: var(--amber-fill);
+  color: var(--on-amber);
+  border-radius: var(--r-sm);
+  font: 600 15px/20px var(--font-body);
+  text-decoration: none;
+  outline: 2px solid var(--on-amber);
+  outline-offset: -4px;
 }
 
 /* Layout. Spec §3.1: every route of every tab but the map renders in this one column. */
@@ -207,10 +245,13 @@ main.fullbleed {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+/* Spec §6 and §12: a 44 target both ways, so a short label ("Clear") is never narrower than a tap. */
 .tlink {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   height: 44px;
+  min-width: var(--touch);
   padding: 0 8px;
   font-size: 17px;
   line-height: 22px;
@@ -430,6 +471,8 @@ main.fullbleed {
 .btn.small {
   position: relative;
   min-height: 36px;
+  /* 44 wide at least, so a one-glyph value ("3", "YES") keeps the 44 target (audit AY-12). */
+  min-width: 44px;
   padding: 0 14px;
   border-radius: var(--r-sm);
   font: var(--t-sub);
@@ -469,14 +512,16 @@ main.fullbleed {
   min-height: var(--touch);
   padding: 8px 12px;
   background: var(--sunk);
-  border: 1px solid var(--line);
+  /* --field-line, 3:1 on the surfaces a field sits on (audit FIELD-3-1). */
+  border: 1px solid var(--field-line);
   border-radius: var(--r-xs);
   font-size: 16px;
   line-height: 21px;
 }
+/* The amber edge, plus the global :focus-visible ring (spec §8.7, audit AY-15). A text field
+   matches :focus-visible on every focus, a tap included: the ring is its focus indicator. */
 .field:focus {
   border-color: var(--amber);
-  outline: none;
 }
 /* The UA's placeholder grey is 3.4 on --sunk; --faint-ink passes in both themes, as on .search
    (AY-16). */
@@ -590,11 +635,16 @@ table.t th {
 .prov {
   max-width: var(--measure);
 }
-.prose h3 {
+/* The handbook's own headings (render.ts: h2 for a level-2 heading, h3 below it, spec §9.11,
+   audit AY-14) keep the name and section-head sizes. Scoped to the rendered sections, so an
+   embed's card heading inside .prose keeps its own. */
+.prose > section > h2 {
+  font: var(--t-name);
   margin-top: 1.4em;
   color: var(--violet);
 }
-.prose h4 {
+.prose > section > h3 {
+  font: var(--t-head);
   margin-top: 1.2em;
 }
 .prose ul,
@@ -637,6 +687,22 @@ table.t th {
    not the whole .prose block (VP-01). */
 .prose a {
   overflow-wrap: anywhere;
+}
+/* Spec §12, audit AY-12: a handbook table's page refs (the quick reference's "1-2, 3", render.ts
+   turns #goto links into #pg- anchors or /manual/ pages) were 9-33 × 19, some 21 apart. Each is
+   now a box at least 24 wide and 26 tall (3 px over and under the 20 px line, taken back by the
+   margin, so the 33 row keeps its height), which leaves the focus ring inside the table's
+   scroller. The cell holds refs and commas only and never wraps: a second line 20 px under the
+   first would put two refs closer than 24 (WCAG 2.5.8). */
+.prose td > :is(a[href*='#pg-'], a[href*='/manual/']) {
+  display: inline-block;
+  min-width: 24px;
+  padding-block: 3px;
+  margin-block: -3px;
+  text-align: center;
+}
+.prose td:has(> :is(a[href*='#pg-'], a[href*='/manual/'])) {
+  white-space: nowrap;
 }
 .prose blockquote {
   margin: 1em 0;
@@ -688,8 +754,11 @@ table.t th {
   margin: 0;
   padding: 0;
 }
-.mcard li {
-  margin: 2px 0;
+/* Spec §12: the entries are contiguous rows, so each link is a real 44 row. */
+.mcard li > a {
+  display: flex;
+  align-items: center;
+  min-height: var(--touch);
 }
 .mcard .mc {
   font-family: var(--font-mono);
@@ -733,6 +802,21 @@ table.t {
 }
 .card table.t {
   --tbl-bg: var(--cell);
+}
+/* Spec §12: the id link in a key cell (/lamps, /coils) is 17 × 18. Its 44 box is centred on it
+   upright and runs right from its left edge, because the column starts at the table scroller's
+   clipping edge; it reaches only the name beside it, plain text, and never meets the next row's
+   box (the rows are 45 apart or more). */
+table.t td.key > a {
+  position: relative;
+}
+table.t td.key > a::after {
+  content: '';
+  position: absolute;
+  top: min(0px, (100% - var(--touch)) / 2);
+  bottom: min(0px, (100% - var(--touch)) / 2);
+  left: 0;
+  width: max(100%, var(--touch));
 }
 @media (min-width: 600px) {
   table.t :is(td, th).key {
@@ -955,8 +1039,11 @@ table.t {
   border-radius: var(--r-track);
   background: var(--seg-track);
 }
+/* A segment is 32 tall; its ::after reaches 6 above and below, so the hit area is 44 (audit
+   AY-12). The 2 px gap keeps neighbours apart. */
 .seg > button,
 .seg > a {
+  position: relative;
   display: grid;
   place-items: center;
   min-width: 0;
@@ -974,6 +1061,12 @@ table.t {
   transition:
     background var(--dur-2) var(--ease-standard),
     box-shadow var(--dur-2) var(--ease-standard);
+}
+.seg > button::after,
+.seg > a::after {
+  content: '';
+  position: absolute;
+  inset: -6px 0;
 }
 .seg > button[aria-pressed='true'],
 .seg > button[aria-selected='true'],
@@ -1148,6 +1241,8 @@ table.t {
   border-radius: calc(var(--r-sm) + 4px);
   background-color: var(--seg-track);
   background-clip: padding-box;
+  /* The pill's 1 px edge at the padding box, 3:1 on the ground (audit FIELD-3-1). */
+  box-shadow: inset 0 0 0 1px var(--field-line);
   color: var(--ink);
   font: var(--t-callout);
 }
@@ -1425,11 +1520,12 @@ select.search {
   .shell .subs {
     display: block;
   }
+  /* 44 rows: the sub-tabs are contiguous, so the target is real height (audit AY-12). */
   .shell .sub {
     display: flex;
     align-items: center;
     gap: 8px;
-    height: 36px;
+    min-height: 44px;
     padding: 0 12px 0 46px;
     border-radius: var(--r-sm);
     font-size: 15px;
@@ -1723,9 +1819,14 @@ html:active-view-transition-type(pop)::view-transition-new(root) {
     box-shadow: none;
     border: 1px solid #999;
   }
-  a {
+  a,
+  :is(a:not([class]), a.small, .prose a, .owner-note a):not(.btn, .seg > a) {
     color: #000;
     text-decoration: none;
+  }
+  /* Paper has no touch targets: a page ref prints as plain text again. */
+  .prose td > :is(a[href*='#pg-'], a[href*='/manual/']) {
+    display: inline;
   }
   a[href^='http']::after {
     content: ' (' attr(href) ')';
