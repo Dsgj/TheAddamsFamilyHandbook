@@ -272,7 +272,9 @@
     flex: 1;
     min-width: 0;
     display: block;
-    padding: 8px 0;
+    /* 44 tall at least (audit AY-12): the 26 line box and 9 above and below. */
+    min-height: 44px;
+    padding: 9px 0;
     color: var(--ink);
     font-size: 17px;
     line-height: 22px;

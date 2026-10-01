@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { liveText } from '~/lib/live.svelte';
   import { href } from '~/lib/url';
   import SearchField from './SearchField.svelte';
 
@@ -22,9 +23,19 @@
   });
   const link = (i: TocItem) => href(`handbook/${i.section}${i.level === 1 ? '' : '#' + i.id}`);
   const scans = $derived(href(`manual?q=${encodeURIComponent(query)}`));
+  /** Spec §12, audit AY-09: the match count, announced 400 ms after the filter last changed. */
+  const live = liveText(
+    () => q,
+    () => {
+      const n = shown.length;
+      if (!n) return `No headings match “${query}”.`;
+      return `${n} ${n === 1 ? 'heading matches' : 'headings match'}`;
+    },
+  );
 </script>
 
 <nav class="toc" class:home aria-label="Handbook contents">
+  <p class="sr-only" aria-live="polite" aria-atomic="true">{live.text}</p>
   <SearchField
     label={home ? 'Search the handbook and scans' : 'Filter contents'}
     placeholder={home ? 'Search the handbook and scans' : 'Find a heading, e.g. B.1 or EOS'}
@@ -71,9 +82,12 @@
     background: var(--cell);
     max-height: none;
   }
+  /* 44 rows (audit AY-12): the rows are contiguous, so the target is real height. */
   li a {
     display: flex;
     justify-content: space-between;
+    align-items: center;
+    min-height: 44px;
     gap: 8px;
     padding: 5px 8px;
     border-radius: var(--r-xs);

@@ -83,11 +83,21 @@ const groups = [...new Set(ITEMS.map((i) => i.group))];
     text-decoration: line-through;
     text-decoration-color: var(--ok);
   }
+  /* Spec §12: the source links are a list under the label, so each is a real 44 × 44 target; a tap
+     beside one never reaches the tick above. */
   .links {
-    margin: 4px 0 0 var(--touch);
+    margin: 0 0 0 var(--touch);
     display: flex;
     flex-wrap: wrap;
-    gap: 4px 14px;
+    align-items: center;
+    gap: 0 14px;
+  }
+  .links a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: var(--touch);
+    min-width: var(--touch);
   }
 </style>
 

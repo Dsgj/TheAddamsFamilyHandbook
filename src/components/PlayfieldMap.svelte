@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { flushSync, untrack } from 'svelte';
+  import { flushSync, tick, untrack } from 'svelte';
   import { SvelteSet } from 'svelte/reactivity';
   import overlaysRaw from '~/data/overlays.json';
   import { SHOTS } from '~/data/shots';
@@ -15,6 +15,8 @@
     type Layer,
   } from '~/lib/data/components';
   import { COIL_NOTE, HINT, t } from '~/lib/data/en';
+  import { isTypingTarget } from '~/lib/keys';
+  import { liveText } from '~/lib/live.svelte';
   import type { PosKind } from '~/lib/data/positions';
   import { allPositions, PLAYFIELD, positions, posKey } from '~/lib/data/positions';
   import { getStatus, STATUS_LABEL } from '~/lib/model/status.svelte';
@@ -80,8 +82,8 @@
    *  drawing's side gutter at the fit clears it by 4 or more. */
   const GLASS_GUTTER = 16 + 164 + 4;
   /** The stacked keyboard legend floats at the stage's foot only below the layers list:
-   *  16 + the list (4 rows of 44 + 8) + 16 + the legend (4 lines of 20, 3 gaps of 6, 20 padding) + 16. */
-  const LEGEND_STAGE_H = 16 + (4 * 44 + 8) + 16 + (4 * 20 + 3 * 6 + 20) + 16;
+   *  16 + the list (4 rows of 44 + 8) + 16 + the legend (6 lines of 20, 5 gaps of 6, 20 padding) + 16. */
+  const LEGEND_STAGE_H = 16 + (4 * 44 + 8) + 16 + (6 * 20 + 5 * 6 + 20) + 16;
   /** Spec §7.4: from 1000 the zoom capsule (44 wide, at right 16, bottom 16) and the readout
    *  above it (44 wide, bottom 156, 28 tall) stand at the stage's right. The fit keeps the
    *  drawing clear of that column: a side gutter of 16 + 44 + 4, or, top-aligned, a foot of
@@ -146,6 +148,9 @@
   let scroller: HTMLDivElement | undefined = $state();
   let canvas: HTMLDivElement | undefined = $state();
   let calibEl: HTMLDivElement | undefined = $state();
+  let mapUi: HTMLDivElement | undefined = $state();
+  /** The wide panel's selection card (spec §7.7), focused after a keyboard pick. */
+  let selectedEl: HTMLElement | undefined = $state();
 
   // ---- fit (spec §7.1): the stage is measured, the canvas is sized in px
   let stageW = $state(0);
@@ -362,6 +367,70 @@
     expanded = false;
     syncUrl();
   }
+  /** The selection's surface: the phone sheet or the wide panel's card (none in the embed). */
+  function selectionEl(): HTMLElement | null | undefined {
+    if (embed) return null;
+    return wide ? selectedEl : mapUi?.querySelector<HTMLElement>('section.sheet.map');
+  }
+  /** Spec §7.5: a keyboard pick (Enter or Space, so `detail` 0) moves focus to the selection, the
+   *  sheet below 1000 or the panel's card from 1000. A pointer pick leaves focus where it is, the
+   *  embed keeps it on the marker (its card follows in the DOM) and calibration never moves it. */
+  async function focusSelection() {
+    if (embed || calib) return;
+    await tick();
+    selectionEl()?.focus({ preventScroll: true });
+  }
+  /** Esc or Deselect. When focus was in the sheet or the panel's card, which unmounts or empties,
+   *  it returns to the part's first marker (tabindex -1 but focusable), so the next arrow goes on
+   *  from there; the drawing takes it when that marker's layer is off. A pointer click on Deselect
+   *  (`detail` above 0) moves focus without scrolling, so the drawing stays where it was panned;
+   *  Esc or a keyboard press scrolls the marker into view. */
+  function clearSelection(e?: MouseEvent) {
+    const key = selKey;
+    const a = document.activeElement;
+    const inside = !!a && !!selectionEl()?.contains(a);
+    deselect();
+    if (inside) void refocus(key, !!e && e.detail > 0);
+  }
+  async function refocus(key: string, preventScroll: boolean) {
+    await tick();
+    const m = canvas?.querySelector<HTMLElement>(`button.marker[data-key="${CSS.escape(key)}"]`);
+    (m ?? scroller)?.focus({ preventScroll });
+  }
+  /** The keyboard cursor (spec §7.5): one entry per rendered marker position, in reading order
+   *  (y, then x). From the drawing the first arrow lands on the selected part's first marker, else
+   *  the first entry; ←/→ step and wrap; ↑/↓ take the nearest entry above or below within 12 % of
+   *  the width, else the reading order. */
+  function stepCursor(key: string, from: HTMLElement | null) {
+    if (!canvas) return false;
+    const list = [...canvas.querySelectorAll<HTMLElement>('button.marker')]
+      .map((el) => ({ el, x: Number(el.dataset.x), y: Number(el.dataset.y) }))
+      .sort((a, b) => a.y - b.y || a.x - b.x);
+    if (!list.length) return false;
+    const i = from ? list.findIndex((m) => m.el === from) : -1;
+    const cur = list[i];
+    let next: HTMLElement | null | undefined;
+    if (!cur) {
+      if (selKey)
+        next = canvas.querySelector<HTMLElement>(`button.marker[data-key="${CSS.escape(selKey)}"]`);
+      next ??= list[0]!.el;
+    } else if (key === 'ArrowLeft' || key === 'ArrowRight') {
+      const d = key === 'ArrowRight' ? 1 : -1;
+      next = list[(i + d + list.length) % list.length]!.el;
+    } else {
+      const d = key === 'ArrowDown' ? 1 : -1;
+      let best: { el: HTMLElement; dy: number; dx: number } | undefined;
+      for (const m of list) {
+        const dy = (m.y - cur.y) * d;
+        const dx = Math.abs(m.x - cur.x);
+        if (dy <= 0 || dx > 0.12) continue;
+        if (!best || dy < best.dy || (dy === best.dy && dx < best.dx)) best = { el: m.el, dy, dx };
+      }
+      next = best?.el ?? list[(i + d + list.length) % list.length]!.el;
+    }
+    next.focus();
+    return true;
+  }
   function toggle(l: MapLayer) {
     if (on.has(l)) on.delete(l);
     else on.add(l);
@@ -424,6 +493,14 @@
     return m.col !== null && m.col !== undefined ? `Column ${m.col}, row ${m.row}` : '';
   }
   /** The "Find a part" filter: id or name (Q28). */
+  const findLive = liveText(
+    () => q,
+    () => {
+      const s = q.trim();
+      const n = visible.reduce((a, l) => a + itemsIn(l).filter(matches).length, 0);
+      return n ? `${n} ${n === 1 ? 'part matches' : 'parts match'}` : `No parts match “${s}”.`;
+    },
+  );
   function matches(item: Item) {
     const s = q.trim().toLowerCase();
     return (
@@ -602,8 +679,7 @@
   function onKey(e: KeyboardEvent, fromWindow = false) {
     const t = e.target as HTMLElement | null;
     if (fromWindow && t !== document.body && t !== document.documentElement) return;
-    if (t?.matches?.('input, textarea, select, [contenteditable]')) return;
-    if (e.altKey || e.ctrlKey || e.metaKey) return;
+    if (isTypingTarget(t) || e.altKey || e.ctrlKey || e.metaKey) return;
     switch (e.key) {
       case '+':
       case '=':
@@ -618,13 +694,21 @@
         break;
       case 'Escape':
         if (!selKey) return;
-        deselect();
+        clearSelection();
         break;
       case 'ArrowLeft':
       case 'ArrowRight':
       case 'ArrowUp':
       case 'ArrowDown': {
-        if (t !== scroller || !scroller) return;
+        // Spec §7.5: bare arrows on the drawing or a marker walk the markers; Shift+arrows pan the
+        // focused drawing. Calibration keeps its keys: arrows pan the drawing and nudge a focused
+        // marker (the marker's own handler), with no cursor.
+        const onMarker = !!t && t.classList.contains('marker') && !!canvas?.contains(t);
+        if (!calib && !e.shiftKey && (t === scroller || onMarker)) {
+          if (!stepCursor(e.key, onMarker ? t : null)) return;
+          break;
+        }
+        if (t !== scroller || !scroller || (!calib && !e.shiftKey)) return;
         const step = 80;
         const dx = e.key === 'ArrowLeft' ? -step : e.key === 'ArrowRight' ? step : 0;
         const dy = e.key === 'ArrowUp' ? -step : e.key === 'ArrowDown' ? step : 0;
@@ -741,14 +825,16 @@
 {/snippet}
 
 {#snippet keyHints()}
+  <span><kbd>↑↓←→</kbd> markers</span>
+  <span><kbd>⇧↑↓←→</kbd> pan</span>
+  <span><kbd>⏎</kbd> select</span>
+  <span><kbd>Esc</kbd> deselect</span>
   <span><kbd>+</kbd><kbd>−</kbd> zoom</span>
   <span><kbd>0</kbd> fit</span>
-  <span><kbd>↑↓←→</kbd> pan</span>
-  <span><kbd>Esc</kbd> deselect</span>
 {/snippet}
 
 {#snippet deselectBtn()}
-  <button class="ibtn desel" type="button" aria-label="Deselect" onclick={deselect}>
+  <button class="ibtn desel" type="button" aria-label="Deselect" onclick={clearSelection}>
     <span class="x" aria-hidden="true">
       <svg viewBox="0 0 20 20" width="14" height="14">
         <path d="M5 5l10 10M15 5L5 15" />
@@ -932,7 +1018,9 @@
 {/snippet}
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="map-ui" class:embed class:wide onkeydown={(e) => onKey(e)}>
+<div class="map-ui" class:embed class:wide onkeydown={(e) => onKey(e)} bind:this={mapUi}>
+  <!-- Spec §12: the find field's one announcer, debounced; the visible "No parts match" stays. -->
+  <p class="sr-only" aria-live="polite" aria-atomic="true">{findLive.text}</p>
   {#if calib}
     <div class="card calib" bind:this={calibEl}>
       <strong>Calibration.</strong>
@@ -1037,7 +1125,14 @@
                   title="{item.id} {item.name}"
                   aria-label={markerName(item, selKey === key)}
                   aria-pressed={selKey === key}
-                  onclick={() => pick(item)}
+                  tabindex={calib ? 0 : -1}
+                  data-key={key}
+                  data-x={p.x}
+                  data-y={p.y}
+                  onclick={(e) => {
+                    pick(item);
+                    if (e.detail === 0) void focusSelection();
+                  }}
                   onpointerdown={(e) => dragStart(e, item, li)}
                   onpointermove={(e) => dragMove(e, item)}
                   onpointerup={dragEnd}
@@ -1126,6 +1221,7 @@
           bind:expanded
           peek={PEEK}
           full={FULL}
+          tabindex={-1}
           data-kind={current.kind}
           data-id={current.id}
         >
@@ -1159,7 +1255,14 @@
             {/if}
           {/if}
         </div>
-        <section class="selected" aria-label="Selected part">
+        <section
+          class="selected"
+          aria-label={current
+            ? `Selected part, ${KIND_WORD[current.kind]} ${showId(current)}`
+            : 'Selected part'}
+          tabindex="-1"
+          bind:this={selectedEl}
+        >
           {#if current}
             <div class="ph slim">
               <h2 class="t-name">{KIND_WORD[current.kind]} {showId(current)}</h2>
@@ -1381,6 +1484,11 @@
     font: 700 10px/1 var(--font-mono);
     transition: opacity var(--dur-1) var(--ease-standard);
   }
+  /* Spec §7.5: the keyboard cursor scrolls a zoomed drawing to keep the focused marker clear of
+     the edge; a focused marker comes on top (a jet under its lamp), after the layer z-indexes. */
+  .marker {
+    scroll-margin: 44px;
+  }
   .marker i {
     font-style: normal;
   }
@@ -1398,6 +1506,9 @@
   }
   .marker.k-shot {
     z-index: var(--z-lift-3);
+  }
+  .marker:focus-visible {
+    z-index: var(--z-lift-4);
   }
   .marker.st-ok {
     --k: var(--ok);
@@ -1954,6 +2065,13 @@
   .side .src {
     justify-self: start;
   }
+  /* Spec §12: the source link stands on its own line, not in running text, so it is a real 44
+     target (in the side panel and under the phone parts list). */
+  .src {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--touch);
+  }
   .shot-card h2 {
     margin: 4px 0;
   }
@@ -1982,7 +2100,8 @@
     border-radius: var(--r-xs);
     padding: 6px 8px;
     cursor: pointer;
-    min-height: 36px;
+    /* Spec §12: contiguous rows, so each is a real 44 row. */
+    min-height: var(--touch);
     align-items: center;
     color: inherit;
   }

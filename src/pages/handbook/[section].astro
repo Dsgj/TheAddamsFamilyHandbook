@@ -117,7 +117,7 @@ const scan = section.key === 'appendix' ? undefined : manualHref('ops', section.
             )}
             {!isAppendixPage(e.data.page) &&
               OWNER_NOTES[e.data.page]?.map((n) => (
-                <aside class="owner-note small">
+                <aside class="owner-note small" role="note" aria-label="Owner's note">
                   <span class="muted">Owner's note:</span> {n.text}{' '}
                   <a href={href(`handbook/appendix#${appendixAnchor(n.code)}`)}>
                     {n.code} {APPENDICES[n.code]}
@@ -189,11 +189,14 @@ const scan = section.key === 'appendix' ? undefined : manualHref('ops', section.
       align-self: start;
     }
   }
-  /* The Contents heading keeps its display face, like the manual card heads (.mhead). */
+  /* The Contents heading keeps its display face, like the manual card heads (.mhead). It is a 44
+     target (audit AY-12): a 44 line, so the disclosure marker stays (display: flex drops it). */
   summary {
     cursor: pointer;
     font: var(--t-head);
     font-family: var(--font-display);
     font-weight: 400;
+    min-height: 44px;
+    line-height: 44px;
   }
 </style>

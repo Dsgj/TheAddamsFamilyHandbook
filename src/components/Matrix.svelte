@@ -1,6 +1,6 @@
 <script lang="ts">
   import { tick, untrack } from 'svelte';
-  import { getStatus } from '~/lib/model/status.svelte';
+  import { getStatus, STATUS_LABEL } from '~/lib/model/status.svelte';
   import type { Kind, MatrixHeaders } from '~/lib/model/types';
   import { componentHref, href } from '~/lib/url';
   import WireChip from './WireChip.svelte';
@@ -114,10 +114,14 @@
               class="st-{cell ? status(cell.id) : ''}"
             >
               {#if cell}
+                {@const st = status(cell.id)}
                 <a
                   href={componentHref(kind, cell.id)}
                   data-cell={id}
                   tabindex={focus === id ? 0 : -1}
+                  aria-label={st && !cell.unused
+                    ? `${cell.id} ${cell.name}, ${STATUS_LABEL[st]}`
+                    : undefined}
                   class:target={highlight === cell.id}
                   onfocus={(e) => {
                     focus = id;
@@ -138,6 +142,22 @@
                 >
                   <span class="mono id">{cell.id}</span>
                   <span class="nm">{cell.name}</span>
+                  <!-- Spec §9.6, audit AY-07: the status is in the name (the aria-label above: an
+                       sr-only span is out of flow, so Chrome read "13 Start Button , Fault") and in
+                       a mark, never in the border colour alone. An unused position has neither. -->
+                  {#if st && !cell.unused}
+                    <i class="mk" aria-hidden="true">
+                      <svg viewBox="0 0 12 12">
+                        {#if st === 'ok'}
+                          <path d="M2.2 6.4l2.5 2.5 5.1-5.6" />
+                        {:else if st === 'fault'}
+                          <path d="M3 3l6 6M9 3l-6 6" />
+                        {:else}
+                          <path d="M4.2 4.4a1.9 1.9 0 1 1 2.6 1.7c-.6.3-.8.7-.8 1.3v.4M6 10v.1" />
+                        {/if}
+                      </svg>
+                    </i>
+                  {/if}
                 </a>
               {:else}
                 <!-- svelte-ignore a11y_no_noninteractive_tabindex (roving focus target for arrow-key navigation) -->
@@ -248,6 +268,38 @@
     color: var(--ink);
     text-decoration: none;
   }
+  td a {
+    position: relative;
+  }
+  /* The status mark (spec §9.6): a check, a cross or a question mark at the link's top right, in
+     the status ink the border uses. */
+  .mk {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 12px;
+    height: 12px;
+    pointer-events: none;
+  }
+  .mk svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  td.st-ok .mk {
+    color: var(--ok);
+  }
+  td.st-fault .mk {
+    color: var(--bad);
+  }
+  td.st-untested .mk {
+    color: var(--warn);
+  }
   /* An unused position reads grey, not dimmed: opacity took the text under 4.5 (AY-16). The link
      sets its own colour, so the grey goes on the link and the id, not the cell. */
   td.unused a {
@@ -289,7 +341,6 @@
     gap: 12px;
     margin-top: var(--gap);
     max-width: 480px;
-    scroll-margin-bottom: calc(var(--tabbar-h) + var(--safe-bot) + 8px);
   }
   td a,
   td .empty {
@@ -356,11 +407,19 @@
       height: 44px;
       vertical-align: middle;
     }
+    /* 44 tall at least (audit AY-12); the 38 width is the spec's ≥24×44 phone cell (§9.6). */
     td a,
     td .empty {
       display: grid;
       place-items: center;
       padding: 0;
+      min-height: 44px;
+    }
+    .mk {
+      top: 3px;
+      right: 3px;
+      width: 10px;
+      height: 10px;
     }
     .nm {
       position: absolute;

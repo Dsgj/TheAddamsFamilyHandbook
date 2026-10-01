@@ -1,8 +1,9 @@
 <script lang="ts">
   import { onMount, untrack } from 'svelte';
   import BottomSheet from './BottomSheet.svelte';
+  import { isTypingTarget } from '~/lib/keys';
   import type { DocId, PageMeta } from '~/lib/model/types';
-  import { pdfPageFromLabel } from '~/lib/pages';
+  import { DOC_NAME, pdfPageFromLabel } from '~/lib/pages';
   import { href, manualHref, replacePage } from '~/lib/url';
 
   /**
@@ -146,14 +147,23 @@
     zoomBy(e.deltaY < 0 ? 1.2 : 1 / 1.2, e.clientX, e.clientY);
   }
   const rotate = () => (rot = (rot + 90) % 360);
+  /** Spec §9.12, audit AY-11: one guard first. Nothing fires while typing in a field or with Ctrl,
+   *  Cmd or Alt held (Alt+← is the browser's Back, Ctrl+= its zoom); Shift passes (Shift+P = P).
+   *  With the zoomed stage focused the arrows scroll it, 40 a press, and stop at its edges: left to
+   *  the browser, a press at an edge went on to scroll the page (the phone's short stage). */
   function onKey(e: KeyboardEvent) {
-    if ((e.target as HTMLElement).tagName === 'INPUT' || go) return;
+    if (go || isTypingTarget(e.target) || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (stage && e.target === stage && e.key.startsWith('Arrow')) {
+      e.preventDefault();
+      const step = (less: string, more: string) => (e.key === less ? -40 : e.key === more ? 40 : 0);
+      stage.scrollBy(step('ArrowLeft', 'ArrowRight'), step('ArrowUp', 'ArrowDown'));
+      return;
+    }
     if (e.key === 'ArrowLeft' && page > 1) replacePage(manualHref(doc, page - 1));
     else if (e.key === 'ArrowRight' && page < count) replacePage(manualHref(doc, page + 1));
     else if (e.key === '+' || e.key === '=') zoomBy(1.2);
     else if (e.key === '-') zoomBy(1 / 1.2);
     else if (e.key === '0') scale = 0;
-    else if (e.ctrlKey || e.metaKey || e.altKey) return;
     else if (e.key === 'w' || e.key === 'W') chooseFit('width');
     else if (e.key === 'p' || e.key === 'P') chooseFit('page');
     else if (e.key === 'r') rotate();
@@ -193,12 +203,16 @@
 
 <div class="viewer">
   <div class="tb" role="toolbar" aria-label="Page" bind:this={bar}>
+    <!-- At an end the link has no href, so it is not focusable; role=link and aria-disabled keep
+         it a disabled link in browse mode (spec §9.12, audit AY-11). -->
     <a
       class="ibtn"
       href={page > 1 ? manualHref(doc, page - 1) : undefined}
+      role={page > 1 ? undefined : 'link'}
       data-replace
       aria-disabled={page <= 1 ? 'true' : undefined}
       aria-label="Previous page"
+      title="Previous page (←)"
     >
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
     </a>
@@ -216,13 +230,21 @@
     <a
       class="ibtn"
       href={page < count ? manualHref(doc, page + 1) : undefined}
+      role={page < count ? undefined : 'link'}
       data-replace
       aria-disabled={page >= count ? 'true' : undefined}
       aria-label="Next page"
+      title="Next page (→)"
     >
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" /></svg>
     </a>
-    <button class="ibtn" type="button" onclick={rotate} aria-label="Rotate page">
+    <button
+      class="ibtn"
+      type="button"
+      onclick={rotate}
+      aria-label="Rotate page"
+      title="Rotate page (R)"
+    >
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M20 12a8 8 0 1 1-3-6.2" />
         <path d="M20 4v5h-5" />
@@ -233,6 +255,7 @@
       class="btn sm"
       type="button"
       aria-pressed={mode === 'text'}
+      title="Text (T)"
       onclick={() => (mode = mode === 'text' ? 'image' : 'text')}>Text</button
     >
   </div>
@@ -257,10 +280,18 @@
       </div>
     {/if}
     <div class="stagewrap">
-      <!-- svelte-ignore a11y_no_static_element_interactions (mouse drag-to-pan; keyboard and touch use scroll) -->
+      <!-- Mouse drag pans; keyboard and touch scroll. Zoomed, the stage is the one scroller, so it
+           is a named tab stop and the arrows scroll it (spec §9.12, audit AY-11); at a fit the
+           page scrolls and the stage is not a stop. -->
+      <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
       <div
         class="stage"
         class:zoomed={scale !== 0}
+        tabindex={scale !== 0 ? 0 : undefined}
+        role={scale !== 0 ? 'region' : undefined}
+        aria-label={scale !== 0
+          ? `${DOC_NAME[doc]} page ${page}, zoomed, arrow keys scroll`
+          : undefined}
         style:--avail-h={availH ? `${availH}px` : undefined}
         bind:this={stage}
         onwheel={onWheel}
@@ -311,12 +342,24 @@
       </div>
       <div class="corner">
         <div class="glass capsule" role="group" aria-label="Zoom">
-          <button class="ibtn" type="button" aria-label="Zoom in" onclick={() => zoomBy(1.2)}>
+          <button
+            class="ibtn"
+            type="button"
+            aria-label="Zoom in"
+            title="Zoom in (+)"
+            onclick={() => zoomBy(1.2)}
+          >
             <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true">
               <path d="M10 4v12M4 10h12" />
             </svg>
           </button>
-          <button class="ibtn" type="button" aria-label="Zoom out" onclick={() => zoomBy(1 / 1.2)}>
+          <button
+            class="ibtn"
+            type="button"
+            aria-label="Zoom out"
+            title="Zoom out (−)"
+            onclick={() => zoomBy(1 / 1.2)}
+          >
             <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true">
               <path d="M4 10h12" />
             </svg>
@@ -325,7 +368,7 @@
             class="ibtn fit"
             type="button"
             aria-label="Fit width"
-            title="Fit width (W)"
+            title={fitMode === 'width' ? 'Fit width (W, 0)' : 'Fit width (W)'}
             aria-pressed={scale === 0 && fitMode === 'width'}
             onclick={() => chooseFit('width')}
           >
@@ -337,7 +380,7 @@
             class="ibtn fit"
             type="button"
             aria-label="Fit page"
-            title="Fit page (P)"
+            title={fitMode === 'page' ? 'Fit page (P, 0)' : 'Fit page (P)'}
             aria-pressed={scale === 0 && fitMode === 'page'}
             onclick={() => chooseFit('page')}
           >
@@ -349,8 +392,8 @@
       </div>
     </div>
     <p class="muted small hint keys">
-      Ctrl + wheel or pinch to zoom, drag to pan. Keys: ← → pages, + − 0 zoom, W P fit width or
-      page, R rotate, T text.
+      Ctrl + wheel or pinch to zoom, drag to pan. Keys: ← → pages, + − zoom, 0 back to the fit, W P
+      fit width or page, R rotate, T text.
     </p>
   {/if}
 </div>

@@ -56,6 +56,9 @@
   --ink: #ece6da;
   --muted: #a79fae;
   --line: #35303b;
+  /* A field's edge (.field border, .search inset ring): 3:1 or more on every surface a field sits on
+     (spec §1.1, audit FIELD-3-1). --line stays the hairline for cards and rules. */
+  --field-line: #726b7a;
   --amber: #ff8a3d;
   --amber-glow: rgba(255, 138, 61, 0.45);
   --violet: #c9a0dc;
@@ -217,6 +220,7 @@
   --ink: #1c1720;
   --muted: #5e5766;
   --line: #d3cbb8;
+  --field-line: #7f7769;
   --amber: #c9520f;
   --amber-glow: transparent;
   --violet: #6a2d80;
@@ -267,6 +271,7 @@
     --ink: #1c1720;
     --muted: #5e5766;
     --line: #d3cbb8;
+    --field-line: #7f7769;
     --amber: #c9520f;
     --amber-glow: transparent;
     --violet: #6a2d80;
@@ -340,6 +345,7 @@
     --on-amber: #fff;
     --muted: #444;
     --line: #999;
+    --field-line: #767676;
     --sep: #999;
     --violet: #6a2d80;
     --brass: #70552b;

@@ -3,11 +3,12 @@ import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
-/* The design system's source rules (spec §1, §2, §4, §8.6, §12; audit P2 items 2 and 3): the
-   z-index scale, hover styles behind @media (hover: hover), type on the px scale, radii on tokens,
-   amber text on --amber-ink, one DMD recipe, and print tokens that beat the light theme. Each check
-   reads the style source as text: .css files whole, and the <style> blocks of .svelte and .astro
-   files. */
+/* The design system's source rules (spec §1, §2, §4, §7.5, §8.6, §8.7, §9.12, §12; audit P2 items
+   2, 3 and 5): the z-index scale, hover styles behind @media (hover: hover), type on the px scale,
+   radii on tokens, amber text on --amber-ink, one DMD recipe, print tokens that beat the light
+   theme, key handlers that leave fields and modified keys alone, field edges at 3:1, and the scroll
+   padding. Each check reads the style source as text: .css files whole, and the <style> blocks of
+   .svelte and .astro files; (s) and (t) read the markup and scripts. */
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 // Every style source in src: the global sheets, and each island's and page's <style> block.
@@ -532,6 +533,110 @@ describe('design system source rules', () => {
     expect(sets(/^\.matrix$/, 'table-layout', 'fixed'), 'table-layout: fixed').toBe(true);
     expect(sets(/\.wire\b/, 'white-space', 'normal'), '.wire white-space').toBe(true);
     expect(sets(/\.wire\b/, 'flex-wrap', 'wrap'), '.wire flex-wrap').toBe(true);
+  });
+
+  it('(s) leaves typing and modified keys alone in every page-wide key handler', () => {
+    // Spec §7.5 and §9.12, audit AY-11: a key typed into a field never pages, zooms or moves a
+    // marker, and Ctrl, Cmd or Alt with a key stays the browser's (Alt+← is Back, Ctrl+= zoom).
+    const text = (f: string) => readFileSync(join(ROOT, f), 'utf8');
+    const handlers = sources(SCOPE)
+      .filter((f) => /\.(svelte|astro)$/.test(f))
+      .filter(
+        (f) =>
+          text(f).includes('<svelte:window onkeydown') ||
+          text(f).includes("addEventListener('keydown'"),
+      );
+    expect(handlers).toEqual(
+      expect.arrayContaining([
+        'src/components/PageViewer.svelte',
+        'src/components/PlayfieldMap.svelte',
+        'src/pages/switches.astro',
+      ]),
+    );
+    const keys = /import \{[^}]*\bisTypingTarget\b[^}]*\} from '~\/lib\/keys'/;
+    expect(handlers.filter((f) => !keys.test(text(f)))).toEqual([]);
+    // The viewer returns on a modifier before its first key branch.
+    const viewer = text('src/components/PageViewer.svelte');
+    const name = /<svelte:window onkeydown=\{(\w+)\}/.exec(viewer)?.[1];
+    const start = viewer.indexOf(`function ${name}(`);
+    expect(start, `function ${name}`).toBeGreaterThan(-1);
+    const body = viewer.slice(start, close(viewer, viewer.indexOf('{', start)));
+    const first = body.indexOf('e.key ===');
+    expect(first).toBeGreaterThan(-1);
+    for (const mod of ['ctrlKey', 'metaKey', 'altKey'])
+      expect(body.slice(0, first), mod).toMatch(
+        new RegExp(`if \\([^\\n]*e\\.${mod}\\b[^\\n]*\\) return;`),
+      );
+  });
+
+  it('(t) makes the map markers tab stops only while calibrating', () => {
+    // Spec §7.5, audit AY-01: Tab passes the map in one stop (the scroller) and the arrows walk the
+    // markers; calibration nudges one marker at a time, so there every marker is a stop.
+    const map = readFileSync(join(ROOT, 'src/components/PlayfieldMap.svelte'), 'utf8');
+    const tags = [...map.matchAll(/class="marker[\s"]/g)].map((m) => {
+      const open = map.lastIndexOf('<', m.index);
+      let depth = 0;
+      let i = open;
+      for (; i < map.length; i++) {
+        if (map[i] === '{') depth++;
+        else if (map[i] === '}') depth--;
+        else if (map[i] === '>' && depth === 0) break;
+      }
+      return map.slice(open, i);
+    });
+    expect(tags.length).toBeGreaterThan(0);
+    for (const tag of tags) {
+      expect(tag.startsWith('<button')).toBe(true);
+      expect(tag).toContain('tabindex={calib ? 0 : -1}');
+    }
+  });
+
+  it('(u) keeps the field focus ring, and draws field edges in --field-line at 3:1', () => {
+    // Spec §1.1 and §8.7, audits AY-15 and FIELD-3-1: a field's edge is a non-text contrast cue, 3:1
+    // on every surface a field sits on, and its focus keeps the global ring.
+    const base = RULES.filter((r) => r.file === 'src/styles/base.css');
+    const killed = base
+      .filter((r) => /\.field:focus\b/.test(r.selector))
+      .filter((r) =>
+        r.decls.some(([p, v]) => /^outline(-style)?$/.test(p) && /^(none|0)\b/.test(v)),
+      )
+      .map(where);
+    expect(killed).toEqual([]);
+    const own = (selector: string) =>
+      new Map(base.find((r) => r.selector === selector && !r.at.length)?.decls);
+    expect(own('.field').get('border')).toMatch(/var\(--field-line\)/);
+    expect(own('.search').get('box-shadow')).toMatch(/var\(--field-line\)/);
+    const surfaces = ['--sunk', '--cell', '--surface', '--ground', '--seg-track', '--sheet'];
+    for (const [theme, set, extra] of [
+      ['dark', block(':root', ''), ['--sheet-cell', '--raised']],
+      ['light', block(":root[data-theme='light']", ''), []],
+      [
+        'print',
+        block(":root, :root[data-theme='light'], :root:not([data-theme='dark'])", '@media print'),
+        [],
+      ],
+    ] as const) {
+      // The print block writes #fff and #000 short.
+      const get = (k: string) =>
+        set.get(k)?.replace(/^#([0-9a-f])([0-9a-f])([0-9a-f])$/i, '#$1$1$2$2$3$3');
+      const line = hex(get('--field-line'));
+      for (const s of [...surfaces, ...extra])
+        expect(contrast(line, hex(get(s))), `${theme} --field-line on ${s}`).toBeGreaterThanOrEqual(
+          3,
+        );
+    }
+  });
+
+  it('(v) scrolls a focused row clear of the toast lift, from the page and not the matrix', () => {
+    // Spec §12, audit AY-02: the page's scroll padding counts what sits on the tab bar (the Diagnose
+    // dock, the reader bar); a per-cell scroll margin in the matrix doubled it.
+    const html = RULES.find(
+      (r) => r.file === 'src/styles/base.css' && r.selector === 'html' && !r.at.length,
+    );
+    expect(new Map(html?.decls).get('scroll-padding-bottom')).toMatch(/var\(--toast-lift\b/);
+    expect(styleText(join(ROOT, 'src/components/Matrix.svelte'))).not.toMatch(
+      /scroll-margin-bottom/,
+    );
   });
 
   it('defines the tokens and classes the components build on', () => {

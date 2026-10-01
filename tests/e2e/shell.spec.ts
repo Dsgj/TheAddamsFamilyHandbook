@@ -183,7 +183,8 @@ test.describe('sidebar', () => {
     for (let i = 0; i < TAB_ORDER.length; i++) {
       expect((await tabs(page).nth(i).boundingBox())!.height).toBe(44);
     }
-    expect((await subs.first().boundingBox())!.height).toBe(36);
+    // 44 since audit AY-12 (spec §6.4): the sub-rows are contiguous, so the target is real height.
+    expect((await subs.first().boundingBox())!.height).toBe(44);
     // "Skip to content" stays the first focusable element.
     await page.keyboard.press('Tab');
     await expect(page.getByRole('link', { name: 'Skip to content' })).toBeFocused();

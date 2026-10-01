@@ -107,6 +107,12 @@
     });
     return idx.slice(0, 300);
   });
+  /** The search's count line; with no rows it says so, in the words the region announces. */
+  const found = $derived(
+    !shown.length
+      ? `No parts match “${q.trim()}”.`
+      : `${shown.length} ${shown.length === 1 ? 'row' : 'rows'}${shown.length === 300 ? ' (first 300)' : ''}`,
+  );
   function clear() {
     q = '';
     highlight = '';
@@ -141,12 +147,12 @@
     }}
     onclear={clear}
   />
+  <!-- Spec §12: the count line keeps role=status (the page's one live region). Every other search
+       surface announces through a separate sr-only aria-live region instead. A search with no rows
+       says so here, so the region announces the words on screen, not "0 rows". -->
   <p class="gf count" role="status">
     {#if loading}Loading…{:else if !searching}Top-level assemblies ({shown.length} rows). Type at least
-      two characters to search all {rows.length} rows, e.g. 5768, flipper or SW-1A.{:else}{`${shown.length} ${shown.length === 1 ? 'row' : 'rows'}`}{shown.length ===
-      300
-        ? ' (first 300)'
-        : ''}{/if}
+      two characters to search all {rows.length} rows, e.g. 5768, flipper or SW-1A.{:else}{found}{/if}
   </p>
   <div class="scroll-x">
     <!-- Spec §8.9: under 600 the rows are two-line flex rows, which drops table semantics in
@@ -192,9 +198,6 @@
       </tbody>
     </table>
   </div>
-  {#if searching && !loading && !shown.length}
-    <p class="gf">No parts match “{q.trim()}”.</p>
-  {/if}
 </div>
 
 <style>

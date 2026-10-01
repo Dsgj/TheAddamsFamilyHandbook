@@ -182,6 +182,19 @@
   .head h2 a {
     color: inherit;
   }
+  /* Spec §12: the title link (28 tall) and the callout page link (20 tall) get a 44 box centred on
+     them. It reaches over the card padding, the kind line and 12 of the 14 gap below the wiring list,
+     where no other target sits. */
+  .head h2 a,
+  dd a {
+    position: relative;
+  }
+  .head h2 a::after,
+  dd a::after {
+    content: '';
+    position: absolute;
+    inset: min(0px, (100% - var(--touch)) / 2);
+  }
   .kind {
     margin: 0;
     font: var(--t-sub);

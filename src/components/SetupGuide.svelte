@@ -22,6 +22,11 @@
   const ids = $derived(steps.flatMap((s) => s.items.map((i) => i.id)));
   const done = $derived(doneCount(ids));
   const isCode = (id: string) => /^[AU]\.\d/.test(id);
+  /** Spec §9.13, audit AY-10: an item as its controls name it. Names repeat ("Custom Message" is
+   *  A.1 20 and U.5), so a coded item carries its code. */
+  const refOf = (i: { id: string; name: string }) => (isCode(i.id) ? `${i.id} ${i.name}` : i.name);
+  /** A unique id fragment per item, for the field's aria-labelledby. */
+  const keyOf = (id: string) => id.replace(/[^a-z0-9]+/gi, '-');
   const isTask = (i: SetupItem) => !i.suggested;
   const stepDone = (s: SetupStep) => doneCount(s.items.map((i) => i.id));
 </script>
@@ -46,12 +51,14 @@
       <ul class="items">
         {#each s.items as i (i.id)}
           {@const cur = getSetup(i.id)}
+          {@const ref = refOf(i)}
+          {@const key = keyOf(i.id)}
           <li class="item" class:done={cur?.done}>
             <label class="tick">
               <input
                 type="checkbox"
                 checked={cur?.done ?? false}
-                aria-label="Done: {i.name}"
+                aria-label="Done: {ref}"
                 onchange={(e) => setDone(i.id, e.currentTarget.checked)}
               />
             </label>
@@ -59,7 +66,11 @@
               <div class="head">
                 {#if isCode(i.id)}<span class="mono code">{i.id}</span>{/if}
                 <span class="name">{i.name}</span>
-                {#if links[i.id]}<a class="small" href={links[i.id]}>handbook</a>{/if}
+                {#if links[i.id]}<a
+                    class="small"
+                    href={links[i.id]}
+                    aria-label="{ref} in the handbook">handbook</a
+                  >{/if}
               </div>
               {#if !isTask(i)}
                 <div class="vals">
@@ -68,13 +79,17 @@
                     type="button"
                     class="btn sm mono"
                     title="Use suggested value"
+                    aria-label="{i.suggested}, suggested for {ref}"
                     onclick={() => setValue(i.id, i.suggested)}>{i.suggested}</button
                   >
+                  <!-- The name keeps the visible "Set to" first (WCAG 2.5.3) and adds the item. -->
                   <label class="small muted set">
-                    Set to
+                    <span id="sg-set-{key}">Set to</span>
+                    <span class="sr-only" id="sg-ref-{key}">{ref}</span>
                     <input
                       class="field mono"
                       type="text"
+                      aria-labelledby="sg-set-{key} sg-ref-{key}"
                       value={cur?.value ?? ''}
                       placeholder={isCode(i.id) ? '' : 'number on display, value'}
                       oninput={(e) => setValue(i.id, e.currentTarget.value, { defer: true })}
@@ -185,6 +200,13 @@
     align-items: baseline;
     gap: 4px 10px;
   }
+  /* Spec §12: the "handbook" link sits beside the name, not in running text, so it is a real 44
+     target; the head grows round it and the suggestion button below keeps its own area. */
+  .head a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--touch);
+  }
   .code {
     color: var(--amber-ink);
   }
@@ -215,11 +237,13 @@
     overflow-wrap: anywhere;
     text-align: left;
   }
+  /* The label is the 44 target (it focuses the field); the field itself stays 34 (audit AY-12). */
   .set {
     display: flex;
     align-items: center;
     gap: 6px;
     flex: 1 1 180px;
+    min-height: 44px;
   }
   .set .field {
     flex: 1;

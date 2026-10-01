@@ -143,6 +143,8 @@ const GROUPS: Group[] = [
       ))
     }
     <p class="gf" data-empty hidden>No tables match.</p>
+    <!-- Spec §12, audit AY-09: the filter's announcer, separate from the visible line above. -->
+    <p class="sr-only" data-live aria-live="polite" aria-atomic="true"></p>
   </div>
 </Base>
 
@@ -202,6 +204,8 @@ const GROUPS: Group[] = [
   if (hub && field) {
     const groups = [...hub.querySelectorAll<HTMLElement>('[data-group]')];
     const empty = hub.querySelector<HTMLElement>('[data-empty]');
+    const live = hub.querySelector<HTMLElement>('[data-live]');
+    let timer: ReturnType<typeof setTimeout> | undefined;
     const apply = () => {
       if (clear) clear.hidden = !field.value;
       const q = field.value.trim().toLowerCase();
@@ -219,6 +223,15 @@ const GROUPS: Group[] = [
       if (empty) {
         empty.hidden = shown > 0;
         empty.textContent = `No tables match “${field.value.trim()}”.`;
+      }
+      // The count, announced 400 ms after the last keystroke; an empty field clears it at once.
+      clearTimeout(timer);
+      if (live && !q) live.textContent = '';
+      else if (live) {
+        const text = shown
+          ? `${shown} ${shown === 1 ? 'table' : 'tables'}`
+          : `No tables match “${field.value.trim()}”.`;
+        timer = setTimeout(() => (live.textContent = text), 400);
       }
     };
     field.addEventListener('input', apply);
