@@ -26,7 +26,7 @@
   const stepDone = (s: SetupStep) => doneCount(s.items.map((i) => i.id));
 </script>
 
-<p class="muted">{intro}</p>
+<p class="muted intro">{intro}</p>
 <p class="progress" role="status">
   <span class="dmd small">{done} / {ids.length}</span>
   <span class="muted">{noun} done</span>
@@ -110,6 +110,14 @@
     height: 8px;
     accent-color: var(--ok);
   }
+  /* The prose measure (spec §3.1) on the intro, the warning, the reasons and each step's own
+     paragraphs (its intro and its closing note). */
+  .intro,
+  .warn,
+  .why,
+  .step > p {
+    max-width: var(--measure);
+  }
   .warn {
     border-left: 3px solid var(--warn);
     padding-left: 10px;
@@ -180,8 +188,11 @@
   .code {
     color: var(--amber-ink);
   }
+  /* The measure on the name only: a long one (the Thing Flips task) sets 60-80 a line, and the
+     suggested value and the Set field below keep the row's width. */
   .name {
     font-weight: 500;
+    max-width: var(--measure);
   }
   .done .name {
     color: var(--muted);

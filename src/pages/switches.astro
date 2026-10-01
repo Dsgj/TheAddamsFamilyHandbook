@@ -23,7 +23,7 @@ const TABS = [
 ];
 ---
 
-<Base title="Switches" nav="switches" wide>
+<Base title="Switches" nav="switches">
   <h1>Switch matrix</h1>
   <div class="seg tabs" role="tablist" aria-label="Switch matrix view">
     {
@@ -55,30 +55,44 @@ const TABS = [
     <section class="card">
       <h2>Dedicated switches (J205)</h2>
       <div class="scroll-x">
-        <table class="t">
-          <thead><tr><th>#</th><th>Name</th><th>Wire</th><th>Pin</th><th>Broken</th></tr></thead>
-          <tbody>
+        <table class="t two" role="table">
+          <thead role="rowgroup">
+            <tr role="row">
+              <th role="columnheader" class="key">#</th>
+              <th role="columnheader">Name</th>
+              <th role="columnheader">Wire</th>
+              <th role="columnheader">Pin</th>
+              <th role="columnheader" class="chk">Broken</th>
+            </tr>
+          </thead>
+          <tbody role="rowgroup">
             {
               ded.map((s) => (
-                <tr>
-                  <td>
+                <tr role="row">
+                  <td role="cell" class="key">
                     <a class="mono" href={componentHref('switch', s.id)}>
                       {s.id}
                     </a>
                   </td>
-                  <td>{s.name}</td>
-                  <td>
+                  <td role="cell" class="nm">
+                    {s.name}
+                  </td>
+                  <td role="cell" data-h="Wire">
                     <WireChip colour={s.wireEn ?? ''} />
                   </td>
-                  <td class="mono">{s.pin}</td>
-                  <td class="chk">
-                    <input
-                      type="checkbox"
-                      class="fault-check"
-                      data-kind="switch"
-                      data-id={s.id}
-                      aria-label={`Broken: ${s.name}`}
-                    />
+                  <td role="cell" class="mono" data-h="Pin">
+                    {s.pin}
+                  </td>
+                  <td role="cell" class="chk">
+                    <label class="chk-hit">
+                      <input
+                        type="checkbox"
+                        class="fault-check"
+                        data-kind="switch"
+                        data-id={s.id}
+                        aria-label={`Broken: ${s.name}`}
+                      />
+                    </label>
                   </td>
                 </tr>
               ))
@@ -93,30 +107,44 @@ const TABS = [
     <section class="card">
       <h2>Flipper switches (Fliptronics J806)</h2>
       <div class="scroll-x">
-        <table class="t">
-          <thead><tr><th>#</th><th>Name</th><th>Wire</th><th>Pin</th><th>Broken</th></tr></thead>
-          <tbody>
+        <table class="t two" role="table">
+          <thead role="rowgroup">
+            <tr role="row">
+              <th role="columnheader" class="key">#</th>
+              <th role="columnheader">Name</th>
+              <th role="columnheader">Wire</th>
+              <th role="columnheader">Pin</th>
+              <th role="columnheader" class="chk">Broken</th>
+            </tr>
+          </thead>
+          <tbody role="rowgroup">
             {
               flip.map((s) => (
-                <tr>
-                  <td>
+                <tr role="row">
+                  <td role="cell" class="key">
                     <a class="mono" href={componentHref('switch', s.id)}>
                       {s.id}
                     </a>
                   </td>
-                  <td>{s.name}</td>
-                  <td>
+                  <td role="cell" class="nm">
+                    {s.name}
+                  </td>
+                  <td role="cell" data-h="Wire">
                     <WireChip colour={s.wireEn ?? ''} />
                   </td>
-                  <td class="mono">{s.pin}</td>
-                  <td class="chk">
-                    <input
-                      type="checkbox"
-                      class="fault-check"
-                      data-kind="switch"
-                      data-id={s.id}
-                      aria-label={`Broken: ${s.name}`}
-                    />
+                  <td role="cell" class="mono" data-h="Pin">
+                    {s.pin}
+                  </td>
+                  <td role="cell" class="chk">
+                    <label class="chk-hit">
+                      <input
+                        type="checkbox"
+                        class="fault-check"
+                        data-kind="switch"
+                        data-id={s.id}
+                        aria-label={`Broken: ${s.name}`}
+                      />
+                    </label>
                   </td>
                 </tr>
               ))

@@ -27,7 +27,6 @@ interface Props {
   h1?: 'large' | 'page' | 'bar';
   /** The back link. Defaults to the nav key's static parent on pushed pages; `null` for none. */
   back?: BackLink | null;
-  wide?: boolean;
   /** Full-bleed page (the map): no gutter or max-width on main, and no footer. */
   fullbleed?: boolean;
 }
@@ -39,7 +38,6 @@ const {
   nav,
   h1 = 'page',
   back = h1 === 'large' ? null : nav ? PARENT[nav] : null,
-  wide,
   fullbleed,
 } = Astro.props;
 
@@ -236,7 +234,7 @@ const hasActions = Astro.slots.has('actions');
         <div class="trail">{hasActions && <slot name="actions" />}</div>
       </div>
     </header>
-    <main id="main" class:list={[{ wrap: !fullbleed, wide, fullbleed }]}>
+    <main id="main" class:list={[{ wrap: !fullbleed, fullbleed }]}>
       {
         h1 === 'large' && (
           <div class="lt">

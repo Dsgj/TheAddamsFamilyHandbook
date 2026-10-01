@@ -168,6 +168,10 @@
     gap: 12px;
     align-items: center;
   }
+  /* Spec §8.6: the badge keeps its width; the title beside it wraps. */
+  header .code {
+    flex: none;
+  }
   .head {
     min-width: 0;
   }

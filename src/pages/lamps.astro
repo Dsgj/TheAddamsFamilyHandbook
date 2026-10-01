@@ -13,7 +13,7 @@ const cells = DATA.lamps.map((l) => ({
 }));
 ---
 
-<Base title="Lamps" nav="lamps" wide>
+<Base title="Lamps" nav="lamps">
   <h1>Lamp matrix</h1>
   <p class="muted">
     Columns from J137/J138 (Q90–Q98), rows from J133/J134 (Q80–Q88). Source:
@@ -29,34 +29,53 @@ const cells = DATA.lamps.map((l) => ({
       lands on the <a href={href('shopping')}>shopping list</a> with its bulb type.
     </p>
     <div class="scroll-x">
-      <table class="t">
-        <thead>
-          <tr><th>#</th><th>Name</th><th>Bulb</th><th>Part</th><th>Assembly</th><th>Broken</th></tr>
+      <table class="t two" role="table">
+        <thead role="rowgroup">
+          <tr role="row">
+            <th role="columnheader" class="key">#</th>
+            <th role="columnheader">Name</th>
+            <th role="columnheader">Bulb</th>
+            <th role="columnheader">Part</th>
+            <th role="columnheader">Assembly</th>
+            <th role="columnheader" class="chk">Broken</th>
+          </tr>
         </thead>
-        <tbody>
+        <tbody role="rowgroup">
           {
             DATA.lamps.map((l) => (
-              <tr class:list={[{ muted: l.unused }]}>
-                <td>
+              <tr role="row" class:list={[{ muted: l.unused }]}>
+                <td role="cell" class="key">
                   <a class="mono" href={componentHref('lamp', l.id)}>
                     {l.id}
                   </a>
                 </td>
-                <td>
+                <td role="cell" class="nm">
                   {l.name}
-                  {l.speaker && <span class="muted small"> · speaker panel</span>}
+                  {l.speaker && (
+                    <span class="note muted small">
+                      <span class="sep"> · </span>speaker panel
+                    </span>
+                  )}
                 </td>
-                <td class="mono">{l.bulb}</td>
-                <td class="mono">{l.bulbPart}</td>
-                <td class="mono">{l.assy}</td>
-                <td class="chk">
-                  <input
-                    type="checkbox"
-                    class="fault-check"
-                    data-kind="lamp"
-                    data-id={l.id}
-                    aria-label={`Broken: ${l.name}`}
-                  />
+                <td role="cell" class="mono" data-h="Bulb">
+                  {l.bulb}
+                </td>
+                <td role="cell" class="mono" data-h="Part">
+                  {l.bulbPart}
+                </td>
+                <td role="cell" class="mono" data-h="Assembly">
+                  {l.assy}
+                </td>
+                <td role="cell" class="chk">
+                  <label class="chk-hit">
+                    <input
+                      type="checkbox"
+                      class="fault-check"
+                      data-kind="lamp"
+                      data-id={l.id}
+                      aria-label={`Broken: ${l.name}`}
+                    />
+                  </label>
                 </td>
               </tr>
             ))

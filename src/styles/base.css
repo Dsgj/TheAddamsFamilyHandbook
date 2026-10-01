@@ -80,9 +80,9 @@ textarea {
   white-space: nowrap;
 }
 
-/* Layout */
+/* Layout. Spec §3.1: every route of every tab but the map renders in this one column. */
 .wrap {
-  max-width: 1120px;
+  max-width: var(--content-w);
   margin: 0 auto;
   padding: var(--pad);
   /* Spec §11: the side gutter clears the notch in landscape. */
@@ -320,9 +320,6 @@ main.fullbleed {
     background: var(--sunk);
   }
 }
-main.wide {
-  max-width: 1400px;
-}
 .foot {
   border-top: 1px solid var(--line);
   margin-top: 32px;
@@ -380,6 +377,9 @@ main.wide {
   line-height: 18px;
 }
 .scroll-x {
+  /* The containing block of what it holds: an absolutely positioned child (a column header's
+     .sr-only text) scrolls and clips with the table instead of widening the page. */
+  position: relative;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   max-width: 100%;
@@ -522,6 +522,21 @@ table.t td {
   border-bottom: 1px solid var(--line);
   vertical-align: top;
 }
+/* Spec §8.9: a code, pin or part number never breaks mid-token (`J205-1`, `AE-26-1200`); the
+   name column gives way instead. */
+table.t td.mono,
+table.t td.chk,
+table.t .mono {
+  white-space: nowrap;
+}
+/* A code phrase ('F111 Flasher Secondary (5A S.B.)', 'CPU D19') wraps at its spaces only: each
+   token is a .tok (Phrase.astro), so a cell can take two lines and still never break a code. */
+table.t td.phrase {
+  white-space: normal;
+}
+.tok {
+  white-space: nowrap;
+}
 table.t th {
   color: var(--muted);
   font: var(--t-cap);
@@ -561,7 +576,20 @@ table.t th {
   background: #fff;
 }
 
-/* Handbook prose */
+/* Handbook prose. Spec §3.1: the measure goes on the text blocks, never on the article, so figures,
+   tables and the embedded map keep the full column. :where() keeps each block's own specificity. */
+.prose :where(p, ul, ol, dl, blockquote, h2, h3, h4, .owner-note) {
+  max-width: var(--measure);
+}
+/* The same measure on a page's own paragraphs (the intros of /care, /setup and the tables), a
+   tab panel's (the matrix note on /switches), the group footers (.gf, a <p> of text and links
+   only) and the provenance notes. Paragraphs only: the panel's matrix keeps the column. */
+.wrap > p,
+.panel > p,
+.gf,
+.prov {
+  max-width: var(--measure);
+}
 .prose h3 {
   margin-top: 1.4em;
   color: var(--violet);
@@ -670,10 +698,22 @@ table.t th {
   font-size: 13px;
 }
 
-/* Broken tick in the component tables */
+/* The Broken tick (spec §8.9): an 18 box in a 44 × 44 label, which is the whole cell, so rows
+   never share a target and the label never spills out of the table. */
 table.t td.chk {
   text-align: center;
   width: 1%;
+  height: 44px;
+  padding: 0;
+  vertical-align: middle;
+}
+.chk-hit {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  vertical-align: middle;
+  cursor: pointer;
 }
 .fault-check {
   width: 18px;
@@ -684,6 +724,113 @@ table.t td.chk {
 table.t tr.row-fault td:first-child a,
 table.t tr.row-fault td:first-child {
   color: var(--bad);
+}
+/* Spec §8.9, from 600: a table wider than its .scroll-x keeps the id column and the Broken tick
+   in view. The pinned cells take the background of the surface under the table (--tbl-bg) and
+   the row's hover. Sticky cells paint above the static ones, so no z-index. */
+table.t {
+  --tbl-bg: var(--ground);
+}
+.card table.t {
+  --tbl-bg: var(--cell);
+}
+@media (min-width: 600px) {
+  table.t :is(td, th).key {
+    position: sticky;
+    left: 0;
+    background: var(--tbl-bg);
+  }
+  table.t :is(td, th).chk {
+    position: sticky;
+    right: 0;
+    background: var(--tbl-bg);
+  }
+}
+@media (min-width: 600px) and (hover: hover) {
+  table.t tbody tr:hover > :is(.key, .chk) {
+    background: var(--sunk);
+  }
+}
+/* Spec §8.9, under 600: a `t two` table is a list of two-line rows. Line 1 is the id, the name
+   (its note under it) and the Broken tick; line 2 is the other cells as muted-label pairs. The
+   display change drops table semantics in WebKit, so the markup carries explicit ARIA roles, and
+   the column headers stay for screen readers. Not in print: A4 is 718 wide. */
+@media (max-width: 599px) {
+  table.t.two,
+  table.t.two tbody {
+    display: block;
+  }
+  table.t.two thead {
+    display: block;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  table.t.two tbody tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    column-gap: 8px;
+    padding-block: 4px;
+    border-bottom: 1px solid var(--line);
+  }
+  table.t.two tbody td {
+    order: 4;
+    padding: 2px 0;
+    border-bottom: 0;
+  }
+  table.t.two td.key {
+    order: 0;
+  }
+  table.t.two td.nm {
+    order: 1;
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  /* Beside a 44 tick, the id and the name's first line sit on its middle (12 + 20 + 12), so a
+     name with a note under it keeps the id and the tick on its first line. */
+  table.t.two tbody tr:has(> td.chk) > :is(td.key, td.nm) {
+    padding-top: 12px;
+  }
+  table.t.two td.nm .note {
+    display: block;
+  }
+  table.t.two td.nm .note .sep {
+    display: none;
+  }
+  table.t.two td.chk {
+    order: 2;
+    width: auto;
+    margin-left: auto;
+  }
+  table.t.two tbody tr::after {
+    content: '';
+    order: 3;
+    flex-basis: 100%;
+  }
+  /* An empty pair (no location, no bulb) is not shown: the build renders its cell with no
+     whitespace, so it is :empty (the e2e checks no empty pair shows). */
+  table.t.two tbody td:empty {
+    display: none;
+  }
+  /* A pair wraps as a whole to the next line; only a phrase longer than the row (a fuse's
+     'F111 Flasher Secondary (5A S.B.)', a td.phrase) wraps inside, and then at its spaces. A
+     one-token code keeps the nowrap of td.mono. */
+  table.t.two td[data-h] {
+    font-size: 13px;
+    line-height: 18px;
+  }
+  /* The label is in the body face, whatever the value's face. The alt-text form keeps it out of
+     the accessible name (the header says it); engines without it take the plain form first. */
+  table.t.two td[data-h]::before {
+    content: attr(data-h) ' ';
+    content: attr(data-h) ' ' / '';
+    font: var(--t-foot);
+    color: var(--muted);
+  }
 }
 
 /* Print: the shopping list at the parts drawer, a component card taped inside the cabinet. */
@@ -754,8 +901,10 @@ table.t tr.row-fault td:first-child {
   display: grid;
 }
 .lrow .ttl {
+  min-width: 0;
   font-size: 17px;
   line-height: 22px;
+  overflow-wrap: anywhere;
 }
 .lrow .sub {
   font-size: 15px;
@@ -946,6 +1095,8 @@ table.t tr.row-fault td:first-child {
   font: var(--t-code);
   letter-spacing: 0.06em;
   text-transform: uppercase;
+  /* Spec §8.6: a code is one token; `SOL 01` never wraps (VP-06). */
+  white-space: nowrap;
 }
 .code.lg {
   min-width: 54px;
@@ -1056,10 +1207,12 @@ select.search {
   }
 }
 
-/* ---- Hub pages (spec §9.5, §9.14) ---- */
+/* ---- Hub pages (spec §9.5, §9.14) ----
+   Spec §3.1: a hub is a --hub-w list column, start-aligned. It cancels the .wrap gutter, and its
+   rows' 16 margins put their outer edge back on the page content edge at every width. */
 .hub {
-  max-width: 640px;
-  margin: 0 auto;
+  max-width: calc(var(--hub-w) + 2 * var(--pad));
+  margin-inline: calc(-1 * var(--pad));
 }
 .hub > h1 {
   margin: 0 16px 8px;
@@ -1551,6 +1704,19 @@ html:active-view-transition-type(pop)::view-transition-new(root) {
   .wrap {
     max-width: none;
     padding: 0;
+  }
+  /* The screen's 44 tick rows and pinned columns are for fingers and scrolling, not paper. */
+  table.t td.chk {
+    height: auto;
+    padding: 6px 10px;
+  }
+  .chk-hit {
+    display: inline;
+    width: auto;
+    height: auto;
+  }
+  table.t :is(td, th):is(.key, .chk) {
+    position: static;
   }
   .card {
     break-inside: avoid;

@@ -105,6 +105,9 @@ Source: Components §07 (it matches the kit). Each light value goes into **both*
 | --rail-w | 80 |
 | --sidebar-w | 256 |
 | --panel-w | 400; 420 from 1280 |
+| --content-w | 1120, the content column (§3.1) |
+| --hub-w | 640, the hub list column (§3.1) |
+| --measure | 52ch, the prose measure (§3.1) |
 
 - The board writes the fallbacks as 47 and 34, its phone values. They ship as 0. Browsers that support `env()` define these insets (0 without a notch, and in Playwright), so the fallback only applies where the inset is undefined, and there a 47 / 34 inset would be wrong. The 47 and 34 stay the board's drawing values (the tables in §7.1).
 - The breakpoints for 50 and 56 aren't stated. The drawings imply 50 for 600–1279 and 56 from 1280 **[confirm on board MapFitSpec]**.
@@ -165,6 +168,19 @@ Source: the kit and Components §05.
 - Card: padding 16, gap 14 (Components §06).
 - Button grid in the map sheet: gap 8, margin 16 16 0 (MapExpanded).
 - `--gap` 12, `--pad` 16 stay.
+
+### 3.1 Content column (audit P2 item 4: VL-09, VL-10, VP-08)
+
+- Every route of every tab but the map renders in `.wrap`: `max-width: var(--content-w)` (1120) inside the `--pad` gutter. There is no wider column: `main.wide` and Base's `wide` prop are gone (they never bound under 1712). The map stays `fullbleed`.
+- A hub is a `--hub-w` (640) list column, start-aligned, not centred: `.hub { max-width: calc(var(--hub-w) + 2 * var(--pad)); margin-inline: calc(-1 * var(--pad)) }`.
+  - It cancels the wrap gutter, and the 16 margins of its lists and its `.srch` pill put their outer edge back on the page's content edge.
+  - So a hub list spans 16–396 at 412, like the lists on other tabs, and from 1000 it starts at main's content-left, the edge every other page starts on.
+- The measure is `--measure` (52ch). It goes on text blocks, never on a column:
+  - 52ch sets 60–80 characters a line. `1ch` is the width of a "0", wider than the average IBM Plex Sans letter, so 65ch set 84–94 (audit P2 item 4 review). The e2e counts characters a line at 1000, 1280 and 1440, not ch: every line at most 80, a block's last too, so a one-line block cannot run long unseen (2026-10-01).
+  - `.prose :where(p, ul, ol, dl, blockquote, h2, h3, h4, .owner-note)`, the component notes (`.notes p`), ComponentDetail's `.hint`, the SetupGuide intro, warning, `.why` and step text (`.step > p`: each step's intro and its provenance) and item names (`.name`, not the row, so the suggested value and the Set field keep its width; 2026-10-01), and the Diagnose intro.
+  - A page's own paragraphs (`.wrap > p`: the notes under /care, /setup and the tables), a tab panel's (`.panel > p`: the matrix note on /switches; the matrix beside it keeps the column), every group footer (`.gf`, a `<p>` of text and links: the bench note on /shopping, ComponentDetail's footers) and the provenance notes (`.prov`). The panel paragraphs and the group footers since 2026-10-01: they set 115–176 characters a line from 1000.
+  - Figures, `.scroll-x` tables, `.shot-map` and `.pg-bar` keep the full column. A measure on the article narrowed the handbook's embedded map until its glass covered the drawing.
+- `ch` is used for `--measure` only; every other fixed width is px (the design-system unit test checks both).
 
 ## 4. Radii and elevation
 
@@ -304,7 +320,7 @@ The five tabs, in job order:
 
 ### 6.6 Side panel (ShellTablet, ShellDesktop)
 
-- `aside aria-label="Selected part and parts on the map"`, 400 wide (tablet; 420 from 1280), `--surface`, left hairline.
+- `aside aria-label="Selected part and parts on the map"`, 400 wide (tablet; 420 from 1280), on the page ground (`--ground` through `--panel-bg`, audit P2 item 4), left hairline.
 - On the tablet it sits at left 780, top 24, 796 tall.
 - Contents: see §7.7.
 
@@ -399,13 +415,22 @@ dragMove keeps working
 - Zoom capsule at right 16, bottom 16.
 - Zoom readout: `.glass.mono.t-cap` at right 68, bottom 68, 28 tall, radius 14; an sr-only "Zoom level" precedes "1×". The boards give it `role=status`; that's allowed because it renders on `/map` only (§12).
 - The layer-source link (Q25) sits at the top of the aside, not under the stage.
-- The aside column is capped at the stage height and scrolls inside (`overflow: auto`), so the list never lengthens the page.
+- The aside is the stage height and the one scroller of the panel (§7.7), so the list never lengthens the page.
 - Keyboard legend (ShellDesktop):
   - `.glass.t-cap`, `role=note`, `aria-label="Keyboard shortcuts"`, at left 16, bottom 16, padding 10 12, radius 12.
   - Keycaps: mono, 20 px, radius 5, `--sunk`.
   - Entries: "+ − zoom", "0 fit", "Arrows pan", "Esc deselect".
-  - Shown at 1440; the width where it starts isn't stated **[confirm on board ShellDesktop]**.
+  - Shown from 1280 (the board draws it at 1440 only **[confirm on board ShellDesktop]**).
 - Whether the layers list or the capsule is used at 600–999 isn't drawn **[confirm on board ShellTablet]**.
+- Placement from 1000 (audit P2 item 4, VL-04): the glass floats only where it clears the drawing. The drawing's side gutter at the fit, `(stage width − drawing width) / 2`, is recomputed with the stage.
+  - Gutter at least 184 (16 + 164 + 4), as at 1440 × 900: the layers list floats at left 16, top 16, and the readout at right 68, bottom 68. The legend floats at left 16, bottom 16, 164 wide with its entries stacked, when the stage is at least 350 tall, so it clears the list (16 + list 184 + 16 + legend 118 + 16). Otherwise it is the panel hint below.
+  - Gutter under 184 (1000–1366 × 900, and 1440 × 1080 at about 146):
+    - The layers list is a row of four 44 × 44 toggles in the panel's top, with the same `role=group aria-label="Layers"`, `aria-pressed` buttons and labels.
+    - The readout moves above the capsule (right 16, bottom 156), 44 wide like the capsule, so the two make one control column.
+  - On /map the fit itself clears that column (audit P2 item 4 review): of the fit beside it (the stage width less 64 a side: 16 + 44 + 4) and the fit above it (the stage height less 188: 156 + 28 + 4), the larger, and never more than the whole-drawing fit. A short stage (1000–1440 × 900) narrows the drawing beside the column; a tall or portrait one (1000 × 1080, 1024 × 1366) shortens it above the readout. The e2e checks the layers list, readout, legend and capsule (`.corner`) against the drawing at both.
+    - From 1280 the key legend is a one-line `t-cap` hint (`role=note`, "Keyboard shortcuts") under the toggles.
+  - Each control renders once at a time, so the strict `group 'Layers'` locator finds one.
+  - The handbook embed has no panel and keeps its glass floating (§7.9).
 
 ### 7.5 Markers (MapFitSpec, Map, MapZoom, kit)
 
@@ -479,6 +504,10 @@ dragMove keeps working
   - `.row.two` rows: a `.code.dmd` id tile (§8.6), the name, and "Column 3, row 1".
   - The selected row is on `--tint`, its tile `--amber-fill`, and it shows `.pill.fault`. In every row (the list renders only the Fault pill) the pill's tint sits on an opaque `--cell` base, not on the row's background: the selected row's tint took the dark `--bad` to 4.25 and a hovered row's `--sunk` the light `--bad` to 4.28; on `--cell` it is 5.45 dark and 5.58 light. It also carries `aria-current="true"`, the only `aria-current` in the list, so the selection isn't colour alone.
   - The "Find a part" filter field heads the list if Q28 confirms the proposal.
+- One scroll column (audit P2 item 4, VL-01):
+  - The aside is the stage height and the only scroller. The selected part (never clipped) and the list run in it, and the list runs to the panel's foot.
+  - The `.lh` list header sticks at the panel's top on the panel ground. The 32 fade is a sticky overlay at the panel's foot that takes no space.
+  - Every selection (marker, search, list row) scrolls the panel to the top, so its card is in view.
 
 ### 7.8 Calibration (`?calib=1`)
 
@@ -580,6 +609,7 @@ dragMove keeps working
   - A `.chip` is a control (a filter, a recent search). A label that only shows a value is a `.pill`, a `.code` or a `.wire`, never a `.chip`.
 - `.pill`: 24 tall, radius 12, 13/18 weight 600, in ok / fault / untested variants. `.dot`: 8 px.
 - `.code`: 26 tall, min-width 36, radius 6, 14/18, letter-spacing .06em, uppercase. `.code.lg`: 40 tall, min-width 54, radius 8, 22/26.
+  - A code never wraps (`white-space: nowrap`), and a badge beside a title is `flex: none` (the component header, the component card, the map card), so `SOL 01` stays one 40-tall line at 320 (audit P2 item 4, VP-06).
   - `.code.dmd` puts a code on the DMD well: `.dmd` gives the look, `.code` the box. The map's list id tiles use it (§7.7).
 - `.dmd`: a dot grid (a radial gradient of `--dmd-dot` on a 4 px background-size) on `--dmd-well`, text in `--dmd-ink`, text-shadow `0 0 6px rgba(255,138,61,.45)` in both themes, inset rings. The DMD well stays dark in the light theme, so its codes are the same bright orange with the same glow in both. Diagnose's input well (`.well`) reads the same three tokens and keeps its own 10 px glow; its placeholder is at .7 opacity. In print a `.dmd` is white, its ink black, its border #999 and there is no glow; the well is hidden with the Diagnose dock.
 - `.wire`: a swatch and the colour's name, 13/18 mono, inline, no background, no cursor, no height of its own. It is a label, not a control, so it has no chip styling.
@@ -620,6 +650,31 @@ dragMove keeps working
 - The host has `pointer-events: none`; only the toast's buttons take pointer events, so it never blocks the tab bar or the map controls.
 - Until the toast lands (Phase 11), `#sw-status` (Base.astro:98) leaves the footer and becomes a fixed line at the same place, with the same pointer rule; pwa.ts hides the offline-ready text after 4 s.
 
+### 8.9 Tables (audit P2 item 4: VP-04, VL-07, VP-05)
+
+- At every width:
+  - A code, pin or part number never breaks mid-token: `table.t td.mono, table.t td.chk, table.t .mono { white-space: nowrap }`. The name column gives way.
+  - A code phrase (a fuse's "F111 Flasher Secondary (5A S.B.)", a flasher's "20-9247 12V", a flipper's pins "J126-7 / J125-8", an LED's "CPU D19") is a `td.phrase` (`white-space: normal`) whose tokens are nowrap `.tok` spans (Phrase.astro; a bracketed group is one token). It wraps at its spaces only, so the solenoid tables fit the column at 1000 and 1280 and the LED table fits 320 (audit P2 item 4 review).
+  - Every column has a header. A header with nothing to show gets sr-only text (the solenoid Location column).
+  - Cells carry role classes: `td.key` (the id), `td.nm` (the name, its note in `span.note`) and `td.chk` (Broken).
+  - The Broken tick is an 18 box in a 44 × 44 `label.chk-hit`, which is the whole cell (`td.chk` is 44 tall with no padding), so rows never share a target.
+- From 600, plain tables:
+  - A table wider than its `.scroll-x` (the solenoid tables at 600–800) scrolls with `td.key` pinned at the left and `td.chk` at the right.
+  - The pinned cells paint `--tbl-bg` (the ground, or `--cell` in a card) and follow the row hover (inside `(hover: hover)`) and `row-fault`. They need no z-index.
+  - The flipper and GI tables stack at every width.
+- Under 600, the tables with class `t two` (J205, J806, lamps, the solenoid tables, flipper, GI, parts) become lists of two-line rows:
+  - They carry explicit ARIA (`role=table`, `rowgroup`, `row`, `columnheader`, `cell`), because a changed `display` drops table semantics in WebKit. The thead is sr-only and still names every column.
+  - Line 1 holds the id, the name (wrapping, with the note under it) and the Broken tick at the right edge.
+    - The row aligns to its top. Beside the 44 tick the id and the name take 12 top padding, so the id and the tick sit on the name's first line however long the note.
+    - The note drops its " · " separator (`.sep`), which shows only where the note runs on in the name's line (from 600).
+  - Line 2 holds the other cells as `t-foot` pairs, each prefixed by its header from `data-h`.
+    - The label is in the body face (`font: var(--t-foot)`) whatever the value's face.
+    - `content: attr(data-h) " "` comes first, then `content: attr(data-h) " " / ""`, so the visual label stays out of the accessibility tree and an engine without the alt-text form keeps the plain one (the design-system unit test checks the order).
+    - A pair wraps whole; only a phrase (`td.phrase`) wraps inside, at its spaces. Empty cells are hidden (`td:empty`: the build renders them with no whitespace, and the e2e checks that no empty pair shows).
+    - The solenoid Location reads "in cabinet" or "under playfield", not a bare "under".
+  - The `.scroll-x` wrapper stays but never scrolls. The Fuses and handbook tables are unchanged: Fuses stays a plain `table.t`, its three short columns fitting 320 as a table (audit P2 item 4 review).
+- Print: A4 renders at 718, so the phone rules do not apply. The print block puts `td.chk` back to its print height and the pinned cells to `position: static`.
+
 ## 9. Screens
 
 ### 9.1 Diagnose home (Main, MainLight; Rationale §03)
@@ -639,6 +694,12 @@ dragMove keeps working
   - Buttons "Paste" and "Diagnose". Diagnosis stays live on input (Diagnose.svelte:19-31; the tests never press a button). "Diagnose" records the entry in Recent and moves focus to the results.
   - Below it: "Or type a word to search everything."
 - The DMD field (Main styles): `.dmd` radius 14, padding 18, min-height 112; text 26/32, weight 500, letter-spacing .06em.
+- From 1000 the field sits at the top of the column in every mode (audit P2 item 4, VL-08):
+  - It is in flow, never sticky, and at most 720 wide. On home it sits under the intro and above the tiles; in search and results it sits above the cards.
+  - There is no bottom dock to clear, so the toast is not lifted.
+  - Under 1000 the look is unchanged: the hero docks low on home, and the compact dock sticks above the tab bar over search and results.
+  - The field comes first in the DOM at every width, so keyboard and screen-reader order reach it first.
+  - Enter moves focus to the results heading and scrolls only as far as it needs (`block: 'nearest'`), so the field stays in view for the next code. Under 1000 the heading scrolls to the top under the sticky bar (`block: 'start'`).
 
 ### 9.2 Results (DiagnoseResults, DiagnoseResultsLight)
 
@@ -646,7 +707,7 @@ dragMove keeps working
 - Code chips 32 68 F1 F3 with a "1 of 4" counter.
 - Shared-cause card: "J806 Shared connector — F1 and F3 both go to connector J806 on the Fliptronics board. More", with "Appendix A6, Flippers".
 - Result cards (§8.5). The second is "68 Vault — Switch · matrix column 6, row 8".
-- A floating input "Test report or display message" with a "Diagnose" button.
+- A floating input "Test report or display message" with a "Diagnose" button, under 1000. From 1000 it is at the top of the column (§9.1).
 - What the tests read stays: `.cards article` as `article.comp[data-id]` with the name in an `h2`; `.prov` "Not recognised"; the `.causes` card with "Shared cause?" and its `matrix` link (the task file, Keep → Diagnose).
 
 ### 9.3 Search (DiagnoseSearch)
@@ -684,6 +745,17 @@ See §7: Map, MapLight, MapPeek, MapPeekLight, MapExpanded, MapZoom, ShellTablet
   - Row headers: White-Brown, White-Red, White-Orange, White-Yellow, White-Green, White-Blue, White-Violet, White-Gray.
 - Unused cells: 11, 12, 23, 28, 46, 52, 83, 88.
 - Selecting a cell shows a card: 32 Upper Right Jet with its wiring, and the buttons "Open" and "Show on map".
+- Fit (audit P2 item 4: VP-12, VL-06), for the switch and the lamp matrix:
+  - From 1000 the grid fits the column with no sideways scroll. It has `table-layout: fixed`, a 112 header column and eight equal cells; the names break anywhere and the header wire labels wrap. Cells keep 58 as their minimum height.
+    - A header pin wraps between its codes, never inside one: each code is a nowrap `.tok` (base.css), the row header's two joined by " · ", the column header's split by a `<br>` (2026-10-01). "J208-1 · U18-11" and "J208-5 · U19-11" broke after U18's and U19's hyphen in the row header's 104 from 1000 and on A4; they now break at the separator.
+  - At 600–999 the 860 grid scrolls sideways under a pinned row-header column (`.corner` and `th.rowh` sticky at left 0 on `--ground`, no z-index). Cells keep a 124 scroll margin, so focus moving left stays clear of the pinned column.
+  - Under 600 the grid fits the width with no scroll: a 40 header column, and cells at least 24 × 44 that show the id only (the name stays in the link's accessible name and in the card).
+    - The headers show the number over the wire's colour swatch (up to 26 × 8); the colour's name and the pin stay for screen readers only (audit P2 item 4 review).
+    - The corner keeps the hint as "row ↓" over "col →", on the corner's whole 40 (no inline padding), each on one line.
+  - The selected-cell card stays in flow under the grid.
+    - A keyboard selection (`:focus-visible`) scrolls the card into view above the tab bar (`scroll-margin-bottom`: tab bar + safe-bottom + 8), then brings the focused cell back (`scroll-margin-top`: top bar + 8) if both do not fit.
+    - The scroll is instant, so reduced motion needs no branch. A pointer press does not move the page.
+  - Print is unchanged (contrast.spec's A4 check).
 
 ### 9.7 Component detail (Switch)
 
@@ -749,21 +821,30 @@ See §7: Map, MapLight, MapPeek, MapPeekLight, MapExpanded, MapZoom, ShellTablet
 - Contents: Unique parts 2-33 … Ramps 2-43.
 - Footer: "Scans are saved on the device as you open them."
 - Not drawn, but it stays (the task file, Keep → Manual viewer):
-  - Zoom: "Zoom out", "Fit", "Zoom in" (PageViewer.svelte:138-140) move into a `.glass` capsule, `role=group aria-label="Zoom"`, 44 px buttons, floating bottom-right over the scan above the toolbar, like the Map's (§7.3) **[confirm on board ManualViewer]**. "Rotate page" replaces today's Rotate (:141).
-  - Pinch, Ctrl + wheel, drag to pan, and the keys ← → `+` `−` `0` `R` `T`. The key hint (:196) shows from 1000 or under `(hover: hover)`.
+  - Zoom: "Zoom in", "Zoom out", "Fit width" and "Fit page" sit in a `.glass` capsule, `role=group aria-label="Zoom"`, with 44 px buttons, bottom-right over the scan like the Map's (§7.3) **[confirm on board ManualViewer]**. The fit in force is `aria-pressed` and reads in `--amber-ink`. "Rotate page" replaces today's Rotate.
+  - Fits (audit P2 item 4, VL-05): fit width, or fit page, which puts the whole page in view as the page opens: from the stage's own document top (under the heading, the document switch and the toolbar) to 16 above the viewport's foot and the phone tab bar.
+    - Zoomed, the stage is one slice: the viewport less the top bar, the toolbar, 32 and the phone tab bar.
+    - The default is fit page from 1000 and fit width below.
+    - A chosen fit is kept in `localStorage` (`valvet:manual-fit`, `width` | `page`, every access in try/catch), because every page turn loads a new document.
+  - One scroller: at a fit the stage does not scroll, so the plain wheel scrolls the page. Zoomed, the stage is the one scroller, one viewport slice tall.
+  - The capsule rides a zero-height sticky row at the stage's foot. It stays 12 above the viewport's foot (and the phone tab bar) while the page runs past it, and rests 12 inside the stage otherwise.
+  - Pinch, Ctrl + wheel, drag to pan, and the keys ← → `+` `−` `0` `W` `P` `R` `T`. `0` returns to the current fit; `W` and `P` choose one and are ignored with Ctrl, Cmd or Alt. The key hint shows from 1000 or under `(hover: hover)`.
   - ManualSearch ("Search manual text", OCR full text) on this page (`manual/[doc]/[page].astro:40`) and on `/manual` (manual/index.astro:13).
 
 ### 9.13 Parts (Parts)
 
 - The segmented links, then "Search parts" and "Clear search".
 - "52 rows". Note: "Descriptions are OCR from the original and may have small errors."
-- Columns: Item / Part no. / Description / Qty. Keep the `<table>`; smoke:58 reads `tbody tr`.
+- Columns: Item / Part no. / Description / Qty. Keep the `<table>`; smoke:58 reads `tbody tr`. Under 600 its rows are two-line rows (§8.9).
 
 ### 9.14 Workshop hub (Workshop)
 
 - Rows: Shopping list 4; Verify "5 of 13"; Care "Next: every week or so"; Machine setup "7 steps".
 - This device:
   - Appearance: a segmented control named "Toggle theme" with System / Dark / Light.
+    - The row wraps when it is narrower than 413: tile 30 + gap 12 + label 92 + gap 12 + control 235 + row padding 32. The row is the viewport less the 32 page gutter, so it wraps under a 445 viewport, 430 (an iPhone Pro Max) included (audit P2 item 4: VP-07, UX-15, and the review).
+    - It is a container query on the "This device" list, so the label never breaks mid-word: the label keeps its one-line width (`min-width: max-content`), and the control drops onto its own line, indented to the text column (tile 30 + gap 12).
+    - Only this row wraps. Other `.lrow.static` rows keep their trailing control on the first line.
   - Device data: "Back up status, notes and setup". It links to Device data's current home (`/shopping`, where features.spec opens it) until Q7 settles.
   - Offline: "Ready".
   - Install app. Hidden until Phase 11 (the install sheet, §9.16).

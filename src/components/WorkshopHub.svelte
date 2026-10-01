@@ -156,9 +156,9 @@
   </ul>
 
   <h2 class="lst-h">This device</h2>
-  <ul class="lst">
+  <ul class="lst device">
     <li>
-      <div class="lrow two static">
+      <div class="lrow two static appearance">
         {@render tile(ICON.theme)}
         <span class="txt"><span class="ttl" id="appearance-label">Appearance</span></span>
         <div class="seg" role="group" aria-label="Toggle theme">
@@ -252,6 +252,26 @@
 <style>
   .static .seg {
     margin-left: auto;
+  }
+  /* Spec §9.14: the Appearance row needs tile 30 + gap 12 + label 92 + gap 12 + control 235 +
+     row padding 32 = 413 of its own width (the viewport less the 32 page gutter). The list is the
+     query container, so the rule follows the row, not the viewport: narrower, the control drops
+     onto its own line, indented to the text column (tile 30 + gap 12). The label never shrinks
+     below its width, so if the font runs wider the control wraps rather than the word breaking. */
+  .device {
+    container-type: inline-size;
+  }
+  .appearance {
+    flex-wrap: wrap;
+  }
+  .appearance .txt {
+    min-width: max-content;
+  }
+  @container (width < 413px) {
+    .appearance .seg {
+      flex-basis: calc(100% - 42px);
+      margin-left: 42px;
+    }
   }
   .about {
     padding: 4px 16px 16px;

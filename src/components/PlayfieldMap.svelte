@@ -76,6 +76,18 @@
   /** Selection sheet detents (spec §8.2). */
   const PEEK = 96;
   const FULL = 416;
+  /** Spec §7.4: the floating layers list is 164 wide at left 16; it floats only where the
+   *  drawing's side gutter at the fit clears it by 4 or more. */
+  const GLASS_GUTTER = 16 + 164 + 4;
+  /** The stacked keyboard legend floats at the stage's foot only below the layers list:
+   *  16 + the list (4 rows of 44 + 8) + 16 + the legend (4 lines of 20, 3 gaps of 6, 20 padding) + 16. */
+  const LEGEND_STAGE_H = 16 + (4 * 44 + 8) + 16 + (4 * 20 + 3 * 6 + 20) + 16;
+  /** Spec §7.4: from 1000 the zoom capsule (44 wide, at right 16, bottom 16) and the readout
+   *  above it (44 wide, bottom 156, 28 tall) stand at the stage's right. The fit keeps the
+   *  drawing clear of that column: a side gutter of 16 + 44 + 4, or, top-aligned, a foot of
+   *  156 + 28 + 4 under it. */
+  const CTRL_SIDE = 16 + 44 + 4;
+  const CTRL_FOOT = 156 + 28 + 4;
   /** Manual scans positioned so their playfield frame lands on the drawing's (calibration aid). */
   interface Overlay {
     src: string;
@@ -155,15 +167,35 @@
   let q = $state('');
   /** True once the first fit has landed, so later re-fits animate and the first never does. */
   let ready = $state(false);
-  const fit = $derived(
-    stageW && stageH ? Math.min(stageW / PLAYFIELD.w, (stageH - inset) / PLAYFIELD.h) : 0,
-  );
+  const fit = $derived.by(() => {
+    if (!stageW || !stageH) return 0;
+    const whole = Math.min(stageW / PLAYFIELD.w, (stageH - inset) / PLAYFIELD.h);
+    if (!wide || embed) return whole;
+    // From 1000 on /map: the larger of the fits that clear the controls (VL-04). A tall or
+    // portrait stage shortens the drawing above them; a short one narrows it beside them.
+    const beside = Math.min((stageW - 2 * CTRL_SIDE) / PLAYFIELD.w, stageH / PLAYFIELD.h);
+    const above = Math.min(stageW / PLAYFIELD.w, (stageH - CTRL_FOOT) / PLAYFIELD.h);
+    return Math.min(whole, Math.max(beside, above));
+  });
   // Whole px, rounded down, so a fitted canvas never overflows its stage by a rounding px.
   const canvasW = $derived(Math.floor(PLAYFIELD.w * fit * zoom));
   const canvasH = $derived(Math.floor(PLAYFIELD.h * fit * zoom));
   /** The embed fits the container width; CSS caps the height at the stage height (Q13). */
   const embedH = $derived(Math.round((stageW / PLAYFIELD.w) * PLAYFIELD.h));
   const zoomLabel = $derived(`${Math.round(zoom * 10) / 10}×`);
+  /** The drawing's side gutter at the fit: the width the glass can float in without covering it. */
+  const gutter = $derived(fit ? (stageW - Math.floor(PLAYFIELD.w * fit)) / 2 : 0);
+  /** Spec §7.4: on /map from 1000 the layers list and the key legend float beside the drawing
+   *  where the gutter holds them; otherwise they sit at the top of the side panel. The embed has no
+   *  panel and keeps them floating. */
+  const floatGlass = $derived(wide && !embed && gutter >= GLASS_GUTTER);
+  const glassInPanel = $derived(wide && !embed && !floatGlass);
+  const floatLegend = $derived(floatGlass && stageH >= LEGEND_STAGE_H);
+  let panel: HTMLElement | undefined = $state();
+  // Spec §7.7: every selection (marker, search, list row) shows its card at the panel's top.
+  $effect(() => {
+    if (selKey) untrack(() => panel)?.scrollTo({ top: 0 });
+  });
   /** The selection sheet: below 1000 on /map, with a part selected (spec §7.6). */
   const sheetOpen = $derived(!embed && !wide && !calib && !!current);
   /** Px the sheet takes from the fit at 1×: phones only (Q29 open; tablets keep the overlap). */
@@ -708,6 +740,13 @@
   </div>
 {/snippet}
 
+{#snippet keyHints()}
+  <span><kbd>+</kbd><kbd>−</kbd> zoom</span>
+  <span><kbd>0</kbd> fit</span>
+  <span><kbd>↑↓←→</kbd> pan</span>
+  <span><kbd>Esc</kbd> deselect</span>
+{/snippet}
+
 {#snippet deselectBtn()}
   <button class="ibtn desel" type="button" aria-label="Deselect" onclick={deselect}>
     <span class="x" aria-hidden="true">
@@ -1021,34 +1060,42 @@
         class:gone={sheetOpen && expanded}
       >
         {#if wide}
-          <div class="glass layers-list" role="group" aria-label="Layers">
-            {#each LAYERS as l (l)}
-              <button
-                class="lrow k-{l}"
-                class:off={!on.has(l)}
-                type="button"
-                aria-pressed={on.has(l)}
-                aria-label="{NAME[l]}, {counts[l]} on the map"
-                onclick={() => toggle(l)}
-              >
-                <span class="tile" aria-hidden="true">{@render layerIcon(l)}</span>
-                <span class="lbl" aria-hidden="true">{SHORT[l]}</span>
-                <span class="mono cnt" aria-hidden="true">{counts[l]}</span>
-              </button>
-            {/each}
-          </div>
-          <div class="glass mono readout" role={embed ? undefined : 'status'}>
+          {#if !glassInPanel}
+            <div class="glass layers-list" role="group" aria-label="Layers">
+              {#each LAYERS as l (l)}
+                <button
+                  class="lrow k-{l}"
+                  class:off={!on.has(l)}
+                  type="button"
+                  aria-pressed={on.has(l)}
+                  aria-label="{NAME[l]}, {counts[l]} on the map"
+                  onclick={() => toggle(l)}
+                >
+                  <span class="tile" aria-hidden="true">{@render layerIcon(l)}</span>
+                  <span class="lbl" aria-hidden="true">{SHORT[l]}</span>
+                  <span class="mono cnt" aria-hidden="true">{counts[l]}</span>
+                </button>
+              {/each}
+            </div>
+          {/if}
+          <div
+            class="glass mono readout"
+            class:low={glassInPanel}
+            role={embed ? undefined : 'status'}
+          >
             <span class="sr-only">Zoom level</span>{zoomLabel}
           </div>
           <div class="corner">
             {@render zoomCapsule()}
           </div>
-          {#if desktop}
-            <div class="glass legend" role="note" aria-label="Keyboard shortcuts">
-              <span><kbd>+</kbd><kbd>−</kbd> zoom</span>
-              <span><kbd>0</kbd> fit</span>
-              <span><kbd>↑↓←→</kbd> pan</span>
-              <span><kbd>Esc</kbd> deselect</span>
+          {#if desktop && (embed || floatLegend)}
+            <div
+              class="glass legend"
+              class:stack={!embed}
+              role="note"
+              aria-label="Keyboard shortcuts"
+            >
+              {@render keyHints()}
             </div>
           {/if}
         {:else}
@@ -1089,8 +1136,29 @@
     </div>
 
     {#if wide && !embed}
-      <aside class="side panel" aria-label="Selected part and parts on the map">
-        <div class="panel-top">{@render srcLink()}</div>
+      <aside class="side panel" aria-label="Selected part and parts on the map" bind:this={panel}>
+        <div class="panel-top">
+          {@render srcLink()}
+          {#if glassInPanel}
+            <div class="layers-row" role="group" aria-label="Layers">
+              {#each LAYERS as l (l)}
+                <button
+                  class="ibtn k-{l}"
+                  class:off={!on.has(l)}
+                  type="button"
+                  aria-pressed={on.has(l)}
+                  aria-label="{NAME[l]}, {counts[l]} on the map"
+                  onclick={() => toggle(l)}
+                >
+                  {@render layerIcon(l)}
+                </button>
+              {/each}
+            </div>
+            {#if desktop && !floatLegend}
+              <p class="keys" role="note" aria-label="Keyboard shortcuts">{@render keyHints()}</p>
+            {/if}
+          {/if}
+        </div>
         <section class="selected" aria-label="Selected part">
           {#if current}
             <div class="ph slim">
@@ -1443,6 +1511,10 @@
       visibility 0s var(--dur-1);
   }
   /* The selection sheet's content (spec §7.6). */
+  /* Spec §8.6: the badge keeps its width; the name beside it wraps. */
+  .ph .code {
+    flex: none;
+  }
   .ph {
     display: flex;
     align-items: center;
@@ -1643,32 +1715,68 @@
     text-shadow: none;
   }
 
-  /* The wide panel (spec §7.7): the selected part above, the list below, inside the stage height. */
-  .panel {
+  /* The wide panel (spec §7.7): one scroll column of the stage height, the selected part above the
+     list. `.side.panel` so the embed's `.side` grid below does not win (VL-01). The panel shows the
+     page ground; the sticky list headers and the foot fade paint in it (--panel-bg). */
+  .map-ui:not(.embed) .side.panel {
+    --panel-bg: var(--ground);
     display: flex;
     flex-direction: column;
     padding: 0;
     gap: 0;
-    overflow: hidden;
+    overflow-y: auto;
+    height: var(--stage-h, auto);
     border-left: 1px solid var(--sep);
+    background: var(--panel-bg);
+  }
+  /* The 32 fade at the panel's foot (spec §7.7): a sticky overlay that takes no space. */
+  .map-ui:not(.embed) .side.panel::after {
+    content: '';
+    position: sticky;
+    bottom: 0;
+    flex: none;
+    height: 32px;
+    margin-top: -32px;
+    background: linear-gradient(transparent, var(--panel-bg));
+    pointer-events: none;
   }
   .panel-top:empty {
     display: none;
   }
   .panel-top {
+    flex: none;
+    display: grid;
+    gap: 8px;
+    justify-items: start;
     padding: 10px var(--pad) 0;
   }
   .selected {
-    flex: 0 1 auto;
-    max-height: 58%;
-    overflow: auto;
+    flex: none;
     padding: var(--pad);
   }
   .listing {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow: auto;
+    flex: 1 0 auto;
     border-top: 1px solid var(--sep);
+  }
+  .panel .lh {
+    position: sticky;
+    top: 0;
+    margin: 10px 0 0;
+    padding: 6px 0 4px;
+    background: var(--panel-bg);
+  }
+  /* The layers toggles in the panel, where the gutter is too narrow to float them (spec §7.4). */
+  .layers-row {
+    display: flex;
+    gap: 4px;
+  }
+  .keys {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    margin: 0;
+    font: var(--t-cap);
+    color: var(--muted);
   }
   .capsule {
     display: flex;
@@ -1775,6 +1883,13 @@
     right: 16px;
     bottom: 16px;
   }
+  /* Beside the capsule when the glass floats; above it, clear of the drawing, when it does not. */
+  .readout.low {
+    right: 16px;
+    bottom: 156px;
+    width: 44px;
+    padding: 0;
+  }
   .readout {
     position: absolute;
     right: 68px;
@@ -1800,12 +1915,21 @@
     font: var(--t-cap);
     color: var(--muted);
   }
-  .legend span {
+  /* On /map the legend floats in the gutter, so its entries stack in the list's 164. */
+  .legend.stack {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    width: 164px;
+  }
+  .legend span,
+  .keys span {
     display: inline-flex;
     align-items: center;
     gap: 6px;
   }
-  .legend kbd {
+  .legend kbd,
+  .keys kbd {
     display: inline-grid;
     place-items: center;
     min-width: 20px;
@@ -1871,8 +1995,10 @@
     background: var(--sunk);
     color: var(--amber-ink);
   }
+  /* Three mono digits (3ch at the 0.92em mono, 26.5 px), in px: `ch` is kept for the prose
+     measure (spec §3.1). */
   .row .id {
-    min-width: 3ch;
+    min-width: 27px;
     color: var(--muted);
   }
   .row.st-ok .id {
@@ -1887,9 +2013,6 @@
   @media (min-width: 1000px) {
     .map-ui:not(.embed) .stage {
       grid-template-columns: minmax(0, 1fr) var(--panel-w);
-    }
-    .map-ui:not(.embed) .side {
-      max-height: var(--stage-h, none);
     }
   }
   /* Calibration on phones and tablets (spec §7.8): a non-modal sheet that doesn't re-fit (Q12). */
