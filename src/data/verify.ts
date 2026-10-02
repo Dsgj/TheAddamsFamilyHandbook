@@ -4,9 +4,10 @@
  * and part of the backup file. When one is settled for good, fix the data and remove it here and in
  * KNOWN-ISSUES.md.
  */
-import { appendixAnchor } from '~/data/appendix';
+import { appendixHref } from '~/data/appendix';
+import { KIND_PLURAL } from '~/lib/copy';
 import { pageRefText } from '~/lib/pages';
-import { componentHref, href, manualHref } from '~/lib/url';
+import { componentHref, handbookHref, href, manualHref, mapHref, tableHref } from '~/lib/url';
 
 export interface VerifyItem {
   id: string;
@@ -21,7 +22,7 @@ export const VERIFY_ITEMS: VerifyItem[] = [
     group: 'Component data',
     text: 'Count the flashers in the machine. The solenoid table (3-6) gives 6 flasher circuits with 14 bulbs; the parts list sums to 15 × #906, three of them on top of the backbox.',
     links: [
-      ['Solenoids', href('coils')],
+      [KIND_PLURAL.coil, tableHref('coil')],
       [pageRefText('ops', 108), manualHref('ops', 108)],
     ],
   },
@@ -32,7 +33,7 @@ export const VERIFY_ITEMS: VerifyItem[] = [
     links: [
       ['F1 card', componentHref('switch', 'F1')],
       ['F2 card', componentHref('switch', 'F2')],
-      ['A6 Flippers', href(`handbook/appendix#${appendixAnchor('A6')}`)],
+      ['A6 Flippers', appendixHref('A6')],
     ],
   },
   {
@@ -41,7 +42,7 @@ export const VERIFY_ITEMS: VerifyItem[] = [
     text: 'The fuse on solenoids 01–28 is derived from the fuse list (F105 = solenoids 1–8 and so on), not printed per coil. Spot-check one coil per fuse against the wiring.',
     links: [
       ['Fuses', href('fuses')],
-      ['Solenoids', href('coils')],
+      [KIND_PLURAL.coil, tableHref('coil')],
     ],
   },
   {
@@ -49,22 +50,22 @@ export const VERIFY_ITEMS: VerifyItem[] = [
     group: 'Maps',
     text: 'Lamp 13 and lamp 71 are placed by hand on the map, not snapped to a callout on the manual page. Compare their markers with the machine.',
     links: [
-      ['L13 on the map', href('map?layer=lamp&id=13')],
-      ['L71 on the map', href('map?layer=lamp&id=71')],
+      ['L13 on the map', mapHref('lamp', 13)],
+      ['L71 on the map', mapHref('lamp', 71)],
     ],
   },
   {
     id: 'cousin-it',
     group: 'Maps',
     text: 'Cousin It (44a/44b) has four markers in the original callout drawing. Confirm which two are the switch positions.',
-    links: [['44 on the map', href('map?layer=sw&id=44')]],
+    links: [['44 on the map', mapHref('sw', 44)]],
   },
   {
     id: 'pages-26-28',
     group: 'Transcription',
     text: 'The test menu, Operations Manual p. 1-16 to 1-18, was typed from machine-read text and never read against the manual pages. Read it once against the page images.',
     links: [
-      ['Test menu', href('handbook/tests')],
+      ['Test menu', handbookHref('tests')],
       [pageRefText('ops', 26), manualHref('ops', 26)],
     ],
   },
@@ -73,7 +74,7 @@ export const VERIFY_ITEMS: VerifyItem[] = [
     group: 'Transcription',
     text: 'Spot-check the figures in the difficulty and pricing tables (Operations Manual p. 1-22 to 1-26 and 1-40); single digits in dense tables are the most likely transcription slips.',
     links: [
-      ['Presets', href('handbook/presets')],
+      ['Presets', handbookHref('presets')],
       [pageRefText('ops', 32), manualHref('ops', 32)],
       [pageRefText('ops', 50), manualHref('ops', 50)],
     ],
@@ -84,7 +85,7 @@ export const VERIFY_ITEMS: VerifyItem[] = [
     text: 'The backbox photos of 2026-09-24 show an anyPin NVRAM module at U8 and a black block below it that looks like the battery holder, covered or removed. Confirm that no old cells remain in or under it.',
     links: [
       ['Machine setup step 7', href('setup#step-upkeep')],
-      ['A5 Power driver board', href(`handbook/appendix#${appendixAnchor('A5')}`)],
+      ['A5 Power driver board', appendixHref('A5')],
     ],
   },
   {
@@ -111,7 +112,7 @@ export const VERIFY_ITEMS: VerifyItem[] = [
     text: 'H-4 adjustments beyond A.2 26 (A-MODE SOUND, A-MODE MUSIC, GAMEOVER KICKOUT, SPOT GREED/BALL, FREEPLAY MESSAGE, SPOT T-H-I-N-G) come from the ROM string table. Verify number, order and options in the machine menu.',
     links: [
       ['Machine setup step 5', href('setup#step-h4')],
-      ['Adjustments', href('handbook/adjustments')],
+      ['Adjustments', handbookHref('adjustments')],
     ],
   },
   {
@@ -120,7 +121,7 @@ export const VERIFY_ITEMS: VerifyItem[] = [
     text: 'The custom message format (2 rows × 16 characters per frame) comes from the owner’s machine, not the manual. Count how many frames the menu accepts.',
     links: [
       ['Machine setup step 6', href('setup#step-utilities')],
-      ['Adjustments', href('handbook/adjustments')],
+      ['Adjustments', handbookHref('adjustments')],
     ],
   },
 ];

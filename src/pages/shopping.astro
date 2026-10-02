@@ -2,8 +2,7 @@
 import Base from '~/layouts/Base.astro';
 import ShoppingList from '~/components/ShoppingList.svelte';
 import DeviceData from '~/components/DeviceData.svelte';
-import { appendixAnchor } from '~/data/appendix';
-import { href } from '~/lib/url';
+import { appendixHref } from '~/data/appendix';
 import { allShoppingItems } from '~/lib/shopping';
 
 const items = allShoppingItems();
@@ -79,7 +78,7 @@ const items = allShoppingItems();
     <p class="gf">
       What the yearly round and the appendices assume is on the bench; the same for every device, so
       it is not tracked here. Why each one, and what not to buy, is in{' '}
-      <a href={href(`handbook/appendix#${appendixAnchor('A7')}`)}>A7 Connectors and cleaning</a>.
+      <a href={appendixHref('A7')}>A7 Connectors and cleaning</a>.
     </p>
   </section>
   <DeviceData client:load />

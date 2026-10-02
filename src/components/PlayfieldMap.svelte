@@ -4,22 +4,24 @@
   import overlaysRaw from '~/data/overlays.json';
   import { SHOTS } from '~/data/shots';
   import type { AnyComponent } from '~/lib/data/components';
-  import {
-    DATA,
-    itemsOf,
-    LAYER_KIND,
-    LAYER_LABEL,
-    LAYER_SOURCE,
-    MAP_LAYER,
-    type Layer,
-  } from '~/lib/data/components';
+  import { DATA, itemsOf, mapOf } from '~/lib/data/components';
   import {
     capitalise,
     componentCode,
+    componentName,
+    inMatrix,
+    KIND_LABEL,
+    KIND_PLURAL,
     kindLine as kindLineOf,
     agree,
+    LAYER_KIND,
+    LAYER_LABEL,
     locationLine,
+    MAP_LAYER,
+    MAP_TITLE,
     plural,
+    TABLE_LABEL,
+    tileCode,
   } from '~/lib/copy';
   import { COIL_NOTE, HINT, t } from '~/lib/data/en';
   import { isTypingTarget } from '~/lib/keys';
@@ -27,9 +29,10 @@
   import type { PosKind } from '~/lib/data/positions';
   import { allPositions, PLAYFIELD, positions, posKey } from '~/lib/data/positions';
   import { getStatus, STATUS_LABEL } from '~/lib/model/status.svelte';
-  import type { Coil, Kind, Lamp, Loc, Switch } from '~/lib/model/types';
-  import { pageRefText, pageTitleText } from '~/lib/pages';
-  import { componentHref, href, manualHref, parseMapId, replaceUrl } from '~/lib/url';
+  import type { Coil, Lamp, Layer, Loc, Switch } from '~/lib/model/types';
+  import { pageLabel, pageRefText, pageTitleText } from '~/lib/pages';
+  import { wiring } from '~/lib/present';
+  import { componentHref, href, manualHref, parseMapId, replaceUrl, tableHref } from '~/lib/url';
   import BottomSheet from './BottomSheet.svelte';
   import ComponentCard from './ComponentCard.svelte';
   import SearchField from './SearchField.svelte';
@@ -45,20 +48,8 @@
   }
   const LAYERS: MapLayer[] = ['sw', 'lamp', 'coil', 'shot'];
   const LABEL: Record<MapLayer, string> = { ...LAYER_LABEL, shot: 'Shots' };
-  /** Short labels for the wide layers list (ShellDesktop). */
-  const SHORT: Record<MapLayer, string> = {
-    sw: 'Switches',
-    lamp: 'Lamps',
-    coil: 'Solenoids',
-    shot: 'Shots',
-  };
-  /** Accessible names of the layer buttons. */
-  const NAME: Record<MapLayer, string> = {
-    sw: 'Switches',
-    lamp: 'Lamps',
-    coil: 'Solenoids and flashers',
-    shot: 'Shots',
-  };
+  /** Short labels for the wide layers list (ShellDesktop). LABEL names the layer buttons. */
+  const shortName = (l: MapLayer) => (l === 'shot' ? 'Shots' : KIND_PLURAL[LAYER_KIND[l]]);
   const DEFAULT: MapLayer[] = ['sw', 'lamp', 'coil'];
   /** Zoom steps (spec §7.2). Pinch covers 1–3. */
   const ZOOMS = [1, 1.6, 2.4];
@@ -68,23 +59,14 @@
   /** A pointer that moves further than this is a drag, and never selects. */
   const DRAG = 6;
   const DRAFT_KEY = 'taf.positions.draft';
-  /** Marker name prefixes (spec §7.5): "Switch 32, Upper Right Jet". */
-  const KIND_WORD: Record<PosKind, string> = {
-    switch: 'Switch',
-    lamp: 'Lamp',
-    coil: 'Solenoid',
-    shot: 'Shot',
-  };
   /** The id on a list tile (the exception to componentCode: the layer already names the kind). */
-  const showId = (item: Item) => (item.kind === 'lamp' ? 'L' + item.id : item.id);
-  /** "Switch 32", "Lamp 55", "Solenoid 01", "Shot A": headings and accessible names (spec §13). */
-  const fullName = (item: Item) => `${KIND_WORD[item.kind]} ${item.id}`;
-  /** Where the kind's table lives, for the sheet's links. */
-  const TABLE: Record<Kind, [string, string]> = {
-    switch: ['switches', 'Switch matrix'],
-    lamp: ['lamps', 'Lamp matrix'],
-    coil: ['coils', 'Solenoids and flashers'],
-  };
+  const showId = (item: Item) => tileCode(item.kind, item.id);
+  /**
+   * "Switch 32", "Lamp 55", "Solenoid 01", "Shot A": headings and accessible names, and the marker
+   * name prefix (spec §7.5, §13).
+   */
+  const fullName = (item: Item) =>
+    item.kind === 'shot' ? `Shot ${item.id}` : componentName(item.kind, item.id);
   /** Selection sheet detents (spec §8.2). */
   const PEEK = 96;
   const FULL = 416;
@@ -109,10 +91,13 @@
     height: number;
   }
   const OVERLAYS = overlaysRaw as Record<string, Overlay>;
+  /** "Switch map, 2-39": a location map, with the printed label of its page. */
+  const overlayLabel = (l: Layer) =>
+    `${KIND_LABEL[LAYER_KIND[l]]} map, ${pageLabel('ops', DATA.maps[l].page)}`;
   const OVERLAY_LABEL: Record<string, string> = {
-    sw: 'Switch map, 2-39',
-    lamp: 'Lamp map, 2-40',
-    coil: 'Solenoid map, 2-41',
+    sw: overlayLabel('sw'),
+    lamp: overlayLabel('lamp'),
+    coil: overlayLabel('coil'),
     shot9: `Shots (1), ${pageRefText('ops', 9)}`,
     shot10: `Shots (2), ${pageRefText('ops', 10)}`,
   };
@@ -484,13 +469,13 @@
       const page = SHOTS.find((x) => x.id === item.id)?.page;
       return page ? `Shot · ${pageTitleText('ops', page)}` : 'Shot';
     }
-    return item.comp ? kindLineOf(item.kind, item.comp) : KIND_WORD[item.kind];
+    return item.comp ? kindLineOf(item.kind, item.comp) : KIND_LABEL[item.kind];
   }
   /** The second line of a list row: where it sits, on the rows that carry one (matrix, coils). */
   function subtitle(item: Item) {
     const c = item.comp;
     if (!c || item.kind === 'shot') return '';
-    if (item.kind !== 'coil' && (c as Switch | Lamp).col == null) return '';
+    if (item.kind !== 'coil' && !inMatrix(c as Switch | Lamp)) return '';
     // The row's name already says "Not Used" and the row says "not on map": no third "not used".
     return capitalise(locationLine(item.kind, { ...c, unused: false }));
   }
@@ -850,7 +835,7 @@
 {#snippet srcLink()}
   {#if visible.length === 1 && compLayers[0]}
     <a class="small src" href={manualHref('ops', DATA.maps[compLayers[0]].page)}
-      >{LAYER_SOURCE[compLayers[0]]}</a
+      >{MAP_TITLE[compLayers[0]]}, {pageTitleText('ops', DATA.maps[compLayers[0]].page)}</a
     >
   {:else if visible.length === 1 && on.has('shot')}
     <a class="small src" href={manualHref('ops', 9)}>Playfield Shots, Operations Manual p. E–F</a>
@@ -903,49 +888,49 @@
 {#snippet partBody(item: Item)}
   {#if item.comp && item.kind !== 'shot'}
     {@const sw = item.kind === 'switch' ? (item.comp as Switch) : undefined}
-    {@const lamp = item.kind === 'lamp' ? (item.comp as Lamp) : undefined}
     {@const coil = item.kind === 'coil' ? (item.comp as Coil) : undefined}
-    {@const page = DATA.maps[MAP_LAYER[item.kind]].page}
+    {@const w = wiring(item.kind, item.comp)}
+    {@const page = mapOf(item.kind).page}
     <h3 class="gh">Wiring</h3>
     <ul class="wires">
-      {#if sw}
-        {#if sw.col !== null}
+      {#if w.kind === 'switch'}
+        {#if w.matrix}
           <li>
-            <WireChip colour={sw.colWireEn ?? ''} /><span>Column {sw.col}</span>
-            <span class="mono muted">{sw.colPin} · {sw.colIc}</span>
+            <WireChip colour={w.matrix.column.colour} /><span>Column {w.matrix.column.n}</span>
+            <span class="mono muted">{w.matrix.column.text}</span>
           </li>
           <li>
-            <WireChip colour={sw.rowWireEn ?? ''} /><span>Row {sw.row}</span>
-            <span class="mono muted">{sw.rowPin} · {sw.rowIc}</span>
+            <WireChip colour={w.matrix.row.colour} /><span>Row {w.matrix.row.n}</span>
+            <span class="mono muted">{w.matrix.row.text}</span>
           </li>
         {:else}
           <li>
-            <WireChip colour={sw.wireEn ?? ''} /><span>Wire</span>
-            <span class="mono muted">{sw.pin}</span>
+            <WireChip colour={w.wire.colour} /><span>Wire</span>
+            <span class="mono muted">{w.wire.text}</span>
           </li>
         {/if}
-        {#if sw.part}<li>
-            <span class="lbl">Switch</span><span class="mono muted">{sw.part}</span>
+        {#if w.part}<li>
+            <span class="lbl">Switch</span><span class="mono muted">{w.part}</span>
           </li>{/if}
-      {:else if lamp}
+      {:else if w.kind === 'lamp'}
         <li>
-          <WireChip colour={lamp.colWireEn} /><span>Column {lamp.col}</span>
-          <span class="mono muted">{lamp.colPin} · {lamp.colQ}</span>
+          <WireChip colour={w.column.colour} /><span>Column {w.column.n}</span>
+          <span class="mono muted">{w.column.text}</span>
         </li>
         <li>
-          <WireChip colour={lamp.rowWireEn} /><span>Row {lamp.row}</span>
-          <span class="mono muted">{lamp.rowPin} · {lamp.rowQ}</span>
+          <WireChip colour={w.row.colour} /><span>Row {w.row.n}</span>
+          <span class="mono muted">{w.row.text}</span>
         </li>
         <li>
-          <span class="lbl">Bulb</span><span class="mono muted">{lamp.bulb} · {lamp.bulbPart}</span>
+          <span class="lbl">Bulb</span><span class="mono muted">{w.bulb.code} · {w.bulb.part}</span>
         </li>
-      {:else if coil}
+      {:else if w.kind === 'coil'}
         <li>
-          <WireChip colour={coil.wireEn} /><span>Wire</span>
-          <span class="mono muted">{coil.pin} · {coil.driver}</span>
+          <WireChip colour={w.wire.colour} /><span>Wire</span>
+          <span class="mono muted">{w.wire.text}</span>
         </li>
-        <li><span class="lbl">Coil</span><span class="mono muted">{coil.part}</span></li>
-        <li><span class="lbl">Fuse</span><span class="mono muted">{coil.fuse || '—'}</span></li>
+        <li><span class="lbl">Coil</span><span class="mono muted">{w.part}</span></li>
+        <li><span class="lbl">Fuse</span><span class="mono muted">{w.fuse}</span></li>
       {/if}
     </ul>
     {#if sw?.hint}
@@ -957,7 +942,7 @@
     <nav class="more" aria-label="More about {fullName(item).toLowerCase()}">
       <a class="btn sm" href={componentHref(item.kind, item.id)}>Details</a>
       <a class="btn sm" href={manualHref('ops', page)}>Manual {pageTitleText('ops', page)}</a>
-      <a class="btn sm" href={href(TABLE[item.kind][0])}>{TABLE[item.kind][1]}</a>
+      <a class="btn sm" href={tableHref(item.kind)}>{TABLE_LABEL[item.kind]}</a>
       {#if statusOf(item) === 'fault'}
         <a class="btn sm" href={href('shopping')}>On the shopping list</a>
       {/if}
@@ -1172,11 +1157,11 @@
                   class:off={!on.has(l)}
                   type="button"
                   aria-pressed={on.has(l)}
-                  aria-label="{NAME[l]}, {counts[l]} on the map"
+                  aria-label="{LABEL[l]}, {counts[l]} on the map"
                   onclick={() => toggle(l)}
                 >
                   <span class="tile" aria-hidden="true">{@render layerIcon(l)}</span>
-                  <span class="lbl" aria-hidden="true">{SHORT[l]}</span>
+                  <span class="lbl" aria-hidden="true">{shortName(l)}</span>
                   <span class="mono cnt" aria-hidden="true">{counts[l]}</span>
                 </button>
               {/each}
@@ -1211,7 +1196,7 @@
                   class:off={!on.has(l)}
                   type="button"
                   aria-pressed={on.has(l)}
-                  aria-label={NAME[l]}
+                  aria-label={LABEL[l]}
                   onclick={() => toggle(l)}
                 >
                   {@render layerIcon(l)}
@@ -1256,7 +1241,7 @@
                   class:off={!on.has(l)}
                   type="button"
                   aria-pressed={on.has(l)}
-                  aria-label="{NAME[l]}, {counts[l]} on the map"
+                  aria-label="{LABEL[l]}, {counts[l]} on the map"
                   onclick={() => toggle(l)}
                 >
                   {@render layerIcon(l)}
@@ -1281,11 +1266,7 @@
             </div>
           {/if}
           {#if current?.comp && current.kind !== 'shot'}
-            <ComponentCard
-              kind={current.kind}
-              item={current.comp}
-              mapMeta={DATA.maps[MAP_LAYER[current.kind]]}
-            />
+            <ComponentCard kind={current.kind} item={current.comp} mapMeta={mapOf(current.kind)} />
           {:else if currentShot}
             {@render shotCard(currentShot)}
           {:else}
@@ -1302,11 +1283,7 @@
       <aside class="side">
         {@render srcLink()}
         {#if current?.comp && current.kind !== 'shot'}
-          <ComponentCard
-            kind={current.kind}
-            item={current.comp}
-            mapMeta={DATA.maps[MAP_LAYER[current.kind]]}
-          />
+          <ComponentCard kind={current.kind} item={current.comp} mapMeta={mapOf(current.kind)} />
         {:else if currentShot}
           {@render shotCard(currentShot)}
         {:else}

@@ -8,10 +8,10 @@
  * (`/map?calib=1`). The manual's own callout coordinates stay untouched in `loc`.
  */
 import raw from '~/data/positions.json';
-import type { Kind, Loc } from '~/lib/model/types';
+import type { Loc, MapKind } from '~/lib/model/types';
 
 /** Component kinds plus the manual's lettered shots (`src/data/shots.ts`). */
-export type PosKind = Kind | 'shot';
+export type PosKind = MapKind;
 
 export interface Playfield {
   w: number;

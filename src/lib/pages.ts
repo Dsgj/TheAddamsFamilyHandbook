@@ -45,8 +45,20 @@ export function pdfPageFromLabel(label: string): number | undefined {
  * page number. `p. 1-15`, `p. E`, `PDF page 2`.
  */
 export function pageTitleText(doc: DocId, p: number): string {
-  const lab = pageLabel(doc, p);
-  return lab ? `p. ${lab}` : `PDF page ${p}`;
+  return printedPageText(pageLabel(doc, p), p);
+}
+
+/**
+ * pageTitleText for a label already in hand (a Handbook entry stores its page's label): "p." before
+ * a printed label, otherwise the PDF page number.
+ */
+export function printedPageText(label: string, page: number): string {
+  return label ? `p. ${label}` : `PDF page ${page}`;
+}
+
+/** A page's cell in a page list: the bare printed label, otherwise `PDF page 3`. */
+export function pageCellText(doc: DocId, p: number): string {
+  return pageLabel(doc, p) || `PDF page ${p}`;
 }
 
 /** Human page reference: `Operations Manual p. 1-15`, `WPC Schematic Manual PDF page 3`. */
@@ -54,8 +66,9 @@ export function pageRefText(doc: DocId, p: number): string {
   return `${DOC_NAME[doc]} ${pageTitleText(doc, p)}`;
 }
 
-export function pageImage(doc: DocId, p: number): string {
-  return `assets/pages/${doc}/${p}.${doc === 'ops' && p === 1 ? 'jpg' : 'png'}`;
+/** A page's image path, for `href()`. A suffix names a tile (`_00`) or the overview (`_o`). */
+export function pageImage(doc: DocId, p: number, suffix = ''): string {
+  return `assets/pages/${doc}/${p}${suffix}.${doc === 'ops' && p === 1 ? 'jpg' : 'png'}`;
 }
 
 /** Table of contents per document (assistant's titles; page numbers are PDF pages). */

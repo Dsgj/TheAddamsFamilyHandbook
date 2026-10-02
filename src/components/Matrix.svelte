@@ -1,9 +1,9 @@
 <script lang="ts">
   import { tick, untrack } from 'svelte';
-  import { componentCode, kindLine } from '~/lib/copy';
+  import { componentCode, kindLine, MAP_LAYER } from '~/lib/copy';
   import { getStatus, STATUS_LABEL } from '~/lib/model/status.svelte';
   import type { Kind, MatrixHeaders } from '~/lib/model/types';
-  import { componentHref, href } from '~/lib/url';
+  import { componentHref, mapHref } from '~/lib/url';
   import WireChip from './WireChip.svelte';
 
   interface Cell {
@@ -33,7 +33,7 @@
   /** The cell whose card shows below the grid (spec §9.6): the highlighted one, then any focused. */
   let selected = $state<string>(untrack(() => highlight));
   const sel = $derived(cells.find((c) => c.id === selected));
-  const layer = kind === 'switch' ? 'sw' : kind === 'lamp' ? 'lamp' : 'coil';
+  const layer = MAP_LAYER[kind];
   let hoverCol = $state(0);
   let hoverRow = $state(0);
   let card = $state<HTMLElement>();
@@ -193,7 +193,7 @@
     </dl>
     <div class="acts">
       <a class="btn sm tinted" href={componentHref(kind, sel.id)}>Details</a>
-      <a class="btn sm tinted" href={href(`map?layer=${layer}&id=${sel.id}`)}>Show on map</a>
+      <a class="btn sm tinted" href={mapHref(layer, sel.id)}>Show on map</a>
     </div>
   </div>
 {/if}

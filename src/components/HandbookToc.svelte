@@ -1,7 +1,7 @@
 <script lang="ts">
   import { agree, plural } from '~/lib/copy';
   import { liveText } from '~/lib/live.svelte';
-  import { href } from '~/lib/url';
+  import { handbookHref, href } from '~/lib/url';
   import SearchField from './SearchField.svelte';
 
   import type { TocItem } from '~/lib/handbook/types';
@@ -22,7 +22,7 @@
     if (!s) return home ? [] : items;
     return items.filter((i) => i.level !== 1 && i.text.toLowerCase().includes(s));
   });
-  const link = (i: TocItem) => href(`handbook/${i.section}${i.level === 1 ? '' : '#' + i.id}`);
+  const link = (i: TocItem) => handbookHref(i.section, i.level === 1 ? undefined : i.id);
   const scans = $derived(href(`manual?q=${encodeURIComponent(query)}`));
   /** Spec §12, audit AY-09: the match count, announced 400 ms after the filter last changed. */
   const live = liveText(

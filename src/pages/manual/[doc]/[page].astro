@@ -8,14 +8,14 @@ import {
   DOC_NAME,
   DOCS,
   PAGES,
+  pageCellText,
   pageCount,
-  pageLabel,
   pageTitleText,
   tocTitle,
   TOC,
 } from '~/lib/pages';
 import { sectionOfPage } from '~/lib/handbook/sections';
-import { href, manualHref } from '~/lib/url';
+import { handbookHref, href, manualHref } from '~/lib/url';
 
 /**
  * The manual viewer page (spec §9.12): the document segmented control, the viewer island with
@@ -76,7 +76,7 @@ const around = toc.slice(from, from + 7).map(([p, name], i) => ({
         {
           sec && (
             <li>
-              <a class="lrow" href={href(`handbook/${sec.key}#pg-${page}`)}>
+              <a class="lrow" href={handbookHref(sec.key, `pg-${page}`)}>
                 <span class="txt">
                   <span class="ttl">Read the transcription</span>
                   <span class="sub">{sec.title}, in the handbook</span>
@@ -100,7 +100,7 @@ const around = toc.slice(from, from + 7).map(([p, name], i) => ({
                 <span class="txt">
                   <span class="ttl">{e.name}</span>
                 </span>
-                <span class="val mono">{pageLabel(doc, e.p) || `PDF page ${e.p}`}</span>
+                <span class="val mono">{pageCellText(doc, e.p)}</span>
                 <svg class="chev" viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M9 5l7 7-7 7" />
                 </svg>

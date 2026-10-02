@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { agree } from '~/lib/copy';
+  import { agree, KIND_PLURAL } from '~/lib/copy';
   import { allStatuses, setStatus } from '~/lib/model/status.svelte';
   import { componentHref } from '~/lib/url';
   import {
@@ -8,7 +8,6 @@
     groupFaults,
     itemRef,
     KIND_ORDER,
-    KIND_TITLE,
     NO_PART,
     type ShoppingItem,
   } from '~/lib/shopping';
@@ -128,7 +127,7 @@
 
   {#each kinds as kind (kind)}
     <section class="grp">
-      <h2 class="lst-h">{KIND_TITLE[kind]}</h2>
+      <h2 class="lst-h">{KIND_PLURAL[kind]}</h2>
       <ul class="lst">
         {#each groups.filter((g) => g.kind === kind) as g (g.label + g.part)}
           <li class="lrow static part">

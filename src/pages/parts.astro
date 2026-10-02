@@ -2,6 +2,7 @@
 import Base from '~/layouts/Base.astro';
 import DocSeg from '~/components/DocSeg.astro';
 import PartsList from '~/components/PartsList.svelte';
+import { pageTitleText } from '~/lib/pages';
 import { manualHref } from '~/lib/url';
 ---
 
@@ -14,8 +15,8 @@ import { manualHref } from '~/lib/url';
   <DocSeg current="parts" />
   <p class="muted">
     All rows of the Operations Manual parts list (section 2), with the assembly each part belongs
-    to. Manual pages start at <a href={manualHref('ops', 59)}>p. 2-1</a>. Descriptions are
-    machine-read from the original and unedited, so they may have small errors.
+    to. Manual pages start at <a href={manualHref('ops', 59)}>{pageTitleText('ops', 59)}</a>.
+    Descriptions are machine-read from the original and unedited, so they may have small errors.
   </p>
   <PartsList client:load />
 </Base>

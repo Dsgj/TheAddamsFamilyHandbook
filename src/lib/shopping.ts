@@ -1,5 +1,5 @@
 import type { ComponentStatus, Kind } from './model/types';
-import { componentCode } from '~/lib/copy';
+import { componentCode, KIND_PLURAL } from '~/lib/copy';
 import { DATA } from '~/lib/data/components';
 
 /** Compact per-component row the Shopping list island receives (keeps components.json out of the bundle). */
@@ -25,11 +25,6 @@ export interface ShoppingGroup {
 
 export const NO_PART = 'no part number';
 export const KIND_ORDER: Kind[] = ['lamp', 'switch', 'coil'];
-export const KIND_TITLE: Record<Kind, string> = {
-  lamp: 'Lamps',
-  switch: 'Switches',
-  coil: 'Solenoids',
-};
 /** The component's code as the tables print it: "32", "L55", "SOL 01" (spec §13). */
 export const itemRef = (i: ShoppingItem) => componentCode(i.kind, i.id);
 
@@ -73,7 +68,7 @@ export function formatShopping(groups: ShoppingGroup[]): string {
     const gs = groups.filter((g) => g.kind === kind);
     if (!gs.length) continue;
     if (out.length) out.push('');
-    out.push(KIND_TITLE[kind], ...gs.map(formatGroup));
+    out.push(KIND_PLURAL[kind], ...gs.map(formatGroup));
   }
   return out.join('\n');
 }

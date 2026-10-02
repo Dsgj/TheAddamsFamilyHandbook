@@ -6,9 +6,9 @@ import PlayfieldMap from '~/components/PlayfieldMap.svelte';
 import ReaderBar from '~/components/ReaderBar.svelte';
 import { SECTIONS, isAppendixPage } from '~/lib/handbook/sections';
 import { handbookToc } from '~/lib/handbook/toc';
-import { pageLabel, pageTitleText } from '~/lib/pages';
-import { href, manualHref } from '~/lib/url';
-import { APPENDICES, appendixAnchor } from '~/data/appendix';
+import { pageLabel, pageTitleText, printedPageText } from '~/lib/pages';
+import { handbookHref, manualHref } from '~/lib/url';
+import { APPENDICES, appendixHref } from '~/data/appendix';
 import { OWNER_NOTES } from '~/data/ownerNotes';
 
 /**
@@ -30,7 +30,7 @@ const next = SECTIONS[i + 1];
 const end = (s: typeof section | undefined, page: number | undefined) =>
   s && page !== undefined
     ? {
-        href: href(`handbook/${s.key}`),
+        href: handbookHref(s.key),
         label: isAppendixPage(page) ? 'Appendix' : pageLabel('ops', page) || s.title,
         title: s.title,
       }
@@ -102,9 +102,7 @@ const description =
               <span class="mono" aria-hidden={isAppendixPage(e.data.page) ? undefined : 'true'}>
                 {isAppendixPage(e.data.page)
                   ? `Appendix ${e.data.label}`
-                  : e.data.label
-                    ? `p. ${e.data.label}`
-                    : `PDF page ${e.data.page}`}
+                  : printedPageText(e.data.label, e.data.page)}
               </span>
               {UNVERIFIED.has(e.data.page) && (
                 <span class="st-untested">transcription not verified</span>
@@ -135,7 +133,7 @@ const description =
               OWNER_NOTES[e.data.page]?.map((n) => (
                 <aside class="owner-note small" role="note" aria-label="Owner's note">
                   <span class="muted">Owner's note:</span> {n.text}{' '}
-                  <a href={href(`handbook/appendix#${appendixAnchor(n.code)}`)}>
+                  <a href={appendixHref(n.code)}>
                     {n.code} {APPENDICES[n.code]}
                   </a>
                 </aside>

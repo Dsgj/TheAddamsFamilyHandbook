@@ -1,3 +1,4 @@
+import { componentCode } from '~/lib/copy';
 import type { Lamp, MatrixHeaders, Switch } from '~/lib/model/types';
 
 export interface SharedCause {
@@ -133,7 +134,7 @@ export function lampSharedCauses(
   rows: MatrixHeaders,
 ): SharedCause[] {
   const out = matrixCauses('lamp', lamps, cols, rows, (axis, key, ids, h) => {
-    const list = ids.map((id) => `L${id}`).join(', ');
+    const list = ids.map((id) => componentCode('lamp', id)).join(', ');
     const q = h?.[3] ?? '';
     const pin = h?.[2] ?? '';
     return axis === 'column'

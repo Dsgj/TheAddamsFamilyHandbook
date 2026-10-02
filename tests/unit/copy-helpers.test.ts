@@ -1,7 +1,34 @@
 import { describe, expect, it } from 'vitest';
-import { agree, capitalise, componentCode, kindLine, locationLine, plural } from '~/lib/copy';
+import {
+  agree,
+  capitalise,
+  componentCode,
+  componentName,
+  inMatrix,
+  KIND_LABEL,
+  KIND_PLURAL,
+  kindLine,
+  LAYER_KIND,
+  LAYER_LABEL,
+  locationLine,
+  MAP_LAYER,
+  MAP_TITLE,
+  plural,
+  TABLE_LABEL,
+  tileCode,
+} from '~/lib/copy';
 import { DATA } from '~/lib/data/components';
-import { pageRefText, pageTitleText } from '~/lib/pages';
+import type { Kind, Layer } from '~/lib/model/types';
+import {
+  DOCS,
+  pageCellText,
+  pageCount,
+  pageImage,
+  pageLabel,
+  pageRefText,
+  pageTitleText,
+  printedPageText,
+} from '~/lib/pages';
 import { wireName } from '~/lib/wire';
 
 // The shared wording helpers of spec §13 Copy.
@@ -68,5 +95,95 @@ describe('copy helpers', () => {
     expect(wireName('Gry')).toBe('Grey');
     expect(wireName('Green-Gray')).toBe('Green-Grey');
     expect(wireName('Red')).toBe('Red');
+  });
+});
+
+const KINDS: Kind[] = ['switch', 'lamp', 'coil'];
+const LAYERS: Layer[] = ['sw', 'lamp', 'coil'];
+const ALL = [
+  ...DATA.switches.map((c) => ['switch', c] as const),
+  ...DATA.lamps.map((c) => ['lamp', c] as const),
+  ...DATA.coils.map((c) => ['coil', c] as const),
+];
+
+// The presentation helpers of audit P4 item 1. Each one is also checked against the inline
+// expression it replaced, over the real data.
+describe('presentation helpers', () => {
+  it('names a component by its kind word and id', () => {
+    expect(componentName('switch', '32')).toBe('Switch 32');
+    expect(componentName('lamp', '55')).toBe('Lamp 55');
+    expect(componentName('coil', '01')).toBe('Solenoid 01');
+    for (const [k, c] of ALL) expect(componentName(k, c.id)).toBe(`${KIND_LABEL[k]} ${c.id}`);
+  });
+
+  it('puts L before a lamp id on a map tile, and nothing before any other', () => {
+    expect(tileCode('lamp', '55')).toBe('L55');
+    expect(tileCode('switch', '32')).toBe('32');
+    expect(tileCode('coil', '07')).toBe('07');
+    expect(tileCode('shot', 'K')).toBe('K');
+    for (const [k, c] of ALL) expect(tileCode(k, c.id)).toBe(k === 'lamp' ? 'L' + c.id : c.id);
+  });
+
+  it('puts a switch or lamp in the matrix exactly when it has a column', () => {
+    for (const c of [...DATA.switches, ...DATA.lamps])
+      expect(inMatrix(c), c.id).toBe(c.col !== null);
+    const out = DATA.switches.filter((s) => !inMatrix(s)).map((s) => s.id);
+    expect(out).toContain('D1');
+    expect(out).toContain('F1');
+    expect(out).not.toContain('32');
+  });
+
+  it('keeps one word per kind and per map layer', () => {
+    expect(KIND_PLURAL).toEqual({ switch: 'Switches', lamp: 'Lamps', coil: 'Solenoids' });
+    expect(TABLE_LABEL).toEqual({
+      switch: 'Switch matrix',
+      lamp: 'Lamp matrix',
+      coil: 'Solenoids and flashers',
+    });
+    expect(LAYER_LABEL).toEqual({ sw: 'Switches', lamp: 'Lamps', coil: 'Solenoids and flashers' });
+    expect(MAP_TITLE).toEqual({
+      sw: 'Switch Locations',
+      lamp: 'Lamp Locations',
+      coil: 'Solenoid/Flasher Locations',
+    });
+    for (const k of KINDS) expect(LAYER_KIND[MAP_LAYER[k]]).toBe(k);
+    for (const l of LAYERS) expect(MAP_LAYER[LAYER_KIND[l]]).toBe(l);
+  });
+
+  it("cites each layer's location page as the old fixed strings did", () => {
+    const old: Record<Layer, string> = {
+      sw: 'Switch Locations, p. 2-39',
+      lamp: 'Lamp Locations, p. 2-40',
+      coil: 'Solenoid/Flasher Locations, p. 2-41',
+    };
+    for (const l of LAYERS)
+      expect(`${MAP_TITLE[l]}, ${pageTitleText('ops', DATA.maps[l].page)}`).toBe(old[l]);
+  });
+
+  it('builds a page image path, with a tile or overview suffix', () => {
+    expect(pageImage('ops', 1)).toBe('assets/pages/ops/1.jpg');
+    expect(pageImage('ops', 1, '_o')).toBe('assets/pages/ops/1_o.jpg');
+    expect(pageImage('ops', 25, '_00')).toBe('assets/pages/ops/25_00.png');
+    expect(pageImage('wpc', 3)).toBe('assets/pages/wpc/3.png');
+    for (const doc of DOCS)
+      for (let p = 1; p <= pageCount(doc); p++)
+        for (const suffix of ['', '_00', '_o'])
+          expect(pageImage(doc, p, suffix)).toBe(
+            `assets/pages/${doc}/${p}${suffix}.${doc === 'ops' && p === 1 ? 'jpg' : 'png'}`,
+          );
+  });
+
+  it('writes a page as the old ternaries did, for every page of every manual', () => {
+    expect(printedPageText('2-39', 97)).toBe('p. 2-39');
+    expect(printedPageText('', 2)).toBe('PDF page 2');
+    expect(pageCellText('ops', 25)).toBe('1-15');
+    expect(pageCellText('ops', 2)).toBe('PDF page 2');
+    for (const doc of DOCS)
+      for (let p = 1; p <= pageCount(doc); p++) {
+        const label = pageLabel(doc, p);
+        expect(printedPageText(label, p)).toBe(label ? `p. ${label}` : `PDF page ${p}`);
+        expect(printedPageText(label, p)).toBe(pageTitleText(doc, p));
+        expect(pageCellText(doc, p)).toBe(label || `PDF page ${p}`);
+      }
   });
 });

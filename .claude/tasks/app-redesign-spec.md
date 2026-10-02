@@ -458,7 +458,7 @@ dragMove keeps working
   - 1.6 s, standard ease, scale 1→2.2, opacity .9→0, **once**. Today it loops (`PlayfieldMap.svelte:608`); owner question.
   - None under reduced motion.
 - Names:
-  - "Switch 32, Upper Right Jet", "Lamp 13, …", "Solenoid 07, …", "Shot K, …" (`${KIND_LABEL} ${id}`, §13).
+  - "Switch 32, Upper Right Jet", "Lamp 13, …", "Solenoid 07, …", "Shot K, …" (`${KIND_LABEL} ${id}`, `componentName`, §13).
   - A faulted marker adds ", Fault". The selected one adds ", selected" and `aria-pressed="true"`.
   - Today's names are "32 Upper Right Jet" (PlayfieldMap.svelte:346). `tests/e2e/smoke.spec.ts:16,:81` match on them. The list rows share that name today (:400-408), and `.first()` picks the marker because the canvas comes first in the DOM; keep that order.
 - Keyboard (audit AY-01, 2026-10-01; tests/e2e/a11y.spec.ts):
@@ -894,7 +894,7 @@ See §7: Map, MapLight, MapPeek, MapPeekLight, MapExpanded, MapZoom, ShellTablet
 - Buttons: "Copy as text" and "Share".
 - Footer: "Mark a component Fault and it lands here. Fixed clears the fault."
 - Where the repo wins over the board (the tests and the text export depend on it; the task file, Keep → Shopping list):
-  - The lamp group is titled **Lamps**, not "Bulbs" (`KIND_TITLE`, src/lib/shopping.ts:26-30).
+  - The lamp group is titled **Lamps**, not "Bulbs" (`KIND_PLURAL`, src/lib/copy.ts).
   - Each group is a `section.grp` with an `<h2>`.
   - The item link text is `{itemRef} {name}`: "32 Upper Right Jet", "L13 Jackpot (2)", "SOL 01 Chair Kickout" (`componentCode`, §13).
   - Each row keeps its "Fixed: {name}" button, so the swipe is never the only way.
@@ -1067,14 +1067,14 @@ Source: Rationale §08, Components and MapFitSpec.
 
 ## 13. Copy
 
-Audit P3 item 1, "One name per thing" (CP-01 to CP-20, UX-06, UX-07, UX-10, CR-09), 2026-10-01. One word for each thing, in every screen, label, accessible name, toast and meta description. Words only: the stored values (`ok`, `fault`, `untested`), the backup format (`EXPORT_VERSION` 2), the storage keys (`tafh:status`, `tafh:setup`, `tafh:verify`, `tafh:reading`, `tafh:recent`, `tafh:viewed`), routes, ids, anchors and content file names never change. `src/content/**` and quoted manual names (menu items, 'Center Staircase', 'Set Time & Date') keep the manual's words. The helpers live in `src/lib/copy.ts` (`KIND_LABEL`, `plural`, `componentCode`, `locationLine`, `kindLine`, `capitalise`), `src/lib/pages.ts` (`pageTitleText`, `pageRefText`), `src/lib/status-io.ts` (`shortDate`, `whenLabel`, `localIsoDate`) and `src/lib/wire.ts` (`wireName`). `tests/unit/copy.test.ts` reads the source and fails on a losing variant.
+Audit P3 item 1, "One name per thing" (CP-01 to CP-20, UX-06, UX-07, UX-10, CR-09), 2026-10-01. One word for each thing, in every screen, label, accessible name, toast and meta description. Words only: the stored values (`ok`, `fault`, `untested`), the backup format (`EXPORT_VERSION` 2), the storage keys (`tafh:status`, `tafh:setup`, `tafh:verify`, `tafh:reading`, `tafh:recent`, `tafh:viewed`), routes, ids, anchors and content file names never change. `src/content/**` and quoted manual names (menu items, 'Center Staircase', 'Set Time & Date') keep the manual's words. The helpers live in `src/lib/copy.ts` (`KIND_LABEL`, `KIND_PLURAL`, `TABLE_LABEL`, `MAP_TITLE`, `LAYER_LABEL`, `MAP_LAYER`, `LAYER_KIND`, `plural`, `componentCode`, `componentName`, `tileCode`, `inMatrix`, `locationLine`, `kindLine`, `capitalise`), `src/lib/pages.ts` (`pageTitleText`, `pageRefText`, `printedPageText`, `pageCellText`, `pageImage`), `src/lib/present.ts` (`wiring`, `callouts`), `src/lib/url.ts` (`mapHref`, `handbookHref`, `tablePath`, `tableHref`), `src/lib/handbook/links.ts` (`tocIndex`, `headingHref`), `src/data/appendix.ts` (`appendixHref`), `src/lib/status-io.ts` (`shortDate`, `whenLabel`, `localIsoDate`) and `src/lib/wire.ts` (`wireName`). `tests/unit/copy.test.ts` reads the source and fails on a losing variant.
 
 ### 13.1 Glossary
 
 | Thing | Term | Not | Rule |
 |---|---|---|---|
 | Component state | OK · Fault · Not tested | Broken, Not Tested | The tick column is headed "Fault" and each tick is named "Fault: {name}". Log events: OK, Fault, Not tested, Cleared. "Fixed" is the shopping-list action only. |
-| Component code | `32`, `L55`, `SOL 01`, `F101`, `GI 1`, `F1` | C01, S32, SF1, SOL 1, "Lamp L55" | `componentCode(kind, id)`; the code parser is unchanged. Headings and accessible names use `${KIND_LABEL} ${id}`: "Switch 32", "Lamp 55", "Solenoid 01". Map markers and the 32 px map list tiles show the bare id. |
+| Component code | `32`, `L55`, `SOL 01`, `F101`, `GI 1`, `F1` | C01, S32, SF1, SOL 1, "Lamp L55" | `componentCode(kind, id)`; the code parser is unchanged. Headings and accessible names use `${KIND_LABEL} ${id}` (`componentName`): "Switch 32", "Lamp 55", "Solenoid 01". Map markers and the 32 px map list tiles show the bare id. |
 | Machine component | component | part (for a switch, lamp or solenoid), "Selected part", "Mark a part Fault" | "part" is a catalogue entry with a part number (Parts, "parts to order"). Map: "Search components", "Selected component", "Selected component and components on the map", "All components on the map". The shopping list footer: "Mark a component Fault and it lands here. Fixed clears the fault." |
 | Page name | one name per page (rule 5) | Switches, Lamps and Solenoids as titles, "Solenoid table", "Parts list", "Verify in the machine", "Setup step 7" | Switch matrix · Lamp matrix · Solenoids and flashers · Fuses, LEDs and jumpers · Parts · Verify · Machine setup step 7. |
 | Handbook | Handbook (the tab, a title) / the handbook (running text) | Owner service notes, owner's handbook, transcription, "the owner's own notes" | "Handbook appendix" for the notes after the manual's pages: "appendix A7 in the handbook", "handbook appendix A7". The appendix is "notes written for this machine, not manual text", on the Handbook home and in the appendix's warning. A short note under a manual page stays the "Owner's note" (§9.11). |

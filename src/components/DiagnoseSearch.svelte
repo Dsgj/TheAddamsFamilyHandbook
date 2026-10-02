@@ -1,9 +1,9 @@
 <script lang="ts">
   import { componentCode, kindLine } from '~/lib/copy';
   import { DATA } from '~/lib/data/components';
-  import { pageRefText } from '~/lib/pages';
+  import { pageRefText, printedPageText } from '~/lib/pages';
   import type { DocId } from '~/lib/model/types';
-  import { componentHref, href, manualHref } from '~/lib/url';
+  import { componentHref, handbookHref, href, manualHref, tableHref } from '~/lib/url';
 
   /**
    * The search state of the Diagnose field (spec §9.3): one word or more, no digits. Components
@@ -86,9 +86,9 @@
         c.driver,
       );
     for (const f of DATA.flippers)
-      hit(f.id, f.name, `Flipper coil ${f.coil}`, href('coils#flippers'));
+      hit(f.id, f.name, `Flipper coil ${f.coil}`, tableHref('coil', 'flippers'));
     for (const g of DATA.gi)
-      hit(g.id, g.name, `General illumination · ${g.driver}`, href('coils#gi'));
+      hit(g.id, g.name, `General illumination · ${g.driver}`, tableHref('coil', 'gi'));
     for (const f of DATA.fuses) hit(f.id, f.circuit, `Fuse · ${f.rating}`, href(`fuses#${f.id}`));
     return out;
   })();
@@ -112,7 +112,7 @@
           const appendix = t.section === 'appendix';
           const sub = appendix
             ? 'Handbook appendix'
-            : `Handbook · ${t.label ? `p. ${t.label}` : `PDF page ${t.page}`}`;
+            : `Handbook · ${printedPageText(t.label, t.page)}`;
           // "owner service notes": the appendix's old name, still found by the search.
           const extra = appendix ? ' owner service notes' : '';
           return {
@@ -121,7 +121,7 @@
             code: '',
             label: t.text,
             sub,
-            url: href(`handbook/${t.section}#${t.id}`),
+            url: handbookHref(t.section, t.id),
             text: `${t.text} ${sub}${extra}`.toLowerCase(),
           };
         });

@@ -2,27 +2,22 @@
 import Base from '~/layouts/Base.astro';
 import SetupGuide from '~/components/SetupGuide.svelte';
 import { CARE_INTRO, CARE_STEPS, CARE_WARNING } from '~/data/care';
-import { findHeading, type HeadingIndex } from '~/lib/handbook/render';
-import { handbookToc } from '~/lib/handbook/toc';
-import { href } from '~/lib/url';
+import { headingHref } from '~/lib/handbook/links';
+import { findHeading } from '~/lib/handbook/render';
+import { handbookIndex } from '~/lib/handbook/toc';
+import { handbookHref, href } from '~/lib/url';
 
 /**
  * Same resolution as the setup page: `find` is a heading code or text in the Handbook. The advice
  * itself lives in src/data/care.ts.
  */
-const toc = await handbookToc();
-const idx: HeadingIndex = new Map(
-  toc
-    .filter((t) => t.level > 1)
-    .map((t) => [t.id, { id: t.id, level: t.level === 2 ? 2 : 3, text: t.text, page: t.page }]),
-);
-const sectionOf = new Map(toc.map((t) => [t.id, t.section]));
+const idx = await handbookIndex();
 const links: Record<string, string> = {};
 for (const s of CARE_STEPS) {
   for (const i of s.items) {
     if (!i.find) continue;
-    const h = findHeading(idx, i.find);
-    if (h) links[i.id] = href(`handbook/${sectionOf.get(h.id)}#${h.id}`);
+    const h = findHeading(idx.headings, i.find);
+    if (h) links[i.id] = headingHref(idx, h);
   }
 }
 ---
@@ -45,6 +40,6 @@ for (const s of CARE_STEPS) {
     Ticks and dates stay on this device and go into the backup on the{' '}
     <a href={href('shopping')}>Shopping list</a> page. The battery tick is the same one as in{' '}
     <a href={href('setup#step-upkeep')}>Machine setup step 7</a>. The manual's own page is{' '}
-    <a href={href('handbook/maintenance')}>Maintenance Information</a>.
+    <a href={handbookHref('maintenance')}>Maintenance Information</a>.
   </p>
 </Base>

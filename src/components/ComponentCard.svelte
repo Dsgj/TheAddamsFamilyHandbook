@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { componentCode, kindLine as kindLineOf } from '~/lib/copy';
-  import { MAP_LAYER } from '~/lib/data/components';
+  import { componentCode, kindLine as kindLineOf, MAP_LAYER } from '~/lib/copy';
   import { COIL_NOTE, HINT, t } from '~/lib/data/en';
   import { positions } from '~/lib/data/positions';
   import type { Coil, Kind, Lamp, MapMeta, Switch } from '~/lib/model/types';
   import { pageTitleText } from '~/lib/pages';
-  import { componentHref, href, manualHref } from '~/lib/url';
+  import { callouts as calloutsOf, wiring } from '~/lib/present';
+  import { componentHref, manualHref, mapHref } from '~/lib/url';
   import MiniMap from './MiniMap.svelte';
   import StatusRow from './StatusRow.svelte';
   import WireChip from './WireChip.svelte';
@@ -24,13 +24,12 @@
   }: { kind: Kind; item: Any; mapMeta: MapMeta; compact?: boolean; linkTitle?: boolean } = $props();
 
   const sw = $derived(kind === 'switch' ? (item as Switch) : undefined);
-  const lamp = $derived(kind === 'lamp' ? (item as Lamp) : undefined);
   const coil = $derived(kind === 'coil' ? (item as Coil) : undefined);
+  const w = $derived(wiring(kind, item));
   const layer = $derived(MAP_LAYER[kind]);
-  const callouts = $derived(item.loc.map((l) => l.l).join(', '));
+  const callouts = $derived(calloutsOf(item));
   const mapPage = $derived(mapMeta.page);
   const pos = $derived(positions(kind, item.id));
-  const isMatrix = $derived(!!sw && sw.col !== null);
   const code = $derived(componentCode(kind, item.id));
   const kindLine = $derived(kindLineOf(kind, item));
   /** "p. 2-39": the location map's printed label. */
@@ -53,51 +52,51 @@
   </header>
 
   <dl class="wiring" class:compact>
-    {#if sw}
-      {#if isMatrix}
-        <dt>Column {sw.col}</dt>
+    {#if w.kind === 'switch'}
+      {#if w.matrix}
+        <dt>Column {w.matrix.column.n}</dt>
         <dd>
-          <WireChip colour={sw.colWireEn ?? ''} />
-          <span class="mono">{sw.colPin} · {sw.colIc}</span>
+          <WireChip colour={w.matrix.column.colour} />
+          <span class="mono">{w.matrix.column.text}</span>
         </dd>
-        <dt>Row {sw.row}</dt>
+        <dt>Row {w.matrix.row.n}</dt>
         <dd>
-          <WireChip colour={sw.rowWireEn ?? ''} />
-          <span class="mono">{sw.rowPin} · {sw.rowIc}</span>
+          <WireChip colour={w.matrix.row.colour} />
+          <span class="mono">{w.matrix.row.text}</span>
         </dd>
       {:else}
         <dt>Wire</dt>
-        <dd><WireChip colour={sw.wireEn ?? ''} /> <span class="mono">{sw.pin}</span></dd>
+        <dd><WireChip colour={w.wire.colour} /> <span class="mono">{w.wire.text}</span></dd>
       {/if}
-      {#if sw.part}<dt>Switch</dt>
-        <dd class="mono">{sw.part}</dd>{/if}
-      {#if sw.assy}<dt>Assembly</dt>
-        <dd class="mono">{sw.assy}</dd>{/if}
-    {:else if lamp}
-      <dt>Column {lamp.col}</dt>
+      {#if w.part}<dt>Switch</dt>
+        <dd class="mono">{w.part}</dd>{/if}
+      {#if w.assy}<dt>Assembly</dt>
+        <dd class="mono">{w.assy}</dd>{/if}
+    {:else if w.kind === 'lamp'}
+      <dt>Column {w.column.n}</dt>
       <dd>
-        <WireChip colour={lamp.colWireEn} /> <span class="mono">{lamp.colPin} · {lamp.colQ}</span>
+        <WireChip colour={w.column.colour} /> <span class="mono">{w.column.text}</span>
       </dd>
-      <dt>Row {lamp.row}</dt>
+      <dt>Row {w.row.n}</dt>
       <dd>
-        <WireChip colour={lamp.rowWireEn} /> <span class="mono">{lamp.rowPin} · {lamp.rowQ}</span>
+        <WireChip colour={w.row.colour} /> <span class="mono">{w.row.text}</span>
       </dd>
       <dt>Bulb</dt>
-      <dd><span class="mono">{lamp.bulb}</span> · {lamp.bulbPart}</dd>
-      {#if lamp.assy}<dt>Assembly</dt>
-        <dd class="mono">{lamp.assy}</dd>{/if}
-    {:else if coil}
+      <dd><span class="mono">{w.bulb.code}</span> · {w.bulb.part}</dd>
+      {#if w.assy}<dt>Assembly</dt>
+        <dd class="mono">{w.assy}</dd>{/if}
+    {:else if w.kind === 'coil'}
       <dt>Wire</dt>
       <dd>
-        <WireChip colour={coil.wireEn} /> <span class="mono">{coil.pin} · {coil.driver}</span>
+        <WireChip colour={w.wire.colour} /> <span class="mono">{w.wire.text}</span>
       </dd>
       <dt>Coil</dt>
-      <dd class="mono">{coil.part}</dd>
-      {#if coil.assy}<dt>Assembly</dt>
-        <dd class="mono">{coil.assy}</dd>{/if}
+      <dd class="mono">{w.part}</dd>
+      {#if w.assy}<dt>Assembly</dt>
+        <dd class="mono">{w.assy}</dd>{/if}
       <dt>Fuse</dt>
       <dd>
-        {coil.fuse || '—'}
+        {w.fuse}
         <span class="muted small">(derived from the fuse list, not printed per coil)</span>
       </dd>
     {/if}
@@ -114,7 +113,7 @@
   </dl>
 
   {#if !compact}
-    <a class="map-link" href={href(`map?layer=${layer}&id=${item.id}`)} aria-label="Show on map">
+    <a class="map-link" href={mapHref(layer, item.id)} aria-label="Show on map">
       <MiniMap {pos} w={310} h={120} />
     </a>
   {/if}
@@ -122,7 +121,7 @@
   <StatusRow {kind} id={item.id} />
 
   <div class="acts">
-    <a class="btn sm tinted" href={href(`map?layer=${layer}&id=${item.id}`)}>Show on map</a>
+    <a class="btn sm tinted" href={mapHref(layer, item.id)}>Show on map</a>
     <a class="btn sm tinted" href={manualHref('ops', mapPage)}>Manual {mapRef}</a>
     {#if linkTitle}
       <a class="btn sm tinted" href={componentHref(kind, item.id)}>Details</a>

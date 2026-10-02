@@ -7,6 +7,7 @@
  */
 import type { AnyComponent } from '~/lib/data/components';
 import type { Coil, Kind, Lamp, Switch } from '~/lib/model/types';
+import { handbookHref } from '~/lib/url';
 
 export const APPENDICES: Record<string, string> = {
   A1: 'Multimeter basics',
@@ -21,6 +22,10 @@ export const APPENDICES: Record<string, string> = {
 
 /** Heading id of an appendix's H2: each appendix is one page and its H2 is the first heading. */
 export const appendixAnchor = (code: string): string => `p${100 + Number(code.slice(1))}-1`;
+
+/** The link to an appendix's heading: `handbook/appendix#p106-1` for A6. */
+export const appendixHref = (code: string): string =>
+  handbookHref('appendix', appendixAnchor(code));
 
 /**
  * Typical coil resistance across the lugs, game off, from the A2 and A6 tables. Flipper coils

@@ -1,10 +1,18 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { APPENDICES, appendixAnchor, appendixFor, coilOhms, serviceNotes } from '~/data/appendix';
+import {
+  APPENDICES,
+  appendixAnchor,
+  appendixFor,
+  appendixHref,
+  coilOhms,
+  serviceNotes,
+} from '~/data/appendix';
 import { OWNER_NOTES } from '~/data/ownerNotes';
 import { DATA } from '~/lib/data/components';
 import { findHeading, indexHeadings, parseHeader, renderPage } from '~/lib/handbook/render';
 import { APPENDIX_FIRST_PAGE, SECTIONS, isAppendixPage } from '~/lib/handbook/sections';
+import { href } from '~/lib/url';
 
 const dir = 'src/content/handbook';
 const appFiles = readdirSync(dir).filter((f) => /^app\d+\.md$/.test(f));
@@ -49,6 +57,12 @@ describe('owner appendices', () => {
     for (const code of Object.keys(APPENDICES)) {
       expect(findHeading(idx, code)?.id, code).toBe(appendixAnchor(code));
     }
+  });
+
+  it('links each appendix code to its heading on the appendix page', () => {
+    expect(appendixHref('A6')).toBe(href('handbook/appendix#p106-1'));
+    for (const code of Object.keys(APPENDICES))
+      expect(appendixHref(code)).toBe(href('handbook/appendix#' + appendixAnchor(code)));
   });
 
   it('maps every component to known codes, most specific first and A1 last', () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseMapId } from '~/lib/url';
+import { handbookHref, href, mapHref, parseMapId, tableHref, tablePath } from '~/lib/url';
 
 describe('parseMapId', () => {
   it('reads every kind-qualified id exactly', () => {
@@ -17,5 +17,30 @@ describe('parseMapId', () => {
     expect(parseMapId('lamp:')).toBeNull();
     expect(parseMapId('')).toBeNull();
     expect(parseMapId(null)).toBeNull();
+  });
+});
+
+// The link helpers of audit P4 item 1, each against the inline `href()` it replaced.
+describe('link helpers', () => {
+  it('links the map with one layer on and one marker selected', () => {
+    expect(mapHref('lamp', 13)).toBe(href('map?layer=lamp&id=13'));
+    expect(mapHref('sw', '32')).toBe(href('map?layer=sw&id=32'));
+    expect(mapHref('coil', '05').endsWith('/map?layer=coil&id=05')).toBe(true);
+  });
+
+  it('drops the Handbook hash only when no anchor is given', () => {
+    expect(handbookHref('tests')).toBe(href('handbook/tests'));
+    expect(handbookHref('tests', 'p17-2')).toBe(href('handbook/tests#p17-2'));
+    // A stored reading anchor is any string; an empty one keeps its hash, as it always did.
+    expect(handbookHref('tests', '')).toBe(href('handbook/tests#'));
+  });
+
+  it("names each kind's table page and links it, at a panel when asked", () => {
+    expect(tablePath('switch')).toBe('switches');
+    expect(tablePath('lamp')).toBe('lamps');
+    expect(tablePath('coil')).toBe('coils');
+    expect(tableHref('switch')).toBe(href('switches'));
+    expect(tableHref('coil', 'flippers')).toBe(href('coils#flippers'));
+    expect(tableHref('coil', 'gi')).toBe(href('coils#gi'));
   });
 });

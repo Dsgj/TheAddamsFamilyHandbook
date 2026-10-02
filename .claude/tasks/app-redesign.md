@@ -252,6 +252,49 @@ Baseline before Phase 1 (from `playfield-map.md`, last green run):
     - The `/switches` segments read Matrix / Dedicated / Flippers. "Flipper J806" named one connector for switches that sit on J805 (the buttons) and J806 (the EOS switches), and "Dedicated J205" overflowed its segment at 360 px. The segment names the group; each panel heading carries the connectors (§6.6, §9.6; tables.spec and shopping.spec updated).
     - The lamp service note (appendix.ts, A4) writes the bulb only when the lamp has one. Lamps 41, 76 and 88 have no bulb in components.json and printed "the bulb () or its socket".
     - The CHANGELOG counts six copy rules, as §13.2 does, and the Diagnose Recent examples in §9 carry the year ("23 Sep 2026").
+- **Presentation helpers** (2026-10-01, audit P4 item 1: AR-05, SV-07, AR-16, AR-09, AR-12, AR-14, SV-12, CP-14). A refactor with no visible change: each string or link that several files built by hand now comes from one helper, and the built site is byte-identical. Words, URLs, stored values, keys, ids and anchors are unchanged, as are copy.test.ts, the rules in spec §13 (its helper list is updated) and the e2e assertions.
+  - **Helper homes:**
+    - `src/lib/copy.ts` holds the vocabulary: `KIND_PLURAL` (was shopping.ts `KIND_TITLE`), `TABLE_LABEL`, `MAP_LAYER`, `LAYER_KIND`, `LAYER_LABEL` (the last three were in `src/lib/data/components.ts`) and `MAP_TITLE`. It also holds `componentName` ("Switch 32"), `tileCode` (the map tile's bare id with the lamp `L`) and `inMatrix`. components.ts no longer exports or re-exports any vocabulary, and it gains `mapOf`, so ComponentCard and ComponentDetail stop pulling components.json into their islands.
+    - `src/lib/url.ts`: `mapHref`, `handbookHref`, `tablePath` and `tableHref`. `src/data/appendix.ts`: `appendixHref`.
+    - `src/lib/handbook/links.ts`: `tocIndex` and `headingHref`, used by care, setup and the component pages, with `handbookIndex` in toc.ts.
+    - `src/lib/pages.ts`: `printedPageText`, `pageCellText` and a suffix on `pageImage` (`_00` tile, `_o` overview).
+    - `src/lib/present.ts`: `wiring(kind, item)` (one typed object per kind: the matrix column and row or the wire, part, assembly, fuse and bulb) and `callouts`.
+    - The types `Layer` and `MapKind` are in model/types.ts.
+  - **Template rule.** Svelte 5 SSR writes indexed hydration markers (`<!--[0-->`, `<!--[-1-->`), so every touched template keeps its block tree: the same `{#if}`/`{:else if}` branches in the same order, and the same `{#each}` and component boundaries. Only the expressions change: `{:else if coil}` becomes `{:else if w.kind === 'coil'}`, never `{:else}`. The wiring helper is a derivation, not a row renderer.
+  - **Casts that stay.** `sw?.hint`, `sw?.notShown`, `coil?.note`, and ComponentDetail's `part` and `partLabel` still read the per-kind casts in ComponentCard, ComponentDetail and PlayfieldMap.
+  - **Stays hand-typed:**
+    - page ranges and en.ts:59;
+    - the Matrix header rows and appendix.ts prose wiring;
+    - the nav.ts rows (tested equal to `tablePath` and `TABLE_LABEL`);
+    - the handbook hub link;
+    - the PlayfieldMap shot words;
+    - the tables' bare `#` ids;
+    - the render.ts link strings, which take a base;
+    - the col and row data filters;
+    - the pages.ts manual page titles;
+    - `src/content` prose.
+  - **Lint.** `tests/unit/structure.test.ts` reads src/ with comments blanked. Its 14 checks all fail on HEAD 1a14a76 and pass now:
+    - (a) map links are built only in url.ts, and (b) Handbook links only in url.ts and render.ts;
+    - (c) the heading index only under lib/handbook;
+    - (d) printed page labels and the "p." and "PDF page" templates only in pages.ts;
+    - (e) kind and table words, kind-to-path, layer or word maps, and the kind word before an id only in copy.ts;
+    - (f) the lamp `L` prefix only in copy.ts;
+    - (g) the fuse dash and the callouts only in present.ts;
+    - (h) nav.ts table rows equal to `TABLE_LABEL` and `tablePath`;
+    - (i) the vocabulary is exported only from copy.ts and never imported from lib/data/components, and kind or layer keys map to capitalised words only in copy.ts.
+  - **Tests.** New helper tests sit in copy-helpers, url, handbook, appendix and the new present.test.ts. On HEAD they fail or cannot load their module. There are 33 new unit tests (14 of them the lint), 271 in all.
+  - **Proof.**
+    - `dist` matches the HEAD build: the 360 html, json, css and webmanifest files (349 pages) are byte-identical after hash normalisation, the 240 binaries are present on both sides, and sw.js precaches the same URL set. No chunk grew by more than 1 KB, and no island closure gained components.json or pages.json.
+    - present.ts shares the StatusRow chunk (+796 B), and copy grew by 516 B. The ComponentCard and ComponentDetail closures shrink by about 57 KB each.
+    - A client snapshot of the HEAD and new previews matches body HTML byte for byte in 44 of 44 captures, 22 at phone and 22 at desktop size. They cover:
+      - map selection of switches 32, D1 and 14, lamps 13 and 76, and coils 05 and 16;
+      - the four map lists, and calibration;
+      - Diagnose codes and shared faults;
+      - two searches;
+      - the handbook filter and the Continue reading link, with an empty anchor;
+      - the matrix cards;
+      - the shopping list.
+    - switches.astro imports the lib modules above Matrix: Astro orders page CSS by import position, and a tie put Matrix.css before the `.tabs` style.
 
 ## Routes
 
