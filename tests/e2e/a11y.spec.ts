@@ -239,6 +239,7 @@ test.describe('map keyboard model (AY-01, spec §7.5)', () => {
     page,
   }) => {
     await gotoHydrated(page, '/map?calib=1');
+    await expect(page.locator('.card.calib')).toBeVisible();
     const markers = page.locator('button.marker');
     await expect(markers.first()).toBeAttached();
     await expect(page.locator('button.marker[tabindex="-1"]')).toHaveCount(0);
