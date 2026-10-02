@@ -2,7 +2,7 @@
 import Base from '~/layouts/Base.astro';
 import PageViewer from '~/components/PageViewer.svelte';
 import ManualSearch from '~/components/ManualSearch.svelte';
-import ocr from '~/data/kit/ocr-text.json';
+import { OCR } from '~/lib/kit/ocr';
 import type { DocId } from '~/lib/model/types';
 import {
   DOC_NAME,
@@ -28,7 +28,7 @@ export function getStaticPaths() {
 }
 const { doc, meta } = Astro.props as { doc: DocId; meta: (typeof PAGES)['ops'][number] };
 const page = meta[0];
-const text = (ocr as Record<DocId, string[]>)[doc][page - 1] ?? '';
+const text = OCR[doc][page - 1] ?? '';
 /** "p. 1-15" before a printed label, "PDF page 2" where the page prints none (spec §13). */
 const pageTitle = pageTitleText(doc, page);
 const title = tocTitle(doc, page);

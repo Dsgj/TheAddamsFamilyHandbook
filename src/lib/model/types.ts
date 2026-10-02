@@ -1,4 +1,9 @@
-/** Static component data, transcribed from the owner's manuals (see kit-docs/DATA-SCHEMA.md). */
+/**
+ * Static component data, transcribed from the owner's manuals (see kit-docs/DATA-SCHEMA.md). The
+ * kit's JSON is Swedish-authored; src/lib/kit/translate.ts turns it into this English model at build
+ * time, so every string here is English and the kit's Swedish twins (`colWire`, `rowWire`, `wire`
+ * on switches and coils) are gone.
+ */
 
 export interface Loc {
   /** Normalised 0–1 to the map image width/height. */
@@ -15,23 +20,20 @@ export interface Switch {
   assy: string;
   col: number | null;
   row: number | null;
-  colWire?: string;
   colWireEn?: string;
   colPin?: string;
   colIc?: string;
-  rowWire?: string;
   rowWireEn?: string;
   rowPin?: string;
   rowIc?: string;
   /** Dedicated / flipper switches only. */
-  wire?: string;
   wireEn?: string;
   pin?: string;
   kind?: 'ded' | 'flip';
   under: boolean;
   notShown: boolean;
   unused: boolean;
-  /** Experience, not the manual (Swedish in the kit; rendered through en.ts). */
+  /** Experience, not the manual (Swedish in the kit; English from en.ts HINT at build time). */
   hint: string;
   loc: Loc[];
 }
@@ -44,11 +46,9 @@ export interface Lamp {
   assy: string;
   col: number;
   row: number;
-  colWire: string;
   colWireEn: string;
   colPin: string;
   colQ: string;
-  rowWire: string;
   rowWireEn: string;
   rowPin: string;
   rowQ: string;
@@ -61,7 +61,6 @@ export interface Coil {
   id: string;
   name: string;
   type: 'High Power' | 'Low Power' | 'Flasher';
-  wire: string;
   wireEn: string;
   pin: string;
   driver: string;
@@ -69,8 +68,14 @@ export interface Coil {
   assy: string;
   under: boolean;
   cabinet: boolean;
-  /** Derived from the fuse list (1-47), not printed per coil. */
+  /**
+   * Derived from the fuse list (1-47), not printed per coil, except the magnets 16, 23 and 24,
+   * whose 5A S.B. fuse is printed (ops002 footnote) and overlaid from ownerNotes.ts COMPONENT_FUSES.
+   */
   fuse: string;
+  /** False where `fuse` is the owner's overlay rather than the kit's derived value. */
+  fuseDerived: boolean;
+  /** The kit's note in English, or the owner's from ownerNotes.ts COMPONENT_NOTES. */
   note: string;
   loc: Loc[];
 }
@@ -78,6 +83,7 @@ export interface Coil {
 export interface Gi {
   id: string;
   name: string;
+  /** English (en.ts wireEn of the kit's Swedish), or the owner's from COMPONENT_WIRES. */
   wire: string;
   pin: string;
   driver: string;
@@ -88,6 +94,7 @@ export interface Gi {
 export interface Flipper {
   id: 'ULF' | 'URF' | 'LLF' | 'LRF';
   name: string;
+  /** English (en.ts wireEn of the kit's Swedish). */
   wire: string;
   pin: string;
   coil: string;
@@ -96,10 +103,13 @@ export interface Flipper {
 }
 
 export interface Fuse {
+  /** As printed; `—` for the three unnumbered fuses. */
   id: string;
   board: string;
   circuit: string;
   rating: string;
+  /** Anchor on the Fuses page: the id, or a slug of the circuit for the unnumbered fuses. */
+  key: string;
 }
 
 export interface Led {
@@ -108,8 +118,8 @@ export interface Led {
   normal: string;
 }
 
-/** [wireSv, wireEn, connectorPin, icPinOrTransistor] */
-export type MatrixHeader = [string, string, string, string];
+/** [wire, connectorPin, icPinOrTransistor] (the kit's Swedish wire column is dropped at build time). */
+export type MatrixHeader = [string, string, string];
 export type MatrixHeaders = Record<string, MatrixHeader>;
 
 export interface MapMeta {

@@ -56,7 +56,8 @@ export function wiring(kind: Kind, item: Switch | Lamp | Coil): Wiring {
     wire: { colour: coil.wireEn ?? '', text: pair(coil.pin, coil.driver) },
     part: coil.part,
     assy: coil.assy,
-    // Derived from the fuse list, not printed per coil; a dash where the list names none.
+    // From the fuse list unless the owner overlays a printed fuse (COMPONENT_FUSES); a dash where
+    // neither names one.
     fuse: coil.fuse || '—',
   };
 }

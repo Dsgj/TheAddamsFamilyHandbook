@@ -2,7 +2,6 @@
 import Phrase from '~/components/Phrase.astro';
 import Base from '~/layouts/Base.astro';
 import { DATA } from '~/lib/data/components';
-import { BOARD, FUSE_CIRCUIT, LED_NORMAL, LED_WHAT, t } from '~/lib/data/en';
 import { pageRefText, pageTitleText } from '~/lib/pages';
 import { handbookHref, manualHref } from '~/lib/url';
 
@@ -26,7 +25,7 @@ const boards = [...new Set(DATA.fuses.map((f) => f.board))];
     {
       boards.map((b) => (
         <div class="board">
-          <h3>{t(BOARD, b)}</h3>
+          <h3>{b}</h3>
           <div class="scroll-x">
             <table class="t">
               <thead>
@@ -42,9 +41,9 @@ const boards = [...new Set(DATA.fuses.map((f) => f.board))];
                 {DATA.fuses
                   .filter((f) => f.board === b)
                   .map((f) => (
-                    <tr id={f.id}>
+                    <tr id={f.key}>
                       <td class="mono">{f.id}</td>
-                      <td>{t(FUSE_CIRCUIT, f.circuit)}</td>
+                      <td>{f.circuit}</td>
                       <td class="mono">{f.rating}</td>
                     </tr>
                   ))}
@@ -72,8 +71,8 @@ const boards = [...new Set(DATA.fuses.map((f) => f.board))];
                 <td class="mono phrase">
                   <Phrase text={l.id} />
                 </td>
-                <td>{t(LED_WHAT, l.what)}</td>
-                <td>{t(LED_NORMAL, l.normal)}</td>
+                <td>{l.what}</td>
+                <td>{l.normal}</td>
               </tr>
             ))
           }

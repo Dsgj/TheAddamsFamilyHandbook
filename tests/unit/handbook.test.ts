@@ -56,6 +56,24 @@ describe('handbook rendering', () => {
     expect(html).not.toContain('#goto:');
   });
 
+  it('resolves every menu-map link, a printout code to its menu heading', async () => {
+    const pages = await loadAll();
+    const idx = indexHeadings(pages);
+    const html = pages.map((p) => finish(p, idx, '')).join('\n');
+    expect(html).not.toContain('data-find=');
+    expect(html.match(/href="\/handbook\/menus#p24-1"/g)).toHaveLength(8);
+  });
+
+  it('shows the kit html in English: every title is translated, no Swedish outside code', async () => {
+    const pages = await loadAll();
+    const idx = indexHeadings(pages);
+    const html = pages.map((p) => finish(p, idx, '')).join('\n');
+    const titles = [...html.matchAll(/title="([^"]*)"/g)].map((m) => m[1]);
+    expect(titles.length).toBeGreaterThan(0);
+    expect([...new Set(titles)]).toEqual(['Has a submenu']);
+    expect(html.replace(/<code>[\s\S]*?<\/code>/g, '')).not.toMatch(/[åäöÅÄÖ]/);
+  });
+
   it('rewrites figures to the assets folder', async () => {
     const pages = await loadAll();
     const p9 = pages.find((p) => p.page === 9)!;

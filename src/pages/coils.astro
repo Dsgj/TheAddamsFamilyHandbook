@@ -3,7 +3,6 @@ import Base from '~/layouts/Base.astro';
 import Phrase from '~/components/Phrase.astro';
 import WireChip from '~/components/WireChip.svelte';
 import { DATA } from '~/lib/data/components';
-import { COIL_NOTE, t, wireEn } from '~/lib/data/en';
 import { KIND_PLURAL, TABLE_LABEL } from '~/lib/copy';
 import { pageRefText, pageTitleText } from '~/lib/pages';
 import { componentHref, manualHref } from '~/lib/url';
@@ -23,8 +22,9 @@ const groups = ['High Power', 'Low Power', 'Flasher'] as const;
       ' '
     }
     <a href={manualHref('ops', 2)}>{pageRefText('ops', 2)}</a>. The fuse column is derived from the
-    fuse list on {pageTitleText('ops', 57)}, not printed per coil. The table lists 14 flashers; the
-    display test counts 15. The kit has not resolved which one is missing.
+    fuse list on {pageTitleText('ops', 57)}, not printed per coil, except the magnets 16, 23 and 24,
+    whose 5A S.B. fuse is printed in a footnote on {pageTitleText('ops', 2)}. The table lists 14
+    flashers; the display test counts 15. The kit has not resolved which one is missing.
   </p>
 
   {
@@ -69,7 +69,7 @@ const groups = ['High Power', 'Low Power', 'Flasher'] as const;
                       {c.note && (
                         <span class="note muted small">
                           <span class="sep"> · </span>
-                          {t(COIL_NOTE, c.note)}
+                          {c.note}
                         </span>
                       )}
                     </td>
@@ -138,7 +138,7 @@ const groups = ['High Power', 'Low Power', 'Flasher'] as const;
                     {f.name}
                   </td>
                   <td role="cell" data-h="Wire">
-                    <WireChip colour={wireEn(f.wire)} />
+                    <WireChip colour={f.wire} />
                   </td>
                   <td role="cell" class="mono phrase" data-h="Pin">
                     <Phrase text={f.pin} />
@@ -190,7 +190,7 @@ const groups = ['High Power', 'Low Power', 'Flasher'] as const;
                     {g.name}
                   </td>
                   <td role="cell" data-h="Wire">
-                    <WireChip colour={wireEn(g.wire)} />
+                    <WireChip colour={g.wire} />
                   </td>
                   <td role="cell" class="mono phrase" data-h="Pin">
                     <Phrase text={g.pin} />

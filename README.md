@@ -133,8 +133,9 @@ pnpm preview
 
 ## Data pipeline
 
-All data is copied from the kit in the sibling folder `../kit`. Nothing is
-edited here.
+All data is copied from the kit in the sibling folder `../kit`, and the copies
+are never edited here: the owner's corrections live in
+[`src/data/ownerNotes.ts`](src/data/ownerNotes.ts).
 
 ```text
 kit/data      ─►  src/data/kit + public/data       ┐
@@ -146,11 +147,28 @@ icon.svg      ─►  public/icons/*.png (+ iOS splash)    pnpm icons
 page images   ─►  page thumbnails (optional)          pnpm thumbs
 ```
 
+`pnpm sync-kit` is a dry run: it prints what each file would do and writes
+nothing. `pnpm sync-kit -- --write` copies the files marked `new` and
+`update`. Only the files on the script's copy list are copied (the data the
+app reads, `ops*.md`, the assets, `tools/*.py`, the docs), and nothing is ever
+deleted. The manifest `src/data/kit/kit-sync.json` records the sha256 of each
+kit file as last synced: a copy that no longer matches it was edited here and
+is skipped, never overwritten, and a copy with no record that differs from the
+kit (four of the `kit-docs`) is reported as diverged. `--write` refuses while
+git shows changes under the destinations, and `tests/unit/kit.test.ts` fails on
+any hand edit to a synced file. The owner's corrections live in
+`src/data/ownerNotes.ts` and the translations in `src/lib/data/en.ts`; both
+are applied once per build, so restart `astro dev` after editing them.
+
 Handbook pages are rendered by a custom content loader
 ([`src/lib/handbook/loader.ts`](src/lib/handbook/loader.ts)) that turns
-`#find:CODE` and `#goto:ops:N` links into real anchors. Swedish wiring names in
-the source data are mapped to the English UI in
-[`src/lib/data/en.ts`](src/lib/data/en.ts).
+`#find:CODE` and `#goto:ops:N` links into real anchors. The kit's component
+data is Swedish-authored: a Vite plugin
+([`src/lib/kit/plugin.ts`](src/lib/kit/plugin.ts)) translates it to the
+English model once at build time, with the dictionaries in
+[`src/lib/data/en.ts`](src/lib/data/en.ts) and the owner's notes, printed
+fuses and wire colours from `ownerNotes.ts`, and fails the build on a value it
+has no English for. Only `src/lib/kit/` imports `src/data/kit`.
 
 Three things are this repo's own and not synced from the kit:
 

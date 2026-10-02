@@ -82,8 +82,8 @@
           <th class="colh" class:hi={hoverCol === c} scope="col">
             <div class="hd">
               <span class="n">{c}</span>
-              {#if h}<WireChip colour={h[1]} /><span class="mono pin"
-                  ><span class="tok">{h[2]}</span><br /><span class="tok">{h[3]}</span></span
+              {#if h}<WireChip colour={h[0]} /><span class="mono pin"
+                  ><span class="tok">{h[1]}</span><br /><span class="tok">{h[2]}</span></span
                 >{/if}
             </div>
           </th>
@@ -99,8 +99,8 @@
               <span class="n">{r}</span>
               <!-- Each code is a nowrap .tok (base.css): the pin wraps at the separator, never at a
                    code's hyphen ('U18-11' in the 104 of the row header from 1000 and on paper). -->
-              {#if h}<WireChip colour={h[1]} /><span class="mono pin"
-                  ><span class="tok">{h[2]}</span> · <span class="tok">{h[3]}</span></span
+              {#if h}<WireChip colour={h[0]} /><span class="mono pin"
+                  ><span class="tok">{h[1]}</span> · <span class="tok">{h[2]}</span></span
                 >{/if}
             </div>
           </th>
@@ -184,11 +184,11 @@
     <dl class="wiring">
       <dt>Column {sel.col}</dt>
       <dd>
-        {#if ch}<WireChip colour={ch[1]} /> <span class="mono">{ch[2]} · {ch[3]}</span>{/if}
+        {#if ch}<WireChip colour={ch[0]} /> <span class="mono">{ch[1]} · {ch[2]}</span>{/if}
       </dd>
       <dt>Row {sel.row}</dt>
       <dd>
-        {#if rh}<WireChip colour={rh[1]} /> <span class="mono">{rh[2]} · {rh[3]}</span>{/if}
+        {#if rh}<WireChip colour={rh[0]} /> <span class="mono">{rh[1]} · {rh[2]}</span>{/if}
       </dd>
     </dl>
     <div class="acts">

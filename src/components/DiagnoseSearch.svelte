@@ -89,7 +89,7 @@
       hit(f.id, f.name, `Flipper coil ${f.coil}`, tableHref('coil', 'flippers'));
     for (const g of DATA.gi)
       hit(g.id, g.name, `General illumination · ${g.driver}`, tableHref('coil', 'gi'));
-    for (const f of DATA.fuses) hit(f.id, f.circuit, `Fuse · ${f.rating}`, href(`fuses#${f.id}`));
+    for (const f of DATA.fuses) hit(f.id, f.circuit, `Fuse · ${f.rating}`, href(`fuses#${f.key}`));
     return out;
   })();
 
