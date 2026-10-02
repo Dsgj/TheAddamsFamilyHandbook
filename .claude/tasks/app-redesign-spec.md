@@ -1117,3 +1117,13 @@ Audit P3 item 1, "One name per thing" (CP-01 to CP-20, UX-06, UX-07, UX-10, CR-0
 4. **Inline-link spacing.** A link inside a sentence has a space, or opening punctuation, before it and a space or closing punctuation after it. In Astro, write `{' '}` before an inline `<a>` that starts a new source line, since Astro drops that newline.
 5. **Page names.** Each page has one name: its title, its h1, its tab or row label and the links to it agree. The bar's short word is the `short` prop (Switches, Lamps, Solenoids, Fuses), used only where the full name does not fit and as the back label. Titles read "{name} · The Addams Family Handbook".
 6. **Source links.** A "Source:" link names the page it opens, like its siblings: "Fuse List p. 1-47", "Lamp Matrix p. 3-2", "Flipper Circuits p. 3-10". Never a bare "p. 3-10" after "Source:" (copy.test rule (l)). A callout line keeps its short form, "Callout 32 on p. 2-39".
+
+### 13.3 Kit data boundary (audit P4 item 3, 2026-10-02)
+
+- The kit (`src/data/kit/*.json`, synced from the sibling `kit` repo) is read only by `src/lib/kit/components.ts`, `pages.ts` and `ocr.ts` (structure lint m). Everything else imports the typed, English, overlaid data from there.
+- `components.json` is translated once at build time by the Vite transform in `src/lib/kit/plugin.ts` (`translateKit` in `translate.ts`): closed-world, every key declared, dictionaries in `src/lib/data/en.ts`, throws on any Swedish left. No component translates at render time; `t()` does not exist.
+- Owner facts that the kit does not carry are overlays in `src/data/ownerNotes.ts`, keyed `kind:id`: `COMPONENT_NOTES` (notes), `COMPONENT_FUSES` (a printed fuse that replaces the fuse-list derivation; `Coil.fuseDerived` is then false and the "derived" caption disappears), `COMPONENT_WIRES` and `GI_CONFIRMED` (the G.I. colour decision). Never edit the kit copy by hand; a hand edit fails `kit.test.ts` against the manifest.
+- `Fuse.key` is the fuse id, or the slug of the circuit when the manual prints no id (`domestic-game`, `foreign-game`, `magnets`); table row ids and deep links use the key.
+- `MatrixHeader` is `[wire, pin, ic]`.
+- Handbook text that is kit-owned is translated at render time through `HANDBOOK_ATTR` in `src/lib/handbook/render.ts` (today: `title="Has a submenu"`); repo-owned handbook pages (`app*.md`) are edited directly.
+- `pnpm sync-kit` is a dry run; `pnpm sync-kit -- --write` applies the copy list, updates the manifest `src/data/kit/kit-sync.json`, skips local edits and diverged docs, and refuses while the synced roots are dirty. Restart `astro dev` after editing `ownerNotes.ts` or `en.ts`.

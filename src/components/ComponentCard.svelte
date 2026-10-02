@@ -1,6 +1,5 @@
 <script lang="ts">
   import { componentCode, kindLine as kindLineOf, MAP_LAYER } from '~/lib/copy';
-  import { COIL_NOTE, HINT, t } from '~/lib/data/en';
   import { positions } from '~/lib/data/positions';
   import type { Coil, Kind, Lamp, MapMeta, Switch } from '~/lib/model/types';
   import { pageTitleText } from '~/lib/pages';
@@ -97,7 +96,9 @@
       <dt>Fuse</dt>
       <dd>
         {w.fuse}
-        <span class="muted small">(derived from the fuse list, not printed per coil)</span>
+        {#if coil?.fuseDerived}<span class="muted small"
+            >(derived from the fuse list, not printed per coil)</span
+          >{/if}
       </dd>
     {/if}
     <dt>Callout</dt>
@@ -131,11 +132,11 @@
   {#if sw?.hint}
     <p class="hint">
       <strong>Owner's hint</strong><br />
-      {t(HINT, sw.hint)} <em>(owner's experience, not the manual)</em>
+      {sw.hint} <em>(owner's experience, not the manual)</em>
     </p>
   {/if}
   {#if coil?.note}
-    <p class="hint">{t(COIL_NOTE, coil.note)}</p>
+    <p class="hint">{coil.note}</p>
   {/if}
 </article>
 

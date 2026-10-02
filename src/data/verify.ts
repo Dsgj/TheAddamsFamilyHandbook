@@ -1,11 +1,11 @@
 /**
- * Open questions from kit-docs/KNOWN-ISSUES.md as the Verify checklist. Ticks are stored on the
- * device (tafh:verify) by src/lib/model/verify.svelte.ts, ticked through src/lib/verify-check.ts
- * and part of the backup file. When one is settled for good, fix the data and remove it here and in
- * KNOWN-ISSUES.md.
+ * Open questions from kit-docs/KNOWN-ISSUES.md and the app audit (gi-colours, magnet-fuse) as the
+ * Verify checklist. Ticks are stored on the device (tafh:verify) by src/lib/model/verify.svelte.ts,
+ * ticked through src/lib/verify-check.ts and part of the backup file. When one is settled for good,
+ * fix the data and remove it here (and in KNOWN-ISSUES.md when it is listed there).
  */
 import { appendixHref } from '~/data/appendix';
-import { KIND_PLURAL } from '~/lib/copy';
+import { componentCode, KIND_PLURAL } from '~/lib/copy';
 import { pageRefText } from '~/lib/pages';
 import { componentHref, handbookHref, href, manualHref, mapHref, tableHref } from '~/lib/url';
 
@@ -39,7 +39,7 @@ export const VERIFY_ITEMS: VerifyItem[] = [
   {
     id: 'coil-fuses',
     group: 'Component data',
-    text: 'The fuse on solenoids 01–28 is derived from the fuse list (F105 = solenoids 1–8 and so on), not printed per coil. Spot-check one coil per fuse against the wiring.',
+    text: `The fuse on solenoids 01–28 is derived from the fuse list (F105 = solenoids 1–8 and so on), not printed per coil, except the magnets 16, 23 and 24, whose 5A S.B. fuse is printed in a footnote on ${pageRefText('ops', 2)}. Spot-check one coil per fuse against the wiring.`,
     links: [
       ['Fuses', href('fuses')],
       [KIND_PLURAL.coil, tableHref('coil')],
@@ -122,6 +122,25 @@ export const VERIFY_ITEMS: VerifyItem[] = [
     links: [
       ['Machine setup step 6', href('setup#step-utilities')],
       ['Adjustments', handbookHref('adjustments')],
+    ],
+  },
+  {
+    id: 'gi-colours',
+    group: 'Component data',
+    text: `The manual gives two wire colours for G.I. strings 2, 4, 5: the G.I. table on ${pageRefText('ops', 2)} has Orange, Green and Violet, the fuse list on ${pageRefText('ops', 57)} has White-Violet, White-Orange and White-Green. The app shows the table’s colours. Read the wire at J120-2, J121-5 and J121-6 on the power driver board and note which source is right for each string.`,
+    links: [
+      ['Fuses', href('fuses')],
+      [pageRefText('ops', 2), manualHref('ops', 2)],
+      [pageRefText('ops', 57), manualHref('ops', 57)],
+    ],
+  },
+  {
+    id: 'magnet-fuse',
+    group: 'Component data',
+    text: `The magnets 16, 23 and 24 are starred in the solenoid table, and its footnote on ${pageRefText('ops', 2)} puts their fuse, a 5A S.B., on the underside of the playfield. The app shows that fuse for them instead of the F104 and F111 the fuse list gives by solenoid number. Find the fuse under the playfield, check its rating and note which magnets it feeds.`,
+    links: [
+      [`${componentCode('coil', '16')} card`, componentHref('coil', '16')],
+      [pageRefText('ops', 2), manualHref('ops', 2)],
     ],
   },
 ];

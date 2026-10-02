@@ -66,3 +66,39 @@ export const OWNER_NOTES: Record<number, OwnerNote[]> = {
     },
   ],
 };
+
+/*
+ * Owner overlays on the kit's component data. src/lib/kit/translate.ts applies them when the kit's
+ * components.json is translated at build time, so the kit copy in src/data/kit stays byte-identical
+ * to the kit and `pnpm sync-kit` can never overwrite them. Keyed `kind:id` (`coil:02`, `gi:GI 2`);
+ * a key that names no component fails the build. The transform runs once per build, so restart
+ * `astro dev` after editing this file or src/lib/data/en.ts.
+ */
+
+/** The owner's note on a component; replaces the kit's own note. */
+export const COMPONENT_NOTES: Record<string, string> = {
+  'coil:02':
+    'Coil missing on this machine: the A-15267 bracket and the rubber pad are in the cabinet, the AE-23-800 coil is not. The game plays without it; the knocker only sounds on awards. Fitting it is on the Setup page under Upgrades and upkeep.',
+};
+
+/**
+ * A fuse value the manual prints, over the kit's `fuse`, which is derived from the fuse list by
+ * solenoid number (kit-docs/KNOWN-ISSUES.md). Such a coil gets `fuseDerived: false`. The three
+ * magnets are starred in the solenoid table, and its footnote prints their fuse: "Magnet fuse is a
+ * 5 Amp S.B. located on the underside of the playfield" (src/content/handbook/ops002.md); the kit
+ * derives F104 and F111 for them.
+ */
+export const COMPONENT_FUSES: Record<string, string> = {
+  'coil:16': '5A S.B. (under the playfield)',
+  'coil:23': '5A S.B. (under the playfield)',
+  'coil:24': '5A S.B. (under the playfield)',
+};
+
+/** A wire colour the owner has read on the machine, over the kit's (English, e.g. `White-Violet`). */
+export const COMPONENT_WIRES: Record<string, string> = {};
+
+/**
+ * Kit values the owner has checked on the machine and found right, keyed like the overlays; the
+ * value says when and what was seen. A confirmed G.I. string leaves the `gi-colours` Verify item.
+ */
+export const GI_CONFIRMED: Record<string, string> = {};

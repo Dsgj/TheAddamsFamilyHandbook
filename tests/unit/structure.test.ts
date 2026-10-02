@@ -181,6 +181,17 @@ describe('structure lint', () => {
     expect(map).toMatch(/from '~\/lib\/map\/zoom\.svelte'/);
   });
 
+  it('(m) the kit JSON has three importers, all under src/lib/kit/', () => {
+    // Any string naming src/data/kit: an aliased or relative import specifier, or a glob.
+    const kit = /(['"`])[^'"`\n]*\bdata\/kit\/[^'"`\n]*\1/;
+    const importers = FILES.filter((f) => kit.test(f.text)).map((f) => f.path);
+    expect(importers.sort()).toEqual([
+      'src/lib/kit/components.ts',
+      'src/lib/kit/ocr.ts',
+      'src/lib/kit/pages.ts',
+    ]);
+  });
+
   it('(control) every rule above still matches inside its home, so none passes vacuously', () => {
     expect(RULES.length).toBe(12);
     for (const [pattern, allowed] of RULES) {

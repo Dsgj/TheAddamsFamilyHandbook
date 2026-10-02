@@ -1,8 +1,8 @@
-import components from '~/data/kit/components.json';
+import { COMPONENTS } from '~/lib/kit/components';
 import { MAP_LAYER } from '~/lib/copy';
-import type { Coil, Components, Kind, Lamp, Layer, MapMeta, Switch } from '~/lib/model/types';
+import type { Coil, Kind, Lamp, Layer, MapMeta, Switch } from '~/lib/model/types';
 
-export const DATA = components as unknown as Components;
+export const DATA = COMPONENTS;
 
 const byId = <T extends { id: string }>(list: T[]) => new Map(list.map((x) => [x.id, x]));
 export const SWITCHES = byId(DATA.switches);

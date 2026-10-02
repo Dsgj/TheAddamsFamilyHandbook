@@ -2,7 +2,16 @@
  * English renderings of the few Swedish strings in the kit's data files.
  * The owner chose English throughout the app. Manual text is never translated;
  * these are the assistant's own hints and labels (see kit-docs/DATA-SCHEMA.md).
+ *
+ * Build-time input only: src/lib/kit/translate.ts applies these once, when Vite loads the kit's
+ * components.json, and src/lib/handbook/render.ts applies HANDBOOK_ATTR to the kit's handbook
+ * html, so no island imports this file. The translation is closed-world: every value a dictionary
+ * field takes in the kit is a key here, the English ones mapped to themselves (`same`), and a
+ * value missing from its dictionary fails the build.
  */
+
+/** Kit values that are already English, listed so the closed-world translation knows them. */
+const same = (...s: string[]): Record<string, string> => Object.fromEntries(s.map((x) => [x, x]));
 
 const COLOUR: Record<string, string> = {
   brun: 'Brown',
@@ -17,20 +26,54 @@ const COLOUR: Record<string, string> = {
   vit: 'White',
 };
 
-/** `Blå-grön` → `Blue-Green`; passes English through unchanged. */
+/** `Blå-grön` → `Blue-Green`; throws on a colour word it does not know. */
 export function wireEn(sv: string): string {
   return sv
     .split('-')
-    .map((w) => COLOUR[w.trim().toLowerCase()] ?? w.trim())
+    .map((w) => {
+      const key = w.trim().toLowerCase();
+      const v = Object.hasOwn(COLOUR, key) ? COLOUR[key] : undefined;
+      if (v === undefined) throw new Error(`no English for wire colour ${JSON.stringify(w)}`);
+      return v;
+    })
     .join('-');
 }
 
 export const BOARD: Record<string, string> = {
   Linjefilter: 'Line filter',
   'Undersidan spelplan': 'Under the playfield',
+  ...same('Power Driver', 'Audio', 'Dot Matrix Controller', 'Extra Flipper Supply'),
 };
 
-export const FUSE_CIRCUIT: Record<string, string> = { Magneter: 'Magnets' };
+export const FUSE_CIRCUIT: Record<string, string> = {
+  Magneter: 'Magnets',
+  ...same(
+    'Lower Left Flipper',
+    'Lower Right Flipper',
+    'Solenoids 25–28',
+    'Solenoids 9–16',
+    'Solenoids 1–8',
+    'G.I. #2 Wht-Vio',
+    'G.I. #3 Wht-Yel',
+    'G.I. #5 Wht-Grn',
+    'G.I. #4 Wht-Orn',
+    'G.I. #1 Wht-Brn',
+    'Flasher Secondary',
+    'Solenoid Secondary',
+    '+5V Logic',
+    '+18V Lamp Matrix',
+    '+12V Switch Matrix',
+    '+12V Secondary',
+    '−25V Circuit',
+    '+25V Circuit',
+    '+80V A.C.',
+    '+100V A.C.',
+    'Upper Left Flipper',
+    'Upper Right Flipper',
+    'Domestic Game',
+    'Foreign Game',
+  ),
+};
 
 export const LED_NORMAL: Record<string, string> = {
   'Tänd vid start, släckt i drift': 'On at power-up, off in operation',
@@ -41,6 +84,7 @@ export const LED_NORMAL: Record<string, string> = {
 };
 
 export const LED_WHAT: Record<string, string> = {
+  ...same('Blanking', 'Diagnostic', '+5 VDC'),
   '+12 VDC, switchkrets': '+12 VDC, switch circuit',
   'Hög/låg nätspänningssensor': 'High/low line-voltage sensor',
   '+5 VDC, digitalkrets': '+5 VDC, digital circuit',
@@ -72,9 +116,12 @@ export const HINT: Record<string, string> = {
     'Trough switch. If the game loses count of balls, check these first.',
 };
 
+/** Attribute text in the kit's handbook html (the menu map's submenu marker). */
+export const HANDBOOK_ATTR: Record<string, string> = { 'Har undermeny': 'Has a submenu' };
+
 export const COIL_NOTE: Record<string, string> = {
   'Magnetsäkring 5A S.B. sitter på undersidan av spelplanen.':
     'Magnet fuse 5A S.B. sits on the underside of the playfield.',
+  'Flasher #6 (b ovanpå backboxen)': 'Flasher #6 (b on top of the backbox)',
+  ...same('Flasher #1 (2)', 'Flasher #2 (2)', 'Flasher #3 (2)', 'Flasher #4', 'Flasher #5'),
 };
-
-export const t = (dict: Record<string, string>, s: string): string => dict[s] ?? s;

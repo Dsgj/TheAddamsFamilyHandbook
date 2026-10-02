@@ -18,7 +18,6 @@
     locationLine,
     MAP_LAYER,
   } from '~/lib/copy';
-  import { COIL_NOTE, HINT, t } from '~/lib/data/en';
   import { positions } from '~/lib/data/positions';
   import { recordViewed } from '~/lib/model/recent.svelte';
   import { getStatus, setStatus, shortDate, STATUS_LABEL } from '~/lib/model/status.svelte';
@@ -129,7 +128,9 @@
         <dt>Fuse</dt>
         <dd>
           {w.fuse}
-          <span class="muted small">(derived from the fuse list, not printed per coil)</span>
+          {#if coil?.fuseDerived}<span class="muted small"
+              >(derived from the fuse list, not printed per coil)</span
+            >{/if}
         </dd>
       {/if}
     </dl>
@@ -204,11 +205,11 @@
     {#if sw?.hint}
       <p class="hint">
         <strong>Owner's hint</strong><br />
-        {t(HINT, sw.hint)} <em>(owner's experience, not the manual)</em>
+        {sw.hint} <em>(owner's experience, not the manual)</em>
       </p>
     {/if}
     {#if coil?.note}
-      <p class="hint">{t(COIL_NOTE, coil.note)}</p>
+      <p class="hint">{coil.note}</p>
     {/if}
   </section>
 

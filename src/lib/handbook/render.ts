@@ -1,4 +1,5 @@
 import { marked } from 'marked';
+import { HANDBOOK_ATTR } from '~/lib/data/en';
 import { sectionOfPage } from './sections';
 
 export interface Heading {
@@ -97,12 +98,15 @@ export function findHeading(idx: HeadingIndex, code: string): Heading | undefine
 
 /**
  * Second pass: resolve `#find:CODE` and `#goto:ops:N` links. `base` is the site base without
- * trailing slash; `figBase` prefixes figure paths.
+ * trailing slash; `figBase` prefixes figure paths. A code with no heading of its own (`P.3`)
+ * links to its menu's heading (`P.`). The kit's Swedish `title` attributes in the menu map get
+ * their English from en.ts HANDBOOK_ATTR; the kit's markdown stays as the kit ships it.
  */
 export function finish(p: RenderedPage, idx: HeadingIndex, base: string): string {
   let html = p.html;
   html = html.replace(/href="#find:([^"]+)"/g, (_m, code: string) => {
-    const h = findHeading(idx, decodeURIComponent(code));
+    const c = decodeURIComponent(code);
+    const h = findHeading(idx, c) ?? findHeading(idx, c.replace(/\.\d+$/, '.'));
     if (!h) return `href="${base}/handbook" data-find="${code}"`;
     const sec = sectionOfPage(h.page);
     return `href="${base}/handbook/${sec?.key ?? ''}#${h.id}"`;
@@ -114,5 +118,8 @@ export function finish(p: RenderedPage, idx: HeadingIndex, base: string): string
     return `href="${base}/manual/${doc}/${page}"`;
   });
   html = html.replace(/src="assets\//g, `src="${base}/assets/`);
+  html = html.replace(/title="([^"]*)"/g, (m, s: string) =>
+    Object.hasOwn(HANDBOOK_ATTR, s) ? `title="${HANDBOOK_ATTR[s]}"` : m,
+  );
   return html;
 }

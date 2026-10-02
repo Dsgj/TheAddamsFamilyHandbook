@@ -1,7 +1,7 @@
-import pagesJson from '~/data/kit/pages.json';
-import type { DocId, PageMeta, Pages } from '~/lib/model/types';
+import { PAGES_RAW } from '~/lib/kit/pages';
+import type { DocId, PageMeta } from '~/lib/model/types';
 
-export const PAGES = pagesJson as Pages;
+export const PAGES = PAGES_RAW;
 export const DOCS: DocId[] = ['ops', 'hb', 'wpc'];
 export const DOC_NAME: Record<DocId, string> = {
   ops: 'Operations Manual',

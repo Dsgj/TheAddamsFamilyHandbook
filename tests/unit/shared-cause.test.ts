@@ -19,6 +19,16 @@ describe('sharedCauses', () => {
     const c = sharedCauses([sw('31'), sw('32')], DATA.swCols, DATA.swRows);
     expect(c.map((x) => x.kind)).toEqual(['column']);
     expect(c[0]).toMatchObject({ key: '3', pin: 'J206-3' });
+    // The English wire is the header's first field (the kit's Swedish one is dropped at build time).
+    expect(c[0]?.text).toContain(`share column 3 (${DATA.swCols['3']![0]}, J206-3)`);
+  });
+  it('finds a shared row and names its wire, connector and comparator', () => {
+    const c = sharedCauses([sw('31'), sw('41')], DATA.swCols, DATA.swRows);
+    expect(c.map((x) => x.kind)).toEqual(['row']);
+    expect(c[0]).toMatchObject({ key: '1', wire: 'White-Brown', pin: 'J208-1', driver: 'U18-11' });
+    expect(c[0]?.text).toContain('share row 1 (White-Brown, J208-1)');
+    expect(c[0]?.text).toContain('Check the row wire and J208 first');
+    expect(c[0]?.text).toContain('Rows are read by U18-11');
   });
   it('reports independent faults', () => {
     const c = sharedCauses([sw('11'), sw('68')], DATA.swCols, DATA.swRows);
@@ -40,11 +50,15 @@ describe('lampSharedCauses', () => {
     expect(c.map((x) => x.kind)).toEqual(['column']);
     expect(c[0]).toMatchObject({ key: '1', pin: 'J137-1', driver: 'Q98', matrix: 'lamp' });
     expect(c[0]?.text).toContain('Q98');
+    expect(c[0]?.text).toContain(`(${DATA.lCols['1']![0]}, J137-1, driver Q98)`);
+    expect(DATA.lCols['1']![0]).not.toMatch(/^J\d/);
   });
   it('finds a shared lamp row', () => {
     const c = lampSharedCauses([lamp('11'), lamp('21')], DATA.lCols, DATA.lRows);
     expect(c.map((x) => x.kind)).toEqual(['row']);
     expect(c[0]).toMatchObject({ key: '1', driver: 'Q90' });
+    expect(c[0]?.text).toContain('driver Q90');
+    expect(c[0]?.text).toContain('share lamp row 1 (Red-Brown, J133-1, driver Q90)');
   });
   it('reports independent lamp faults', () => {
     const c = lampSharedCauses([lamp('11'), lamp('22')], DATA.lCols, DATA.lRows);

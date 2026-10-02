@@ -11,7 +11,6 @@
   import { SHOTS } from '~/data/shots';
   import { DATA, mapOf } from '~/lib/data/components';
   import { componentCode, MAP_TITLE, TABLE_LABEL } from '~/lib/copy';
-  import { COIL_NOTE, HINT, t } from '~/lib/data/en';
   import type { Item, MapLayer } from '~/lib/map/items';
   import { fullName, kindLine, statusOf } from '~/lib/map/items';
   import { STATUS_LABEL } from '~/lib/model/status.svelte';
@@ -136,10 +135,10 @@
       {/if}
     </ul>
     {#if sw?.hint}
-      <p class="prov hint"><strong>Owner's hint.</strong> {t(HINT, sw.hint)}</p>
+      <p class="prov hint"><strong>Owner's hint.</strong> {sw.hint}</p>
     {/if}
     {#if coil?.note}
-      <p class="prov hint">{t(COIL_NOTE, coil.note)}</p>
+      <p class="prov hint">{coil.note}</p>
     {/if}
     <nav class="more" aria-label="More about {fullName(item).toLowerCase()}">
       <a class="btn sm" href={componentHref(item.kind, item.id)}>Details</a>
