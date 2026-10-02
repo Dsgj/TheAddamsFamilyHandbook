@@ -1,72 +1,40 @@
 <script lang="ts">
-  import { flushSync, tick, untrack } from 'svelte';
+  import { tick, untrack } from 'svelte';
   import { SvelteSet } from 'svelte/reactivity';
-  import overlaysRaw from '~/data/overlays.json';
   import { SHOTS } from '~/data/shots';
-  import type { AnyComponent } from '~/lib/data/components';
-  import { DATA, itemsOf, mapOf } from '~/lib/data/components';
-  import {
-    capitalise,
-    componentCode,
-    componentName,
-    inMatrix,
-    KIND_LABEL,
-    KIND_PLURAL,
-    kindLine as kindLineOf,
-    agree,
-    LAYER_KIND,
-    LAYER_LABEL,
-    locationLine,
-    MAP_LAYER,
-    MAP_TITLE,
-    plural,
-    TABLE_LABEL,
-    tileCode,
-  } from '~/lib/copy';
-  import { COIL_NOTE, HINT, t } from '~/lib/data/en';
+  import { mapOf } from '~/lib/data/components';
+  import { KIND_PLURAL, agree, LAYER_KIND, plural } from '~/lib/copy';
   import { isTypingTarget } from '~/lib/keys';
   import { liveText } from '~/lib/live.svelte';
+  import type { CalibrationApi, Item, MapLayer, OverlayImage } from '~/lib/map/items';
+  import {
+    DEFAULT,
+    fullName,
+    itemsIn,
+    kindOf,
+    LABEL,
+    LAYERS,
+    layerOf,
+    matchesQuery,
+    statusClass,
+    statusOf,
+  } from '~/lib/map/items';
+  import { createMapZoom, dist, MAX_ZOOM } from '~/lib/map/zoom.svelte';
   import type { PosKind } from '~/lib/data/positions';
   import { allPositions, PLAYFIELD, positions, posKey } from '~/lib/data/positions';
-  import { getStatus, STATUS_LABEL } from '~/lib/model/status.svelte';
-  import type { Coil, Lamp, Layer, Loc, Switch } from '~/lib/model/types';
-  import { pageLabel, pageRefText, pageTitleText } from '~/lib/pages';
-  import { wiring } from '~/lib/present';
-  import { componentHref, href, manualHref, parseMapId, replaceUrl, tableHref } from '~/lib/url';
+  import type { Loc } from '~/lib/model/types';
+  import { href, parseMapId, replaceUrl } from '~/lib/url';
   import BottomSheet from './BottomSheet.svelte';
   import ComponentCard from './ComponentCard.svelte';
-  import SearchField from './SearchField.svelte';
-  import WireChip from './WireChip.svelte';
+  // Type only (erased): the tool itself is import()ed under `?calib=1` (design §3.7).
+  import type MapCalibration from './MapCalibration.svelte';
+  import { deselectBtn, emptyCard, partBody, partHead, shotCard, srcLink } from './MapCard.svelte';
+  import MapParts from './MapParts.svelte';
 
-  /** Component layers plus the manual's lettered shots. Any combination can be shown. */
-  type MapLayer = Layer | 'shot';
-  interface Item {
-    kind: PosKind;
-    id: string;
-    name: string;
-    comp?: AnyComponent;
-  }
-  const LAYERS: MapLayer[] = ['sw', 'lamp', 'coil', 'shot'];
-  const LABEL: Record<MapLayer, string> = { ...LAYER_LABEL, shot: 'Shots' };
   /** Short labels for the wide layers list (ShellDesktop). LABEL names the layer buttons. */
   const shortName = (l: MapLayer) => (l === 'shot' ? 'Shots' : KIND_PLURAL[LAYER_KIND[l]]);
-  const DEFAULT: MapLayer[] = ['sw', 'lamp', 'coil'];
-  /** Zoom steps (spec §7.2). Pinch covers 1–3. */
-  const ZOOMS = [1, 1.6, 2.4];
-  const MAX_ZOOM = 3;
   /** A tap that lands on no marker selects the nearest visible marker within this many screen px. */
   const HIT = 22;
-  /** A pointer that moves further than this is a drag, and never selects. */
-  const DRAG = 6;
-  const DRAFT_KEY = 'taf.positions.draft';
-  /** The id on a list tile (the exception to componentCode: the layer already names the kind). */
-  const showId = (item: Item) => tileCode(item.kind, item.id);
-  /**
-   * "Switch 32", "Lamp 55", "Solenoid 01", "Shot A": headings and accessible names, and the marker
-   * name prefix (spec §7.5, §13).
-   */
-  const fullName = (item: Item) =>
-    item.kind === 'shot' ? `Shot ${item.id}` : componentName(item.kind, item.id);
   /** Selection sheet detents (spec §8.2). */
   const PEEK = 96;
   const FULL = 416;
@@ -82,26 +50,6 @@
    *  156 + 28 + 4 under it. */
   const CTRL_SIDE = 16 + 44 + 4;
   const CTRL_FOOT = 156 + 28 + 4;
-  /** Manual pages positioned so their playfield frame lands on the drawing's (calibration aid). */
-  interface Overlay {
-    src: string;
-    left: number;
-    top: number;
-    width: number;
-    height: number;
-  }
-  const OVERLAYS = overlaysRaw as Record<string, Overlay>;
-  /** "Switch map, 2-39": a location map, with the printed label of its page. */
-  const overlayLabel = (l: Layer) =>
-    `${KIND_LABEL[LAYER_KIND[l]]} map, ${pageLabel('ops', DATA.maps[l].page)}`;
-  const OVERLAY_LABEL: Record<string, string> = {
-    sw: overlayLabel('sw'),
-    lamp: overlayLabel('lamp'),
-    coil: overlayLabel('coil'),
-    shot9: `Shots (1), ${pageRefText('ops', 9)}`,
-    shot10: `Shots (2), ${pageRefText('ops', 10)}`,
-  };
-  const overlayFor = (l: MapLayer | undefined) => (l === 'shot' ? 'shot9' : (l ?? 'sw'));
 
   let {
     layer: initialLayer = '',
@@ -120,8 +68,6 @@
     const out = LAYERS.filter((l) => s.split(',').includes(l));
     return out.length ? out : DEFAULT;
   }
-  const layerOf = (kind: PosKind): MapLayer => (kind === 'shot' ? 'shot' : MAP_LAYER[kind]);
-  const kindOf = (l: MapLayer): PosKind => (l === 'shot' ? 'shot' : LAYER_KIND[l]);
 
   const on = new SvelteSet<MapLayer>(parseLayers(untrack(() => initialLayer)));
   function setOn(layers: MapLayer[]) {
@@ -131,15 +77,13 @@
     });
   }
   let selKey = $state<string>('');
-  let zoom = $state(1);
-  /** A zoom from the URL (`z`), applied once the first fit has landed. */
-  let startZoom = 1;
-  let zoomSync: ReturnType<typeof setTimeout> | undefined;
   let calib = $state(false);
+  /** The calibration tool (`?calib=1`): its component once imported, then its instance. */
+  let CalibCard = $state<typeof MapCalibration>();
+  let calibCtl = $state<CalibrationApi>();
   let draft = $state<Record<string, Loc[]>>({});
-  let copied = $state('');
-  let overlay = $state('');
-  let overlayOpacity = $state(0.5);
+  /** The manual page the calibration tool lays over the drawing (MapCalibration publishes it). */
+  let overlayImg = $state<OverlayImage>();
   let scroller: HTMLDivElement | undefined = $state();
   let canvas: HTMLDivElement | undefined = $state();
   let calibEl: HTMLDivElement | undefined = $state();
@@ -165,8 +109,6 @@
   let partsOpen = $state(false);
   /** The "Search components" filter (Q28). */
   let q = $state('');
-  /** True once the first fit has landed, so later re-fits animate and the first never does. */
-  let ready = $state(false);
   const fit = $derived.by(() => {
     if (!stageW || !stageH) return 0;
     const whole = Math.min(stageW / PLAYFIELD.w, (stageH - inset) / PLAYFIELD.h);
@@ -177,12 +119,24 @@
     const above = Math.min(stageW / PLAYFIELD.w, (stageH - CTRL_FOOT) / PLAYFIELD.h);
     return Math.min(whole, Math.max(beside, above));
   });
-  // Whole px, rounded down, so a fitted canvas never overflows its stage by a rounding px.
-  const canvasW = $derived(Math.floor(PLAYFIELD.w * fit * zoom));
-  const canvasH = $derived(Math.floor(PLAYFIELD.h * fit * zoom));
+  /** Zoom, first fit and pointer gestures (spec §7.2, §7.5); the canvas size comes from here. */
+  const zm = createMapZoom({
+    fit: () => fit,
+    shift: () => shift,
+    reduced: () => reduced,
+    calib: () => calib,
+    scroller: () => scroller,
+    canvas: () => canvas,
+    anchorLoc: () => (current ? posOf(current)[0] : undefined),
+    onSettle: () => syncUrl(),
+    onTap: (p, target) => {
+      if (target.closest('.marker')) return; // the button's own click selects
+      const hit = nearestMarker(p);
+      if (hit) pick(hit);
+    },
+  });
   /** The embed fits the container width; CSS caps the height at the stage height (Q13). */
   const embedH = $derived(Math.round((stageW / PLAYFIELD.w) * PLAYFIELD.h));
-  const zoomLabel = $derived(`${Math.round(zoom * 10) / 10}×`);
   /** The drawing's side gutter at the fit: the width the glass can float in without covering it. */
   const gutter = $derived(fit ? (stageW - Math.floor(PLAYFIELD.w * fit)) / 2 : 0);
   /** Spec §7.4: on /map from 1000 the layers list and the key legend float beside the drawing
@@ -196,29 +150,6 @@
   $effect(() => {
     if (selKey) untrack(() => panel)?.scrollTo({ top: 0 });
   });
-  /** The selection sheet: below 1000 on /map, with a part selected (spec §7.6). */
-  const sheetOpen = $derived(!embed && !wide && !calib && !!current);
-  /** Px the sheet takes from the fit at 1×: phones only (Q29 open; tablets keep the overlap). */
-  const inset = $derived(sheetOpen && phone ? PEEK : 0);
-  /** Px of the stage the sheet covers now; centring above 1× uses the band left (spec §7.1). */
-  const cover = $derived(sheetOpen ? (expanded ? FULL : PEEK) : 0);
-  /** Expanded at 1× the scroller can't scroll: the canvas moves so the part sits mid-band. */
-  const shift = $derived.by(() => {
-    if (!sheetOpen || !expanded || zoom > 1 || !current || !canvasH) return 0;
-    const l = posOf(current)[0];
-    if (!l) return 0;
-    const band = stageH - FULL;
-    if (canvasH <= band) return 0;
-    const y = Math.min(0, Math.max(band - canvasH, band / 2 - l.y * canvasH));
-    return Math.round(y * 10) / 10;
-  });
-  $effect(() => {
-    if (fit > 0 && canvas && !ready) {
-      void canvas.offsetWidth; // commit the first px size before transitions switch on
-      ready = true;
-      if (startZoom > 1) zoomTo(startZoom, undefined, 0); // the zoom the URL asked for (spec §10)
-    }
-  });
 
   function measureTop() {
     if (!scroller) return;
@@ -229,8 +160,8 @@
     const u = new URLSearchParams(location.search);
     const l = u.get('layer');
     if (l) setOn(parseLayers(l));
-    const z = Number(u.get('z'));
-    if (z > 1) startZoom = Math.min(z, MAX_ZOOM);
+    const z = Math.round(Number(u.get('z')) * 100) / 100; // the precision syncUrl writes
+    if (z > 1) zm.setStartZoom(Math.min(z, MAX_ZOOM));
     const m = parseMapId(u.get('id') || initialId);
     if (m?.kind) {
       // `id=kind:id` (what syncUrl writes) is exact, and shows its layer.
@@ -251,14 +182,7 @@
       selKey = hit ?? posKey(kindOf(layers[0] ?? 'sw'), i);
     }
     calib = u.get('calib') === '1';
-    if (calib) {
-      overlay = overlayFor(untrack(() => LAYERS.find((x) => on.has(x))));
-      try {
-        draft = JSON.parse(localStorage.getItem(DRAFT_KEY) ?? '{}');
-      } catch {
-        draft = {};
-      }
-    }
+    if (calib) void import('./MapCalibration.svelte').then((m) => (CalibCard = m.default));
   });
 
   $effect(() => {
@@ -311,13 +235,9 @@
     };
   });
 
-  function itemsIn(l: MapLayer): Item[] {
-    if (l === 'shot') return SHOTS.map((s) => ({ kind: 'shot', id: s.id, name: s.name }));
-    const kind = LAYER_KIND[l];
-    return itemsOf(l).map((c) => ({ kind, id: c.id, name: c.name, comp: c }));
-  }
-
   const visible = $derived(LAYERS.filter((l) => on.has(l)));
+  /** The one layer that is on, if only one is (the source link names its manual page). */
+  const only = $derived(visible.length === 1 ? visible[0] : undefined);
   const current = $derived.by(() => {
     if (!selKey) return undefined;
     const [kind, id] = selKey.split(':') as [PosKind, string];
@@ -328,7 +248,7 @@
   );
   /** Component layers that are on (shots always carry their own letter). */
   const compLayers = $derived(visible.filter((l) => l !== 'shot'));
-  const showLabels = $derived((zoom >= 1.6 && compLayers.length === 1) || calib);
+  const showLabels = $derived((zm.zoom >= 1.6 && compLayers.length === 1) || calib);
   /** Parts per layer that have a position on the drawing. */
   const counts = $derived(
     Object.fromEntries(
@@ -339,13 +259,29 @@
   function posOf(item: Item): Loc[] {
     return draft[posKey(item.kind, item.id)] ?? positions(item.kind, item.id);
   }
+  /** The selection sheet: below 1000 on /map, with a part selected (spec §7.6). */
+  const sheetOpen = $derived(!embed && !wide && !calib && !!current);
+  /** Px the sheet takes from the fit at 1×: phones only (Q29 open; tablets keep the overlap). */
+  const inset = $derived(sheetOpen && phone ? PEEK : 0);
+  /** Px of the stage the sheet covers now; centring above 1× uses the band left (spec §7.1). */
+  const cover = $derived(sheetOpen ? (expanded ? FULL : PEEK) : 0);
+  /** Expanded at 1× the scroller can't scroll: the canvas moves so the part sits mid-band. */
+  const shift = $derived.by(() => {
+    if (!sheetOpen || !expanded || zm.zoom > 1 || !current || !zm.canvasH) return 0;
+    const l = posOf(current)[0];
+    if (!l) return 0;
+    const band = stageH - FULL;
+    if (zm.canvasH <= band) return 0;
+    const y = Math.min(0, Math.max(band - zm.canvasH, band / 2 - l.y * zm.canvasH));
+    return Math.round(y * 10) / 10;
+  });
   function syncUrl() {
     if (embed) return;
     // Hand-built so the comma list stays readable (URLSearchParams would write %2C).
     const q = [`layer=${visible.join(',')}`];
     // The kind keeps a reload on this marker: lamp 55 is not switch 55 (audit CO-06).
     if (current) q.push(`id=${current.kind}:${encodeURIComponent(current.id)}`);
-    if (zoom !== 1) q.push(`z=${String(Math.round(zoom * 100) / 100)}`);
+    if (zm.zoom !== 1) q.push(`z=${String(Math.round(zm.zoom * 100) / 100)}`);
     if (calib) q.push('calib=1');
     replaceUrl(`${location.pathname}?${q.join('&')}${location.hash}`);
   }
@@ -433,7 +369,7 @@
     syncUrl();
   }
   function centre() {
-    if (!scroller || !canvas || !current || zoom <= 1) return;
+    if (!scroller || !canvas || !current || zm.zoom <= 1) return;
     const l = posOf(current)[0];
     if (!l) return;
     const band = scroller.clientHeight - cover;
@@ -447,11 +383,8 @@
     // re-centre a new selection, or a new detent, when zoomed in (at 1× the whole drawing shows)
     void selKey;
     void expanded;
-    if (current && untrack(() => zoom) > 1) requestAnimationFrame(centre);
+    if (current && untrack(() => zm.zoom) > 1) requestAnimationFrame(centre);
   });
-  function statusOf(item: Item) {
-    return item.kind === 'shot' ? undefined : getStatus(item.kind, item.id)?.status;
-  }
   /** Accessible marker name (spec §7.5): "Switch 32, Upper Right Jet, Fault, selected". */
   function markerName(item: Item, selected: boolean) {
     const st = statusOf(item);
@@ -463,188 +396,22 @@
       (selected ? ', selected' : '')
     );
   }
-  /** "Switch · matrix column 3, row 2": the kind line under a name (spec §13). */
-  function kindLine(item: Item) {
-    if (item.kind === 'shot') {
-      const page = SHOTS.find((x) => x.id === item.id)?.page;
-      return page ? `Shot · ${pageTitleText('ops', page)}` : 'Shot';
-    }
-    return item.comp ? kindLineOf(item.kind, item.comp) : KIND_LABEL[item.kind];
-  }
-  /** The second line of a list row: where it sits, on the rows that carry one (matrix, coils). */
-  function subtitle(item: Item) {
-    const c = item.comp;
-    if (!c || item.kind === 'shot') return '';
-    if (item.kind !== 'coil' && !inMatrix(c as Switch | Lamp)) return '';
-    // The row's name already says "Not Used" and the row says "not on map": no third "not used".
-    return capitalise(locationLine(item.kind, { ...c, unused: false }));
-  }
   /** The "Search components" filter: id or name (Q28). */
   const findLive = liveText(
     () => q,
     () => {
       const s = q.trim();
-      const n = visible.reduce((a, l) => a + itemsIn(l).filter(matches).length, 0);
+      const n = visible.reduce(
+        (a, l) => a + itemsIn(l).filter((i) => matchesQuery(q, i)).length,
+        0,
+      );
       return n
         ? `${plural(n, 'component')} ${agree(n, 'matches', 'match')}`
         : `No components match “${s}”.`;
     },
   );
-  function matches(item: Item) {
-    const s = q.trim().toLowerCase();
-    return (
-      !s ||
-      item.id.toLowerCase().includes(s) ||
-      showId(item).toLowerCase().includes(s) ||
-      item.name.toLowerCase().includes(s)
-    );
-  }
-  function statusClass(item: Item) {
-    if (item.kind === 'shot') return '';
-    const s = getStatus(item.kind, item.id)?.status;
-    return s ? `st-${s}` : '';
-  }
 
-  // ---- zoom (spec §7.2)
-  /** A point to hold still: a canvas fraction (fx, fy) that sits at (sx, sy) of the scroller. */
-  interface Anchor {
-    fx: number;
-    fy: number;
-    sx: number;
-    sy: number;
-  }
-  const clamp = (v: number, lo = 0, hi = 1) => Math.min(hi, Math.max(lo, v));
-  /** The selected part at the stage centre, or whatever is at the stage centre now. */
-  function anchorDefault(): Anchor {
-    const sx = scroller!.clientWidth / 2;
-    const sy = scroller!.clientHeight / 2;
-    const sel = current && posOf(current)[0];
-    if (sel) return { fx: sel.x, fy: sel.y, sx, sy };
-    return { ...fractionAt(sx, sy), sx, sy };
-  }
-  /** The canvas fraction under a scroller-relative point. */
-  function fractionAt(sx: number, sy: number) {
-    const c = canvas!;
-    const s = scroller!;
-    return {
-      fx: clamp((s.scrollLeft + sx - c.offsetLeft) / c.offsetWidth),
-      fy: clamp((s.scrollTop + sy - c.offsetTop - shift) / c.offsetHeight),
-    };
-  }
-  function zoomTo(z: number, anchor?: Anchor, dur = 250) {
-    if (!scroller || !canvas || !fit) return;
-    z = clamp(z, 1, MAX_ZOOM);
-    if (z === zoom) return;
-    anchor ??= anchorDefault();
-    const k = zoom / z;
-    const prevShift = shift;
-    canvas.style.transition = 'none';
-    zoom = z;
-    flushSync();
-    if (z === 1) {
-      scroller.scrollTo({ left: 0, top: 0 });
-    } else {
-      scroller.scrollLeft = anchor.fx * canvas.offsetWidth + canvas.offsetLeft - anchor.sx;
-      scroller.scrollTop = anchor.fy * canvas.offsetHeight + canvas.offsetTop - anchor.sy;
-    }
-    if (dur && !reduced) animateScale(k, anchor, dur, prevShift);
-    else {
-      void canvas.offsetWidth;
-      canvas.style.transition = '';
-    }
-    // A pinch calls this per move; the URL follows once it settles.
-    clearTimeout(zoomSync);
-    zoomSync = setTimeout(syncUrl, 150);
-  }
-  /** Lands the new size from the old one: a transform that eases to none (emphasized). */
-  function animateScale(k: number, anchor: Anchor, dur: number, prevShift = 0) {
-    const c = canvas!;
-    c.style.transition = 'none';
-    c.style.transformOrigin = `${anchor.fx * 100}% ${anchor.fy * 100}%`;
-    c.style.transform = `translateY(${prevShift}px) scale(${k})`;
-    void c.offsetWidth;
-    c.style.transition = `transform ${dur}ms var(--ease-emphasized)`;
-    c.style.transform = '';
-    const done = () => {
-      c.style.transition = '';
-      c.removeEventListener('transitionend', done);
-    };
-    c.addEventListener('transitionend', done);
-  }
-  const nextStep = () => ZOOMS.find((z) => z > zoom + 1e-6) ?? ZOOMS[ZOOMS.length - 1]!;
-  const prevStep = () => [...ZOOMS].reverse().find((z) => z < zoom - 1e-6) ?? 1;
-  const zoomIn = () => zoomTo(nextStep());
-  const zoomOut = () => zoomTo(prevStep());
-  const fitAll = () => zoomTo(1, undefined, 300);
-
-  // ---- pointers: pinch, double-tap and the nearest-marker hit rule (spec §7.5)
-  type Pt = { x: number; y: number };
-  /** Active pointers by id (plain state, not rendered). */
-  let pointers: Record<number, Pt> = {};
-  const pointerList = () => Object.values(pointers);
-  const pointerCount = () => Object.keys(pointers).length;
-  let pinch: { d0: number; z0: number } | undefined;
-  let tap: { id: number; x: number; y: number; moved: boolean } | undefined;
-  let lastTap: { x: number; y: number; t: number } | undefined;
-  const dist = (a: Pt, b: Pt) => Math.hypot(a.x - b.x, a.y - b.y);
-  function pointerDown(e: PointerEvent) {
-    pointers[e.pointerId] = { x: e.clientX, y: e.clientY };
-    if (pointerCount() === 2) {
-      const [a, b] = pointerList() as [Pt, Pt];
-      pinch = { d0: dist(a, b) || 1, z0: zoom };
-      tap = undefined;
-    } else if (pointerCount() === 1 && e.isPrimary) {
-      tap = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: false };
-    }
-  }
-  function pointerMove(e: PointerEvent) {
-    if (!(e.pointerId in pointers)) return;
-    pointers[e.pointerId] = { x: e.clientX, y: e.clientY };
-    if (pinch && pointerCount() === 2 && scroller) {
-      const [a, b] = pointerList() as [Pt, Pt];
-      const r = scroller.getBoundingClientRect();
-      const sx = (a.x + b.x) / 2 - r.left;
-      const sy = (a.y + b.y) / 2 - r.top;
-      zoomTo(pinch.z0 * (dist(a, b) / pinch.d0), { ...fractionAt(sx, sy), sx, sy }, 0);
-    } else if (tap && !tap.moved && dist(tap, { x: e.clientX, y: e.clientY }) > DRAG) {
-      tap.moved = true;
-    }
-  }
-  function pointerUp(e: PointerEvent) {
-    delete pointers[e.pointerId];
-    if (pinch) {
-      if (pointerCount() < 2) pinch = undefined;
-      return;
-    }
-    if (!tap || tap.id !== e.pointerId) return;
-    const t = tap;
-    tap = undefined;
-    if (t.moved || e.type === 'pointercancel' || calib) return;
-    const now = performance.now();
-    const p = { x: e.clientX, y: e.clientY };
-    if (lastTap && now - lastTap.t < 300 && dist(lastTap, p) < 24) {
-      lastTap = undefined;
-      doubleTap(p);
-      return;
-    }
-    lastTap = { ...p, t: now };
-    if ((e.target as Element).closest('.marker')) return; // the button's own click selects
-    const hit = nearestMarker(p);
-    if (hit) pick(hit);
-  }
-  /** Steps up at the tap point; at the last step, fits. */
-  function doubleTap(p: { x: number; y: number }) {
-    if (!scroller || !canvas) return;
-    if (zoom >= ZOOMS[ZOOMS.length - 1]! - 1e-6) return fitAll();
-    const r = scroller.getBoundingClientRect();
-    const c = canvas.getBoundingClientRect();
-    zoomTo(nextStep(), {
-      fx: clamp((p.x - c.left) / c.width),
-      fy: clamp((p.y - c.top) / c.height),
-      sx: p.x - r.left,
-      sy: p.y - r.top,
-    });
-  }
+  // ---- the nearest-marker hit rule (spec §7.5): a tap on no marker (zoom module onTap)
   function nearestMarker(p: { x: number; y: number }): Item | undefined {
     if (!canvas) return;
     const c = canvas.getBoundingClientRect();
@@ -672,14 +439,14 @@
     switch (e.key) {
       case '+':
       case '=':
-        zoomIn();
+        zm.zoomIn();
         break;
       case '-':
       case '_':
-        zoomOut();
+        zm.zoomOut();
         break;
       case '0':
-        fitAll();
+        zm.fitAll();
         break;
       case 'Escape':
         if (!selKey) return;
@@ -715,61 +482,6 @@
     window.addEventListener('keydown', h);
     return () => window.removeEventListener('keydown', h);
   });
-
-  // ---- calibration mode (`?calib=1`): drag or arrow-key a marker, then copy the JSON
-  let drag: { key: string; li: number } | undefined;
-  function setDraft(item: Item, li: number, x: number, y: number) {
-    const key = posKey(item.kind, item.id);
-    const arr = (draft[key] ?? positions(item.kind, item.id)).map((p) => ({ ...p }));
-    const p = arr[li];
-    if (!p) return;
-    arr[li] = { x: +clamp(x).toFixed(4), y: +clamp(y).toFixed(4), l: p.l };
-    draft = { ...draft, [key]: arr };
-    localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
-  }
-  function dragStart(e: PointerEvent, item: Item, li: number) {
-    if (!calib) return;
-    e.preventDefault();
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    drag = { key: posKey(item.kind, item.id), li };
-  }
-  function dragMove(e: PointerEvent, item: Item) {
-    if (!drag || !canvas) return;
-    const r = canvas.getBoundingClientRect();
-    setDraft(item, drag.li, (e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height);
-  }
-  function dragEnd() {
-    drag = undefined;
-  }
-  function nudge(e: KeyboardEvent, item: Item, li: number) {
-    if (!calib) return;
-    const step = e.shiftKey ? 0.005 : 0.001;
-    const d: Record<string, [number, number]> = {
-      ArrowLeft: [-step, 0],
-      ArrowRight: [step, 0],
-      ArrowUp: [0, -step],
-      ArrowDown: [0, step],
-    };
-    const m = d[e.key];
-    if (!m) return;
-    e.preventDefault();
-    const p = posOf(item)[li];
-    if (p) setDraft(item, li, p.x + m[0], p.y + m[1]);
-  }
-  const moved = $derived(Object.keys(draft).length);
-  function exportJson() {
-    const out = { image: PLAYFIELD, pos: { ...allPositions(), ...draft } };
-    const text = JSON.stringify(out, null, 1);
-    navigator.clipboard
-      ?.writeText(text)
-      .then(() => (copied = 'Copied positions.json to the clipboard.'))
-      .catch(() => (copied = text));
-  }
-  function resetDraft() {
-    draft = {};
-    localStorage.removeItem(DRAFT_KEY);
-    copied = '';
-  }
 </script>
 
 {#snippet layerIcon(l: MapLayer)}
@@ -789,12 +501,12 @@
 
 {#snippet zoomCapsule()}
   <div class="glass capsule zooms" role="group" aria-label="Zoom">
-    <button class="ibtn" type="button" aria-label="Zoom in" onclick={zoomIn}>
+    <button class="ibtn" type="button" aria-label="Zoom in" onclick={zm.zoomIn}>
       <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true">
         <path d="M10 4v12M4 10h12" />
       </svg>
     </button>
-    <button class="ibtn" type="button" aria-label="Zoom out" onclick={zoomOut}>
+    <button class="ibtn" type="button" aria-label="Zoom out" onclick={zm.zoomOut}>
       <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true">
         <path d="M4 10h12" />
       </svg>
@@ -803,8 +515,8 @@
       class="ibtn fit"
       type="button"
       aria-label="Fit whole playfield"
-      aria-disabled={zoom <= 1 ? 'true' : undefined}
-      onclick={fitAll}
+      aria-disabled={zm.zoom <= 1 ? 'true' : undefined}
+      onclick={zm.fitAll}
     >
       <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true">
         <path d="M3 8V3h5M12 3h5v5M17 12v5h-5M8 17H3v-5" />
@@ -822,236 +534,22 @@
   <span><kbd>0</kbd> fit</span>
 {/snippet}
 
-{#snippet deselectBtn()}
-  <button class="ibtn desel" type="button" aria-label="Deselect" onclick={clearSelection}>
-    <span class="x" aria-hidden="true">
-      <svg viewBox="0 0 20 20" width="14" height="14">
-        <path d="M5 5l10 10M15 5L5 15" />
-      </svg>
-    </span>
-  </button>
-{/snippet}
-
-{#snippet srcLink()}
-  {#if visible.length === 1 && compLayers[0]}
-    <a class="small src" href={manualHref('ops', DATA.maps[compLayers[0]].page)}
-      >{MAP_TITLE[compLayers[0]]}, {pageTitleText('ops', DATA.maps[compLayers[0]].page)}</a
-    >
-  {:else if visible.length === 1 && on.has('shot')}
-    <a class="small src" href={manualHref('ops', 9)}>Playfield Shots, Operations Manual p. E–F</a>
-  {/if}
-{/snippet}
-
-{#snippet prov()}
-  <p class="prov">
-    Positions were remapped from the manual's location maps (p. 2-39 to 2-41) and shot maps (p.
-    E–F), then placed by hand over the manual pages. Off-playfield components (Start button, THING
-    and credit lamps) sit on the nearest edge.
-  </p>
-{/snippet}
-
-{#snippet shotCard(shot: { id: string; name: string; page: number })}
-  <article class="card comp shot-card" data-kind="shot" data-id={shot.id}>
-    <header><span class="dmd">{shot.id}</span></header>
-    <h2>{shot.name}</h2>
-    <p class="small">
-      Shot {shot.id} on the manual's shot map,
-      <a href={manualHref('ops', shot.page)}>{pageTitleText('ops', shot.page)}</a>. Turn on the
-      other layers to see the switches, lamps and coils under it.
-    </p>
-  </article>
-{/snippet}
-
-{#snippet emptyCard()}
-  <div class="card">
-    <h2>Playfield</h2>
-    <p class="muted">Tap a marker on the drawing, or pick from the list.</p>
-    {@render prov()}
-  </div>
-{/snippet}
-
-<!-- The phone sheet's header row (spec §7.6). -->
-{#snippet partHead(item: Item)}
-  {@const st = statusOf(item)}
-  <div class="ph">
-    <span class="code lg dmd">{componentCode(item.kind, item.id)}</span>
-    <div class="pt">
-      <h2 class="name">{item.name}</h2>
-      <p class="kind muted">{kindLine(item)}</p>
-    </div>
-    {#if st}<span class="pill {st}">{STATUS_LABEL[st]}</span>{/if}
-    {@render deselectBtn()}
-  </div>
-{/snippet}
-
-<!-- The phone sheet's expanded content: wiring, the hint and the links (spec §7.6). -->
-{#snippet partBody(item: Item)}
-  {#if item.comp && item.kind !== 'shot'}
-    {@const sw = item.kind === 'switch' ? (item.comp as Switch) : undefined}
-    {@const coil = item.kind === 'coil' ? (item.comp as Coil) : undefined}
-    {@const w = wiring(item.kind, item.comp)}
-    {@const page = mapOf(item.kind).page}
-    <h3 class="gh">Wiring</h3>
-    <ul class="wires">
-      {#if w.kind === 'switch'}
-        {#if w.matrix}
-          <li>
-            <WireChip colour={w.matrix.column.colour} /><span>Column {w.matrix.column.n}</span>
-            <span class="mono muted">{w.matrix.column.text}</span>
-          </li>
-          <li>
-            <WireChip colour={w.matrix.row.colour} /><span>Row {w.matrix.row.n}</span>
-            <span class="mono muted">{w.matrix.row.text}</span>
-          </li>
-        {:else}
-          <li>
-            <WireChip colour={w.wire.colour} /><span>Wire</span>
-            <span class="mono muted">{w.wire.text}</span>
-          </li>
-        {/if}
-        {#if w.part}<li>
-            <span class="lbl">Switch</span><span class="mono muted">{w.part}</span>
-          </li>{/if}
-      {:else if w.kind === 'lamp'}
-        <li>
-          <WireChip colour={w.column.colour} /><span>Column {w.column.n}</span>
-          <span class="mono muted">{w.column.text}</span>
-        </li>
-        <li>
-          <WireChip colour={w.row.colour} /><span>Row {w.row.n}</span>
-          <span class="mono muted">{w.row.text}</span>
-        </li>
-        <li>
-          <span class="lbl">Bulb</span><span class="mono muted">{w.bulb.code} · {w.bulb.part}</span>
-        </li>
-      {:else if w.kind === 'coil'}
-        <li>
-          <WireChip colour={w.wire.colour} /><span>Wire</span>
-          <span class="mono muted">{w.wire.text}</span>
-        </li>
-        <li><span class="lbl">Coil</span><span class="mono muted">{w.part}</span></li>
-        <li><span class="lbl">Fuse</span><span class="mono muted">{w.fuse}</span></li>
-      {/if}
-    </ul>
-    {#if sw?.hint}
-      <p class="prov hint"><strong>Owner's hint.</strong> {t(HINT, sw.hint)}</p>
-    {/if}
-    {#if coil?.note}
-      <p class="prov hint">{t(COIL_NOTE, coil.note)}</p>
-    {/if}
-    <nav class="more" aria-label="More about {fullName(item).toLowerCase()}">
-      <a class="btn sm" href={componentHref(item.kind, item.id)}>Details</a>
-      <a class="btn sm" href={manualHref('ops', page)}>Manual {pageTitleText('ops', page)}</a>
-      <a class="btn sm" href={tableHref(item.kind)}>{TABLE_LABEL[item.kind]}</a>
-      {#if statusOf(item) === 'fault'}
-        <a class="btn sm" href={href('shopping')}>On the shopping list</a>
-      {/if}
-    </nav>
-  {:else if item.kind === 'shot'}
-    {@const shot = SHOTS.find((x) => x.id === item.id)}
-    {#if shot}
-      <p class="small shot-note">
-        Shot {shot.id} on the manual's shot map,
-        <a href={manualHref('ops', shot.page)}>{pageTitleText('ops', shot.page)}</a>. Turn on the
-        other layers to see the switches, lamps and coils under it.
-      </p>
-    {/if}
-  {/if}
-{/snippet}
-
-<!-- The parts list with its filter: the phone sheet and the wide panel share it (spec §7.7). -->
-{#snippet partsList(inSheet: boolean)}
-  <div class="parts">
-    <SearchField
-      label="Search components"
-      placeholder="Search components"
-      autofocus={inSheet}
-      bind:value={q}
-    />
-    {#if inSheet}
-      {@render srcLink()}
-      {@render prov()}
-    {/if}
-    {#each visible as l (l)}
-      {@const rows = itemsIn(l).filter(matches)}
-      {#if rows.length}
-        <h3 class="lh k-{l}">
-          <span>{LABEL[l]}</span>
-          <span class="muted small">{counts[l]} on the map</span>
-        </h3>
-        <ul class="rows">
-          {#each rows as item (item.id)}
-            {@const key = posKey(item.kind, item.id)}
-            {@const sub = subtitle(item)}
-            <li>
-              <button
-                class="row {statusClass(item)}"
-                class:two={!!sub}
-                class:sel={selKey === key}
-                aria-current={selKey === key ? 'true' : undefined}
-                type="button"
-                onclick={() => pick(item)}
-              >
-                <span class="code dmd tile">{showId(item)}</span>
-                <span class="txt">
-                  <span class="nm">{item.name}</span>
-                  {#if sub}<span class="sub muted">{sub}</span>{/if}
-                </span>
-                {#if !posOf(item).length}<span class="muted small">not on map</span>{/if}
-                {#if statusOf(item) === 'fault'}<span class="pill fault">Fault</span>{/if}
-              </button>
-            </li>
-          {/each}
-        </ul>
-      {/if}
-    {/each}
-    {#if q.trim() && !visible.some((l) => itemsIn(l).some(matches))}
-      <p class="gf none">No components match “{q.trim()}”.</p>
-    {/if}
-  </div>
-{/snippet}
-
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="map-ui" class:embed class:wide onkeydown={(e) => onKey(e)} bind:this={mapUi}>
   <!-- Spec §12: the find field's one announcer, debounced; the visible "No components match" stays. -->
   <p class="sr-only" aria-live="polite" aria-atomic="true">{findLive.text}</p>
-  {#if calib}
-    <div class="card calib" bind:this={calibEl}>
-      <strong>Calibration.</strong>
-      <span class="small">
-        Drag a marker onto its part, or select it and use the arrow keys (Shift = bigger step).
-        Drafts stay in this browser until you copy the JSON into
-        <code>src/data/positions.json</code>.
-      </span>
-      <div class="actions overlay-row">
-        <label class="small"
-          >Overlay
-          <select bind:value={overlay}>
-            <option value="">none</option>
-            {#each Object.keys(OVERLAYS) as k (k)}
-              <option value={k}>{OVERLAY_LABEL[k] ?? k}</option>
-            {/each}
-          </select></label
-        >
-        <label class="small"
-          >Opacity
-          <input type="range" min="0.1" max="0.9" step="0.05" bind:value={overlayOpacity} /></label
-        >
-      </div>
-      <div class="actions">
-        <button class="btn sm" onclick={exportJson} disabled={!moved}
-          >Copy JSON ({moved} moved)</button
-        >
-        <button class="btn sm" onclick={resetDraft} disabled={!moved}>Discard drafts</button>
-      </div>
-      {#if copied}
-        {#if copied.startsWith('{')}
-          <textarea readonly rows="6">{copied}</textarea>
-        {:else}
-          <p class="small ok">{copied}</p>
-        {/if}
-      {/if}
-    </div>
+  {#if calib && CalibCard}
+    <CalibCard
+      bind:this={calibCtl}
+      bind:el={calibEl}
+      bind:draft
+      bind:overlayImg
+      layer={LAYERS.find((x) => on.has(x))}
+      {canvas}
+      {posOf}
+      keyOf={(i) => posKey(i.kind, i.id)}
+      snapshot={() => ({ image: PLAYFIELD, pos: allPositions() })}
+    />
   {/if}
 
   <div class="stage" style:--stage-h={stageH ? `${stageH}px` : undefined}>
@@ -1059,7 +557,7 @@
       <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
       <div
         class="scroller"
-        class:zoomed={zoom > 1}
+        class:zoomed={zm.zoom > 1}
         class:embed
         role="region"
         aria-label="Playfield drawing"
@@ -1067,21 +565,21 @@
         style:--stage-top="{stageTop}px"
         style:height={embed && stageW ? `${embedH}px` : undefined}
         bind:this={scroller}
-        onpointerdown={pointerDown}
-        onpointermove={pointerMove}
-        onpointerup={pointerUp}
-        onpointercancel={pointerUp}
+        onpointerdown={zm.pointerDown}
+        onpointermove={zm.pointerMove}
+        onpointerup={zm.pointerUp}
+        onpointercancel={zm.pointerUp}
       >
         <div
           class="canvas"
           class:has-sel={!!current && !calib}
           class:calib
           class:labels={showLabels}
-          class:clip={calib && !!OVERLAYS[overlay]}
-          class:ready
+          class:clip={!!overlayImg}
+          class:ready={zm.ready}
           style:--shift="{shift}px"
-          style:width={fit ? `${canvasW}px` : undefined}
-          style:height={fit ? `${canvasH}px` : undefined}
+          style:width={fit ? `${zm.canvasW}px` : undefined}
+          style:height={fit ? `${zm.canvasH}px` : undefined}
           bind:this={canvas}
         >
           <img
@@ -1092,17 +590,16 @@
             height={PLAYFIELD.h}
             draggable="false"
           />
-          {#if calib && OVERLAYS[overlay]}
-            {@const o = OVERLAYS[overlay]!}
+          {#if overlayImg}
             <img
               class="scan overlay"
-              src={href(o.src)}
+              src={href(overlayImg.src)}
               alt=""
-              style:left="{o.left}%"
-              style:top="{o.top}%"
-              style:width="{o.width}%"
-              style:height="{o.height}%"
-              style:opacity={overlayOpacity}
+              style:left="{overlayImg.left}%"
+              style:top="{overlayImg.top}%"
+              style:width="{overlayImg.width}%"
+              style:height="{overlayImg.height}%"
+              style:opacity={overlayImg.opacity}
               draggable="false"
             />
           {/if}
@@ -1127,11 +624,11 @@
                     pick(item);
                     if (e.detail === 0) void focusSelection();
                   }}
-                  onpointerdown={(e) => dragStart(e, item, li)}
-                  onpointermove={(e) => dragMove(e, item)}
-                  onpointerup={dragEnd}
-                  onpointercancel={dragEnd}
-                  onkeydown={(e) => nudge(e, item, li)}
+                  onpointerdown={(e) => calibCtl?.dragStart(e, item, li)}
+                  onpointermove={(e) => calibCtl?.dragMove(e, item)}
+                  onpointerup={() => calibCtl?.dragEnd()}
+                  onpointercancel={() => calibCtl?.dragEnd()}
+                  onkeydown={(e) => calibCtl?.nudge(e, item, li)}
                 >
                   <i aria-hidden="true">{l === 'shot' ? p.l : ''}</i>
                   {#if l !== 'shot'}<span aria-hidden="true">{p.l}</span>{/if}
@@ -1172,7 +669,7 @@
             class:low={glassInPanel}
             role={embed ? undefined : 'status'}
           >
-            <span class="sr-only">Zoom level</span>{zoomLabel}
+            <span class="sr-only">Zoom level</span>{zm.zoomLabel}
           </div>
           <div class="corner">
             {@render zoomCapsule()}
@@ -1219,7 +716,7 @@
           data-kind={current.kind}
           data-id={current.id}
         >
-          {@render partHead(current)}
+          {@render partHead(current, clearSelection)}
           {@render partBody(current)}
         </BottomSheet>
       {/if}
@@ -1232,7 +729,7 @@
         bind:this={panel}
       >
         <div class="panel-top">
-          {@render srcLink()}
+          {@render srcLink(only)}
           {#if glassInPanel}
             <div class="layers-row" role="group" aria-label="Layers">
               {#each LAYERS as l (l)}
@@ -1262,7 +759,7 @@
           {#if current}
             <div class="ph slim">
               <h2 class="t-name">{fullName(current)}</h2>
-              {@render deselectBtn()}
+              {@render deselectBtn(clearSelection)}
             </div>
           {/if}
           {#if current?.comp && current.kind !== 'shot'}
@@ -1274,14 +771,23 @@
           {/if}
         </section>
         <section class="listing" aria-label="Components on the map">
-          {@render partsList(false)}
+          <MapParts
+            inSheet={false}
+            {visible}
+            {counts}
+            {selKey}
+            {only}
+            {posOf}
+            onpick={pick}
+            bind:q
+          />
         </section>
       </aside>
     {/if}
 
     {#if embed}
       <aside class="side">
-        {@render srcLink()}
+        {@render srcLink(only)}
         {#if current?.comp && current.kind !== 'shot'}
           <ComponentCard kind={current.kind} item={current.comp} mapMeta={mapOf(current.kind)} />
         {:else if currentShot}
@@ -1322,7 +828,7 @@
       recede="header.top, .map-ui > .stage, .map-ui > .calib"
       onclose={() => (partsOpen = false)}
     >
-      {@render partsList(true)}
+      <MapParts inSheet {visible} {counts} {selKey} {only} {posOf} onpick={pick} bind:q />
     </BottomSheet>
   {/if}
 </div>
@@ -1363,22 +869,24 @@
   .k-coil .dot {
     border-radius: 2px;
   }
-  .calib {
+  /* The calibration card (MapCalibration, no <style> of its own); the canvas carries .calib too. */
+  .calib,
+  .map-ui > :global(.calib) {
     display: grid;
     gap: 6px;
     margin: var(--gap) var(--pad);
     border-color: var(--warn);
   }
-  .calib .actions {
+  .map-ui :global(.calib .actions) {
     display: flex;
     gap: 6px;
     flex-wrap: wrap;
   }
-  .calib textarea {
+  .map-ui :global(.calib textarea) {
     width: 100%;
     font: 11px/1.3 var(--font-mono);
   }
-  .calib .ok {
+  .map-ui :global(.calib .ok) {
     color: var(--ok);
     margin: 0;
   }
@@ -1439,13 +947,13 @@
     max-width: none;
     pointer-events: none;
   }
-  .overlay-row {
+  .map-ui :global(.overlay-row) {
     align-items: center;
   }
-  .overlay-row select {
+  .map-ui :global(.overlay-row select) {
     margin-left: 4px;
   }
-  .overlay-row input[type='range'] {
+  .map-ui :global(.overlay-row input[type='range']) {
     vertical-align: middle;
     width: 120px;
   }
@@ -1609,11 +1117,7 @@
       opacity var(--dur-1) var(--ease-standard),
       visibility 0s var(--dur-1);
   }
-  /* The selection sheet's content (spec §7.6). */
-  /* Spec §8.6: the badge keeps its width; the name beside it wraps. */
-  .ph .code {
-    flex: none;
-  }
+  /* The wide panel's `.ph.slim` header (MapCard has the same rule for the sheet's header). */
   .ph {
     display: flex;
     align-items: center;
@@ -1630,188 +1134,6 @@
   .ph .t-name {
     flex: 1;
     margin: 0;
-  }
-  .pt {
-    flex: 1;
-    min-width: 0;
-  }
-  .pt .name {
-    margin: 0;
-    font: var(--t-name);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .pt .kind {
-    margin: 0;
-    font-size: 13px;
-    line-height: 18px;
-  }
-  .pill {
-    --pill-tint: var(--sunk);
-    flex: 0 0 auto;
-    padding: 2px 8px;
-    border-radius: var(--r-btn);
-    font: var(--t-cap);
-    font-weight: 600;
-    background: var(--pill-tint);
-    color: var(--muted);
-  }
-  .pill.fault {
-    --pill-tint: var(--bad-tint);
-    color: var(--bad);
-  }
-  .pill.ok {
-    --pill-tint: var(--ok-tint);
-    color: var(--ok);
-  }
-  .pill.untested {
-    --pill-tint: var(--warn-tint);
-    color: var(--warn);
-  }
-  /* In the parts list every status pill's tint sits on the list's own --cell, whatever the row
-     paints under it: the selected row's amber tint took the dark --bad to 4.25, and a hovered row's
-     --sunk the light --bad to 4.28 (AY-16). On --cell it is 5.58 light and 5.45 dark. */
-  .rows .row .pill {
-    background: linear-gradient(var(--pill-tint), var(--pill-tint)), var(--cell);
-  }
-  .desel {
-    flex: 0 0 auto;
-    color: var(--muted);
-  }
-  .desel .x {
-    display: grid;
-    place-items: center;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    background: var(--sunk);
-  }
-  .desel svg {
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2;
-    stroke-linecap: round;
-  }
-  .gh {
-    margin: 14px 16px 6px;
-    font: var(--t-foot);
-    font-weight: 600;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-  }
-  .wires {
-    list-style: none;
-    margin: 0 16px;
-    padding: 0;
-    border-radius: var(--r-md);
-    background: var(--sheet-cell);
-    overflow: hidden;
-  }
-  .wires li {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    min-height: 44px;
-    padding: 6px 12px;
-    font-size: 15px;
-  }
-  .wires li + li {
-    border-top: 1px solid var(--sep);
-  }
-  .wires .lbl {
-    color: var(--muted);
-  }
-  .wires .mono {
-    margin-left: auto;
-    font-size: 13px;
-    text-align: right;
-  }
-  .hint {
-    margin: 12px 16px 0;
-  }
-  .more {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin: 16px 16px 12px;
-  }
-  .more .btn {
-    min-height: 44px;
-    text-align: center;
-  }
-  .shot-note {
-    margin: 4px 16px 12px;
-  }
-
-  /* The parts list: the phone sheet and the wide panel (spec §7.7, §8.4). */
-  .parts {
-    display: grid;
-    gap: 6px;
-    padding: 4px 16px 16px;
-  }
-  .parts .src {
-    justify-self: start;
-  }
-  .parts .prov {
-    margin: 0;
-  }
-  .lh {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 8px;
-    margin: 16px 0 4px;
-    font: var(--t-sub);
-    font-weight: 600;
-    color: var(--k-ink, var(--k, var(--ink)));
-  }
-  .rows {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    border-radius: var(--r-md);
-    background: var(--cell);
-    overflow: hidden;
-  }
-  .rows li + li .row {
-    border-top: 1px solid var(--sep);
-  }
-  .rows .row {
-    min-height: 44px;
-    padding: 6px 12px;
-    border-radius: 0;
-    gap: 12px;
-  }
-  .rows .row.two {
-    min-height: 60px;
-  }
-  .rows .tile {
-    flex: none;
-  }
-  .rows .txt {
-    flex: 1;
-    min-width: 0;
-    display: grid;
-  }
-  .rows .nm {
-    font-size: 16px;
-    line-height: 22px;
-  }
-  .rows .sub {
-    font-size: 13px;
-    line-height: 18px;
-  }
-  .rows .row.sel {
-    background: var(--tint);
-    color: var(--ink);
-  }
-  /* The selected row's id tile turns amber (spec §7.7). */
-  .rows .row.sel .tile {
-    background: var(--amber-fill);
-    color: var(--on-amber);
-    text-shadow: none;
   }
 
   /* The wide panel (spec §7.7): one scroll column of the stage height, the selected part above the
@@ -1857,7 +1179,7 @@
     flex: 1 0 auto;
     border-top: 1px solid var(--sep);
   }
-  .panel .lh {
+  .panel :global(.lh) {
     position: sticky;
     top: 0;
     margin: 10px 0 0;
@@ -2050,18 +1372,8 @@
     padding: var(--pad);
     min-width: 0;
   }
-  .side .src {
+  .side :global(.src) {
     justify-self: start;
-  }
-  /* Spec §12: the source link stands on its own line, not in running text, so it is a real 44
-     target (in the side panel and under the phone parts list). */
-  .src {
-    display: inline-flex;
-    align-items: center;
-    min-height: var(--touch);
-  }
-  .shot-card h2 {
-    margin: 4px 0;
   }
   .list {
     max-height: 50vh;
@@ -2124,7 +1436,8 @@
   }
   /* Calibration on phones and tablets (spec §7.8): a non-modal sheet that doesn't re-fit (Q12). */
   @media (max-width: 999px) {
-    .map-ui:not(.embed) .calib {
+    .map-ui:not(.embed) .calib,
+    .map-ui:not(.embed) > :global(.calib) {
       position: fixed;
       left: var(--shell-w);
       right: 0;

@@ -139,7 +139,10 @@ const RADIUS_ALLOWED: [string, string][] = [
 const AMBER_TEXT_ALLOWED: [string, string][] = [];
 /* Custom properties that carry the ring colour, and so could reach text through var(). The map's
    switch layer --k is its marker ring, dot and icon; its headings read the text twin --k-ink. */
-const AMBER_VAR_ALLOWED: [string, string][] = [['src/components/PlayfieldMap.svelte', '.k-sw']];
+const AMBER_VAR_ALLOWED: [string, string][] = [
+  ['src/components/PlayfieldMap.svelte', '.k-sw'],
+  ['src/components/MapParts.svelte', '.k-sw'],
+];
 /** var(--amber) itself, with or without a fallback or spaces; not --amber-ink, -fill or -glow. */
 const RING = /var\(\s*--amber\s*[,)]/;
 const allowed = (list: [string, string][], r: Rule) =>

@@ -148,6 +148,39 @@ describe('structure lint', () => {
     expectNone(hits(/^\s*(switch|sw):\s*['"`][A-Z]/, only('src/lib/copy.ts')));
   });
 
+  it('(j) PlayfieldMap stays a coordinator: at most 1500 lines', () => {
+    const lines = readFileSync('src/components/PlayfieldMap.svelte', 'utf8').split('\n').length;
+    expect(lines, 'src/components/PlayfieldMap.svelte lines').toBeLessThanOrEqual(1500);
+  });
+
+  it('(k) the calibration tool is lazy: one importer of overlays.json, a dynamic import of MapCalibration, runes inside', () => {
+    const importers = FILES.filter((f) => /overlays\.json/.test(f.text)).map((f) => f.path);
+    expect(importers).toEqual(['src/components/MapCalibration.svelte']);
+    const map = readFileSync('src/components/PlayfieldMap.svelte', 'utf8');
+    // A runtime import(), not the type-level `typeof import(…)` of the component's state.
+    expect(map).toMatch(/(?<!typeof )import\('\.\/MapCalibration\.svelte'\)\.then/);
+    expect(map).not.toMatch(/^\s*import\s+(?!type\s)[^\n]*MapCalibration\.svelte'/m);
+    const calib = readFileSync('src/components/MapCalibration.svelte', 'utf8');
+    // Runes mode: no legacy runtime in client.js (design probe 2).
+    expect(calib).toMatch(/\$props\(/);
+    // Its CSS lives in PlayfieldMap as :global (design probe 1).
+    expect(calib).not.toMatch(/<style/);
+    // Only type imports from the map closure, so no module is shared across the dynamic boundary.
+    expect(calib).not.toMatch(
+      /^\s*import\s+(?!type\s)[^\n]*from '~\/lib\/(data\/positions|map\/items|map\/zoom\.svelte)'/m,
+    );
+  });
+
+  it('(l) zoom, items and the card have one home each', () => {
+    const map = readFileSync('src/components/PlayfieldMap.svelte', 'utf8');
+    expect(map).not.toMatch(/\bflushSync\b/);
+    expect(map).not.toMatch(
+      /function zoomTo\b|function pointerUp\b|function exportJson\b|function setDraft\b/,
+    );
+    expect(map).not.toMatch(/\{#snippet (partHead|partBody|partsList|shotCard|emptyCard)\b/);
+    expect(map).toMatch(/from '~\/lib\/map\/zoom\.svelte'/);
+  });
+
   it('(control) every rule above still matches inside its home, so none passes vacuously', () => {
     expect(RULES.length).toBe(12);
     for (const [pattern, allowed] of RULES) {

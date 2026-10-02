@@ -122,6 +122,58 @@ test('zoom in, fit and the 0 key', async ({ page }) => {
   await expect.poll(async () => near(await canvasWidth(page), w1)).toBe(true);
 });
 
+test('a zoomed deep link lands without a runtime error (SV-03)', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(String(e)));
+  await gotoHydrated(page, '/map?layer=sw');
+  await expect.poll(() => fitted(page)).toBe(true);
+  const w1 = await canvasWidth(page);
+  await gotoHydrated(page, '/map?layer=sw&z=2');
+  await expect(page.locator('.scroller')).toHaveClass(/zoomed/);
+  // It lands: the canvas is twice the fit, as the zoom test measures it.
+  await expect.poll(async () => near(await canvasWidth(page), w1 * 2)).toBe(true);
+  const fit = page
+    .getByRole('group', { name: 'Zoom' })
+    .getByRole('button', { name: 'Fit whole playfield' });
+  await expect(fit).not.toHaveAttribute('aria-disabled', 'true');
+  expect(errors).toEqual([]);
+});
+
+test('z just above 1 reads as the fit (two decimals, as the URL is written)', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(String(e)));
+  await gotoHydrated(page, '/map?layer=sw&z=1.0001');
+  await expect.poll(() => fitted(page)).toBe(true);
+  await expect(page.locator('.scroller')).not.toHaveClass(/zoomed/);
+  const fit = page
+    .getByRole('group', { name: 'Zoom' })
+    .getByRole('button', { name: 'Fit whole playfield' });
+  await expect(fit).toHaveAttribute('aria-disabled', 'true');
+  expect(errors).toEqual([]);
+});
+
+test('the calibration tool is not loaded without ?calib=1 (SV-08)', async ({ page }) => {
+  const urls: string[] = [];
+  page.on('request', (r) => urls.push(r.url()));
+  await gotoHydrated(page, '/map?layer=sw');
+  await expect.poll(() => fitted(page)).toBe(true);
+  expect(urls.filter((u) => /MapCalibration/.test(u))).toEqual([]);
+  const island = page.locator('astro-island[component-url*="PlayfieldMap"]').first();
+  const chunk = await island.getAttribute('component-url');
+  expect(chunk).toBeTruthy();
+  const text = await (await page.request.get(new URL(chunk!, page.url()).href)).text();
+  expect(text).not.toContain('Copy JSON');
+  expect(text).not.toContain('taf.positions.draft');
+});
+
+test('?calib=1 loads the calibration chunk and shows the card', async ({ page }) => {
+  const loaded = page.waitForRequest(/_astro\/MapCalibration\./);
+  await gotoHydrated(page, '/map?calib=1&layer=sw');
+  await loaded;
+  await expect(page.locator('.card.calib')).toBeVisible();
+  await expect(page.getByRole('button', { name: /Copy JSON/ })).toBeVisible();
+});
+
 test('keys zoom the focused stage and Esc deselects', async ({ page }) => {
   await gotoHydrated(page, '/map?layer=sw&id=32');
   await expect(page).toHaveURL(/id=32/);

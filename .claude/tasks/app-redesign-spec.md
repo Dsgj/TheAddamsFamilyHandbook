@@ -540,6 +540,16 @@ dragMove keeps working
   - no selection sheet, parts sheet or side panel: the selected card and the list stay under the drawing, as today;
   - keys only on its own root (§7.2).
 
+### 7.10 Code homes (audit P4 item 2, 2026-10-02)
+
+- `src/components/PlayfieldMap.svelte` is the coordinator (at most 1500 lines, lint): URL state, layers, selection, the sheet and panel, the handbook embed list, the calibration CSS as `:global` rules under `.map-ui`.
+- `src/lib/map/items.ts`: the item model and pure helpers (`matchesQuery`, `statusOf`), the `OverlayImage` and `CalibrationApi` types.
+- `src/lib/map/zoom.svelte.ts`: `createMapZoom(ctx)`, a runes module that owns zoom, ready, the canvas size, the first-fit effect (§7.1), zoomTo and animate (§7.2), pointers, pinch and double tap (§7.5); the coordinator passes fit, shift, reduced motion and the element refs as closures.
+- `src/components/MapCard.svelte`: the card snippets (partHead, partBody, shotCard, emptyCard, deselectBtn, srcLink, prov) exported from `<script module>` with the card CSS (§7.6, §7.7).
+- `src/components/MapParts.svelte`: the parts list and filter for the sheet (`inSheet`) and the wide panel; root `div.parts`.
+- `src/components/MapCalibration.svelte` (§7.8): runes, no style block, loaded with `import()` only when the URL carries `?calib=1`; the only importer of `overlays.json` (lint).
+- The handbook embed list (§7.9) stays in the coordinator: a child with a root `{#if}` would add hydration anchors to every server-rendered handbook page.
+
 ## 8. Components
 
 ### 8.1 States (Components)
