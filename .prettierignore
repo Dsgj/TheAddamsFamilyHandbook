@@ -8,3 +8,6 @@ src/content/handbook
 kit-docs
 tools
 pnpm-lock.yaml
+# Task notes (tracked .claude/tasks/*.md are not Prettier-formatted, so CI needs this line) and
+# git-excluded local worktrees.
+.claude

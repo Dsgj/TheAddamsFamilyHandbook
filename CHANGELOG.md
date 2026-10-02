@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- **Gated deploys.** Every pull request and push to main runs check,
+  svelte-check, lint, prettier, vitest, build and the Playwright suite on three
+  projects (a WebKit iPhone 13 at 390×844 joins); only a green main deploys. Axe
+  scans 26 routes; a unit test proves every built link, icon and precache URL
+  resolves. Line endings are LF in git; a stale preview can no longer be tested
+  by mistake. No page changes.
 - **One name per thing.** Fault replaces Broken on the tick column; codes are
   32, L55 and SOL 01; one name per page; one verb per destination (Show on map,
   Details, Manual p. n); UK spelling with Grey; dates carry the year and use

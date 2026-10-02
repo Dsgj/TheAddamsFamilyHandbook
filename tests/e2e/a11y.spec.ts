@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { gotoHydrated } from './helpers';
+import { gotoHydrated, twoFrames } from './helpers';
 
 /*
  * P2 item 5 of the app audit: accessibility (AY-01, AY-02, AY-05, AY-06, AY-07, AY-09, AY-10,
@@ -112,11 +112,29 @@ const focused = (page: Page) =>
     };
   });
 
+/** Set by replacePage as a page turn starts, before the address changes. */
+const leaving = (page: Page) => page.evaluate(() => document.documentElement.dataset.leave);
+
 /** Looked at twice: the browser may still be finishing a focus scroll. */
 async function settled(page: Page) {
   let s = await focused(page);
   if (s && (!s.inView || !s.uncovered)) {
-    await page.waitForTimeout(400);
+    // Until the focused element holds still for two frames (the focus scroll has ended).
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () =>
+            new Promise<boolean>((done) => {
+              const at = () => {
+                const r = document.activeElement?.getBoundingClientRect();
+                return r ? `${r.left},${r.top}` : '';
+              };
+              const a = at();
+              requestAnimationFrame(() => requestAnimationFrame(() => done(at() === a)));
+            }),
+        ),
+      )
+      .toBe(true);
     await page.evaluate(() =>
       (window as unknown as KitWindow).__walked?.delete(document.activeElement!),
     );
@@ -140,7 +158,14 @@ async function tabWalk(page: Page, max = 400) {
 }
 
 test.describe('map keyboard model (AY-01, spec §7.5)', () => {
-  test('skip link, drawing, arrows, Enter, Esc; markers are not tab stops', async ({ page }) => {
+  test('skip link, drawing, arrows, Enter, Esc; markers are not tab stops', async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(
+      browserName === 'webkit',
+      "WebKit's Tab skips links (Safari's default), so the tab order cannot be walked",
+    );
     await gotoHydrated(page, '/map');
     const scroller = page.locator('.scroller');
     await expect(page.locator('button.marker').first()).toBeAttached();
@@ -201,6 +226,7 @@ test.describe('map keyboard model (AY-01, spec §7.5)', () => {
   });
 
   test('a clicked Deselect hands focus back without panning the drawing', async ({ page }) => {
+    await page.clock.install();
     await gotoHydrated(page, '/map');
     const scroller = page.locator('.scroller');
     await expect(page.locator('button.marker').first()).toBeAttached();
@@ -231,7 +257,9 @@ test.describe('map keyboard model (AY-01, spec §7.5)', () => {
     await page.getByRole('button', { name: 'Deselect' }).click();
     await expect(page.locator('[aria-label^="Selected component, "]')).toHaveCount(0);
     await expect(page.locator('button.marker:focus')).toHaveAttribute('data-key', key);
-    await page.waitForTimeout(300);
+    // The focus (and any scroll it makes) has happened; a deferred one (a frame or a timer within
+    // 200 ms, on the fake clock) would show here.
+    await page.clock.runFor(200);
     expect(await away()).toBe(true);
   });
 
@@ -279,7 +307,12 @@ const isWide = (page: Page) => page.evaluate(() => innerWidth >= 960);
 
 test.describe('focus is never under a bar (AY-02)', () => {
   for (const url of ['/', '/?q=flipper', '/setup', '/shopping']) {
-    test(`every tab stop on ${url} is on screen and uncovered`, async ({ page }) => {
+    test(`every tab stop on ${url} is on screen and uncovered`, async ({ page, browserName }) => {
+      // /shopping's stops are links, which WebKit's Tab skips (Safari's default).
+      test.skip(
+        browserName === 'webkit' && url === '/shopping',
+        "WebKit's Tab skips links (Safari's default), so the tab order cannot be walked",
+      );
       test.setTimeout(180_000);
       await gotoHydrated(page, url);
       const { bad, stops } = await tabWalk(page);
@@ -307,7 +340,11 @@ test.describe('focus is never under a bar (AY-02)', () => {
   });
 });
 
-test('the skip link is a 44 pill centred in the top bar (AY-05)', async ({ page }) => {
+test('the skip link is a 44 pill centred in the top bar (AY-05)', async ({ page, browserName }) => {
+  test.skip(
+    browserName === 'webkit',
+    "WebKit's Tab skips links (Safari's default), so the tab order cannot be walked",
+  );
   await gotoHydrated(page, '/');
   await page.keyboard.press('Tab');
   const skip = page.locator('a.skip');
@@ -504,6 +541,7 @@ const SURFACES: Surface[] = [
 test.describe('search results are announced (AY-09, spec §12)', () => {
   for (const s of SURFACES) {
     test(s.name, async ({ page }) => {
+      await page.clock.install();
       await gotoHydrated(page, s.url);
       await s.open?.(page);
       const field = page.locator(s.field).filter({ visible: true }).first();
@@ -511,7 +549,8 @@ test.describe('search results are announced (AY-09, spec §12)', () => {
       await expect(field).toBeVisible();
       await expect(region).toHaveCount(1);
       if (s.quietOnLoad !== false) {
-        await page.waitForTimeout(600);
+        // Past liveText's 400 ms delay (live.svelte.ts), on the fake clock: the region stays empty.
+        await page.clock.runFor(450);
         await expect(region).toHaveText('');
       }
       await field.fill(s.hit[0]);
@@ -523,18 +562,24 @@ test.describe('search results are announced (AY-09, spec §12)', () => {
   }
 
   test('a pre-filled ?q= is not announced', async ({ page }) => {
+    await page.clock.install();
     await gotoHydrated(page, '/?q=flipper');
-    await page.waitForTimeout(700);
+    // Past liveText's 400 ms delay (live.svelte.ts), on the fake clock: the region stays empty.
+    await page.clock.runFor(450);
     await expect(page.locator('section.diag > p[aria-live]')).toHaveText('');
     await gotoHydrated(page, '/manual?q=flipper');
-    await page.waitForTimeout(700);
+    await page.clock.runFor(450);
     await expect(page.locator('.msearch > p[aria-live]')).toHaveText('');
   });
 
   test('a chip or a filter after a pre-filled ?q= is announced', async ({ page }) => {
+    await page.clock.install();
     await gotoHydrated(page, '/?q=flipper');
     const region = page.locator('section.diag > p[aria-live]');
-    await page.waitForTimeout(700);
+    // Every source has answered (the fetched ones too), so the chip below changes the results.
+    await expect(page.locator('section.diag h3.lst-h')).toHaveCount(4);
+    // Past liveText's 400 ms delay (live.svelte.ts), on the fake clock: the region stays empty.
+    await page.clock.runFor(450);
     await expect(region).toHaveText('');
     await page.locator('button.chip', { hasText: 'Components' }).click();
     await expect(region).toHaveText(/^\d+ results? for “flipper”$/);
@@ -542,7 +587,7 @@ test.describe('search results are announced (AY-09, spec §12)', () => {
     await gotoHydrated(page, '/manual?q=flipper');
     const pages = page.locator('.msearch > p[aria-live]');
     await expect(page.locator('.msearch > p.muted.small')).toHaveText(/^\d+ pages?$/);
-    await page.waitForTimeout(700);
+    await page.clock.runFor(450);
     await expect(pages).toHaveText('');
     await page.getByRole('combobox', { name: 'Document' }).selectOption('hb');
     await expect(pages).toHaveText(/^\d+ pages?$/);
@@ -651,10 +696,18 @@ test.describe('page viewer keys (AY-11, spec §9.12)', () => {
     );
 
     await page.keyboard.press('+');
-    await page.keyboard.press('+');
     const stage = page.locator('.stage[tabindex="0"]');
     await expect(stage).toHaveCount(1);
     await expect(stage).toHaveAttribute('aria-label', /zoomed/);
+    // Zoom until the stage overflows both ways, so the arrows have something to scroll; how many
+    // steps that takes depends on the viewport (two were not enough at 390×844).
+    for (let i = 0; i < 8; i++) {
+      const over = await stage.evaluate(
+        (el) => el.scrollHeight > el.clientHeight && el.scrollWidth > el.clientWidth,
+      );
+      if (over) break;
+      await page.keyboard.press('+');
+    }
     await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
     for (let i = 0; i < 30; i++) {
       if (await stage.evaluate((el) => el === document.activeElement)) break;
@@ -673,7 +726,9 @@ test.describe('page viewer keys (AY-11, spec §9.12)', () => {
     });
     for (const k of ['ArrowDown', 'ArrowDown', 'ArrowRight', 'ArrowDown'])
       await page.keyboard.press(k);
-    await page.waitForTimeout(300);
+    // The key handler is synchronous and a page turn marks itself at once (replacePage).
+    await twoFrames(page);
+    expect(await leaving(page)).toBeUndefined();
     expect(
       await stage.evaluate((el) => ({
         top: el.scrollTop,
@@ -690,7 +745,8 @@ test.describe('page viewer keys (AY-11, spec §9.12)', () => {
     for (const k of ['Alt+ArrowRight', 'Control+ArrowRight', 'Control+Equal', 'Meta+ArrowRight']) {
       await page.keyboard.press(k);
     }
-    await page.waitForTimeout(300);
+    await twoFrames(page);
+    expect(await leaving(page)).toBeUndefined();
     expect(page.url()).toBe(url);
     expect(await width()).toBe(w);
 
@@ -699,7 +755,8 @@ test.describe('page viewer keys (AY-11, spec §9.12)', () => {
     const go = page.locator('#goto-page');
     await expect(go).toBeFocused();
     for (const k of ['ArrowRight', 'r', 't', '+', '0']) await page.keyboard.press(k);
-    await page.waitForTimeout(300);
+    await twoFrames(page);
+    expect(await leaving(page)).toBeUndefined();
     expect(page.url()).toBe(url);
     expect(await width()).toBe(w);
   });
@@ -737,7 +794,9 @@ test.describe('targets are 44 or carved out (AY-12, spec §12)', () => {
     test(url, async ({ page, isMobile }) => {
       test.setTimeout(120_000);
       await gotoHydrated(page, url);
-      await page.waitForTimeout(300);
+      // The fonts and the first layout, before measuring.
+      await page.evaluate(() => document.fonts.ready.then(() => undefined));
+      await twoFrames(page);
       const out = await page.evaluate(
         ([phone]) => {
           const k = (window as unknown as KitWindow).__a11y;

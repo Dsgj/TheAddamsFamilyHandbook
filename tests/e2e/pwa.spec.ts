@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { gotoHydrated } from './helpers';
+import { activate, gotoHydrated } from './helpers';
 
 /* Phase 11 of the app redesign: the toasts, the Install sheet, the scan-not-cached state and the
    Workshop's pull-to-refresh. The tests raise toasts with the same `tafh:toast` event pwa.ts uses. */
@@ -13,6 +13,7 @@ const raise = (page: Page, kind: string, text: string) =>
 
 test.describe('toasts', () => {
   test('one at a time, Update wins, offline leaves after 4 s, update stays', async ({ page }) => {
+    await page.clock.install();
     await gotoHydrated(page, '/tables');
     await raise(page, 'offline', 'Ready to work offline. Manual pages are saved as you open them.');
     await raise(page, 'update', 'A new version of the app is ready.');
@@ -21,7 +22,8 @@ test.describe('toasts', () => {
     await expect(toast).toHaveCount(1);
     await expect(toast).toContainText('A new version of the app is ready.');
     await expect(toast.getByRole('button', { name: 'Reload' })).toBeVisible();
-    await page.waitForTimeout(4500);
+    // Past the 4 s dwell of a non-update toast (Toast.svelte), on the fake clock.
+    await page.clock.runFor(4500);
     await expect(toast).toContainText('A new version of the app is ready.');
     // The host is a live region, never a status role.
     await expect(page.locator('.toast-host')).toHaveAttribute('aria-live', 'polite');
@@ -68,10 +70,11 @@ test('an uncached manual page says so offline; "Show the text" reveals its text'
 
 test('the Install sheet opens from the Workshop, closes on Esc and returns focus', async ({
   page,
+  browserName,
 }) => {
   await gotoHydrated(page, '/workshop');
   const open = page.getByRole('button', { name: 'Install the app' });
-  await open.click();
+  await activate(open, browserName);
   const dialog = page.getByRole('dialog', { name: 'Install the app' });
   await expect(dialog).toBeVisible();
   await expect(dialog.getByText('Opens without the browser bar')).toBeVisible();
@@ -103,7 +106,12 @@ test('pull-to-refresh lives on the Workshop only and ends in a toast', async ({ 
 test('offline, a query string still hits the precache and a handbook photo still decodes', async ({
   page,
   context,
+  browserName,
 }) => {
+  test.skip(
+    browserName === 'webkit',
+    "offline navigation is an internal error in Playwright's WebKit",
+  );
   await gotoHydrated(page, './');
   // The SW only becomes active once install (which precaches everything) has finished.
   await page.evaluate(() => navigator.serviceWorker.ready.then(() => undefined));

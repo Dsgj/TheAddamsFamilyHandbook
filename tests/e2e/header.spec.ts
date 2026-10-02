@@ -186,7 +186,11 @@ test.describe('the phone bar: back label, title and actions never overlap', () =
 // ran over the title. The chevron does not move, and a label that fits again brings the usual
 // look back. Both projects: the phone for the keyboard ring, the desktop for hover.
 test.describe('a bare back link', () => {
-  test('draws its focus ring and hover pill round the chevron', async ({ page }) => {
+  test('draws its focus ring and hover pill round the chevron', async ({ page, browserName }) => {
+    test.skip(
+      browserName === 'webkit',
+      "WebKit's Tab skips links (Safari's default), so the tab order cannot be walked",
+    );
     await page.setViewportSize({ width: 320, height: 800 });
     await gotoHydrated(page, 'handbook/tests');
     const back = page.locator('header.top a.back');

@@ -154,7 +154,7 @@ test.describe('rail', () => {
 test.describe('sidebar', () => {
   test.use({ viewport: { width: 1440, height: 900 } });
 
-  test('is 256 wide with sub-rows, the logo and the count pill', async ({ page }) => {
+  test('is 256 wide with sub-rows, the logo and the count pill', async ({ page, browserName }) => {
     await gotoHydrated(page, '/lamps');
     const side = await box(page, 'nav.shell');
     expect(side.x).toBe(0);
@@ -185,9 +185,12 @@ test.describe('sidebar', () => {
     }
     // 44 since audit AY-12 (spec §6.4): the sub-rows are contiguous, so the target is real height.
     expect((await subs.first().boundingBox())!.height).toBe(44);
-    // "Skip to content" stays the first focusable element.
-    await page.keyboard.press('Tab');
-    await expect(page.getByRole('link', { name: 'Skip to content' })).toBeFocused();
+    // "Skip to content" stays the first focusable element. WebKit's Tab skips links (Safari's
+    // default), so there focus stays on the body.
+    if (browserName !== 'webkit') {
+      await page.keyboard.press('Tab');
+      await expect(page.getByRole('link', { name: 'Skip to content' })).toBeFocused();
+    }
     // No count pill without a Fault; one after.
     const shopping = subs.filter({ hasText: 'Shopping list' });
     await expect(shopping.locator('.cnt')).toHaveCount(0);
@@ -254,14 +257,20 @@ test.describe('top bar on phones', () => {
     await expect.poll(() => opacity(page, 'main > .lt h1')).toBe(0);
   });
 
-  test('the bar is 44 tall and the skip link is first and targets #main', async ({ page }) => {
+  test('the bar is 44 tall and the skip link is first and targets #main', async ({
+    page,
+    browserName,
+  }) => {
     await gotoHydrated(page, '/switches');
     const bar = await headerBox(page);
     expect(bar.y).toBe(0);
     expect(bar.height).toBe(44);
-    await page.keyboard.press('Tab');
     const skip = page.getByRole('link', { name: 'Skip to content' });
-    await expect(skip).toBeFocused();
+    // WebKit's Tab skips links (Safari's default), so there focus stays on the body.
+    if (browserName !== 'webkit') {
+      await page.keyboard.press('Tab');
+      await expect(skip).toBeFocused();
+    }
     await expect(skip).toHaveAttribute('href', '#main');
   });
 

@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { gotoHydrated } from './helpers';
+import { countNavigations, gotoHydrated } from './helpers';
 
 /* Phase 12 of the app redesign: view transitions between pages, swipe back, and the per-tab
    stack, scroll and Map state. */
@@ -21,10 +21,17 @@ const swReady = (page: Page) =>
 const motion = (page: Page) =>
   page.evaluate(() => (window as unknown as { tafhMotion?: Motion }).tafhMotion ?? null);
 
-/* The transition, once it has run. Under parallel test load Chrome now and then skips a
-   cross-document transition altogether (a plain swap, `type: 'none'`; never with one worker);
-   the test then steps back (or, after a back that went through history, forward) and makes the
-   same navigation again. */
+/* The transition, once it has run. Chrome drops a cross-document transition under CPU load (a
+   known flake of the test machine, not of the app; audit TT-04): the page being left fires
+   `pageswap` with a view transition, yet the new page's `pagereveal` gets none (`type: 'none'`),
+   with the new page painted in 50-200 ms (not the 4 s timeout), visible and with nothing in the
+   console. Measured on a 16-thread laptop for the link push below: 1 attempt in 11 dropped with one
+   worker, 7 in 17 (desktop) and about 6 in 10 (phone) with ten; history traversals (the pop) were
+   never dropped. So the test steps back (or, after a back that went through history, forward)
+   and makes the same navigation again, up to 20 times, and records each drop as an annotation
+   in the report. A transition can also finish before the new page's module scripts have run;
+   motion.ts must have run before the next click (its back-link and pagehide handlers decide pop
+   against fade), so each step waits for DOMContentLoaded, which follows them. */
 async function transition(
   page: Page,
   go: () => Promise<void>,
@@ -32,18 +39,26 @@ async function transition(
   from: RegExp,
   undo = () => page.goBack(),
 ) {
-  for (let attempt = 0; attempt < 6; attempt++) {
+  const seen: string[] = [];
+  for (let attempt = 0; attempt < 20; attempt++) {
     await go();
     await expect(page).toHaveURL(to);
+    await page.waitForLoadState('domcontentloaded');
     await expect.poll(async () => (await motion(page))?.type).toBeTruthy();
     await expect.poll(async () => (await motion(page))?.pending).toBeFalsy();
     const m = (await motion(page))!;
     if (m.type !== 'none' && !m.skipped) return m;
+    seen.push(m.skipped ? `${m.type} (skipped)` : m.type);
+    test.info().annotations.push({
+      type: 'dropped view transition',
+      description: `${to}: ${seen.at(-1)}`,
+    });
     await undo();
     await expect(page).toHaveURL(from);
+    await page.waitForLoadState('domcontentloaded');
     await expect.poll(async () => (await motion(page))?.type).toBeTruthy();
   }
-  throw new Error('Chrome skipped the transition six times over');
+  throw new Error(`Chrome dropped the transition 20 times over: ${seen.join(', ')}`);
 }
 
 test('a link push slides the page in; the back link pops it', async ({ page }) => {
@@ -150,6 +165,7 @@ test('a view pushed from Diagnose results goes back to Results', async ({ page }
 
 test.describe('swipe back', () => {
   test.skip(({ isMobile }) => !isMobile, 'a touch gesture');
+  test.skip(({ browserName }) => browserName !== 'chromium', 'the touch events go through CDP');
 
   async function drag(page: Page, xs: number[], y: number, pause = 0) {
     const cdp = await page.context().newCDPSession(page);
@@ -158,10 +174,11 @@ test.describe('swipe back', () => {
       touchPoints: [{ x: xs[0]!, y }],
     });
     for (const x of xs.slice(1)) {
+      // Gesture pacing, not a wait: the spacing of the touch events is the input.
       if (pause) await page.waitForTimeout(pause);
       await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y }] });
     }
-    if (pause) await page.waitForTimeout(pause);
+    if (pause) await page.waitForTimeout(pause); // gesture pacing, not a wait
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
     await cdp.detach();
   }
@@ -175,15 +192,27 @@ test.describe('swipe back', () => {
   });
 
   test('a short slow drag springs back', async ({ page }) => {
+    await page.clock.install();
     await gotoHydrated(page, '/switch/32');
+    const navs = await countNavigations(page);
     await drag(page, [8, 20, 32, 44, 56], 400, 60);
-    await page.waitForTimeout(400);
-    await expect(page).toHaveURL(/\/switch\/32$/);
     await expect(page.locator('#main')).toHaveCSS('transform', 'none');
+    // Past the 300 ms swipe timer, on the fake clock: no navigation was started.
+    await page.clock.runFor(350);
+    expect(await navs()).toBe(0);
+    await expect(page).toHaveURL(/\/switch\/32$/);
   });
 });
 
-test('after one online visit all five tabs open offline', async ({ page, context }) => {
+test('after one online visit all five tabs open offline', async ({
+  page,
+  context,
+  browserName,
+}) => {
+  test.skip(
+    browserName === 'webkit',
+    "offline navigation is an internal error in Playwright's WebKit",
+  );
   await gotoHydrated(page, '/');
   await page.evaluate(() => navigator.serviceWorker.ready.then(() => undefined));
   await context.setOffline(true);

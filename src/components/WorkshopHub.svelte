@@ -60,13 +60,12 @@
       /* private mode */
     }
     const sw = navigator.serviceWorker;
-    if (sw) {
-      const mark = () => (offline = sw.controller ? 'Ready' : '');
-      mark();
-      sw.ready.then(mark).catch(() => {});
-      sw.addEventListener('controllerchange', mark);
-      return () => sw.removeEventListener('controllerchange', mark);
-    }
+    if (!sw) return undefined;
+    const mark = () => (offline = sw.controller ? 'Ready' : '');
+    mark();
+    sw.ready.then(mark).catch(() => {});
+    sw.addEventListener('controllerchange', mark);
+    return () => sw.removeEventListener('controllerchange', mark);
   });
 
   /** System removes the stored choice; Dark or Light stores it. The head script applies it on load. */

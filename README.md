@@ -112,14 +112,18 @@ pnpm preview
 
 ### Gates
 
-| Command         | Checks                                                  |
-| --------------- | ------------------------------------------------------- |
-| `pnpm check`    | `astro check` + `tsc --noEmit`                          |
-| `pnpm lint`     | ESLint (Astro + Svelte)                                 |
-| `pnpm test`     | Vitest: codes, shared cause, handbook build, copy rules |
-| `pnpm test:e2e` | Playwright smoke, phone-dark and desktop-light projects |
+| Command             | Checks                                                                                                                                      |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm check`        | `astro check` + `tsc --noEmit`                                                                                                              |
+| `pnpm svelte-check` | svelte-check after astro sync                                                                                                               |
+| `pnpm lint`         | ESLint (Astro + Svelte)                                                                                                                     |
+| `pnpm format:check` | Prettier, LF everywhere                                                                                                                     |
+| `pnpm test`         | Vitest: codes, shared cause, handbook build, copy rules, built links, workflow shape (run `pnpm build` first: the link check reads `dist/`) |
+| `pnpm test:e2e`     | Playwright: phone-dark, desktop-light and phone-webkit (390×844), incl. axe on 26 routes; run `pnpm build` first                            |
 
 ## Deploy
+
+Every push to main and every pull request runs the gates; main deploys once they are green.
 
 - **GitHub Pages** (chosen target).
   [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) builds with

@@ -97,7 +97,6 @@
   }
 
   // ---- map kind: detents and the drag
-  let root: HTMLElement | undefined = $state();
   let dragging = $state(false);
   /** Height while a finger drags; otherwise the detent. */
   let dragH = $state(0);
@@ -248,7 +247,6 @@
     class:dragging
     aria-label={label}
     style:height="calc({height}px + var(--safe-bot))"
-    bind:this={root}
     {...rest}
   >
     <button

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { gotoHydrated } from './helpers';
+import { activate, gotoHydrated } from './helpers';
 
 /* Phase 8 of the app redesign: the Handbook tab's segmented links, the Handbook home, the reader
    toolbar, the manual viewer toolbar with its Go to page sheet and zoom capsule, and Parts. */
@@ -79,6 +79,7 @@ test.describe('the Handbook home', () => {
 test.describe('the reader', () => {
   test('has the back link, View the manual page and the bottom toolbar; Contents opens a sheet', async ({
     page,
+    browserName,
   }) => {
     await gotoHydrated(page, '/handbook/tests');
     await expect(page.locator('header.top a.back')).toHaveText('Handbook');
@@ -100,7 +101,7 @@ test.describe('the reader', () => {
     await expect(pg.locator('.mono')).toHaveAttribute('aria-hidden', 'true');
 
     const contents = bar.getByRole('button', { name: 'Contents' });
-    await contents.click();
+    await activate(contents, browserName);
     const dialog = page.getByRole('dialog', { name: 'Contents' });
     await expect(dialog).toBeVisible();
     await expect(dialog.getByLabel('Search the handbook')).toBeVisible();
@@ -185,15 +186,18 @@ test.describe('the manual viewer', () => {
     await expect(page).toHaveURL(/manual\/ops\/30$/);
   });
 
-  test('Esc closes Go to page and returns focus; a printed number also works', async ({ page }) => {
+  test('Esc closes Go to page and returns focus; a printed number also works', async ({
+    page,
+    browserName,
+  }) => {
     await gotoHydrated(page, '/manual/ops/97');
     const open = page.getByRole('button', { name: /^Go to page/ });
-    await open.click();
+    await activate(open, browserName);
     await expect(page.getByRole('dialog', { name: 'Go to page' })).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(page.getByRole('dialog')).toHaveCount(0);
     await expect(open).toBeFocused();
-    await open.click();
+    await activate(open, browserName);
     const dialog = page.getByRole('dialog', { name: 'Go to page' });
     await dialog.getByLabel('Page').fill('2-39');
     await dialog.getByRole('button', { name: 'Go' }).click();
