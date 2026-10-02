@@ -1,0 +1,9 @@
+# Every text file is LF in the index and on checkout, whatever core.autocrlf says (TT-07).
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.woff2 binary
+*.pdf binary
+*.ico binary

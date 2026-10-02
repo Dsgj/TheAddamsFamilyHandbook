@@ -257,7 +257,7 @@ const ROUTES: Route[] = [
     },
     prep: async (page) => {
       await expect(page.locator('.marker.sel')).toBeVisible();
-      if (test.info().project.name !== 'desktop-light') return;
+      if (test.info().project.use.isMobile) return;
       await expect(page.locator('.rows .row.sel .pill.fault')).toBeVisible();
       const other = page
         .locator('.rows .row:not(.sel)')
@@ -504,7 +504,7 @@ for (const route of PRINT) {
       if (route.prep) await route.prep(page);
       await settle(page);
       const screen = await page.evaluate(printed, HIDDEN);
-      const phone = test.info().project.name === 'phone-dark';
+      const phone = test.info().project.use.isMobile === true;
       expect(screen.visible).toEqual(
         expect.arrayContaining([
           ...route.present,

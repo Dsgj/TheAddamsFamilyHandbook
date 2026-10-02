@@ -4,7 +4,17 @@ import tseslint from 'typescript-eslint';
 import svelteConfig from './svelte.config.js';
 
 export default tseslint.config(
-  { ignores: ['dist/**', '.astro/**', 'node_modules/**', 'public/**', 'tools/**', 'kit-docs/**'] },
+  {
+    ignores: [
+      'dist/**',
+      '.astro/**',
+      'node_modules/**',
+      'public/**',
+      'tools/**',
+      'kit-docs/**',
+      '.claude/**',
+    ],
+  },
   ...tseslint.configs.recommended,
   ...eslintPluginAstro.configs.recommended,
   ...eslintPluginSvelte.configs.recommended,

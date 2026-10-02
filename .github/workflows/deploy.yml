@@ -1,21 +1,26 @@
 name: Deploy to GitHub Pages
 
+# Every push to main and every pull request runs the gates; only a push to main (or a manual run)
+# deploys, and only once every gate is green (audit TT-01).
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
+# A newer push to a pull request cancels that PR's older run. Runs on main are never cancelled (a
+# cancelled run would cancel its deploy too); they queue, and a newer pending run replaces an older
+# pending one, so the latest green main deploys.
 concurrency:
-  group: pages
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  build:
+  static:
+    name: check, svelte-check, lint, prettier, vitest
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
@@ -25,19 +30,80 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm check
+      - run: pnpm svelte-check
+      - run: pnpm lint
+      - run: pnpm format:check
+      # The unit tests include the dist link check, so the build comes first.
+      - run: pnpm build
       - run: pnpm test
+
+  e2e:
+    name: e2e ${{ matrix.project }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - project: phone-dark
+            browser: chromium
+          - project: desktop-light
+            browser: chromium
+          - project: phone-webkit
+            browser: webkit
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
+      # The suite addresses pages by absolute path, so it runs against the default base ('/'),
+      # as it does locally; the Pages build below is a separate job.
+      - run: pnpm build
+      - run: pnpm exec playwright test --project ${{ matrix.project }}
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-${{ matrix.project }}
+          path: test-results
+          retention-days: 7
+
+  build:
+    name: build for Pages
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
       - run: pnpm build
         env:
           # GitHub Pages serves a project site under /<repo>/
           BASE_PATH: /${{ github.event.repository.name }}/
           SITE_URL: https://${{ github.repository_owner }}.github.io
+      # The link check again, on the build that ships: every reference must carry the /<repo>/ base.
+      - run: pnpm test tests/unit/links.test.ts
       - uses: actions/upload-pages-artifact@v5
         with:
           path: dist
 
   deploy:
-    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: [static, e2e, build]
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: false
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

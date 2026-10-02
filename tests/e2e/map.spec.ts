@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { gotoHydrated } from './helpers';
+import { activate, gotoHydrated, twoFrames } from './helpers';
 
 /** Playfield map, Phases 1–2 of the app redesign: fit, zoom, keys, markers, the sheets, the panel. */
 
@@ -199,7 +199,8 @@ test('the handbook embed ignores keys typed elsewhere', async ({ page }) => {
   const before = await canvas.evaluate((el) => el.getBoundingClientRect().width);
   await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
   await page.keyboard.press('+');
-  await page.waitForTimeout(400);
+  // A zoom sets the size at once and eases a transform: none running means none started.
+  await expect.poll(() => canvas.evaluate((el) => el.getAnimations().length)).toBe(0);
   expect(await canvas.evaluate((el) => el.getBoundingClientRect().width)).toBe(before);
   // The embed is never cropped: the drawing lies inside its scroller.
   const g = await embed.evaluate((root) => {
@@ -282,7 +283,7 @@ test('markers select by name, by the nearest-centre rule, and never on a drag', 
   await page.mouse.move(point!.x + 15, point!.y + 15, { steps: 3 });
   await page.mouse.move(point!.x + 30, point!.y + 30, { steps: 3 });
   await page.mouse.up();
-  await page.waitForTimeout(100);
+  await twoFrames(page);
   await expect(book).toHaveAttribute('aria-pressed', 'true');
   await expect(jet).toHaveAttribute('aria-pressed', 'false');
 });
@@ -435,10 +436,10 @@ test.describe('phone selection sheet', () => {
     await expect(page).not.toHaveURL(/id=/);
   });
 
-  test('the parts sheet filters, picks and hands focus back', async ({ page }) => {
+  test('the parts sheet filters, picks and hands focus back', async ({ page, browserName }) => {
     await gotoHydrated(page, '/map?layer=sw');
     const opener = page.getByRole('button', { name: 'All components on the map' });
-    await opener.click();
+    await activate(opener, browserName);
     const dialog = page.getByRole('dialog', { name: 'All components on the map' });
     await expect(dialog).toBeVisible();
     const find = dialog.getByRole('searchbox', { name: 'Search components' });

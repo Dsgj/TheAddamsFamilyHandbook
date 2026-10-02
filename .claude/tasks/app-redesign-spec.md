@@ -1127,3 +1127,14 @@ Audit P3 item 1, "One name per thing" (CP-01 to CP-20, UX-06, UX-07, UX-10, CR-0
 - `MatrixHeader` is `[wire, pin, ic]`.
 - Handbook text that is kit-owned is translated at render time through `HANDBOOK_ATTR` in `src/lib/handbook/render.ts` (today: `title="Has a submenu"`); repo-owned handbook pages (`app*.md`) are edited directly.
 - `pnpm sync-kit` is a dry run; `pnpm sync-kit -- --write` applies the copy list, updates the manifest `src/data/kit/kit-sync.json`, skips local edits and diverged docs, and refuses while the synced roots are dirty. Restart `astro dev` after editing `ownerNotes.ts` or `en.ts`.
+
+## 14. Tooling and CI (audit P4 item 4, 2026-10-02)
+
+- Gates, in `.github/workflows/deploy.yml` and the README Gates table: `pnpm check` (astro check + tsc, 0 hints), `pnpm svelte-check` (0 errors), `pnpm lint`, `pnpm format:check`, `pnpm test` (vitest; the link check needs a prior `pnpm build`), `pnpm build`, and `pnpm test:e2e` on the three projects. Deploy needs every gate; pull requests run the gates and never deploy.
+- Playwright projects: `phone-dark` (Chromium phone), `desktop-light` (Chromium desktop) and `phone-webkit` (iPhone 13, 390×844, dark). A WebKit limit is gated by name in the spec with its cause; an app bug found on one engine goes to `KNOWN_SCROLLS` or the axe `KNOWN` list keyed by project and route, and a stale entry fails the test.
+- No fixed waits in e2e: wait for the condition the test needs (service worker state, `getAnimations()`, frames, a settled rect, a navigation or `history.back` counter, or the fake clock where the app races a 300 ms timer).
+- Local e2e: Playwright starts `astro preview --port 4321 --ignore-lock`; `tests/e2e/global-setup.ts` refuses a port 4321 that serves a different `sw.js` than `dist/sw.js`. CI never reuses a server.
+- Line endings are LF in the repository (`.gitattributes` `* text=auto eol=lf`, binaries marked; `.editorconfig`). `prettier --check .` must stay clean on every checkout.
+- Content collections import `z` from `astro/zod`.
+- Accessibility: `tests/e2e/axe.spec.ts` runs axe-core over 26 representative routes on every project; a new violation fails the build, a known one is listed with its route and project.
+- Links: `tests/unit/links.test.ts` resolves every href, src, srcset, CSS `url()`, island URL, manifest and precache entry of the built dist to a file; CI runs it on the Pages build as well.

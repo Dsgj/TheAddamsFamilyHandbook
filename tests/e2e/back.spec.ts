@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { gotoHydrated } from './helpers';
+import { countNavigations, gotoHydrated } from './helpers';
 
 /* Audit P1 item 7, back behaviour. The header back link and swipe back step back through history
    when the previous entry is where they lead, and otherwise replace the page they leave; each
@@ -128,12 +128,20 @@ test.describe('the header back link', () => {
     const s = await where(page);
     await page.locator('main a[data-cell="32"]').first().click();
     await settle(page, /\/switch\/32$/);
-    await backLink(page).evaluate((a: HTMLAnchorElement) => {
+    // The second activation is ignored on the spot: one history step is taken, not two.
+    const backs = await backLink(page).evaluate((a: HTMLAnchorElement) => {
+      let n = 0;
+      const back = history.back.bind(history);
+      history.back = () => {
+        n++;
+        back();
+      };
       a.click();
       a.click();
+      return n;
     });
+    expect(backs).toBe(1);
     await settle(page, /\/switches$/);
-    await page.waitForTimeout(300);
     expect(await where(page)).toEqual({ url: '/switches', len: s.len + 1, idx: s.idx });
   });
 
@@ -289,9 +297,11 @@ test.describe('Diagnose ?q', () => {
   test('typing alone leaves the address; once committed a reload returns to the results', async ({
     page,
   }) => {
+    await page.clock.install();
     await gotoHydrated(page, './');
     await field(page).fill('32 68');
-    await page.waitForTimeout(400);
+    // Past Diagnose's 250 ms URL timer, on the fake clock: typing alone never writes it.
+    await page.clock.runFor(300);
     await expect(page).not.toHaveURL(/\?/);
     await page.reload();
     await hydrated(page);
@@ -387,6 +397,7 @@ test.describe('Diagnose ?q', () => {
   });
 
   test('a card link followed while the field is not focused commits first', async ({ page }) => {
+    await page.clock.install();
     await gotoHydrated(page, './');
     // Text that arrives without the field having focus (Paste): no blur will commit it.
     await field(page).evaluate((t: HTMLTextAreaElement) => {
@@ -395,7 +406,7 @@ test.describe('Diagnose ?q', () => {
     });
     await expect(diag(page)).toHaveAttribute('data-mode', 'results');
     await expect(field(page)).not.toBeFocused();
-    await page.waitForTimeout(400);
+    await page.clock.runFor(300);
     await expect(page).not.toHaveURL(/\?/);
     await card(page).click();
     await settle(page, CARD);
@@ -555,6 +566,9 @@ test.describe('without the Navigation API', () => {
   test.beforeEach(async ({ context }) => {
     await context.addInitScript(() => {
       const w = window as unknown as { navigation?: unknown };
+      // WebKit runs this twice on a window the page opens (about:blank, then the document);
+      // the second run must keep the first stash, not stash the undefined the first left.
+      if ('__nav' in w) return;
       Object.defineProperty(window, '__nav', { value: w.navigation, configurable: true });
       Object.defineProperty(window, 'navigation', {
         value: undefined,
@@ -639,6 +653,7 @@ test.describe('without the Navigation API', () => {
 
 test.describe('swipe back', () => {
   test.skip(({ isMobile }) => !isMobile, 'a touch gesture');
+  test.skip(({ browserName }) => browserName !== 'chromium', 'the touch events go through CDP');
 
   async function drag(page: Page, xs: number[], y: number, end: 'touchEnd' | 'touchCancel') {
     const cdp = await page.context().newCDPSession(page);
@@ -647,10 +662,11 @@ test.describe('swipe back', () => {
       touchPoints: [{ x: xs[0]!, y }],
     });
     for (const x of xs.slice(1)) {
+      // Gesture pacing, not a wait: the spacing of the touch events is the input.
       await page.waitForTimeout(30);
       await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y }] });
     }
-    await page.waitForTimeout(30);
+    await page.waitForTimeout(30); // gesture pacing, not a wait
     await cdp.send('Input.dispatchTouchEvent', { type: end, touchPoints: [] });
     await cdp.detach();
   }
@@ -720,12 +736,16 @@ test.describe('swipe back', () => {
   });
 
   test('a cancelled touch springs back and never navigates', async ({ page }) => {
+    await page.clock.install();
     await gotoHydrated(page, 'switch/32');
     const s = await where(page);
     await still(page);
+    const navs = await countNavigations(page);
     await drag(page, far(page), 400, 'touchCancel');
-    await page.waitForTimeout(600);
-    expect(await where(page)).toEqual(s);
     await expect(page.locator('#main')).toHaveCSS('transform', 'none');
+    // Past the 300 ms swipe timer, on the fake clock: no navigation was started.
+    await page.clock.runFor(350);
+    expect(await navs()).toBe(0);
+    expect(await where(page)).toEqual(s);
   });
 });

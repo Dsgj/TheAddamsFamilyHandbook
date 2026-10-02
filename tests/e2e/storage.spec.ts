@@ -86,6 +86,7 @@ test("another tab's Clear all is not undone by a note still waiting to be saved"
   page,
   context,
 }) => {
+  await page.clock.install();
   await seed(page, { 'lamp:11': fault('lamp:11') });
   const other = await context.newPage();
   await gotoHydrated(other, '/shopping');
@@ -98,7 +99,8 @@ test("another tab's Clear all is not undone by a note still waiting to be saved"
   await expect(other.locator('.device')).toContainText('Nothing saved on this device yet.');
   // The queued note edits an entry that is gone: it is dropped, and the field shows the clear.
   await expect(note).toHaveValue('');
-  await page.waitForTimeout(600);
+  // Past the 400 ms save debounce (storage.ts), on the fake clock.
+  await page.clock.runFor(450);
   expect(await stored(page)).toEqual({});
   expect(await stored(other)).toEqual({});
 });
@@ -376,6 +378,7 @@ test('marks stay on screen when storage is full', async ({ page }) => {
 });
 
 test('asks once to keep storage, on the first mark and not on load', async ({ page }) => {
+  await page.clock.install();
   await page.addInitScript(() => {
     const w = window as unknown as { persistCalls: number };
     w.persistCalls = 0;
@@ -393,7 +396,8 @@ test('asks once to keep storage, on the first mark and not on load', async ({ pa
   await page.getByRole('button', { name: 'Fault' }).click();
   await page.getByRole('button', { name: 'OK', exact: true }).click();
   await expect.poll(calls).toBe(1);
-  await page.waitForTimeout(200);
+  // Nothing asks again later (a mark is written at once; no save is pending), on the fake clock.
+  await page.clock.runFor(450);
   expect(await calls()).toBe(1);
 });
 

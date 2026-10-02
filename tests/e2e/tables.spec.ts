@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { gotoHydrated } from './helpers';
+import { activate, gotoHydrated } from './helpers';
 
 /* Phase 7 of the app redesign: the switch matrix tabs, the matrix cell card, the component detail
    page with its Show-on-map sheet, and Recently viewed on the Tables hub. */
@@ -165,10 +165,13 @@ test.describe('the component detail page', () => {
     await expect(page.getByRole('button', { name: 'Add to list' })).toHaveCount(0);
   });
 
-  test('Show on map opens a modal sheet; Esc returns focus to its button', async ({ page }) => {
+  test('Show on map opens a modal sheet; Esc returns focus to its button', async ({
+    page,
+    browserName,
+  }) => {
     await gotoHydrated(page, '/switch/32');
     const open = page.getByRole('button', { name: 'Show on map' });
-    await open.click();
+    await activate(open, browserName);
     const dialog = page.getByRole('dialog', { name: 'Switch 32 · Upper Right Jet' });
     await expect(dialog).toBeVisible();
     await expect(dialog.getByRole('link', { name: 'Show on map' })).toHaveAttribute(

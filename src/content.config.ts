@@ -1,4 +1,5 @@
-import { defineCollection, z } from 'astro:content';
+import { defineCollection } from 'astro:content';
+import { z } from 'astro/zod';
 import { handbookLoader } from '~/lib/handbook/loader';
 
 const handbook = defineCollection({

@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { gotoHydrated } from './helpers';
+import { activate, gotoHydrated } from './helpers';
 
 /** Phase 3 of the app redesign: the Tables and Workshop hubs, the list vocabulary, Appearance. */
 
@@ -91,10 +91,10 @@ test('Appearance stores Light, survives a reload, and System clears it', async (
   await expect(page.locator('html')).not.toHaveAttribute('data-theme', /./);
 });
 
-test('About the app opens a dialog and hands focus back', async ({ page }) => {
+test('About the app opens a dialog and hands focus back', async ({ page, browserName }) => {
   await gotoHydrated(page, '/workshop');
   const row = page.getByRole('button', { name: 'About the app' });
-  await row.click();
+  await activate(row, browserName);
   const dialog = page.getByRole('dialog', { name: 'About the app' });
   await expect(dialog).toBeVisible();
   await expect(dialog).toContainText('Williams Electronics Games / Midway');
