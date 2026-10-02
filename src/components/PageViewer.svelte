@@ -3,7 +3,7 @@
   import BottomSheet from './BottomSheet.svelte';
   import { isTypingTarget } from '~/lib/keys';
   import type { DocId, PageMeta } from '~/lib/model/types';
-  import { pageRefText, pdfPageFromLabel } from '~/lib/pages';
+  import { pageImage, pageRefText, pdfPageFromLabel } from '~/lib/pages';
   import { href, manualHref, replacePage } from '~/lib/url';
 
   /**
@@ -77,8 +77,7 @@
   const boxW = $derived((rotated ? H : W) * effScale);
   const boxH = $derived((rotated ? W : H) * effScale);
   const useOverview = $derived(tiled && effScale < 0.3);
-  const src = (suffix = '') =>
-    href(`assets/pages/${doc}/${page}${suffix}.${doc === 'ops' && page === 1 ? 'jpg' : 'png'}`);
+  const src = (suffix = '') => href(pageImage(doc, page, suffix));
 
   const rootPx = (name: string) =>
     parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name)) || 0;

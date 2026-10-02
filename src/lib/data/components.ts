@@ -1,5 +1,6 @@
 import components from '~/data/kit/components.json';
-import type { Coil, Components, Kind, Lamp, Switch } from '~/lib/model/types';
+import { MAP_LAYER } from '~/lib/copy';
+import type { Coil, Components, Kind, Lamp, Layer, MapMeta, Switch } from '~/lib/model/types';
 
 export const DATA = components as unknown as Components;
 
@@ -20,20 +21,14 @@ export function find(kind: Kind, id: string): AnyComponent | undefined {
   return COILS.get(id);
 }
 
-export { KIND_LABEL } from '~/lib/copy';
-export type Layer = 'sw' | 'lamp' | 'coil';
-export const MAP_LAYER: Record<Kind, Layer> = { switch: 'sw', lamp: 'lamp', coil: 'coil' };
-export const LAYER_KIND: Record<Layer, Kind> = { sw: 'switch', lamp: 'lamp', coil: 'coil' };
-export const LAYER_LABEL: Record<Layer, string> = {
-  sw: 'Switches',
-  lamp: 'Lamps',
-  coil: 'Solenoids and flashers',
-};
-export const LAYER_SOURCE: Record<Layer, string> = {
-  sw: 'Switch Locations, p. 2-39',
-  lamp: 'Lamp Locations, p. 2-40',
-  coil: 'Solenoid/Flasher Locations, p. 2-41',
-};
+/**
+ * The location map a kind is printed on. The kind and layer words (KIND_LABEL, MAP_LAYER,
+ * LAYER_LABEL, MAP_TITLE) live in copy.ts, which holds no data, so an island that only names a
+ * component does not pull components.json in through this module.
+ */
+export function mapOf(kind: Kind): MapMeta {
+  return DATA.maps[MAP_LAYER[kind]];
+}
 
 export function itemsOf(layer: Layer): AnyComponent[] {
   return layer === 'sw' ? DATA.switches : layer === 'lamp' ? DATA.lamps : DATA.coils;

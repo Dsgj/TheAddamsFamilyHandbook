@@ -142,6 +142,10 @@ export type PageMeta = [number, number, number, boolean];
 export type Pages = Record<DocId, PageMeta[]>;
 
 export type Kind = 'switch' | 'lamp' | 'coil';
+/** A component layer of the map and its location page: `sw`, `lamp`, `coil` (copy.ts MAP_LAYER). */
+export type Layer = 'sw' | 'lamp' | 'coil';
+/** A marker kind on the map: the component kinds plus the manual's lettered shots. */
+export type MapKind = Kind | 'shot';
 export interface ComponentRef {
   kind: Kind;
   id: string;

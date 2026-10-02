@@ -2,13 +2,13 @@
 import Base from './Base.astro';
 import ComponentDetail, { type Related } from '~/components/ComponentDetail.svelte';
 import type { AnyComponent } from '~/lib/data/components';
-import { DATA, KIND_LABEL, MAP_LAYER } from '~/lib/data/components';
+import { DATA, mapOf } from '~/lib/data/components';
 import type { Kind } from '~/lib/model/types';
-import { componentCode, kindLine } from '~/lib/copy';
-import { componentHref, href } from '~/lib/url';
+import { componentCode, componentName, KIND_PLURAL, kindLine } from '~/lib/copy';
+import { componentHref, handbookHref, tablePath } from '~/lib/url';
 import { appendixFor, APPENDICES, serviceNotes } from '~/data/appendix';
-import { findHeading, type HeadingIndex } from '~/lib/handbook/render';
-import { handbookToc } from '~/lib/handbook/toc';
+import { findHeading } from '~/lib/handbook/render';
+import { handbookIndex } from '~/lib/handbook/toc';
 
 /**
  * The component detail page (spec §9.7). The island draws the anatomy; this layout adds the
@@ -23,10 +23,12 @@ const { kind, item, list } = Astro.props;
 const i = list.findIndex((x) => x.id === item.id);
 const prev = list[i - 1];
 const next = list[i + 1];
-const listPath = kind === 'switch' ? 'switches' : kind === 'lamp' ? 'lamps' : 'coils';
+/** The list page: a path, for the nav key and the back link (Base adds the base path). */
+const listPath = tablePath(kind);
 /** The back link's label: the list page's name. */
-const listLabel = kind === 'switch' ? 'Switches' : kind === 'lamp' ? 'Lamps' : 'Solenoids';
-const layer = MAP_LAYER[kind];
+const listLabel = KIND_PLURAL[kind];
+/** "Switch 32": the page's heading, and the start of its title and description. */
+const compName = componentName(kind, item.id);
 
 /** Related components: the same name (the lamp and coil of a jet bumper) or the same assembly. */
 const name = item.name.trim().toLowerCase();
@@ -54,36 +56,31 @@ const related: Related[] = pool
   }));
 
 /** Owner appendices that apply to this component, resolved to their Handbook headings. */
-const toc = await handbookToc();
-const idx: HeadingIndex = new Map(
-  toc
-    .filter((t) => t.level > 1)
-    .map((t) => [t.id, { id: t.id, level: t.level === 2 ? 2 : 3, text: t.text, page: t.page }]),
-);
+const idx = await handbookIndex();
 const notes = appendixFor(kind, item)
-  .map((code) => ({ code, title: APPENDICES[code], h: findHeading(idx, code) }))
+  .map((code) => ({ code, title: APPENDICES[code], h: findHeading(idx.headings, code) }))
   .filter((n) => n.h);
 const svc = serviceNotes(kind, item)
-  .map((n) => ({ ...n, h: findHeading(idx, n.code) }))
+  .map((n) => ({ ...n, h: findHeading(idx.headings, n.code) }))
   .filter((n) => n.h);
 ---
 
 <Base
-  title={`${KIND_LABEL[kind]} ${item.id} ${item.name}`}
-  heading={`${KIND_LABEL[kind]} ${item.id}`}
-  description={`${KIND_LABEL[kind]} ${item.id}, ${item.name}: where it sits, its part numbers, and its status and service log on this device.`}
+  title={`${compName} ${item.name}`}
+  heading={compName}
+  description={`${compName}, ${item.name}: where it sits, its part numbers, and its status and service log on this device.`}
   nav={listPath}
   h1="bar"
   back={{ path: listPath, label: listLabel }}
 >
-  <ComponentDetail client:load {kind} {item} mapMeta={DATA.maps[layer]} {related} />
+  <ComponentDetail client:load {kind} {item} mapMeta={mapOf(kind)} {related} />
   {
     notes.length > 0 && (
       <div class="notes small">
         {svc.map((n) => (
           <p class="svc">
             <span class="muted">Service notes:</span> {n.text}{' '}
-            <a href={href(`handbook/appendix#${n.h!.id}`)}>
+            <a href={handbookHref('appendix', n.h!.id)}>
               {n.code} {APPENDICES[n.code]}
             </a>
           </p>
@@ -91,7 +88,7 @@ const svc = serviceNotes(kind, item)
         <p class="links">
           <span class="muted">Appendices:</span>
           {notes.map((n) => (
-            <a href={href(`handbook/appendix#${n.h!.id}`)}>
+            <a href={handbookHref('appendix', n.h!.id)}>
               {n.code} {n.title}
             </a>
           ))}

@@ -1,6 +1,12 @@
 import { getCollection } from 'astro:content';
 import type { TocItem } from './types';
+import { tocIndex, type HandbookIndex } from './links';
 import { SECTIONS } from './sections';
+
+/** The heading index the build pages resolve a `find` code against, and the section of each id. */
+export async function handbookIndex(): Promise<HandbookIndex> {
+  return tocIndex(await handbookToc());
+}
 
 /** Full handbook table of contents: sections (level 1) and every heading (2/3). */
 export async function handbookToc(): Promise<TocItem[]> {

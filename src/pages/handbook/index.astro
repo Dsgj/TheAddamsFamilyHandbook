@@ -5,8 +5,8 @@ import HandbookToc from '~/components/HandbookToc.svelte';
 import { handbookToc } from '~/lib/handbook/toc';
 import { SECTIONS } from '~/lib/handbook/sections';
 import { pageLabel } from '~/lib/pages';
-import { APPENDICES, appendixAnchor } from '~/data/appendix';
-import { href, manualHref } from '~/lib/url';
+import { APPENDICES, appendixHref } from '~/data/appendix';
+import { handbookHref, href, manualHref } from '~/lib/url';
 
 /**
  * The Handbook home (spec §9.10): the segmented links, the search field, Continue reading (filled
@@ -56,7 +56,7 @@ const range = (pages: number[]): string => {
     {
       manual.map((s) => (
         <li>
-          <a class="lrow" href={href(`handbook/${s.key}`)}>
+          <a class="lrow" href={handbookHref(s.key)}>
             <span class="txt">
               <span class="ttl">{s.title}</span>
             </span>
@@ -81,7 +81,7 @@ const range = (pages: number[]): string => {
     {
       Object.entries(APPENDICES).map(([code, title]) => (
         <li>
-          <a class="lrow" href={href(`handbook/appendix#${appendixAnchor(code)}`)}>
+          <a class="lrow" href={appendixHref(code)}>
             <span class="code dmd">{code}</span>
             <span class="txt">
               <span class="ttl">{title}</span>
@@ -100,7 +100,7 @@ const range = (pages: number[]): string => {
 <script>
   import { READING_KEY, readReading } from '~/lib/model/reading';
   import { watch } from '~/lib/storage';
-  import { href } from '~/lib/url';
+  import { handbookHref } from '~/lib/url';
 
   // Continue reading: the last page the reader scrolled to, if any. Drawn again when another tab
   // changes it and when the page comes back from the back/forward cache, so Clear all hides it.
@@ -110,7 +110,7 @@ const range = (pages: number[]): string => {
     if (!sec) return;
     if (r) {
       const a = sec.querySelector<HTMLAnchorElement>('a.lrow')!;
-      a.href = href(`handbook/${r.section}#${r.anchor}`);
+      a.href = handbookHref(r.section, r.anchor);
       sec.querySelector('[data-ttl]')!.textContent = r.title;
       sec.querySelector('[data-sub]')!.textContent = r.label;
     }

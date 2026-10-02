@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { appendixAnchor } from '~/data/appendix';
+  import { appendixHref } from '~/data/appendix';
   import { parseCodes, type ParsedCode } from '~/lib/codes';
-  import { componentCode, plural } from '~/lib/copy';
-  import { DATA, find, KIND_LABEL } from '~/lib/data/components';
+  import { componentCode, componentName, plural } from '~/lib/copy';
+  import { DATA, find, mapOf } from '~/lib/data/components';
   import {
     clearRecent,
     normalizeInput,
@@ -14,7 +14,7 @@
   import { getStatus } from '~/lib/model/status.svelte';
   import type { Lamp, Switch } from '~/lib/model/types';
   import { lampSharedCauses, sharedCauses } from '~/lib/shared-cause';
-  import { href, replaceUrl } from '~/lib/url';
+  import { href, replaceUrl, tableHref } from '~/lib/url';
   import { onMount, tick, untrack } from 'svelte';
   import { MediaQuery } from 'svelte/reactivity';
   import ComponentCard from './ComponentCard.svelte';
@@ -183,7 +183,7 @@
   const recent = $derived(hydrated ? recentEntries() : []);
 
   const EXAMPLES = ['32 68 F1 F3', 'Check Switch 32', 'L11 L12 L13', 'SOL 7'];
-  const label = (p: ParsedCode) => (p.kind === 'unknown' ? p.raw : `${KIND_LABEL[p.kind]} ${p.id}`);
+  const label = (p: ParsedCode) => (p.kind === 'unknown' ? p.raw : componentName(p.kind, p.id));
   const codeText = (p: ParsedCode) => (p.kind === 'unknown' ? p.raw : componentCode(p.kind, p.id));
 
   /** "1 switch · 1 marked Fault", "2 lamps · both marked Fault", "1 solenoid". */
@@ -391,13 +391,13 @@
         </svg>
         <span>Playfield map</span>
       </a>
-      <a class="tile" href={href('switches')}>
+      <a class="tile" href={tableHref('switch')}>
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z" />
         </svg>
         <span>Switch matrix</span>
       </a>
-      <a class="tile" href={href('lamps')}>
+      <a class="tile" href={tableHref('lamp')}>
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M12 3a6 6 0 0 1 3.5 10.9V17h-7v-3.1A6 6 0 0 1 12 3zM9.5 20h5" />
         </svg>
@@ -482,12 +482,10 @@
               <span class="ctext">
                 {c.text}
                 {#if c.kind === 'column' || c.kind === 'row'}
-                  · <a href={href(c.matrix === 'lamp' ? 'lamps' : 'switches')}>matrix</a>
+                  · <a href={tableHref(c.matrix)}>matrix</a>
                 {/if}
                 {#if c.appendix}
-                  · <a href={href(`handbook/appendix#${appendixAnchor(c.appendix)}`)}
-                    >{c.appendix}</a
-                  >
+                  · <a href={appendixHref(c.appendix)}>{c.appendix}</a>
                 {/if}
               </span>
             </li>
@@ -499,11 +497,7 @@
     <div class="cards">
       {#each found as r (r.kind + r.id)}
         {#if r.item && r.kind !== 'unknown'}
-          <ComponentCard
-            kind={r.kind}
-            item={r.item}
-            mapMeta={DATA.maps[r.kind === 'switch' ? 'sw' : r.kind]}
-          />
+          <ComponentCard kind={r.kind} item={r.item} mapMeta={mapOf(r.kind)} />
         {/if}
       {/each}
     </div>

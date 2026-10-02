@@ -1,3 +1,7 @@
+import type { Kind, Layer, MapKind } from '~/lib/model/types';
+
+export type { MapKind };
+
 /** Prefixes an app-relative path with the configured base path (BASE_PATH env → Astro `base`). */
 export const base = (import.meta.env.BASE_URL ?? '/').replace(/\/$/, '');
 
@@ -12,6 +16,31 @@ export function componentHref(kind: 'switch' | 'lamp' | 'coil', id: string): str
 
 export function manualHref(doc: string, page: number): string {
   return href(`manual/${doc}/${page}`);
+}
+
+/** The Map with one layer on and one marker selected: `map?layer=lamp&id=13`. */
+export function mapHref(layer: Layer, id: number | string): string {
+  return href(`map?layer=${layer}&id=${id}`);
+}
+
+/**
+ * A Handbook section, at a heading or page anchor when one is given. Only a missing anchor drops
+ * the `#`: a stored anchor is any string, and an empty one keeps its hash as it always has.
+ */
+export function handbookHref(section: string, anchor?: string): string {
+  return href(`handbook/${section}${anchor === undefined ? '' : '#' + anchor}`);
+}
+
+const TABLE_PATH: Record<Kind, string> = { switch: 'switches', lamp: 'lamps', coil: 'coils' };
+
+/** The path of a kind's table page, for `href()` and for a Base `nav` key or back link. */
+export function tablePath(kind: Kind): string {
+  return TABLE_PATH[kind];
+}
+
+/** A kind's table page, at an anchor when one is given (`coils#flippers`). */
+export function tableHref(kind: Kind, anchor?: string): string {
+  return href(tablePath(kind) + (anchor === undefined ? '' : '#' + anchor));
 }
 
 /**
@@ -36,7 +65,6 @@ export function replacePage(url: string): void {
   location.replace(url);
 }
 
-export type MapKind = 'switch' | 'lamp' | 'coil' | 'shot';
 const MAP_KINDS: readonly string[] = ['switch', 'lamp', 'coil', 'shot'];
 
 /**

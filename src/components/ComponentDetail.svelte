@@ -10,15 +10,22 @@
 
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { capitalise, componentCode, kindLine as kindLineOf, locationLine } from '~/lib/copy';
-  import { KIND_LABEL, MAP_LAYER } from '~/lib/data/components';
+  import {
+    capitalise,
+    componentCode,
+    componentName,
+    kindLine as kindLineOf,
+    locationLine,
+    MAP_LAYER,
+  } from '~/lib/copy';
   import { COIL_NOTE, HINT, t } from '~/lib/data/en';
   import { positions } from '~/lib/data/positions';
   import { recordViewed } from '~/lib/model/recent.svelte';
   import { getStatus, setStatus, shortDate, STATUS_LABEL } from '~/lib/model/status.svelte';
   import type { Coil, Kind, Lamp, MapMeta, StatusValue, Switch } from '~/lib/model/types';
   import { pageTitleText } from '~/lib/pages';
-  import { href, manualHref } from '~/lib/url';
+  import { callouts as calloutsOf, wiring } from '~/lib/present';
+  import { href, manualHref, mapHref } from '~/lib/url';
   import BottomSheet from './BottomSheet.svelte';
   import MiniMap from './MiniMap.svelte';
   import StatusRow from './StatusRow.svelte';
@@ -41,13 +48,13 @@
   const sw = $derived(kind === 'switch' ? (item as Switch) : undefined);
   const lamp = $derived(kind === 'lamp' ? (item as Lamp) : undefined);
   const coil = $derived(kind === 'coil' ? (item as Coil) : undefined);
+  const w = $derived(wiring(kind, item));
   const layer = $derived(MAP_LAYER[kind]);
-  const callouts = $derived(item.loc.map((l) => l.l).join(', '));
+  const callouts = $derived(calloutsOf(item));
   const mapPage = $derived(mapMeta.page);
   /** "p. 2-39": the location map's printed label. */
   const mapRef = $derived(pageTitleText('ops', mapPage));
   const pos = $derived(positions(kind, item.id));
-  const isMatrix = $derived(!!sw && sw.col !== null);
   const code = $derived(componentCode(kind, item.id));
   /** The header line starts a sentence: "Matrix column 3, row 2", "Flipper (J806)". */
   const kindLine = $derived(capitalise(locationLine(kind, item)));
@@ -89,39 +96,39 @@
   <section>
     <h3 class="lst-h">Wiring</h3>
     <dl class="wiring card">
-      {#if sw}
-        {#if isMatrix}
-          <dt>Column {sw.col}</dt>
+      {#if w.kind === 'switch'}
+        {#if w.matrix}
+          <dt>Column {w.matrix.column.n}</dt>
           <dd>
-            <WireChip colour={sw.colWireEn ?? ''} />
-            <span class="mono">{sw.colPin} · {sw.colIc}</span>
+            <WireChip colour={w.matrix.column.colour} />
+            <span class="mono">{w.matrix.column.text}</span>
           </dd>
-          <dt>Row {sw.row}</dt>
+          <dt>Row {w.matrix.row.n}</dt>
           <dd>
-            <WireChip colour={sw.rowWireEn ?? ''} />
-            <span class="mono">{sw.rowPin} · {sw.rowIc}</span>
+            <WireChip colour={w.matrix.row.colour} />
+            <span class="mono">{w.matrix.row.text}</span>
           </dd>
         {:else}
           <dt>Wire</dt>
-          <dd><WireChip colour={sw.wireEn ?? ''} /> <span class="mono">{sw.pin}</span></dd>
+          <dd><WireChip colour={w.wire.colour} /> <span class="mono">{w.wire.text}</span></dd>
         {/if}
-      {:else if lamp}
-        <dt>Column {lamp.col}</dt>
+      {:else if w.kind === 'lamp'}
+        <dt>Column {w.column.n}</dt>
         <dd>
-          <WireChip colour={lamp.colWireEn} /> <span class="mono">{lamp.colPin} · {lamp.colQ}</span>
+          <WireChip colour={w.column.colour} /> <span class="mono">{w.column.text}</span>
         </dd>
-        <dt>Row {lamp.row}</dt>
+        <dt>Row {w.row.n}</dt>
         <dd>
-          <WireChip colour={lamp.rowWireEn} /> <span class="mono">{lamp.rowPin} · {lamp.rowQ}</span>
+          <WireChip colour={w.row.colour} /> <span class="mono">{w.row.text}</span>
         </dd>
-      {:else if coil}
+      {:else if w.kind === 'coil'}
         <dt>Wire</dt>
         <dd>
-          <WireChip colour={coil.wireEn} /> <span class="mono">{coil.pin} · {coil.driver}</span>
+          <WireChip colour={w.wire.colour} /> <span class="mono">{w.wire.text}</span>
         </dd>
         <dt>Fuse</dt>
         <dd>
-          {coil.fuse || '—'}
+          {w.fuse}
           <span class="muted small">(derived from the fuse list, not printed per coil)</span>
         </dd>
       {/if}
@@ -249,7 +256,7 @@
 
 {#if mapOpen}
   <BottomSheet
-    label="{KIND_LABEL[kind]} {item.id} · {item.name}"
+    label="{componentName(kind, item.id)} · {item.name}"
     detent="large"
     recede="header.top, .detail, .notes, .pn, footer.foot"
     onclose={() => (mapOpen = false)}
@@ -273,7 +280,7 @@
         {/if}
       </p>
       <div class="acts">
-        <a class="btn primary" href={href(`map?layer=${layer}&id=${item.id}`)}>Show on map</a>
+        <a class="btn primary" href={mapHref(layer, item.id)}>Show on map</a>
         <a class="btn" href={manualHref('ops', mapPage)}>Manual {mapRef}</a>
       </div>
     </div>

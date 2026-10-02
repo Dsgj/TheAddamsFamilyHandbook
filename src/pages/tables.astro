@@ -1,7 +1,8 @@
 ---
 import Base from '~/layouts/Base.astro';
 import { DATA } from '~/lib/data/components';
-import { href } from '~/lib/url';
+import { TABLE_LABEL } from '~/lib/copy';
+import { href, tableHref } from '~/lib/url';
 
 /**
  * The Tables hub (spec §9.5): the matrices, the drivers and the board tables, with their counts
@@ -38,14 +39,14 @@ const GROUPS: Group[] = [
     head: 'Matrices',
     rows: [
       {
-        href: href('switches'),
-        title: 'Switch matrix',
+        href: tableHref('switch'),
+        title: TABLE_LABEL.switch,
         sub: `${matrix} matrix, ${dedicated} dedicated, ${flipper} flipper`,
         icon: ICON.grid,
       },
       {
-        href: href('lamps'),
-        title: 'Lamp matrix',
+        href: tableHref('lamp'),
+        title: TABLE_LABEL.lamp,
         sub: `${DATA.lamps.length} lamps`,
         icon: ICON.lamp,
       },
@@ -55,19 +56,19 @@ const GROUPS: Group[] = [
     head: 'Drivers',
     rows: [
       {
-        href: href('coils'),
-        title: 'Solenoids and flashers',
+        href: tableHref('coil'),
+        title: TABLE_LABEL.coil,
         value: String(DATA.coils.length),
         icon: ICON.coil,
       },
       {
-        href: href('coils#flippers'),
+        href: tableHref('coil', 'flippers'),
         title: 'Flipper coils',
         value: String(DATA.flippers.length),
         icon: ICON.flip,
       },
       {
-        href: href('coils#gi'),
+        href: tableHref('coil', 'gi'),
         title: 'General illumination',
         value: `${DATA.gi.length} strings`,
         icon: ICON.gi,
