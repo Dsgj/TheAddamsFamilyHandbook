@@ -1,8 +1,9 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { plural } from '~/lib/copy';
+  import { loadJson } from '~/lib/load';
   import type { PartRow } from '~/lib/model/types';
-  import { href, replaceUrl } from '~/lib/url';
+  import { replaceUrl } from '~/lib/url';
   import SearchField from './SearchField.svelte';
 
   /**
@@ -17,6 +18,7 @@
   let rows = $state<PartRow[]>([]);
   let q = $state('');
   let loading = $state(true);
+  let failed = $state(false);
   let field: HTMLInputElement | undefined = $state();
   let root: HTMLDivElement | undefined = $state();
   let highlight = $state('');
@@ -25,14 +27,22 @@
   /** The part number, if any, that `q` currently reflects because of the hash. */
   let appliedHash = '';
 
-  $effect(() => {
-    fetch(href('data/parts.json'))
-      .then((r) => r.json())
-      .then((j: PartRow[]) => {
+  // Settles either way: a list that did not load says so and offers Retry (AR2-03).
+  function load() {
+    loading = true;
+    failed = false;
+    loadJson<PartRow[]>('data/parts.json').then(
+      (j) => {
         rows = j;
         loading = false;
-      });
-  });
+      },
+      () => {
+        failed = true;
+        loading = false;
+      },
+    );
+  }
+  onMount(load);
 
   function decodeHash(): string {
     const raw = location.hash.slice(1);
@@ -152,10 +162,15 @@
        surface announces through a separate sr-only aria-live region instead. A search with no rows
        says so here, so the region announces the words on screen, not "0 rows". -->
   <p class="gf count" role="status">
-    {#if loading}Loading…{:else if !searching}Top-level assemblies ({plural(shown.length, 'row')}).
-      Type at least two characters to search all {plural(rows.length, 'row')}, e.g. 5768, flipper or
-      SW-1A.{:else}{found}{/if}
+    {#if loading}Loading…{:else if failed}The parts list did not load.{:else if !searching}Top-level
+      assemblies ({plural(shown.length, 'row')}). Type at least two characters to search all {plural(
+        rows.length,
+        'row',
+      )}, e.g. 5768, flipper or SW-1A.{:else}{found}{/if}
   </p>
+  {#if failed}
+    <button type="button" class="btn" onclick={load}>Retry</button>
+  {/if}
   <div class="scroll-x">
     <!-- Spec §8.9: under 600 the rows are two-line flex rows, which drops table semantics in
          WebKit, so the roles are explicit. -->

@@ -4,7 +4,8 @@
   import { liveText } from '~/lib/live.svelte';
   import { plural } from '~/lib/copy';
   import { DOC_NAME, DOCS, pageTitleText, tocTitle } from '~/lib/pages';
-  import { href, manualHref } from '~/lib/url';
+  import { loadJson } from '~/lib/load';
+  import { manualHref } from '~/lib/url';
   import SearchField from './SearchField.svelte';
 
   /** Full-text search over the page text of all three documents (fetched on first use). */
@@ -12,13 +13,20 @@
   let q = $state('');
   let data = $state<Record<DocId, string[]> | null>(null);
   let loading = $state(false);
+  let failed = $state(false);
   let only = $state<DocId | ''>(untrack(() => doc));
 
   // `/manual?q=flipper` (the Handbook home's "Search the manuals for …") runs the search on load.
   onMount(() => {
     const m = /[?&]q=([^&]*)/.exec(location.search);
     if (!m) return;
-    q = decodeURIComponent(m[1]!.replace(/\+/g, ' '));
+    // A hand-typed `?q=100%` is no URI escape: keep the raw text rather than throw (SV2-04).
+    const raw = m[1]!.replace(/\+/g, ' ');
+    try {
+      q = decodeURIComponent(raw);
+    } catch {
+      q = raw;
+    }
     live.rebase(); // a pre-filled ?q= is never announced (spec §12)
     void ensure();
   });
@@ -26,9 +34,11 @@
   async function ensure() {
     if (data || loading) return;
     loading = true;
+    failed = false;
     try {
-      const r = await fetch(href('data/ocr-text.json'));
-      data = (await r.json()) as Record<DocId, string[]>;
+      data = await loadJson<Record<DocId, string[]>>('data/ocr-text.json');
+    } catch {
+      failed = true;
     } finally {
       loading = false;
     }
@@ -96,6 +106,12 @@
     </select>
   </div>
   {#if loading}<p class="muted small">Loading text…</p>{/if}
+  {#if failed}
+    <p class="muted small">
+      The manuals' text did not load.
+      <button type="button" class="tlink" onclick={ensure}>Retry</button>
+    </p>
+  {/if}
   {#if q.trim().length >= 2 && data}
     <p class="muted small">
       {countLine()}

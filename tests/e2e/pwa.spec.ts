@@ -69,8 +69,55 @@ test('an uncached manual page says so offline; "Show the text" reveals its text'
   await page.route('**/assets/pages/**', (r) => r.abort());
   await gotoHydrated(page, '/manual/ops/40');
   await expect(page.getByText("This manual page isn't on the device yet.")).toBeVisible();
+  // No empty frame and no zoom for a scan that is not there (PF2-07).
+  await expect(page.locator('.stage')).toHaveCount(0);
+  await expect(page.getByRole('group', { name: 'Zoom' })).toHaveCount(0);
   await page.getByRole('button', { name: 'Show the text' }).click();
   await expect(page.locator('.text pre')).toBeVisible();
+});
+
+test.describe('data files that do not load (AR2-03, CO2-06, SV2-02)', () => {
+  // The page's own requests, not the worker's precache, so a route can fail them.
+  test.use({ serviceWorkers: 'block' });
+
+  test('the parts list says it did not load, and Retry loads it', async ({ page }) => {
+    let fail = true;
+    await page.route('**/data/parts.json', (r) => (fail ? r.abort() : r.fallback()));
+    await gotoHydrated(page, '/parts');
+    await expect(page.locator('.count')).toHaveText('The parts list did not load.');
+    fail = false;
+    await page.getByRole('button', { name: 'Retry' }).click();
+    await expect(page.locator('.count')).toContainText('Top-level assemblies');
+  });
+
+  test('the manuals search survives a ?q that is no escape, and a text that did not load', async ({
+    page,
+  }) => {
+    const errors: string[] = [];
+    page.on('pageerror', (e) => errors.push(e.message));
+    let fail = true;
+    await page.route('**/data/ocr-text.json', (r) => (fail ? r.abort() : r.fallback()));
+    await gotoHydrated(page, '/manual?q=100%');
+    await expect(page.getByLabel('Search the manuals')).toHaveValue('100%');
+    await expect(page.getByText("The manuals' text did not load.")).toBeVisible();
+    fail = false;
+    await page.getByRole('button', { name: 'Retry' }).click();
+    await expect(page.getByText("The manuals' text did not load.")).toHaveCount(0);
+    expect(errors).toEqual([]);
+  });
+
+  test('a Diagnose search fetches each file once', async ({ page }) => {
+    const seen: Record<string, number> = {};
+    page.on('request', (r) => {
+      const m = /\/data\/([\w-]+\.json)/.exec(r.url());
+      if (m) seen[m[1]!] = (seen[m[1]!] ?? 0) + 1;
+    });
+    await gotoHydrated(page, '/');
+    await page.getByLabel('Test report or display message').fill('flipper');
+    await expect(page.locator('.qs .lst-h', { hasText: 'Manuals' })).toBeVisible();
+    await expect(page.locator('.qs .lst-h', { hasText: 'Parts' })).toBeVisible();
+    expect(seen).toEqual({ 'handbook.json': 1, 'ocr-text.json': 1, 'parts.json': 1 });
+  });
 });
 
 test('the Install sheet opens from the Workshop, closes on Esc and returns focus', async ({

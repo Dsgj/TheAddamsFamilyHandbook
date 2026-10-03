@@ -1,6 +1,8 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { componentCode, kindLine } from '~/lib/copy';
   import { DATA } from '~/lib/data/components';
+  import { loadJson } from '~/lib/load';
   import { pageRefText, printedPageText } from '~/lib/pages';
   import type { DocId } from '~/lib/model/types';
   import { componentHref, handbookHref, href, manualHref, tableHref } from '~/lib/url';
@@ -60,6 +62,11 @@
   let handbook = $state<Hit[] | null>(null);
   let manuals = $state<Hit[] | null>(null);
   let parts = $state<Hit[] | null>(null);
+  /** Groups whose file did not load: said under the results, with Retry (AR2-03). */
+  let failed = $state<Group[]>([]);
+  const fail = (g: Group) => {
+    if (!failed.includes(g)) failed = [...failed, g];
+  };
 
   const components: Hit[] = (() => {
     const out: Hit[] = [];
@@ -111,7 +118,9 @@
   async function loadHandbook() {
     if (handbook) return;
     try {
-      const h = (await (await fetch(href('data/handbook.json'))).json()) as { toc: TocItem[] };
+      const h = await loadJson<{ toc: TocItem[]; text: Record<string, string> }>(
+        'data/handbook.json',
+      );
       handbook = h.toc
         .filter((t) => t.level > 1)
         .map((t) => {
@@ -133,16 +142,13 @@
           };
         });
     } catch {
-      handbook = [];
+      fail('handbook');
     }
   }
   async function loadManuals() {
     if (manuals) return;
     try {
-      const ocr = (await (await fetch(href('data/ocr-text.json'))).json()) as Record<
-        string,
-        string[]
-      >;
+      const ocr = await loadJson<Record<string, string[]>>('data/ocr-text.json');
       const out: Hit[] = [];
       for (const [doc, pages] of Object.entries(ocr)) {
         pages.forEach((text, i) => {
@@ -160,20 +166,16 @@
       }
       manuals = out;
     } catch {
-      manuals = [];
+      fail('manuals');
     }
   }
   async function loadParts() {
     if (parts) return;
     try {
-      const rows = (await (await fetch(href('data/parts.json'))).json()) as [
-        number,
-        number,
-        string,
-        string,
-        string,
-        number | null,
-      ][];
+      const rows =
+        await loadJson<[number, number, string, string, string, number | null][]>(
+          'data/parts.json',
+        );
       // The BOM lists the same physical part once per assembly it's used in (a common washer
       // repeats across hundreds of rows), so `no` alone (never duplicated with a different desc)
       // is the natural key: keep the first row for each part and drop the rest (DA-01, DA-10).
@@ -199,14 +201,18 @@
       }
       parts = out;
     } catch {
-      parts = [];
+      fail('parts');
     }
   }
-  $effect(() => {
+  // Once, untracked: an effect re-ran on each file that landed and fetched the others again
+  // (SV2-02). loadJson shares one fetch per file across the page as well.
+  function loadAll() {
+    failed = [];
     void loadHandbook();
     void loadParts();
     void loadManuals();
-  });
+  }
+  onMount(loadAll);
 
   const words = $derived(q.trim().toLowerCase().split(/\s+/).filter(Boolean));
   const matches = (list: Hit[] | null) =>
@@ -284,6 +290,12 @@
         {/if}
       </ul>
     {/each}
+    {#if failed.length}
+      <p class="muted none">
+        Not searched: the {failed.map((g) => GROUP_LABEL[g].toLowerCase()).join(' and ')} did not load.
+        <button type="button" class="tlink" onclick={loadAll}>Retry</button>
+      </p>
+    {/if}
     {#if !total}
       <p class="muted none">
         No results match “{q.trim()}”. Codes such as 32, L55 or SOL 07 open the component.

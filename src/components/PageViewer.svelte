@@ -296,13 +296,13 @@
         <p class="muted">No text for this page.</p>
       {/if}
     </div>
+  {:else if missing}
+    <div class="card nocache">
+      <p>This manual page isn't on the device yet. Open it once while you have a connection.</p>
+      <button type="button" class="btn sm" onclick={() => (mode = 'text')}>Show the text</button>
+    </div>
+    <!-- No scan, so no empty frame and no zoom for it (PF2-07). -->
   {:else}
-    {#if missing}
-      <div class="card nocache">
-        <p>This manual page isn't on the device yet. Open it once while you have a connection.</p>
-        <button type="button" class="btn sm" onclick={() => (mode = 'text')}>Show the text</button>
-      </div>
-    {/if}
     <div class="stagewrap">
       <!-- Mouse drag pans; keyboard and touch scroll. Zoomed, the stage is the one scroller, so it
            is a named tab stop and the arrows scroll it (spec §9.12, audit AY-11); at a fit the

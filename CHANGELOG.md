@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- **Data that does not load says so.** The parts list, the manual search and
+  the Diagnose search show what did not load with a Retry button instead of
+  waiting forever or showing nothing. A search fetches each data file once. A
+  manual page whose scan is not on the device offline shows only the card
+  with Show the text, without an empty frame or zoom buttons.
 - **Go to page takes the page numbers the header shows.** In the Operations
   Manual you can type "2-39", "p. 2-39" or "E", and a number the manual does
   not print says so instead of opening another page. The field offers a text
