@@ -163,6 +163,19 @@ test.describe('the toast clears the bottom chrome', () => {
     expect(lift).toBe('');
   });
 
+  test('on phone Home it clears the field and its buttons at the foot (VP2-02)', async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(!isMobile, 'the field ends Home below 1000 (spec §9.1)');
+    await gotoHydrated(page, '/');
+    await expect(page.locator('.diag')).toHaveAttribute('data-mode', 'home');
+    await showToast(page);
+    const dock = await box(page, '.dock');
+    const toast = await box(page, '.toast');
+    expectGap(dock.y - (toast.y + toast.height), 'toast above the field');
+  });
+
   test('on desktop Diagnose the field sits above the results and the toast is not lifted', async ({
     page,
     isMobile,

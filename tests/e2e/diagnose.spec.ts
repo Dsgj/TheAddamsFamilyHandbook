@@ -432,6 +432,39 @@ test.describe('the result card', () => {
   });
 });
 
+test.describe('results on a narrow or short screen (P2 item 3 of the app audit, round 2)', () => {
+  test('a long shared-cause chip puts its text on the full row beneath it (VP2-03)', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 412, height: 900 });
+    await gotoHydrated(page, '/?q=32%2068%20F1%20F3');
+    const row = page.locator('.causes li', { has: page.locator('.code', { hasText: 'J806' }) });
+    await expect(row).toHaveCount(1);
+    const li = (await row.boundingBox())!;
+    const text = (await row.locator('.ctext').boundingBox())!;
+    expect(text.width).toBeGreaterThan(li.width * 0.9);
+  });
+
+  test('a landscape phone keeps the field in flow above the results (AY2-10)', async ({ page }) => {
+    await page.setViewportSize({ width: 720, height: 450 });
+    await gotoHydrated(page, '/?q=32');
+    const dock = page.locator('.diag .dock');
+    await expect(dock).toHaveCSS('position', 'static');
+    const d = (await dock.boundingBox())!;
+    const card = await box(page, 'article.comp');
+    expect(d.y + d.height).toBeLessThanOrEqual(card.y);
+  });
+
+  test('titles after the code chips in a list share one start line (VP2-07)', async ({ page }) => {
+    await gotoHydrated(page, '/switch/32');
+    const xs = await page
+      .locator('.lrow > .code + *')
+      .evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().left)));
+    expect(xs.length).toBeGreaterThan(1);
+    expect(Math.max(...xs) - Math.min(...xs)).toBeLessThanOrEqual(1);
+  });
+});
+
 /* P3 item 1 of the app audit (spec §13): "p." only before a printed page label. */
 test('a handbook heading on an unnumbered page names its PDF page', async ({ page }) => {
   await gotoHydrated(page, '/');

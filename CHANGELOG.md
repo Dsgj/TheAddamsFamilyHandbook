@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- **Diagnose and lists fit a phone better.** Over results and a search the
+  field at the foot is slimmer and its heading is gone, so it takes about a
+  fifth of the screen. On a phone on its side the field sits above the results
+  instead of covering half of them. A "saved" or "copied" note no longer lands
+  on the field on Home. A long part name beside a shared cause now puts the
+  explanation underneath at full width, and titles in a list line up after
+  their codes.
 - **First taps are quicker on a phone.** The handbook Contents opens faster,
   the map is ready sooner, the drawing in a handbook page loads only when you
   scroll to it, and a few page parts start up when they are needed rather than

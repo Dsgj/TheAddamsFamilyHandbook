@@ -254,14 +254,15 @@
     if (top.summary !== s) recordRecent(input, s, top.at);
   });
   // The toast rests 10 above the tab bar (spec §8.8), where the dock sticks over results and a
-  // search. While the dock reaches into that band, lift the toast above the dock's top through
-  // --toast-lift; when the dock sits higher (short results, or scrolled to the end) the toast stays
-  // put, since lifting it by the dock's height would land it on the dock. Measured on scroll,
-  // resize and a resize of the dock or the view, and written only when the value changes.
+  // search, and where the field ends Home (VP2-02). While the dock reaches into that band, lift the
+  // toast above the dock's top through --toast-lift; when the dock sits higher (short results, or
+  // scrolled to the end) or below the fold the toast stays put, since lifting it by the dock's
+  // height would land it on the dock. Measured on scroll, resize and a resize of the dock or the
+  // view, and written only when the value changes.
   let dock: HTMLElement | undefined = $state();
   // From 1000 the field sits at the top of the column (spec §9.1): no bottom dock to clear.
   const wideQ = new MediaQuery('(min-width: 1000px)');
-  const docked = $derived(mode !== 'home' && !wideQ.current);
+  const docked = $derived(!wideQ.current);
   const TOAST_BAND = 80; // the 10 gap and a toast of up to two lines (60), with room to spare
   $effect(() => {
     if (!docked || !dock || !root) return;
@@ -271,10 +272,11 @@
     let lift = '';
     const measure = () => {
       frame = 0;
-      // The dock's sticky bottom is the top of the tab bar (the viewport's bottom on desktop).
+      // The dock's `bottom` is the top of the tab bar (the viewport's bottom on desktop).
       const line = innerHeight - (parseFloat(getComputedStyle(el).bottom) || 0);
       const r = el.getBoundingClientRect();
-      const next = r.bottom > line - TOAST_BAND ? `${Math.ceil(line - r.top)}px` : '';
+      const next =
+        r.bottom > line - TOAST_BAND && r.top < line ? `${Math.ceil(line - r.top)}px` : '';
       if (next === lift) return;
       lift = next;
       if (lift) html.style.setProperty('--toast-lift', lift);
@@ -404,7 +406,9 @@
   <!-- Spec §9.1: the field comes first in the DOM at every width. Below 1000 it is ordered to
        the foot (the docked hero, the sticky bar); from 1000 it stays at the top of the column. -->
   <div class="dock" bind:this={dock}>
-    <label class="lbl" for="codes">Test report or display message</label>
+    <label class="lbl" class:sr-only={mode !== 'home' && !wideQ.current} for="codes"
+      >Test report or display message</label
+    >
     <textarea
       id="codes"
       class="well mono"
@@ -757,10 +761,13 @@
     padding-left: 0;
     list-style: none;
   }
+  /* The text takes the row beside the chip while it keeps 15em, else it goes under the chip at the
+     full width: a long chip (`connector J806`) left it a 182 px column on a phone (VP2-03). */
   .causes li {
     margin: 8px 0;
     display: flex;
-    gap: 10px;
+    flex-wrap: wrap;
+    gap: 4px 10px;
     align-items: flex-start;
   }
   .causes .code {
@@ -771,6 +778,7 @@
     padding-left: 10px;
   }
   .ctext {
+    flex: 1 1 15em;
     font: var(--t-sub);
   }
   .cards {
@@ -791,16 +799,30 @@
     order: 1;
     margin-top: auto;
     padding-top: 16px;
+    /* Where it sticks, and on Home the line the toast measures against. */
+    bottom: calc(var(--tabbar-h) + var(--safe-bot));
   }
   .diag:not([data-mode='home']) .dock {
     position: sticky;
-    bottom: calc(var(--tabbar-h) + var(--safe-bot));
     z-index: var(--z-dock);
     margin: 12px -8px 0;
     padding: 8px 8px 8px;
     background: var(--bar);
     -webkit-backdrop-filter: blur(20px) saturate(1.5);
     backdrop-filter: blur(20px) saturate(1.5);
+  }
+  /* On a short view (a phone on its side, 200% zoom) the stuck dock took half the height (AY2-10):
+     there the field heads the results in flow, as from 1000. */
+  @media (max-width: 999px) and (max-height: 499px) {
+    .diag:not([data-mode='home']) .dock {
+      order: 0;
+      position: static;
+      margin: 0 0 12px;
+      padding: 0;
+      background: none;
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
   }
   /* From 1000 the field is at the top of the column in every mode, in flow and capped at 720 (the
      bottom dock covered the result cards, VL-08). */
@@ -849,9 +871,14 @@
     text-transform: uppercase;
     text-shadow: 0 0 10px rgba(255, 138, 61, 0.5);
   }
+  /* Over results and a search the field is one line and its label is for screen readers only, so
+     the dock takes about a fifth of a phone's height, not a third (VP2-20). */
   .diag:not([data-mode='home']) .well {
-    min-height: 68px;
-    padding: 14px 18px;
+    min-height: 56px;
+    padding: 12px 18px;
+  }
+  .diag:not([data-mode='home']) .acts {
+    margin-top: 8px;
   }
   .well::placeholder {
     color: var(--dmd-ink);

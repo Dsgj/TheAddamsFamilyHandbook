@@ -984,6 +984,12 @@ table.t td.key > a::after {
   min-width: 0;
   display: grid;
 }
+/* A code chip that leads a row is at least as wide as `SOL 00` in --t-code with its tracking
+   (69.5 px), so the titles after `L22`, `SOL 10` and `31-35` share one start line (VP2-07). */
+.lrow > .code {
+  flex: none;
+  min-width: 70px;
+}
 .lrow .ttl {
   min-width: 0;
   font-size: 17px;
