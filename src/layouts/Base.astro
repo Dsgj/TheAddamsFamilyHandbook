@@ -319,6 +319,9 @@ const hasActions = Astro.slots.has('actions');
         const shell = document.querySelector('nav.shell');
         if (shell) {
           shell.addEventListener('click', function (e) {
+            // A Ctrl/Cmd, Shift or Alt click is the browser's: a new tab or window (CO2-13).
+            if (e.defaultPrevented || e.button !== 0) return;
+            if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
             const a = e.target.closest && e.target.closest('a.tab[aria-current="page"]');
             if (!a || norm(location.pathname) !== norm(new URL(a.href).pathname)) return;
             e.preventDefault();

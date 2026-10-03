@@ -9,13 +9,14 @@
     recentEntries,
     recordRecent,
   } from '~/lib/model/recent.svelte';
+  import { later } from '~/lib/later';
   import { liveText } from '~/lib/live.svelte';
   import { whenLabel } from '~/lib/status-io';
   import { allStatuses, getStatus } from '~/lib/model/status.svelte';
   import type { Lamp, Switch } from '~/lib/model/types';
   import { lampSharedCauses, sharedCauses } from '~/lib/shared-cause';
   import { href, replaceUrl, tableHref } from '~/lib/url';
-  import { onMount, tick, untrack } from 'svelte';
+  import { onDestroy, onMount, tick, untrack } from 'svelte';
   import { MediaQuery } from 'svelte/reactivity';
   import ComponentCard from './ComponentCard.svelte';
   import DiagnoseSearch from './DiagnoseSearch.svelte';
@@ -340,12 +341,17 @@
   }
   // Clear asks once more, as Device data does (UX2-08, CR-11): a second tap within 4 s clears.
   let clearArmed = $state(false);
-  let clearTimer: ReturnType<typeof setTimeout> | undefined;
+  const disarm = later();
+  const sharedTimer = later();
+  onDestroy(() => {
+    disarm.clear();
+    sharedTimer.clear();
+  });
   function clearAll() {
-    clearTimeout(clearTimer);
+    disarm.clear();
     if (!clearArmed) {
       clearArmed = true;
-      clearTimer = setTimeout(() => (clearArmed = false), 4000);
+      disarm.set(() => (clearArmed = false), 4000);
       return;
     }
     clearArmed = false;
@@ -380,7 +386,7 @@
         await navigator.clipboard.writeText(text);
         shared = 'copied';
       }
-      setTimeout(() => (shared = ''), 2000);
+      sharedTimer.set(() => (shared = ''), 2000);
     } catch {
       /* cancelled */
     }

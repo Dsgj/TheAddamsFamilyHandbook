@@ -96,6 +96,31 @@ test.describe('the header back link', () => {
     expect(await where(page)).toEqual({ url: '/switch/32', len: s.len + 1, idx: s.idx + 1 });
   });
 
+  test('still steps back with site data blocked (CO2-11)', async ({ page }) => {
+    const errors: string[] = [];
+    page.on('pageerror', (e) => {
+      if (!/^Transition was aborted/.test(e.message)) errors.push(e.message);
+    });
+    await page.addInitScript(() => {
+      Object.defineProperty(window, 'sessionStorage', {
+        get() {
+          throw new DOMException('blocked', 'SecurityError');
+        },
+      });
+    });
+    await gotoHydrated(page, 'switches');
+    const s = await where(page);
+    await page.locator('main a[data-cell="32"]').first().click();
+    await settle(page, /\/switch\/32$/);
+    await expect(backLink(page)).toHaveText('Switches');
+    await backLink(page).click();
+    await settle(page, /\/switches$/);
+    expect(await where(page)).toEqual({ url: '/switches', len: s.len + 1, idx: s.idx });
+    // Nothing is kept across pages without storage, so the tab link stays on its root.
+    await expect(tabLink(page, 'Tables')).toHaveAttribute('href', /\/tables$/);
+    expect(errors).toEqual([]);
+  });
+
   test('on a cold link replaces the page, up to the tab root', async ({ page }) => {
     await gotoHydrated(page, 'switch/32');
     const s = await where(page);

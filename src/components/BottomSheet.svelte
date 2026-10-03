@@ -101,10 +101,13 @@
   /** Height while a finger drags; otherwise the detent. */
   let dragH = $state(0);
   let dragStart: { y: number; h: number; id: number } | undefined;
+  /** A mouse drag ends in a click on the grabber: that click must not toggle the detent back. */
+  let dragged = false;
   const height = $derived(dragging ? dragH : expanded ? full : peek);
 
   function grabDown(e: PointerEvent) {
     if (kind !== 'map') return;
+    dragged = false;
     dragStart = { y: e.clientY, h: expanded ? full : peek, id: e.pointerId };
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
   }
@@ -122,11 +125,18 @@
     dragStart = undefined;
     dragging = false;
     if (!wasDrag) return;
+    // The click, if one follows (a mouse), comes in this same task; a touch drag sends none.
+    dragged = true;
+    setTimeout(() => (dragged = false));
     // Snap toward the drag direction once it has moved a little, else to the nearest detent.
     if (Math.abs(dy) > 24) expanded = dy < 0;
     else expanded = dragH - peek > (full - peek) / 2;
   }
   function toggle() {
+    if (dragged) {
+      dragged = false;
+      return;
+    }
     expanded = !expanded;
   }
   // The toast sits 10 above the map sheet (spec §8.8): publish the sheet's height at its detent as

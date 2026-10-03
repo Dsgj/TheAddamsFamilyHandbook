@@ -192,6 +192,28 @@ describe('structure lint', () => {
     ]);
   });
 
+  it('(n) the tables page writes out the search field with the same input attributes (CR2-05)', () => {
+    const attrs = (path: string) => {
+      const input = /<input\s+class="search"[\s\S]*?\/>/.exec(readFileSync(path, 'utf8'))![0];
+      return Object.fromEntries(
+        [...input.matchAll(/([a-z-]+)="([^"]*)"/g)]
+          .filter(([, k]) => k !== 'aria-label' && k !== 'placeholder')
+          .map(([, k, v]) => [k, v]),
+      );
+    };
+    const field = attrs('src/components/SearchField.svelte');
+    expect(field).toEqual({
+      class: 'search',
+      type: 'search',
+      autocomplete: 'off',
+      autocapitalize: 'off',
+      autocorrect: 'off',
+      spellcheck: 'false',
+      enterkeyhint: 'search',
+    });
+    expect(attrs('src/pages/tables.astro')).toEqual(field);
+  });
+
   it('(control) every rule above still matches inside its home, so none passes vacuously', () => {
     expect(RULES.length).toBe(12);
     for (const [pattern, allowed] of RULES) {

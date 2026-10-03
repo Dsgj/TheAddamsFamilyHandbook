@@ -183,6 +183,23 @@ test.describe('the Diagnose home stays reachable after a ?q= URL', () => {
     await home(page);
   });
 
+  test('a Ctrl or Cmd click on the current tab is left to the browser (CO2-13)', async ({
+    page,
+    context,
+    isMobile,
+  }) => {
+    test.skip(isMobile, 'a modifier click is a desktop gesture');
+    await gotoHydrated(page, '/?q=32');
+    const [tab] = await Promise.all([
+      context.waitForEvent('page'),
+      page.locator('nav.shell a.tab[aria-current="page"]').click({ modifiers: ['ControlOrMeta'] }),
+    ]);
+    await tab.waitForLoadState();
+    expect(new URL(tab.url()).search).toBe('');
+    await expect(field(page)).toHaveValue('32');
+    await expect(page).toHaveURL(/\?q=32$/);
+  });
+
   test('the Recent reports button reaches the home even from a ?q= URL', async ({ page }) => {
     await gotoHydrated(page, '/?q=32');
     await page.getByRole('button', { name: 'Recent reports' }).click();

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- **Clicks and messages behave.** A Ctrl or Cmd click on the tab you are on
+  opens it in a new tab again. With site data blocked, the back link and swipe
+  still work. A message that follows another within a few seconds stays for
+  its full time, and so does a Clear that is asked twice. Dragging the map's
+  sheet with a mouse leaves it where you dragged it. The search fields no
+  longer autocorrect or capitalise what you type.
 - **The workshop lists link up.** A note you type on a Fault now shows on the
   Shopping list and in the text you copy from it. Diagnose says how many
   faults are open and links to the list, and Clear under Recent asks once

@@ -429,6 +429,33 @@ test.describe('phone selection sheet', () => {
       .toBe(true);
   });
 
+  test('a mouse drag on the grabber settles where it was dragged (SV2-03)', async ({ page }) => {
+    await gotoHydrated(page, '/map?layer=sw&id=32');
+    const sheet = page.locator(SHEET);
+    await expect.poll(() => fitted(page)).toBe(true);
+    const grab = sheet.locator('button.grab');
+    // A press, a drag and a release on the grabber: the release ends in a click, which must not
+    // toggle the sheet back.
+    const drag = async (dy: number) => {
+      const b = (await grab.boundingBox())!;
+      const x = b.x + b.width / 2;
+      const y = b.y + b.height / 2;
+      await page.mouse.move(x, y);
+      await page.mouse.down();
+      await page.mouse.move(x, y + dy, { steps: 8 });
+      await page.mouse.up();
+    };
+    await drag(-120);
+    await expect(grab).toHaveAttribute('aria-expanded', 'true');
+    await expect.poll(async () => near((await box(page, SHEET)).height, 416)).toBe(true);
+    await drag(120);
+    await expect(grab).toHaveAttribute('aria-expanded', 'false');
+    await expect.poll(async () => near((await box(page, SHEET)).height, 96)).toBe(true);
+    // A plain click still toggles.
+    await grab.click();
+    await expect(grab).toHaveAttribute('aria-expanded', 'true');
+  });
+
   test('Deselect closes the sheet', async ({ page }) => {
     await gotoHydrated(page, '/map?layer=sw&id=32');
     await page.locator(SHEET).getByRole('button', { name: 'Deselect' }).click();

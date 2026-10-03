@@ -52,10 +52,20 @@ const leavesHere = (a: Element, e: MouseEvent) =>
   (!a.target || a.target === '_self') &&
   !(a.hash && a.pathname === location.pathname && a.search === location.search);
 
-const prev = readPrev(sessionStorage);
-let state = readState(sessionStorage);
+// With site data blocked the `sessionStorage` getter itself throws. Then nothing is kept across
+// pages (tab memory, scroll), but the back link, swipe and reselect still run (CO2-11).
+const store: Pick<Storage, 'getItem' | 'setItem'> = (() => {
+  try {
+    return sessionStorage;
+  } catch {
+    return { getItem: () => null, setItem: () => undefined };
+  }
+})();
+
+const prev = readPrev(store);
+let state = readState(store);
 if (tab) state.tabs[tab] = url;
-writeState(sessionStorage, state);
+writeState(store, state);
 
 let viaTab = false;
 let swipe = false;
@@ -187,12 +197,12 @@ const leave = () => {
     if (from) visit.from = from;
   }
   if (back) visit.backLink = { href: pathOf(back.href), label: text?.textContent ?? '' };
-  writePrev(sessionStorage, visit);
+  writePrev(store, visit);
   // Read-modify-write: pages opened since this one loaded (or since a restore) wrote their tabs.
-  state = readState(sessionStorage);
+  state = readState(store);
   state.scroll[now] = Math.round(scrollY);
   if (tab) state.tabs[tab] = now;
-  writeState(sessionStorage, state);
+  writeState(store, state);
 };
 addEventListener('pagehide', leave);
 
@@ -333,8 +343,8 @@ addEventListener('pageshow', (e) => {
   leaving = null;
   backAt = -Infinity;
   delete html.dataset.leave;
-  state = readState(sessionStorage);
+  state = readState(store);
   if (tab) state.tabs[tab] = document.body.dataset.url || here();
-  writeState(sessionStorage, state);
+  writeState(store, state);
   pointTabs();
 });

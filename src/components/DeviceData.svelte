@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { tick } from 'svelte';
+  import { onDestroy, tick } from 'svelte';
   import { clearReading, READING_KEY, readReading } from '~/lib/model/reading';
   import {
     clearRecent,
@@ -17,6 +17,7 @@
   } from '~/lib/model/status.svelte';
   import { clearVerify, verifyTicks } from '~/lib/model/verify.svelte';
   import { agree, plural } from '~/lib/copy';
+  import { later } from '~/lib/later';
   import { BackupError, localIsoDate } from '~/lib/status-io';
   import { watch } from '~/lib/storage';
 
@@ -51,19 +52,30 @@
    */
   let lapsed = false;
 
+  // One handle each, so a message said 3 s after another still gets its full 4 s.
+  const msgTimer = later();
+  const armTimer = later();
+  onDestroy(() => {
+    msgTimer.clear();
+    armTimer.clear();
+  });
+
   function say(text: string, bad = false) {
     msg = text;
     error = bad;
-    setTimeout(() => (msg = ''), 4000);
+    msgTimer.set(() => (msg = ''), 4000);
   }
 
   function download() {
     const blob = new Blob([exportStatuses()], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
+    a.href = url;
     a.download = `tafh-status-${localIsoDate()}.json`;
     a.click();
-    URL.revokeObjectURL(a.href);
+    // The download may still be reading the blob when click() returns (WebKit), so it is freed
+    // later rather than at once (CO2-10).
+    setTimeout(() => URL.revokeObjectURL(url), 30_000);
     say('Downloaded');
   }
 
@@ -131,9 +143,10 @@
   function clear() {
     if (!armed) {
       armed = true;
-      setTimeout(() => (armed = false), 4000);
+      armTimer.set(() => (armed = false), 4000);
       return;
     }
+    armTimer.clear();
     clearStatuses();
     clearSetup();
     clearVerify();

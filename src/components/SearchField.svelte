@@ -42,6 +42,10 @@
     aria-label={label}
     {placeholder}
     autocomplete="off"
+    autocapitalize="off"
+    autocorrect="off"
+    spellcheck="false"
+    enterkeyhint="search"
     data-autofocus={autofocus ? '' : undefined}
     bind:this={input}
     bind:value

@@ -1,6 +1,7 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onDestroy, onMount } from 'svelte';
   import { agree, KIND_PLURAL } from '~/lib/copy';
+  import { later } from '~/lib/later';
   import { allStatuses, setStatus } from '~/lib/model/status.svelte';
   import { componentHref } from '~/lib/url';
   import {
@@ -34,9 +35,11 @@
     canShare = typeof navigator.share === 'function';
   });
 
+  const msgTimer = later();
+  onDestroy(msgTimer.clear);
   function say(s: string) {
     msg = s;
-    setTimeout(() => (msg = ''), 2500);
+    msgTimer.set(() => (msg = ''), 2500);
   }
   async function copy() {
     try {

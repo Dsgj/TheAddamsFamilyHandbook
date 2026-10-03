@@ -161,6 +161,31 @@ test.describe('replace everything refuses a file that is not a backup', () => {
   }
 });
 
+test('a message said soon after another keeps its full time (CO2-12)', async ({ page }) => {
+  await page.clock.install();
+  await seed(page, { 'switch:32': fault('switch:32') });
+  await gotoHydrated(page, '/shopping');
+  await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('button', { name: 'Download backup' }).click(),
+  ]);
+  await expect(page.getByRole('status')).toHaveText('Downloaded');
+  await page.clock.runFor(3000);
+  await page.getByLabel('Read backup file').setInputFiles({
+    name: 'coil.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(
+      JSON.stringify({ app: 'tafh', version: 1, items: { 'coil:07': fault('coil:07') } }),
+    ),
+  });
+  await expect(page.getByRole('status')).toContainText('read from coil.json');
+  // Past the first message's 4 s: the second still shows, until its own 4 s are up.
+  await page.clock.runFor(2000);
+  await expect(page.getByRole('status')).toContainText('read from coil.json');
+  await page.clock.runFor(2500);
+  await expect(page.getByRole('status')).toHaveText('');
+});
+
 test('replace everything asks once more when the file would drop entries', async ({ page }) => {
   const items = { 'switch:32': fault('switch:32'), 'lamp:11': fault('lamp:11') };
   await seed(page, items);
