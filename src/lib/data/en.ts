@@ -47,17 +47,18 @@ export const BOARD: Record<string, string> = {
 
 export const FUSE_CIRCUIT: Record<string, string> = {
   Magneter: 'Magnets',
+  // The fuse list prints `G.I. #2 Wht-Vio`; the app writes GI and spells the colours out (CP2-15).
+  'G.I. #1 Wht-Brn': 'GI 1, White-Brown',
+  'G.I. #2 Wht-Vio': 'GI 2, White-Violet',
+  'G.I. #3 Wht-Yel': 'GI 3, White-Yellow',
+  'G.I. #4 Wht-Orn': 'GI 4, White-Orange',
+  'G.I. #5 Wht-Grn': 'GI 5, White-Green',
   ...same(
     'Lower Left Flipper',
     'Lower Right Flipper',
     'Solenoids 25–28',
     'Solenoids 9–16',
     'Solenoids 1–8',
-    'G.I. #2 Wht-Vio',
-    'G.I. #3 Wht-Yel',
-    'G.I. #5 Wht-Grn',
-    'G.I. #4 Wht-Orn',
-    'G.I. #1 Wht-Brn',
     'Flasher Secondary',
     'Solenoid Secondary',
     '+5V Logic',

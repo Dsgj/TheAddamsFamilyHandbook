@@ -50,6 +50,7 @@ describe('wiring', () => {
       wire: { colour: 'Vio-Grn', text: 'J130-6 · Q64' },
       assy: 'A-8039-3',
       fuse: 'F105 (3A S.B.)',
+      fuseKey: 'F105',
     });
     const bare = wiring('coil', find('coil', '16')!);
     if (bare.kind !== 'coil') throw new Error('a coil');
@@ -93,7 +94,8 @@ describe('wiring', () => {
         wire: { colour: coil.wireEn, text: pair(coil.pin, coil.driver) },
         part: coil.part,
         assy: coil.assy,
-        fuse: coil.fuse || '—',
+        fuse: coil.fuse,
+        fuseKey: coil.fuseKey,
       });
     }
   });

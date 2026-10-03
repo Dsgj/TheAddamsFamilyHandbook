@@ -82,16 +82,17 @@ export const COMPONENT_NOTES: Record<string, string> = {
 };
 
 /**
- * A fuse value the manual prints, over the kit's `fuse`, which is derived from the fuse list by
+ * A fuse the manual prints, as the key of its row on the fuse list (the Fuses page anchor), over
+ * the kit's `fuse`, which is derived from the fuse list by
  * solenoid number (kit-docs/KNOWN-ISSUES.md). Such a coil gets `fuseDerived: false`. The three
  * magnets are starred in the solenoid table, and its footnote prints their fuse: "Magnet fuse is a
  * 5 Amp S.B. located on the underside of the playfield" (src/content/handbook/ops002.md); the kit
  * derives F104 and F111 for them.
  */
 export const COMPONENT_FUSES: Record<string, string> = {
-  'coil:16': '5A S.B. (under the playfield)',
-  'coil:23': '5A S.B. (under the playfield)',
-  'coil:24': '5A S.B. (under the playfield)',
+  'coil:16': 'magnets',
+  'coil:23': 'magnets',
+  'coil:24': 'magnets',
 };
 
 /** A wire colour the owner has read on the machine, over the kit's (English, e.g. `White-Violet`). */
@@ -99,6 +100,6 @@ export const COMPONENT_WIRES: Record<string, string> = {};
 
 /**
  * Kit values the owner has checked on the machine and found right, keyed like the overlays; the
- * value says when and what was seen. A confirmed G.I. string leaves the `gi-colours` Verify item.
+ * value says when and what was seen. A confirmed GI string leaves the `gi-colours` Verify item.
  */
 export const GI_CONFIRMED: Record<string, string> = {};

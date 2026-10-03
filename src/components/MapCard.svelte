@@ -18,6 +18,7 @@
   import { pageTitleText } from '~/lib/pages';
   import { wiring } from '~/lib/present';
   import { componentHref, href, manualHref, tableSpotHref } from '~/lib/url';
+  import PartNo from './PartNo.svelte';
   import WireChip from './WireChip.svelte';
 
   export { deselectBtn, emptyCard, partBody, partHead, prov, shotCard, srcLink };
@@ -111,7 +112,7 @@
           </li>
         {/if}
         {#if w.part}<li>
-            <span class="lbl">Switch</span><span class="mono muted">{w.part}</span>
+            <span class="lbl">Switch</span><span class="mono muted"><PartNo no={w.part} /></span>
           </li>{/if}
       {:else if w.kind === 'lamp'}
         <li>
@@ -123,7 +124,9 @@
           <span class="mono muted">{w.row.text}</span>
         </li>
         <li>
-          <span class="lbl">Bulb</span><span class="mono muted">{w.bulb.code} · {w.bulb.part}</span>
+          <span class="lbl">Bulb</span><span class="mono muted"
+            >{w.bulb.code} · <PartNo no={w.bulb.part} /></span
+          >
         </li>
         {#if w.led}<li>
             <span class="lbl">LED</span><span class="mono muted">{w.led}</span>
@@ -133,8 +136,13 @@
           <WireChip colour={w.wire.colour} /><span>Wire</span>
           <span class="mono muted">{w.wire.text}</span>
         </li>
-        <li><span class="lbl">Coil</span><span class="mono muted">{w.part}</span></li>
-        <li><span class="lbl">Fuse</span><span class="mono muted">{w.fuse}</span></li>
+        <li>
+          <span class="lbl">Coil</span><span class="mono muted"><PartNo no={w.part} /></span>
+        </li>
+        <li>
+          <span class="lbl">Fuse</span><a class="mono" href={href(`fuses#${w.fuseKey}`)}>{w.fuse}</a
+          >
+        </li>
       {/if}
     </ul>
     {#if sw?.hint}

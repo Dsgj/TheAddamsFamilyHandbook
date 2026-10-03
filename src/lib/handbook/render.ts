@@ -99,12 +99,15 @@ export function indexHeadings(pages: RenderedPage[]): HeadingIndex {
   return idx;
 }
 
-/** Heading whose text starts with the menu code, e.g. `B.1`, `A.2 03`, `T.4`. */
+/**
+ * Heading whose text starts with the menu code, e.g. `B.1`, `A.2 03`, `T.4`. Quote marks in the
+ * heading do not count, so `Thing Flips` finds `"Thing Flips" Automatic Calibration` (DA2-02).
+ */
 export function findHeading(idx: HeadingIndex, code: string): Heading | undefined {
   const c = code.trim().toUpperCase();
   let best: Heading | undefined;
   for (const h of idx.values()) {
-    const t = h.text.toUpperCase();
+    const t = h.text.replaceAll('"', '').toUpperCase();
     if (t === c || t.startsWith(c + ' ') || t.startsWith(c + '.')) {
       if (!best || h.level > best.level) best = h;
       if (h.level === 3) break;
@@ -114,7 +117,17 @@ export function findHeading(idx: HeadingIndex, code: string): Heading | undefine
 }
 
 /**
- * Second pass: resolve `#find:CODE` and `#goto:ops:N` links. `base` is the site base without
+ * A Care or Setup item's heading: its code's own, else its menu item's, so `U.9 02` (Install Easy,
+ * which has no heading of its own) links to `U.9 Presets` (audit DA2-02).
+ */
+export function itemHeading(idx: HeadingIndex, code: string): Heading | undefined {
+  const menu = /^([A-Z]\.\d+) \d+$/.exec(code.trim());
+  return findHeading(idx, code) ?? (menu ? findHeading(idx, menu[1]!) : undefined);
+}
+
+/**
+ * Second pass: resolve `#find:CODE`, `#goto:ops:N` and `#verify:ID` links (an open question on
+ * the Verify page, audit DA2-01). `base` is the site base without
  * trailing slash; `sizes` gives each figure file its width and height, so the image keeps its
  * box while it loads (AY2-06). A code with no heading of its own (`P.3`)
  * links to its menu's heading (`P.`). The kit's Swedish `title` attributes in the menu map get
@@ -145,6 +158,9 @@ export function finish(
     const sec = doc === 'ops' ? sectionOfPage(page) : undefined;
     if (sec) return `href="${base}/handbook/${sec.key}#pg-${page}"`;
     return `href="${base}/manual/${doc}/${page}"`;
+  });
+  html = html.replace(/href="#verify:([a-z0-9-]+)"/g, (_m, id: string) => {
+    return `href="${base}/verify#verify-${id}"`;
   });
   html = html.replace(/src="assets\//g, `src="${base}/assets/`);
   html = html.replace(/title="([^"]*)"/g, (m, s: string) =>

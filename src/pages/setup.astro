@@ -3,7 +3,7 @@ import Base from '~/layouts/Base.astro';
 import SetupGuide from '~/components/SetupGuide.svelte';
 import { FACTORY_RESET_WARNING, SETUP_INTRO, SETUP_STEPS } from '~/data/setup';
 import { headingHref } from '~/lib/handbook/links';
-import { findHeading } from '~/lib/handbook/render';
+import { itemHeading } from '~/lib/handbook/render';
 import { handbookIndex } from '~/lib/handbook/toc';
 import { handbookHref, href } from '~/lib/url';
 
@@ -17,7 +17,7 @@ for (const s of SETUP_STEPS) {
   for (const i of s.items) {
     const code = i.find ?? i.id;
     if (!code) continue;
-    const h = findHeading(idx.headings, code);
+    const h = itemHeading(idx.headings, code);
     if (h) links[i.id] = headingHref(idx, h);
   }
 }

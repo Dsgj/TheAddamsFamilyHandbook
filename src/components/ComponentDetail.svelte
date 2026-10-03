@@ -27,6 +27,7 @@
   import { href, manualHref, mapHref } from '~/lib/url';
   import BottomSheet from './BottomSheet.svelte';
   import MiniMap from './MiniMap.svelte';
+  import PartNo from './PartNo.svelte';
   import StatusRow from './StatusRow.svelte';
   import WireChip from './WireChip.svelte';
 
@@ -129,7 +130,7 @@
         </dd>
         <dt>Fuse</dt>
         <dd>
-          {w.fuse}
+          <a href={href(`fuses#${w.fuseKey}`)}>{w.fuse}</a>
           {#if coil?.fuseDerived}<span class="muted small"
               >(derived from the fuse list, not printed per coil)</span
             >{/if}
@@ -157,7 +158,7 @@
             <div class="lrow two static">
               <span class="txt">
                 <span class="ttl">{partLabel}</span>
-                <span class="sub mono">{part}</span>
+                <span class="sub mono"><PartNo no={part} /></span>
               </span>
               {#if status === 'fault'}
                 <a class="btn sm" href={href('shopping')}>On the list</a>
@@ -172,7 +173,7 @@
             <div class="lrow two static">
               <span class="txt">
                 <span class="ttl">Assembly</span>
-                <span class="sub mono">{item.assy}</span>
+                <span class="sub mono"><PartNo no={item.assy} /></span>
               </span>
             </div>
           </li>
@@ -377,6 +378,12 @@
   .sub.mono {
     font-size: 13px;
     line-height: 18px;
+  }
+  /* A part number is the second line of a 60-tall row, so its 44 box (PartNo) runs up from the
+     number's bottom over the plain title, and stays inside the row and the list's clip. */
+  .sub.mono :global(a::after) {
+    top: min(0px, 100% - var(--touch));
+    bottom: 0;
   }
   .when {
     flex: 0 0 auto;

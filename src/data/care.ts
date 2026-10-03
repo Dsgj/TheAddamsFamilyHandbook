@@ -212,7 +212,7 @@ export const CARE_STEPS: SetupStep[] = [
         name: 'Run the Test Report and paste it into Diagnose',
         suggested: '',
         why: "Diagnose reads the codes and the component cards keep the history, so next year's report has something to compare with.",
-        find: 'Test Report',
+        find: 'Problem Analysis Messages',
       },
     ],
   },

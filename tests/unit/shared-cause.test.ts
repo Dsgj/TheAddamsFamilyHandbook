@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DATA, LAMPS, SWITCHES } from '~/lib/data/components';
 import { lampSharedCauses, sharedCauses } from '~/lib/shared-cause';
+import { wireName } from '~/lib/wire';
 
 const sw = (id: string) => {
   const s = SWITCHES.get(id);
@@ -20,7 +21,7 @@ describe('sharedCauses', () => {
     expect(c.map((x) => x.kind)).toEqual(['column']);
     expect(c[0]).toMatchObject({ key: '3', pin: 'J206-3' });
     // The English wire is the header's first field (the kit's Swedish one is dropped at build time).
-    expect(c[0]?.text).toContain(`share column 3 (${DATA.swCols['3']![0]}, J206-3)`);
+    expect(c[0]?.text).toContain(`share column 3 (${wireName(DATA.swCols['3']![0])}, J206-3)`);
   });
   it('finds a shared row and names its wire, connector and comparator', () => {
     const c = sharedCauses([sw('31'), sw('41')], DATA.swCols, DATA.swRows);
@@ -50,7 +51,7 @@ describe('lampSharedCauses', () => {
     expect(c.map((x) => x.kind)).toEqual(['column']);
     expect(c[0]).toMatchObject({ key: '1', pin: 'J137-1', driver: 'Q98', matrix: 'lamp' });
     expect(c[0]?.text).toContain('Q98');
-    expect(c[0]?.text).toContain(`(${DATA.lCols['1']![0]}, J137-1, driver Q98)`);
+    expect(c[0]?.text).toContain(`(${wireName(DATA.lCols['1']![0])}, J137-1, driver Q98)`);
     expect(DATA.lCols['1']![0]).not.toMatch(/^J\d/);
   });
   it('finds a shared lamp row', () => {
@@ -66,5 +67,18 @@ describe('lampSharedCauses', () => {
   });
   it('says nothing for a single lamp', () => {
     expect(lampSharedCauses([lamp('11')], DATA.lCols, DATA.lRows)).toEqual([]);
+  });
+});
+
+describe('shared-cause text', () => {
+  it('spells every wire colour out, in UK English (audit DA2-04)', () => {
+    const texts = [
+      ...sharedCauses([...SWITCHES.values()], DATA.swCols, DATA.swRows),
+      ...lampSharedCauses([...LAMPS.values()], DATA.lCols, DATA.lRows),
+    ].map((c) => c.text);
+    expect(texts.length).toBeGreaterThan(10);
+    expect(
+      texts.filter((t) => /\b(Gray|Gry|Brn|Org|Orn|Grn|Blu|Vio|Wht|Yel|Blk)\b/.test(t)),
+    ).toEqual([]);
   });
 });

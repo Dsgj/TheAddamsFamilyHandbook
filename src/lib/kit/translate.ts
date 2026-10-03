@@ -175,16 +175,39 @@ function toLamp(x: unknown, at: string, leds: Overlay): Lamp {
   };
 }
 
+type FuseRef = (s: string, at: string) => { fuse: string; fuseKey: string };
+
+/** A fuse as a component shows it: `F105 (3A S.B.)`, or an unnumbered one's rating and board. */
+export function fuseLabel(f: Fuse): string {
+  return f.id === '—' ? `${f.rating} (${f.board.toLowerCase()})` : `${f.id} (${f.rating})`;
+}
+
+/**
+ * Resolves a component's fuse to its row on the fuse list (audit DA2-05): the kit's free text by
+ * its F number (`F111 Flasher Secondary (5A S.B.)`), an overlay by the row's key (`magnets`). The
+ * text must carry the row's rating. Every component then shows one format and links its row.
+ */
+function fuseRefs(fuses: Fuse[]): FuseRef {
+  return (s, at) => {
+    const f =
+      fuses.find((x) => x.key === s) ?? fuses.find((x) => x.id !== '—' && s.startsWith(`${x.id} `));
+    if (!f) fail(at, `${JSON.stringify(s)} names no fuse on the fuse list`);
+    if (f.key !== s && !s.includes(f.rating))
+      fail(at, `${JSON.stringify(s)} does not carry the rating of ${f.id}, ${f.rating}`);
+    return { fuse: fuseLabel(f), fuseKey: f.key };
+  };
+}
+
 // prettier-ignore
 const COIL = [
   'id', 'name', 'type', 'wireEn', 'wire', 'pin', 'driver', 'part', 'assy',
   'under', 'cabinet', 'fuse', 'note', 'loc',
 ] as const;
-function toCoil(x: unknown, at: string, notes: Overlay, fuses: Overlay): Coil {
+function toCoil(x: unknown, at: string, notes: Overlay, fuses: Overlay, ref: FuseRef): Coil {
   const r = record(x, at);
   only(r, at, COIL);
   const id = text(r, 'id', at);
-  const fuse = own(fuses, `coil:${id}`);
+  const printed = own(fuses, `coil:${id}`);
   const kitNote = text(r, 'note', at);
   return {
     id,
@@ -197,15 +220,15 @@ function toCoil(x: unknown, at: string, notes: Overlay, fuses: Overlay): Coil {
     assy: text(r, 'assy', at),
     under: flag(r, 'under', at),
     cabinet: flag(r, 'cabinet', at),
-    fuse: fuse ?? text(r, 'fuse', at),
-    fuseDerived: fuse === undefined,
+    ...ref(printed ?? text(r, 'fuse', at), `${at}.fuse`),
+    fuseDerived: printed === undefined,
     note:
       own(notes, `coil:${id}`) ?? (kitNote === '' ? '' : dict(COIL_NOTE, kitNote, `${at}.note`)),
     loc: locs(r['loc'], `${at}.loc`),
   };
 }
 
-function toGi(x: unknown, at: string, wires: Overlay): Gi {
+function toGi(x: unknown, at: string, wires: Overlay, ref: FuseRef): Gi {
   const r = record(x, at);
   only(r, at, ['id', 'name', 'wire', 'pin', 'driver', 'bulb', 'fuse']);
   const id = text(r, 'id', at);
@@ -216,11 +239,11 @@ function toGi(x: unknown, at: string, wires: Overlay): Gi {
     pin: text(r, 'pin', at),
     driver: text(r, 'driver', at),
     bulb: text(r, 'bulb', at),
-    fuse: text(r, 'fuse', at),
+    ...ref(text(r, 'fuse', at), `${at}.fuse`),
   };
 }
 
-function toFlipper(x: unknown, at: string): Flipper {
+function toFlipper(x: unknown, at: string, ref: FuseRef): Flipper {
   const r = record(x, at);
   only(r, at, ['id', 'name', 'wire', 'pin', 'coil', 'assy', 'fuse']);
   return {
@@ -230,7 +253,7 @@ function toFlipper(x: unknown, at: string): Flipper {
     pin: text(r, 'pin', at),
     coil: text(r, 'coil', at),
     assy: text(r, 'assy', at),
-    fuse: text(r, 'fuse', at),
+    ...ref(text(r, 'fuse', at), `${at}.fuse`),
   };
 }
 
@@ -320,21 +343,22 @@ export function translateKit(
     toSwitch(x, `switches[${i}]`),
   );
   const lamps: Lamp[] = list(r['lamps'], 'lamps').map((x, i) => toLamp(x, `lamps[${i}]`, leds));
-  const coils: Coil[] = list(r['coils'], 'coils').map((x, i) =>
-    toCoil(x, `coils[${i}]`, notes, fuses),
-  );
-  const gi: Gi[] = list(r['gi'], 'gi').map((x, i) => toGi(x, `gi[${i}]`, wires));
-  const flippers: Flipper[] = list(r['flippers'], 'flippers').map((x, i) =>
-    toFlipper(x, `flippers[${i}]`),
-  );
   const fuseList: Fuse[] = list(r['fuses'], 'fuses').map((x, i) => toFuse(x, `fuses[${i}]`));
+  const keys = fuseList.map((f) => f.key);
+  const dup = keys.find((k, i) => keys.indexOf(k) !== i);
+  if (dup !== undefined) fail('fuses', `two fuses share the anchor ${JSON.stringify(dup)}`);
+  const ref = fuseRefs(fuseList);
+  const coils: Coil[] = list(r['coils'], 'coils').map((x, i) =>
+    toCoil(x, `coils[${i}]`, notes, fuses, ref),
+  );
+  const gi: Gi[] = list(r['gi'], 'gi').map((x, i) => toGi(x, `gi[${i}]`, wires, ref));
+  const flippers: Flipper[] = list(r['flippers'], 'flippers').map((x, i) =>
+    toFlipper(x, `flippers[${i}]`, ref),
+  );
   const boardLeds: Led[] = list(r['leds'], 'leds').map((x, i) => toLed(x, `leds[${i}]`));
   const maps = record(r['maps'], 'maps');
   only(maps, 'maps', ['sw', 'lamp', 'coil']);
 
-  const keys = fuseList.map((f) => f.key);
-  const dup = keys.find((k, i) => keys.indexOf(k) !== i);
-  if (dup !== undefined) fail('fuses', `two fuses share the anchor ${JSON.stringify(dup)}`);
   const coilKeys = coils.map((c) => `coil:${c.id}`);
   overlayKnown(notes, 'COMPONENT_NOTES', coilKeys);
   overlayKnown(fuses, 'COMPONENT_FUSES', coilKeys);

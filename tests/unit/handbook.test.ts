@@ -7,6 +7,7 @@ import { imageSize, type ImageSize } from '~/lib/handbook/image-size';
 import { headingHref, tocIndex } from '~/lib/handbook/links';
 import {
   findHeading,
+  itemHeading,
   finish,
   indexHeadings,
   parseHeader,
@@ -197,5 +198,14 @@ describe('handbook index (links.ts)', () => {
       expect(headingHref(idx, h)).toBe(href(`handbook/${old.sectionOf.get(h.id)}#${h.id}`));
     }
     expect(found).toBeGreaterThan(20);
+  });
+
+  it('gives every care and setup item that names a heading its link (audit DA2-02)', async () => {
+    const idx = tocIndex(await tocFromFiles());
+    const missing = [
+      ...CARE_STEPS.flatMap((s) => s.items.flatMap((i) => (i.find ? [i.find] : []))),
+      ...SETUP_STEPS.flatMap((s) => s.items.map((i) => i.find ?? i.id)),
+    ].filter((code) => code && !itemHeading(idx.headings, code));
+    expect(missing).toEqual([]);
   });
 });

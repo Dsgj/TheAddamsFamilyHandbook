@@ -5,12 +5,14 @@ import {
   appendixAnchor,
   appendixFor,
   appendixHref,
+  COIL_OHMS,
   coilOhms,
   serviceNotes,
 } from '~/data/appendix';
 import { OWNER_NOTES } from '~/data/ownerNotes';
 import { DATA } from '~/lib/data/components';
-import { findHeading, indexHeadings, parseHeader, renderPage } from '~/lib/handbook/render';
+import { VERIFY_ITEMS } from '~/data/verify';
+import { findHeading, finish, indexHeadings, parseHeader, renderPage } from '~/lib/handbook/render';
 import { APPENDIX_FIRST_PAGE, SECTIONS, isAppendixPage } from '~/lib/handbook/sections';
 import { href } from '~/lib/url';
 
@@ -115,6 +117,55 @@ describe('owner appendices', () => {
     expect(serviceNotes('coil', swamp)[0]!.text).toContain('J122');
     expect(coilOhms('14-7966 12V')).toBeUndefined();
     expect(coilOhms('AE-26-1200')?.mark).toBe('vendor');
+  });
+
+  it('links the open questions to Verify items that exist (audit DA2-01, DA2-03)', () => {
+    const ids = new Set(VERIFY_ITEMS.map((v) => v.id));
+    const linked = appFiles.flatMap((f) =>
+      [...readFileSync(`${dir}/${f}`, 'utf8').matchAll(/\(#verify:([a-z0-9-]+)\)/g)].map(
+        (m) => m[1]!,
+      ),
+    );
+    expect(linked.sort()).toEqual(['magnet-fuse', 'magnet-supply']);
+    for (const id of linked) expect(ids.has(id), id).toBe(true);
+    const { page, label, body } = parseHeader(readFileSync(`${dir}/app105.md`, 'utf8'));
+    const p = renderPage(page!, body, label);
+    const html = finish(p, indexHeadings([p]), '/base');
+    expect(html).toContain('href="/base/verify#verify-magnet-supply"');
+    expect(html).not.toContain('#verify:');
+  });
+
+  it('keeps COIL_OHMS equal to the A2 and A6 tables (audit AR2-05)', () => {
+    /** The body rows of the table whose header row starts with `header`, as trimmed cells. */
+    const table = (file: string, header: string) => {
+      const lines = readFileSync(`${dir}/${file}`, 'utf8').split(/\r?\n/);
+      const start = lines.findIndex((l) => l.startsWith(header));
+      expect(start, `${file}: ${header}`).toBeGreaterThan(-1);
+      const body = [];
+      for (const l of lines.slice(start + 2)) {
+        if (!l.startsWith('|')) break;
+        body.push(
+          l
+            .split('|')
+            .slice(1, -1)
+            .map((c) => c.trim()),
+        );
+      }
+      return body;
+    };
+    const fromTables: Record<string, { ohms: string; mark: string }> = {};
+    // The motors have no published value and the flipper row points to A6.
+    for (const [part, ohms, , conf] of table('app102.md', '| Coil | Typical Ω |')) {
+      if (!/^(about )?\d/.test(ohms!)) continue;
+      const mark = /^measured/.test(conf!) ? 'measured' : /vendor/.test(conf!) ? 'vendor' : 'forum';
+      fromTables[part!] = { ohms: ohms!, mark };
+    }
+    // A6 gives the vendor's power and hold windings.
+    for (const [, coil, power, hold] of table('app106.md', '| Flipper | Coil |')) {
+      const ohm = (v: string) => v.replace(/\s*Ω$/, '');
+      fromTables[coil!.split(' ')[0]!] = { ohms: `${ohm(power!)} / ${ohm(hold!)}`, mark: 'vendor' };
+    }
+    expect(fromTables).toEqual(COIL_OHMS);
   });
 
   it("keeps owner's notes on manual pages with valid appendix codes", () => {

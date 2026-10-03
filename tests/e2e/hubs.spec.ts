@@ -52,12 +52,12 @@ test('Workshop: rows and counts from the device', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Workshop');
   await rowsAreTall(page);
   await expect(page.locator('[data-count="shopping"]')).toHaveText('');
-  await expect(page.locator('[data-count="verify"]')).toHaveText('0 of 15');
+  await expect(page.locator('[data-count="verify"]')).toHaveText('0 of 16');
   await expect(hub(page).getByRole('link', { name: /Machine setup/ })).toContainText(
     '47 settings in 7 steps',
   );
   await expect(hub(page).getByRole('link', { name: /^Verify/ })).toContainText(
-    '15 data points to check on the machine',
+    '16 data points to check on the machine',
   );
   await expect(hub(page).getByRole('link', { name: /^Care/ })).toContainText(
     'Every week to every year',
@@ -79,7 +79,7 @@ test('Workshop: rows and counts from the device', async ({ page }) => {
   await gotoHydrated(page, '/verify');
   await page.locator('input.verify-check').first().check();
   await gotoHydrated(page, '/workshop');
-  await expect(page.locator('[data-count="verify"]')).toHaveText('1 of 15');
+  await expect(page.locator('[data-count="verify"]')).toHaveText('1 of 16');
 });
 
 test('Appearance stores Light, survives a reload, and System clears it', async ({ page }) => {

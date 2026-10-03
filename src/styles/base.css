@@ -857,6 +857,24 @@ table.t td.key > a::after {
   left: 0;
   width: max(100%, var(--touch));
 }
+/* Spec §12: a fuse link on /coils (DA2-05) is 17 or 35 tall. One block, so a wrapped "F105 (3A
+   S.B.)" has one box, with a 44 box centred on it. Its row is 45 tall at least, as a row with a
+   Broken tick is, so the boxes of two rows never meet (the flipper and GI rows were 33); in a
+   phone's stacked row the row's other links sit on other lines. */
+@media (min-width: 600px) {
+  table.t tr:has(> td.fuse) {
+    height: 45px;
+  }
+}
+table.t td.fuse > a {
+  display: inline-block;
+  position: relative;
+}
+table.t td.fuse > a::after {
+  content: '';
+  position: absolute;
+  inset: min(0px, (100% - var(--touch)) / 2);
+}
 @media (min-width: 600px) {
   table.t :is(td, th).key {
     position: sticky;

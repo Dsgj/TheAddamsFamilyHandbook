@@ -4,7 +4,7 @@
   import type { Coil, Kind, Lamp, MapMeta, Switch } from '~/lib/model/types';
   import { pageTitleText } from '~/lib/pages';
   import { callouts as calloutsOf, offMap, wiring } from '~/lib/present';
-  import { componentHref, manualHref, mapHref } from '~/lib/url';
+  import { componentHref, href, manualHref, mapHref } from '~/lib/url';
   import MiniMap from './MiniMap.svelte';
   import StatusRow from './StatusRow.svelte';
   import WireChip from './WireChip.svelte';
@@ -112,7 +112,7 @@
         <dd class="mono">{w.assy}</dd>{/if}
       <dt>Fuse</dt>
       <dd>
-        {w.fuse}
+        <a href={href(`fuses#${w.fuseKey}`)}>{w.fuse}</a>
         {#if coil?.fuseDerived}<span class="muted small"
             >(derived from the fuse list, not printed per coil)</span
           >{/if}

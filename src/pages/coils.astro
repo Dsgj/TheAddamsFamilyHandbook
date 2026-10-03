@@ -2,6 +2,7 @@
 import Base from '~/layouts/Base.astro';
 import Phrase from '~/components/Phrase.astro';
 import WireChip from '~/components/WireChip.svelte';
+import { FLASHERS } from '~/data/verify';
 import { DATA } from '~/lib/data/components';
 import { KIND_PLURAL, TABLE_LABEL } from '~/lib/copy';
 import { pageRefText, pageTitleText } from '~/lib/pages';
@@ -23,8 +24,9 @@ const groups = ['High Power', 'Low Power', 'Flasher'] as const;
     }
     <a href={manualHref('ops', 2)}>{pageRefText('ops', 2)}</a>. The fuse column is derived from the
     fuse list on {pageTitleText('ops', 57)}, not printed per coil, except the magnets 16, 23 and 24,
-    whose 5A S.B. fuse is printed in a footnote on {pageTitleText('ops', 2)}. The table lists 14
-    flashers; the display test counts 15. The manual does not say which one is missing, so{' '}
+    whose 5A S.B. fuse is printed in a footnote on {pageTitleText('ops', 2)}. The table lists{' '}
+    {FLASHERS.table} flasher bulbs; the parts list sums to {FLASHERS.parts}. The manual does not say
+    which count is right, so{' '}
     <a href={href('verify#verify-flasher-count')}>Verify</a> asks you to count them in the machine.
   </p>
 
@@ -86,8 +88,10 @@ const groups = ['High Power', 'Low Power', 'Flasher'] as const;
                     <td role="cell" class="mono phrase" data-h="Coil">
                       <Phrase text={c.part} />
                     </td>
-                    <td role="cell" class="mono small phrase" data-h="Fuse">
-                      <Phrase text={c.fuse} />
+                    <td role="cell" class="mono small phrase fuse" data-h="Fuse">
+                      <a href={href(`fuses#${c.fuseKey}`)}>
+                        <Phrase text={c.fuse} />
+                      </a>
                     </td>
                     <td role="cell" class="muted small" data-h="Location">
                       {c.cabinet ? 'in cabinet' : c.under ? 'under playfield' : ''}
@@ -150,8 +154,8 @@ const groups = ['High Power', 'Low Power', 'Flasher'] as const;
                   <td role="cell" class="mono phrase" data-h="Assembly">
                     <Phrase text={f.assy} />
                   </td>
-                  <td role="cell" class="small" data-h="Fuse">
-                    {f.fuse}
+                  <td role="cell" class="small fuse" data-h="Fuse">
+                    <a href={href(`fuses#${f.fuseKey}`)}>{f.fuse}</a>
                   </td>
                 </tr>
               ))
@@ -202,8 +206,8 @@ const groups = ['High Power', 'Low Power', 'Flasher'] as const;
                   <td role="cell" class="mono phrase" data-h="Bulb">
                     <Phrase text={g.bulb} />
                   </td>
-                  <td role="cell" class="small" data-h="Fuse">
-                    {g.fuse}
+                  <td role="cell" class="small fuse" data-h="Fuse">
+                    <a href={href(`fuses#${g.fuseKey}`)}>{g.fuse}</a>
                   </td>
                 </tr>
               ))

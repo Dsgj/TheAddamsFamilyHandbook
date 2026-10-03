@@ -261,11 +261,10 @@ test.describe('P2-4: tables (spec §8.9)', () => {
     }
   });
 
-  /* Known, not changed (app audit P4 item 4): at 320 in WebKit the Low Power table on /coils
-     scrolls by 1 px. Its nowrap token "(under the playfield)" (Phrase.astro keeps a bracketed group
-     whole) ends 1.06 px past the cell; Chromium fits it, and 360 and 412 fit in both engines. A fix
-     makes the count 0 and fails here, so the entry goes with it. */
-  const KNOWN_SCROLLS: Record<string, number> = { 'webkit 320 /coils': 1 };
+  /* Known overflows by engine, width and page; a fix makes the count 0 and fails here, so the
+     entry goes with it. None now: the magnets' "(under the playfield)" that ran 1.06 px past its
+     cell at 320 in WebKit sits in the fuse link's own block since audit round 2 P3 item 2. */
+  const KNOWN_SCROLLS: Record<string, number> = {};
   for (const width of [320, 360, 412]) {
     test.describe(`${width}px`, () => {
       onWidth(width);

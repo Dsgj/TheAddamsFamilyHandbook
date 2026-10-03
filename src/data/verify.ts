@@ -4,7 +4,7 @@
  * ticked through src/lib/verify-check.ts and part of the backup file. When one is settled for good,
  * fix the data and remove it here (and in KNOWN-ISSUES.md when it is listed there).
  */
-import { appendixHref } from '~/data/appendix';
+import { APPENDICES, appendixHref } from '~/data/appendix';
 import { componentCode, KIND_PLURAL, MAP_LAYER } from '~/lib/copy';
 import { pageRefText } from '~/lib/pages';
 import { componentHref, handbookHref, href, manualHref, mapHref, tableHref } from '~/lib/url';
@@ -21,6 +21,12 @@ const onMap = (kind: 'switch' | 'lamp', id: string): Link => [
   mapHref(MAP_LAYER[kind], id),
 ];
 
+/**
+ * The flasher count, one source for Verify and the Coils lead (audit DA2-07): the solenoid table's
+ * circuits and bulbs against the parts list's #906 bulbs.
+ */
+export const FLASHERS = { circuits: 6, table: 14, parts: 15 } as const;
+
 export interface VerifyItem {
   id: string;
   group: string;
@@ -32,7 +38,7 @@ export const VERIFY_ITEMS: VerifyItem[] = [
   {
     id: 'flasher-count',
     group: 'Component data',
-    text: `Count the flashers in the machine. The solenoid table on ${pageRefText('ops', 108)} gives 6 flasher circuits with 14 bulbs; the parts list sums to 15 × #906, three of them on top of the backbox.`,
+    text: `Count the flashers in the machine. The solenoid table on ${pageRefText('ops', 108)} gives ${FLASHERS.circuits} flasher circuits with ${FLASHERS.table} bulbs; the parts list sums to ${FLASHERS.parts} × #906, three of them on top of the backbox.`,
     links: [
       [KIND_PLURAL.coil, tableHref('coil')],
       [pageRefText('ops', 108), manualHref('ops', 108)],
@@ -132,7 +138,7 @@ export const VERIFY_ITEMS: VerifyItem[] = [
   {
     id: 'gi-colours',
     group: 'Component data',
-    text: `The manual gives two wire colours for G.I. strings 2, 4, 5: the G.I. table on ${pageRefText('ops', 2)} has Orange, Green and Violet, the fuse list on ${pageRefText('ops', 57)} has White-Violet, White-Orange and White-Green. The app shows the table's colours. Read the wire at J120-2, J121-5 and J121-6 on the power driver board and note which source is right for each string.`,
+    text: `The manual gives two wire colours for GI strings 2, 4, 5: the GI table on ${pageRefText('ops', 2)} has Orange, Green and Violet, the fuse list on ${pageRefText('ops', 57)} has White-Violet, White-Orange and White-Green. The app shows the table's colours. Read the wire at J120-2, J121-5 and J121-6 on the power driver board and note which source is right for each string.`,
     links: [
       ['Fuses', href('fuses')],
       [pageRefText('ops', 2), manualHref('ops', 2)],
@@ -144,5 +150,15 @@ export const VERIFY_ITEMS: VerifyItem[] = [
     group: 'Component data',
     text: `The magnets 16, 23 and 24 are starred in the solenoid table, and its footnote on ${pageRefText('ops', 2)} puts their fuse, a 5A S.B., on the underside of the playfield. The app shows that fuse for them instead of the F104 and F111 the fuse list gives by solenoid number. Find the fuse under the playfield, check its rating and note which magnets it feeds.`,
     links: [details('coil', '16'), [pageRefText('ops', 2), manualHref('ops', 2)]],
+  },
+  {
+    id: 'magnet-supply',
+    group: 'Component data',
+    text: `The magnets' supply is stated three ways: the solenoid table on ${pageRefText('ops', 2)} labels their 20-9247 coil "12V", A5 puts them in the 20 V group at TP7, and A6 has the Extra Flipper Supply board A-15416 feed them 50 V through J903. With the game on, measure J903 pins 1 and 2 against pins 3 and 4, as A6 describes, and write down the reading.`,
+    links: [
+      details('coil', '16'),
+      [`A5 ${APPENDICES.A5}`, appendixHref('A5')],
+      [`A6 ${APPENDICES.A6}`, appendixHref('A6')],
+    ],
   },
 ];

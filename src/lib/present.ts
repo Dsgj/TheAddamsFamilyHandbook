@@ -26,7 +26,7 @@ export type Wiring =
       led: string;
       assy: string;
     }
-  | { kind: 'coil'; wire: Wire; part: string; assy: string; fuse: string };
+  | { kind: 'coil'; wire: Wire; part: string; assy: string; fuse: string; fuseKey: string };
 
 /** "J206-3 · U20-16": a connector pin and the IC pin, transistor or driver behind it. */
 const pair = (a: string | undefined, b: string | undefined) => `${a ?? ''} · ${b ?? ''}`;
@@ -65,9 +65,10 @@ export function wiring(kind: Kind, item: Switch | Lamp | Coil): Wiring {
     wire: { colour: coil.wireEn ?? '', text: pair(coil.pin, coil.driver) },
     part: coil.part,
     assy: coil.assy,
-    // From the fuse list unless the owner overlays a printed fuse (COMPONENT_FUSES); a dash where
-    // neither names one.
-    fuse: coil.fuse || '—',
+    // The fuse-list row, or the printed fuse the owner overlays (COMPONENT_FUSES), and its anchor
+    // on the Fuses page.
+    fuse: coil.fuse,
+    fuseKey: coil.fuseKey,
   };
 }
 

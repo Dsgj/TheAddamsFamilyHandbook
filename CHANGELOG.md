@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- The data tells one story. Appendix A2 and A5 point to Verify where the
+  manual disagrees with itself about the magnets, and Verify has a new item
+  for the magnets' supply. Every fuse on a card, a map card or the Coils
+  page reads "F105 (3A S.B.)" and links to its row on the Fuses page. Part
+  and assembly numbers on a component's page and its map sheet link to the
+  Parts list when it carries them. Diagnose spells wire colours out ("Grey"), the fuse list writes
+  "GI 1, White-Brown", and three Setup and Care links to the handbook that
+  had gone missing are back.
 - Backups use two verbs: Download backup and Restore from backup, with
   "When restoring" for merge or replace and "restored" in the result. A
   component page's title and its map sheet read "Switch 32, Upper Right

@@ -430,6 +430,10 @@ export const RULES: Record<string, [string, Rule]> = {
     'a page is named by its title, not a nickname',
     inCopy(/\b(Setup|Fuses|Switches|Lamps|Solenoids|error code) page\b/),
   ],
+  r: [
+    'one spelling of GI; en.ts keys are the kit’s words (audit CP2-15)',
+    (x) => (x.file === 'src/lib/data/en.ts' ? [] : inCopy(/\bG\.I\./)(x)),
+  ],
 };
 
 function check(x: Extract): Record<string, Hit[]> {
@@ -499,6 +503,8 @@ describe('copy rules: self-test', () => {
     ['p', 'x.ts', "const s = 'Record it in the machine card.';"],
     ['q', 'x.ts', "const s = 'The right values are on the Fuses page.';"],
     ['q', 'x.astro', '<p>Blink codes are on <a href="/x">the error code page</a>.</p>'],
+    ['r', 'x.ts', "const s = 'Fuse F113 feeds G.I. string 2.';"],
+    ['r', 'x.svelte', '<p>The G.I. strings dim.</p>'],
   ];
   const PASS: [string, string, string][] = [
     ['a', 'x.ts', "el.scrollIntoView({ behavior: 'smooth', block: 'center' });"],
@@ -529,6 +535,8 @@ describe('copy rules: self-test', () => {
     ['p', 'x.ts', "const l = [['F1: Details', componentHref('switch', 'F1')]];"],
     ['p', 'x.svelte', '<button>All components on the map</button>'],
     ['q', 'x.ts', "const s = 'The right values are on the Fuses, LEDs and jumpers page.';"],
+    ['r', 'x.ts', "const s = 'GI 2, White-Violet';"],
+    ['r', 'src/lib/data/en.ts', "const m = { 'G.I. #2 Wht-Vio': 'GI 2, White-Violet' };"],
   ];
 
   for (const [k, file, src] of FAIL) {

@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { COMPONENT_FUSES, COMPONENT_NOTES, COMPONENT_WIRES, GI_CONFIRMED } from '~/data/ownerNotes';
 import { VERIFY_ITEMS } from '~/data/verify';
 import { DATA, find } from '~/lib/data/components';
-import { translateKit } from '~/lib/kit/translate';
+import { fuseLabel, translateKit } from '~/lib/kit/translate';
 
 // The kit data boundary (audit P4 item 3): src/data/kit stays byte-identical to the kit, the
 // translation to the English model happens once at build time, and the owner's corrections live in
@@ -71,15 +71,40 @@ describe('kit data boundary', () => {
     const kit = raw().coils;
     for (const c of DATA.coils) {
       if (starred.includes(c.id)) {
-        expect(c.fuse, c.id).toBe(COMPONENT_FUSES[`coil:${c.id}`]);
+        expect(c.fuseKey, c.id).toBe(COMPONENT_FUSES[`coil:${c.id}`]);
         expect(c.fuse.startsWith(`${rating} `), c.id).toBe(true);
         expect(c.fuseDerived, c.id).toBe(false);
       } else {
-        expect(c.fuse, c.id).toBe(kit.find((k) => k.id === c.id)?.fuse);
+        expect(kit.find((k) => k.id === c.id)?.fuse.startsWith(`${c.fuseKey} `), c.id).toBe(true);
         expect(c.fuseDerived, c.id).toBe(true);
       }
     }
     expect(find('coil', '06')?.fuse).toBe('F105 (3A S.B.)');
+  });
+
+  it('names every component fuse in one format, by its row on the fuse list (audit DA2-05)', () => {
+    const rows = new Map(DATA.fuses.map((f) => [f.key, f]));
+    for (const c of [...DATA.coils, ...DATA.gi, ...DATA.flippers]) {
+      const f = rows.get(c.fuseKey);
+      expect(f, c.id).toBeDefined();
+      expect(c.fuse, c.id).toBe(fuseLabel(f!));
+    }
+    expect(find('coil', '17')?.fuse).toBe('F111 (5A S.B.)');
+    expect(find('coil', '16')?.fuse).toBe('5A S.B. (under the playfield)');
+    expect(DATA.flippers.find((f) => f.id === 'ULF')?.fuse).toBe('F901 (3A S.B.)');
+    const bad = JSON.parse(read(KIT)) as { coils: { fuse: string }[] };
+    bad.coils[0]!.fuse = 'F199 (3A S.B.)';
+    expect(() => translateKit(bad, {}, {}, {}, {})).toThrow(/names no fuse on the fuse list/);
+    bad.coils[0]!.fuse = 'F105 (5A S.B.)';
+    expect(() => translateKit(bad, {}, {}, {}, {})).toThrow(/does not carry the rating of F105/);
+  });
+
+  it('writes GI and spells the wire colours out in the fuse circuits (audit CP2-15)', () => {
+    const circuits = DATA.fuses.map((f) => f.circuit);
+    expect(
+      circuits.filter((c) => /G\.I\.|\b(Wht|Vio|Yel|Grn|Orn|Brn|Gry|Blu|Blk)\b/.test(c)),
+    ).toEqual([]);
+    expect(circuits).toContain('GI 2, White-Violet');
   });
 
   it('keeps a Verify item for the G.I. strings whose wire the fuse list prints differently', () => {
@@ -107,7 +132,7 @@ describe('kit data boundary', () => {
     disagree.sort();
     const item = VERIFY_ITEMS.find((v) => v.id === 'gi-colours');
     expect(item !== undefined, `gi-colours for ${disagree.join(', ')}`).toBe(disagree.length > 0);
-    if (item) expect(item.text).toContain(`G.I. strings ${disagree.join(', ')}`);
+    if (item) expect(item.text).toContain(`GI strings ${disagree.join(', ')}`);
     for (const k of Object.keys(COMPONENT_WIRES)) expect(k).toMatch(/^gi:GI \d$/);
   });
 

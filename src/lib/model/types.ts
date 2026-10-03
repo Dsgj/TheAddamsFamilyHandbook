@@ -74,10 +74,13 @@ export interface Coil {
   under: boolean;
   cabinet: boolean;
   /**
-   * Derived from the fuse list (1-47), not printed per coil, except the magnets 16, 23 and 24,
-   * whose 5A S.B. fuse is printed (ops002 footnote) and overlaid from ownerNotes.ts COMPONENT_FUSES.
+   * `F105 (3A S.B.)`, from the fuse-list row the kit derives (1-47), not printed per coil, except
+   * the magnets 16, 23 and 24, whose 5A S.B. fuse is printed (ops002 footnote) and overlaid from
+   * ownerNotes.ts COMPONENT_FUSES. One format for every component, from `fuseLabel` (DA2-05).
    */
   fuse: string;
+  /** The row on the Fuses page, `fuses#${fuseKey}`. */
+  fuseKey: string;
   /** False where `fuse` is the owner's overlay rather than the kit's derived value. */
   fuseDerived: boolean;
   /** The kit's note in English, or the owner's from ownerNotes.ts COMPONENT_NOTES. */
@@ -94,6 +97,7 @@ export interface Gi {
   driver: string;
   bulb: string;
   fuse: string;
+  fuseKey: string;
 }
 
 export interface Flipper {
@@ -105,6 +109,7 @@ export interface Flipper {
   coil: string;
   assy: string;
   fuse: string;
+  fuseKey: string;
 }
 
 export interface Fuse {

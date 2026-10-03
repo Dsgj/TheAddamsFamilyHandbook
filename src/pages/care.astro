@@ -3,7 +3,7 @@ import Base from '~/layouts/Base.astro';
 import SetupGuide from '~/components/SetupGuide.svelte';
 import { CARE_INTRO, CARE_STEPS, CARE_WARNING } from '~/data/care';
 import { headingHref } from '~/lib/handbook/links';
-import { findHeading } from '~/lib/handbook/render';
+import { itemHeading } from '~/lib/handbook/render';
 import { handbookIndex } from '~/lib/handbook/toc';
 import { handbookHref, href } from '~/lib/url';
 
@@ -16,7 +16,7 @@ const links: Record<string, string> = {};
 for (const s of CARE_STEPS) {
   for (const i of s.items) {
     if (!i.find) continue;
-    const h = findHeading(idx.headings, i.find);
+    const h = itemHeading(idx.headings, i.find);
     if (h) links[i.id] = headingHref(idx, h);
   }
 }
