@@ -151,9 +151,9 @@ describe('structure lint', () => {
     expectNone(hits(/^\s*(switch|sw):\s*['"`][A-Z]/, only('src/lib/copy.ts')));
   });
 
-  it('(j) PlayfieldMap stays a coordinator: at most 1500 lines', () => {
+  it('(j) PlayfieldMap stays a coordinator: at most 1100 lines (AR2-02)', () => {
     const lines = readFileSync('src/components/PlayfieldMap.svelte', 'utf8').split('\n').length;
-    expect(lines, 'src/components/PlayfieldMap.svelte lines').toBeLessThanOrEqual(1500);
+    expect(lines, 'src/components/PlayfieldMap.svelte lines').toBeLessThanOrEqual(1100);
   });
 
   it('(k) the calibration tool is lazy: one importer of overlays.json, a dynamic import of MapCalibration, runes inside', () => {
@@ -217,8 +217,20 @@ describe('structure lint', () => {
     expect(attrs('src/pages/tables.astro')).toEqual(field);
   });
 
+  it('(o) builds the kind:id component key only in model/key.ts (AR2-14)', () => {
+    expectNone(hits(/`\$\{[\w.]*kind\}:\$\{/, only('src/lib/model/key.ts')));
+  });
+
+  it("(p) writes the owner's-hint provenance only in OwnerHint (AR2-01, CP2-03)", () => {
+    expectNone(hits(/owner's experience, not the manual/, only('src/components/OwnerHint.svelte')));
+  });
+
+  it('(p) words a missing callout only in copy.ts (AR2-01)', () => {
+    expectNone(hits(/on the location map['"]/i, only('src/lib/copy.ts')));
+  });
+
   it('(control) every rule above still matches inside its home, so none passes vacuously', () => {
-    expect(RULES.length).toBe(12);
+    expect(RULES.length).toBe(15);
     for (const [pattern, allowed] of RULES) {
       if (pattern === KIND_TERNARY) continue;
       const home = FILES.filter((f) => allowed(f.path));

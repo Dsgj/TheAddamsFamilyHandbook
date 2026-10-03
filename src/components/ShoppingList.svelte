@@ -2,6 +2,7 @@
   import { onDestroy, onMount } from 'svelte';
   import { agree, KIND_PLURAL } from '~/lib/copy';
   import { later } from '~/lib/later';
+  import { componentKey } from '~/lib/model/key';
   import { allStatuses, setStatus } from '~/lib/model/status.svelte';
   import { componentHref } from '~/lib/url';
   import {
@@ -67,7 +68,7 @@
   let drag = $state<{ key: string; dx: number } | null>(null);
   let start: { key: string; x: number; y: number; decided: boolean } | null = null;
   function key(i: ShoppingItem) {
-    return `${i.kind}:${i.id}`;
+    return componentKey(i.kind, i.id);
   }
   function down(e: PointerEvent, i: ShoppingItem) {
     if (e.pointerType === 'mouse' && e.button !== 0) return;

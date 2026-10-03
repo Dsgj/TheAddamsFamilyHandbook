@@ -16,10 +16,10 @@
   import { STATUS_LABEL } from '~/lib/model/status.svelte';
   import type { Coil, Switch } from '~/lib/model/types';
   import { pageTitleText } from '~/lib/pages';
-  import { wiring } from '~/lib/present';
+  import { wiring, wiringRows } from '~/lib/present';
   import { componentHref, href, manualHref, tableSpotHref } from '~/lib/url';
-  import PartNo from './PartNo.svelte';
-  import WireChip from './WireChip.svelte';
+  import OwnerHint from './OwnerHint.svelte';
+  import WiringList from './WiringList.svelte';
 
   export { deselectBtn, emptyCard, partBody, partHead, prov, shotCard, srcLink };
 </script>
@@ -91,66 +91,14 @@
   {#if item.comp && item.kind !== 'shot'}
     {@const sw = item.kind === 'switch' ? (item.comp as Switch) : undefined}
     {@const coil = item.kind === 'coil' ? (item.comp as Coil) : undefined}
-    {@const w = wiring(item.kind, item.comp)}
     {@const page = mapOf(item.kind).page}
     <h3 class="gh">Wiring</h3>
-    <ul class="wires">
-      {#if w.kind === 'switch'}
-        {#if w.matrix}
-          <li>
-            <WireChip colour={w.matrix.column.colour} /><span>Column {w.matrix.column.n}</span>
-            <span class="mono muted">{w.matrix.column.text}</span>
-          </li>
-          <li>
-            <WireChip colour={w.matrix.row.colour} /><span>Row {w.matrix.row.n}</span>
-            <span class="mono muted">{w.matrix.row.text}</span>
-          </li>
-        {:else}
-          <li>
-            <WireChip colour={w.wire.colour} /><span>Wire</span>
-            <span class="mono muted">{w.wire.text}</span>
-          </li>
-        {/if}
-        {#if w.part}<li>
-            <span class="lbl">Switch</span><span class="mono muted"><PartNo no={w.part} /></span>
-          </li>{/if}
-      {:else if w.kind === 'lamp'}
-        <li>
-          <WireChip colour={w.column.colour} /><span>Column {w.column.n}</span>
-          <span class="mono muted">{w.column.text}</span>
-        </li>
-        <li>
-          <WireChip colour={w.row.colour} /><span>Row {w.row.n}</span>
-          <span class="mono muted">{w.row.text}</span>
-        </li>
-        <li>
-          <span class="lbl">Bulb</span><span class="mono muted"
-            >{w.bulb.code} · <PartNo no={w.bulb.part} /></span
-          >
-        </li>
-        {#if w.led}<li>
-            <span class="lbl">LED</span><span class="mono muted">{w.led}</span>
-          </li>{/if}
-      {:else if w.kind === 'coil'}
-        <li>
-          <WireChip colour={w.wire.colour} /><span>Wire</span>
-          <span class="mono muted">{w.wire.text}</span>
-        </li>
-        <li>
-          <span class="lbl">Coil</span><span class="mono muted"><PartNo no={w.part} /></span>
-        </li>
-        <li>
-          <span class="lbl">Fuse</span><a class="mono" href={href(`fuses#${w.fuseKey}`)}>{w.fuse}</a
-          >
-        </li>
-      {/if}
-    </ul>
-    {#if sw?.hint}
-      <p class="prov hint"><strong>Owner's hint.</strong> {sw.hint}</p>
-    {/if}
-    {#if coil?.note}
-      <p class="prov hint">{coil.note}</p>
-    {/if}
+    <WiringList
+      rows={wiringRows(wiring(item.kind, item.comp), { parts: true, assembly: false })}
+      variant="list"
+      links
+    />
+    <OwnerHint hint={sw?.hint} note={coil?.note} at="sheet" />
     <nav class="more" aria-label="More about {fullName(item).toLowerCase()}">
       <a class="btn sm" href={componentHref(item.kind, item.id)}>Details</a>
       <a class="btn sm" href={manualHref('ops', page)}>Manual {pageTitleText('ops', page)}</a>
@@ -226,36 +174,6 @@
     color: var(--muted);
     text-transform: uppercase;
     letter-spacing: 0.04em;
-  }
-  .wires {
-    list-style: none;
-    margin: 0 16px;
-    padding: 0;
-    border-radius: var(--r-md);
-    background: var(--sheet-cell);
-    overflow: hidden;
-  }
-  .wires li {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    min-height: 44px;
-    padding: 6px 12px;
-    font-size: 15px;
-  }
-  .wires li + li {
-    border-top: 1px solid var(--sep);
-  }
-  .wires .lbl {
-    color: var(--muted);
-  }
-  .wires .mono {
-    margin-left: auto;
-    font-size: 13px;
-    text-align: right;
-  }
-  .hint {
-    margin: 12px 16px 0;
   }
   .more {
     display: grid;

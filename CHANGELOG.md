@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- A component's wiring reads the same on its card, its page and the map
+  sheet. The sheet now says "Installed LED", shows when a coil's fuse comes
+  from the fuse list, and tags an owner's hint "(owner's experience, not the
+  manual)" in the same box as the card. A card with no callout says "No
+  callout on the location map" instead of a dash, and its fuse and page links
+  are underlined like every other text link. The handbook's map embed lists
+  lamps as L11, not 11.
 - The data tells one story. Appendix A2 and A5 point to Verify where the
   manual disagrees with itself about the magnets, and Verify has a new item
   for the magnets' supply. Every fuse on a card, a map card or the Coils

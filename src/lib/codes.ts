@@ -1,3 +1,4 @@
+import { componentKey } from '~/lib/model/key';
 import type { Kind } from '~/lib/model/types';
 
 export interface ParsedCode {
@@ -59,7 +60,7 @@ export function parseCodes(input: string): ParsedCode[] {
   }
   const seen = new Set<string>();
   return out.filter((c) => {
-    const k = `${c.kind}:${c.id}`;
+    const k = componentKey(c.kind, c.id);
     if (seen.has(k)) return false;
     seen.add(k);
     return true;

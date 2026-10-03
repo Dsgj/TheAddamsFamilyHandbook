@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DATA, find } from '~/lib/data/components';
-import { callouts, wiring } from '~/lib/present';
+import type { WiringRow } from '~/lib/present';
+import { callouts, wiring, wiringRows } from '~/lib/present';
 
 // The oracle: the old inline Svelte text. `{a} · {b}` renders a nullish piece as nothing.
 const text = (v: string | undefined | null) => v ?? '';
@@ -96,8 +97,86 @@ describe('wiring', () => {
         assy: coil.assy,
         fuse: coil.fuse,
         fuseKey: coil.fuseKey,
+        fuseDerived: coil.fuseDerived,
       });
     }
+  });
+});
+
+describe('wiringRows', () => {
+  const ALL = { parts: true, assembly: true };
+  const SHEET = { parts: true, assembly: false };
+  const WIRES = { parts: false, assembly: false };
+  const labels = (rows: WiringRow[]) => rows.map((r) => r.label);
+
+  it('labels a matrix switch, a lamp and a coil in one order on every surface', () => {
+    const sw = DATA.switches.find((s) => s.col !== null && s.part && s.assy)!;
+    const w = wiring('switch', sw);
+    expect(labels(wiringRows(w, ALL))).toEqual([
+      `Column ${sw.col}`,
+      `Row ${sw.row}`,
+      'Switch',
+      'Assembly',
+    ]);
+    expect(labels(wiringRows(w, SHEET))).toEqual([`Column ${sw.col}`, `Row ${sw.row}`, 'Switch']);
+    expect(labels(wiringRows(w, WIRES))).toEqual([`Column ${sw.col}`, `Row ${sw.row}`]);
+
+    const lamp = DATA.lamps.find((l) => l.led && l.assy)!;
+    expect(labels(wiringRows(wiring('lamp', lamp), ALL))).toEqual([
+      `Column ${lamp.col}`,
+      `Row ${lamp.row}`,
+      'Bulb',
+      'Installed LED',
+      'Assembly',
+    ]);
+
+    const coil = DATA.coils.find((c) => c.assy)!;
+    expect(labels(wiringRows(wiring('coil', coil), ALL))).toEqual([
+      'Wire',
+      'Coil',
+      'Assembly',
+      'Fuse',
+    ]);
+    expect(labels(wiringRows(wiring('coil', coil), WIRES))).toEqual(['Wire', 'Fuse']);
+  });
+
+  it('gives a switch off the matrix one wire, and leaves out a part or assembly it lacks', () => {
+    for (const sw of DATA.switches) {
+      const got = labels(wiringRows(wiring('switch', sw), ALL));
+      expect(got.includes('Wire'), sw.id).toBe(sw.col === null);
+      expect(got.includes('Switch'), sw.id).toBe(!!sw.part);
+      expect(got.includes('Assembly'), sw.id).toBe(!!sw.assy);
+    }
+  });
+
+  it('carries the values: the bulb code with its part number, the LED, the fuse and its anchor', () => {
+    for (const lamp of DATA.lamps) {
+      const rows = wiringRows(wiring('lamp', lamp), SHEET);
+      expect(
+        rows.find((r) => r.label === 'Bulb'),
+        lamp.id,
+      ).toEqual({
+        kind: 'part',
+        label: 'Bulb',
+        code: lamp.bulb ?? '',
+        no: lamp.bulbPart ?? '',
+      });
+      expect(
+        rows.some((r) => r.label === 'Installed LED'),
+        lamp.id,
+      ).toBe(!!lamp.led);
+    }
+    for (const coil of DATA.coils) {
+      const rows = wiringRows(wiring('coil', coil), WIRES);
+      expect(rows.at(-1), coil.id).toEqual({
+        kind: 'fuse',
+        label: 'Fuse',
+        text: coil.fuse,
+        key: coil.fuseKey,
+        derived: coil.fuseDerived,
+      });
+    }
+    expect(DATA.coils.some((c) => c.fuseDerived)).toBe(true);
   });
 });
 

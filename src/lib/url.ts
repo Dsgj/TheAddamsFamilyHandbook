@@ -1,3 +1,4 @@
+import { parseComponentKey } from '~/lib/model/key';
 import type { Kind, Layer, MapKind } from '~/lib/model/types';
 
 export type { MapKind };
@@ -84,10 +85,7 @@ const MAP_KINDS: readonly string[] = ['switch', 'lamp', 'coil', 'shot'];
  */
 export function parseMapId(raw: string | null | undefined): { kind?: MapKind; id: string } | null {
   if (!raw) return null;
-  const i = raw.indexOf(':');
-  if (i > 0 && MAP_KINDS.includes(raw.slice(0, i))) {
-    const id = raw.slice(i + 1);
-    return id ? { kind: raw.slice(0, i) as MapKind, id } : null;
-  }
+  const k = parseComponentKey(raw);
+  if (k && MAP_KINDS.includes(k.kind)) return k.id ? { kind: k.kind as MapKind, id: k.id } : null;
   return { id: raw };
 }

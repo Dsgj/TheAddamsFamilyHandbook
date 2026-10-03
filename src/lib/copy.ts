@@ -67,6 +67,14 @@ export function componentCode(kind: string, id: string): string {
   return id;
 }
 
+/**
+ * What stands in for a callout on the location map when a component has none (audit AR2-01): a
+ * switch the manual leaves off the map, or a part the map shows without a label.
+ */
+export function noCallout(notShown: boolean | undefined): string {
+  return notShown ? 'Not shown on the location map' : 'No callout on the location map';
+}
+
 /** "Switch 32", "Lamp 55", "Solenoid 01": headings and accessible names (spec §13). */
 export function componentName(kind: Kind, id: string): string {
   return `${KIND_LABEL[kind]} ${id}`;

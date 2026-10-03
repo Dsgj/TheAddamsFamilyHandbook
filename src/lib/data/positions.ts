@@ -8,6 +8,7 @@
  * (`/map?calib=1`). The manual's own callout coordinates stay untouched in `loc`.
  */
 import raw from '~/data/positions.json';
+import { componentKey } from '~/lib/model/key';
 import type { Loc, MapKind } from '~/lib/model/types';
 
 /** Component kinds plus the manual's lettered shots (`src/data/shots.ts`). */
@@ -21,10 +22,8 @@ export interface Playfield {
 export const PLAYFIELD: Playfield = raw.image;
 const POS = raw.pos as Record<string, Loc[]>;
 
-export const posKey = (kind: PosKind, id: string) => `${kind}:${id}`;
-
 export function positions(kind: PosKind, id: string): Loc[] {
-  return POS[posKey(kind, id)] ?? [];
+  return POS[componentKey(kind, id)] ?? [];
 }
 
 export function allPositions(): Record<string, Loc[]> {

@@ -1,4 +1,5 @@
 import { untrack } from 'svelte';
+import { componentKey } from '~/lib/model/key';
 import type { ComponentStatus, Kind, SetupEntry, StatusValue } from './types';
 import {
   applyBackup,
@@ -44,14 +45,12 @@ if (typeof window !== 'undefined')
 /** For the vanilla table enhancer: runs after every change to the statuses. */
 export const watchStatus = (cb: () => void) => watch(KEY, cb);
 
-export const statusKey = (kind: Kind, id: string) => `${kind}:${id}`;
-
 export function getStatus(kind: Kind, id: string): ComponentStatus | undefined {
-  return state.items[statusKey(kind, id)];
+  return state.items[componentKey(kind, id)];
 }
 
 export function setStatus(kind: Kind, id: string, status: StatusValue | '', note?: string) {
-  const key = statusKey(kind, id);
+  const key = componentKey(kind, id);
   updateEntry<ComponentStatus>(
     KEY,
     key,
@@ -65,7 +64,7 @@ export function setStatus(kind: Kind, id: string, status: StatusValue | '', note
  * after a short pause, or on pagehide; the status and time are taken when it is written.
  */
 export function setNote(kind: Kind, id: string, note: string, opts: { defer?: boolean } = {}) {
-  const key = statusKey(kind, id);
+  const key = componentKey(kind, id);
   const fn = (cur: ComponentStatus | undefined) =>
     nextStatus(key, cur, cur?.status ?? '', note, nowIso());
   if (!opts.defer) {

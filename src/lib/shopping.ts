@@ -1,5 +1,6 @@
 import type { ComponentStatus, Kind } from './model/types';
 import { componentCode, KIND_PLURAL } from '~/lib/copy';
+import { componentKey } from '~/lib/model/key';
 
 /** Compact per-component row the Shopping list island receives (keeps components.json out of the bundle). */
 export interface ShoppingItem {
@@ -49,7 +50,7 @@ export function groupFaults(items: ShoppingItem[], statuses: ComponentStatus[]):
   );
   const groups = new Map<string, ShoppingGroup>();
   for (const i of items) {
-    const note = faulty.get(`${i.kind}:${i.id}`);
+    const note = faulty.get(componentKey(i.kind, i.id));
     if (note === undefined) continue;
     const [label, part] = groupKey(i);
     const key = `${i.kind}|${label}|${part}`;

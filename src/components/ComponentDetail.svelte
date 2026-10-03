@@ -17,19 +17,21 @@
     kindLine as kindLineOf,
     locationLine,
     MAP_LAYER,
+    noCallout,
   } from '~/lib/copy';
   import { positions } from '~/lib/data/positions';
   import { recordViewed } from '~/lib/model/recent.svelte';
   import { getStatus, setStatus, shortDate, STATUS_LABEL } from '~/lib/model/status.svelte';
   import type { Coil, Kind, Lamp, MapMeta, StatusValue, Switch } from '~/lib/model/types';
   import { pageTitleText } from '~/lib/pages';
-  import { callouts as calloutsOf, offMap, wiring } from '~/lib/present';
+  import { callouts as calloutsOf, offMap, wiring, wiringRows } from '~/lib/present';
   import { href, manualHref, mapHref } from '~/lib/url';
   import BottomSheet from './BottomSheet.svelte';
   import MiniMap from './MiniMap.svelte';
   import PartNo from './PartNo.svelte';
   import StatusRow from './StatusRow.svelte';
-  import WireChip from './WireChip.svelte';
+  import OwnerHint from './OwnerHint.svelte';
+  import WiringList from './WiringList.svelte';
 
   /**
    * The component detail page (spec §9.7): header with the code, the status control and a note,
@@ -97,46 +99,7 @@
 
   <section>
     <h3 class="lst-h">Wiring</h3>
-    <dl class="wiring card">
-      {#if w.kind === 'switch'}
-        {#if w.matrix}
-          <dt>Column {w.matrix.column.n}</dt>
-          <dd>
-            <WireChip colour={w.matrix.column.colour} />
-            <span class="mono">{w.matrix.column.text}</span>
-          </dd>
-          <dt>Row {w.matrix.row.n}</dt>
-          <dd>
-            <WireChip colour={w.matrix.row.colour} />
-            <span class="mono">{w.matrix.row.text}</span>
-          </dd>
-        {:else}
-          <dt>Wire</dt>
-          <dd><WireChip colour={w.wire.colour} /> <span class="mono">{w.wire.text}</span></dd>
-        {/if}
-      {:else if w.kind === 'lamp'}
-        <dt>Column {w.column.n}</dt>
-        <dd>
-          <WireChip colour={w.column.colour} /> <span class="mono">{w.column.text}</span>
-        </dd>
-        <dt>Row {w.row.n}</dt>
-        <dd>
-          <WireChip colour={w.row.colour} /> <span class="mono">{w.row.text}</span>
-        </dd>
-      {:else if w.kind === 'coil'}
-        <dt>Wire</dt>
-        <dd>
-          <WireChip colour={w.wire.colour} /> <span class="mono">{w.wire.text}</span>
-        </dd>
-        <dt>Fuse</dt>
-        <dd>
-          <a href={href(`fuses#${w.fuseKey}`)}>{w.fuse}</a>
-          {#if coil?.fuseDerived}<span class="muted small"
-              >(derived from the fuse list, not printed per coil)</span
-            >{/if}
-        </dd>
-      {/if}
-    </dl>
+    <WiringList rows={wiringRows(w, { parts: false, assembly: false })} variant="dl" card />
   </section>
 
   {#if part || item.assy}
@@ -215,22 +178,12 @@
           </a>
         {:else}
           <div class="lrow static">
-            <span class="txt muted">
-              {sw?.notShown ? 'Not shown on the location map' : 'No callout on the location map'}
-            </span>
+            <span class="txt muted">{noCallout(sw?.notShown)}</span>
           </div>
         {/if}
       </li>
     </ul>
-    {#if sw?.hint}
-      <p class="hint">
-        <strong>Owner's hint</strong><br />
-        {sw.hint} <em>(owner's experience, not the manual)</em>
-      </p>
-    {/if}
-    {#if coil?.note}
-      <p class="hint">{coil.note}</p>
-    {/if}
+    <OwnerHint hint={sw?.hint} note={coil?.note} at="detail" />
   </section>
 
   {#if related.length}
@@ -298,7 +251,7 @@
         {#if callouts}
           Callout {callouts} on {mapRef}
         {:else}
-          Not on the location map
+          {noCallout(sw?.notShown)}
         {/if}
       </p>
       <div class="acts">
@@ -351,27 +304,6 @@
     margin-left: 0;
     margin-right: 0;
   }
-  .wiring {
-    display: grid;
-    grid-template-columns: max-content 1fr;
-    gap: 6px 12px;
-    margin: 0;
-    font: var(--t-sub);
-  }
-  dt {
-    color: var(--muted);
-  }
-  dd {
-    margin: 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px 8px;
-    align-items: center;
-  }
-  dd .mono {
-    font-size: 12px;
-    line-height: 16px;
-  }
   .lrow .btn {
     flex: 0 0 auto;
   }
@@ -390,13 +322,6 @@
     min-width: 64px;
     font-size: 13px;
     color: var(--muted);
-  }
-  .hint {
-    margin: 10px 0 0;
-  }
-  /* The prose measure (spec §3.1) on the hint; the group footers take it from base.css (.gf). */
-  .hint {
-    max-width: var(--measure);
   }
   /* minmax(0,1fr), not the implicit auto track: the map crop starts at 340 before it measures
      itself, and an auto track would keep that as its minimum and push the sheet past a 320 phone. */

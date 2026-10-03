@@ -1,13 +1,14 @@
 <script lang="ts">
-  import { componentCode, kindLine as kindLineOf, MAP_LAYER } from '~/lib/copy';
+  import { componentCode, kindLine as kindLineOf, MAP_LAYER, noCallout } from '~/lib/copy';
   import { positions } from '~/lib/data/positions';
   import type { Coil, Kind, Lamp, MapMeta, Switch } from '~/lib/model/types';
   import { pageTitleText } from '~/lib/pages';
-  import { callouts as calloutsOf, offMap, wiring } from '~/lib/present';
-  import { componentHref, href, manualHref, mapHref } from '~/lib/url';
+  import { callouts as calloutsOf, offMap, wiring, wiringRows } from '~/lib/present';
+  import { componentHref, manualHref, mapHref } from '~/lib/url';
   import MiniMap from './MiniMap.svelte';
   import StatusRow from './StatusRow.svelte';
-  import WireChip from './WireChip.svelte';
+  import OwnerHint from './OwnerHint.svelte';
+  import WiringList from './WiringList.svelte';
 
   /**
    * The component card (spec §8.5): code chip, name and kind line, wiring, a mini-map, the status
@@ -38,7 +39,7 @@
 
   const sw = $derived(kind === 'switch' ? (item as Switch) : undefined);
   const coil = $derived(kind === 'coil' ? (item as Coil) : undefined);
-  const w = $derived(wiring(kind, item));
+  const rows = $derived(wiringRows(wiring(kind, item), { parts: true, assembly: true }));
   const layer = $derived(MAP_LAYER[kind]);
   const callouts = $derived(calloutsOf(item));
   const mapPage = $derived(mapMeta.page);
@@ -65,70 +66,16 @@
     </div>
   </header>
 
-  <dl class="wiring" class:compact>
-    {#if w.kind === 'switch'}
-      {#if w.matrix}
-        <dt>Column {w.matrix.column.n}</dt>
-        <dd>
-          <WireChip colour={w.matrix.column.colour} />
-          <span class="mono">{w.matrix.column.text}</span>
-        </dd>
-        <dt>Row {w.matrix.row.n}</dt>
-        <dd>
-          <WireChip colour={w.matrix.row.colour} />
-          <span class="mono">{w.matrix.row.text}</span>
-        </dd>
-      {:else}
-        <dt>Wire</dt>
-        <dd><WireChip colour={w.wire.colour} /> <span class="mono">{w.wire.text}</span></dd>
-      {/if}
-      {#if w.part}<dt>Switch</dt>
-        <dd class="mono">{w.part}</dd>{/if}
-      {#if w.assy}<dt>Assembly</dt>
-        <dd class="mono">{w.assy}</dd>{/if}
-    {:else if w.kind === 'lamp'}
-      <dt>Column {w.column.n}</dt>
-      <dd>
-        <WireChip colour={w.column.colour} /> <span class="mono">{w.column.text}</span>
-      </dd>
-      <dt>Row {w.row.n}</dt>
-      <dd>
-        <WireChip colour={w.row.colour} /> <span class="mono">{w.row.text}</span>
-      </dd>
-      <dt>Bulb</dt>
-      <dd><span class="mono">{w.bulb.code}</span> · {w.bulb.part}</dd>
-      {#if w.led}<dt>Installed LED</dt>
-        <dd class="mono">{w.led}</dd>{/if}
-      {#if w.assy}<dt>Assembly</dt>
-        <dd class="mono">{w.assy}</dd>{/if}
-    {:else if w.kind === 'coil'}
-      <dt>Wire</dt>
-      <dd>
-        <WireChip colour={w.wire.colour} /> <span class="mono">{w.wire.text}</span>
-      </dd>
-      <dt>Coil</dt>
-      <dd class="mono">{w.part}</dd>
-      {#if w.assy}<dt>Assembly</dt>
-        <dd class="mono">{w.assy}</dd>{/if}
-      <dt>Fuse</dt>
-      <dd>
-        <a href={href(`fuses#${w.fuseKey}`)}>{w.fuse}</a>
-        {#if coil?.fuseDerived}<span class="muted small"
-            >(derived from the fuse list, not printed per coil)</span
-          >{/if}
-      </dd>
-    {/if}
+  <WiringList {rows} variant="dl">
     <dt>Callout</dt>
     <dd>
       {#if callouts}
         {callouts} on <a href={manualHref('ops', mapPage)}>{mapRef}</a>
-      {:else if sw?.notShown}
-        not shown on the location map
       {:else}
-        —
+        {noCallout(sw?.notShown)}
       {/if}
     </dd>
-  </dl>
+  </WiringList>
 
   {#if !onMap}
     <p class="off muted">{offMap(kind, item)}</p>
@@ -150,15 +97,7 @@
     {/if}
   </div>
 
-  {#if sw?.hint}
-    <p class="hint">
-      <strong>Owner's hint</strong><br />
-      {sw.hint} <em>(owner's experience, not the manual)</em>
-    </p>
-  {/if}
-  {#if coil?.note}
-    <p class="hint">{coil.note}</p>
-  {/if}
+  <OwnerHint hint={sw?.hint} note={coil?.note} at="card" />
 </article>
 
 <style>
@@ -192,15 +131,12 @@
   .head h2 a {
     color: inherit;
   }
-  /* Spec §12: the title link (28 tall) and the callout page link (20 tall) get a 44 box centred on
-     them. It reaches over the card padding, the kind line and 12 of the 14 gap below the wiring list,
-     where no other target sits. */
-  .head h2 a,
-  dd a {
+  /* Spec §12: the title link (28 tall) gets a 44 box centred on it, over the card padding and the
+     kind line, where no other target sits. WiringList gives the callout page link its own. */
+  .head h2 a {
     position: relative;
   }
-  .head h2 a::after,
-  dd a::after {
+  .head h2 a::after {
     content: '';
     position: absolute;
     inset: min(0px, (100% - var(--touch)) / 2);
@@ -209,27 +145,6 @@
     margin: 0;
     font: var(--t-sub);
     color: var(--muted);
-  }
-  .wiring {
-    display: grid;
-    grid-template-columns: max-content 1fr;
-    gap: 6px 12px;
-    margin: 0;
-    font: var(--t-sub);
-  }
-  dt {
-    color: var(--muted);
-  }
-  dd {
-    margin: 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px 8px;
-    align-items: center;
-  }
-  dd .mono {
-    font-size: 12px;
-    line-height: 16px;
   }
   .map-link {
     display: block;
@@ -243,8 +158,5 @@
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-  }
-  .hint {
-    margin: 0;
   }
 </style>

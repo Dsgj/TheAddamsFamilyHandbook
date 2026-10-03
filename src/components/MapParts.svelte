@@ -2,8 +2,9 @@
   /**
    * The map's parts list with its filter (P4-2, AR-06): the phone parts sheet and the wide panel
    * (spec §7.7, §8.4). PlayfieldMap owns the query (bound), the selection and the positions.
+   * `embed` is the handbook embed's plain list under its card: no filter, one heading per layer
+   * when more than one is on (audit SV2-09).
    */
-  import { posKey } from '~/lib/data/positions';
   import type { Item, MapLayer } from '~/lib/map/items';
   import {
     itemsIn,
@@ -14,12 +15,14 @@
     statusOf,
     subtitle,
   } from '~/lib/map/items';
+  import { componentKey } from '~/lib/model/key';
   import type { Loc } from '~/lib/model/types';
   import { prov, srcLink } from './MapCard.svelte';
   import SearchField from './SearchField.svelte';
 
   let {
-    inSheet,
+    inSheet = false,
+    embed = false,
     visible,
     counts,
     selKey,
@@ -29,7 +32,9 @@
     q = $bindable(''),
   }: {
     /** The phone parts sheet: the filter takes focus, the source link and provenance show. */
-    inSheet: boolean;
+    inSheet?: boolean;
+    /** The handbook embed's list. */
+    embed?: boolean;
     visible: MapLayer[];
     /** Parts per layer that have a position on the drawing. */
     counts: Record<MapLayer, number>;
@@ -43,79 +48,84 @@
   } = $props();
 </script>
 
-<div class="parts">
-  <SearchField
-    label="Search components"
-    placeholder="Search components"
-    autofocus={inSheet}
-    bind:value={q}
-  />
-  {#if inSheet}
-    {@render srcLink(only)}
-    {@render prov()}
-  {/if}
-  {#each visible as l (l)}
-    {@const rows = itemsIn(l).filter((i) => matchesQuery(q, i))}
-    {#if rows.length}
-      <h3 class="lh k-{l}">
-        <span>{LABEL[l]}</span>
-        <span class="muted small">{counts[l]} on the map</span>
-      </h3>
-      <ul class="rows">
-        {#each rows as item (item.id)}
-          {@const key = posKey(item.kind, item.id)}
-          {@const sub = subtitle(item)}
+{#if embed}
+  <div class="card list">
+    {#each visible as l (l)}
+      {#if visible.length > 1}
+        <h3 class="small k-{l}"><i class="dot" aria-hidden="true"></i> {LABEL[l]}</h3>
+      {/if}
+      <ul>
+        {#each itemsIn(l) as item (item.id)}
+          {@const key = componentKey(item.kind, item.id)}
           <li>
             <button
               class="row {statusClass(item)}"
-              class:two={!!sub}
               class:sel={selKey === key}
               aria-current={selKey === key ? 'true' : undefined}
               type="button"
               onclick={() => onpick(item)}
             >
-              <span class="code dmd tile">{showId(item)}</span>
-              <span class="txt">
-                <span class="nm">{item.name}</span>
-                {#if sub}<span class="sub muted">{sub}</span>{/if}
-              </span>
+              <span class="mono id">{showId(item)}</span>
+              <span>{item.name}</span>
               {#if !posOf(item).length}<span class="muted small">not on map</span>{/if}
-              {#if statusOf(item) === 'fault'}<span class="pill fault">Fault</span>{/if}
             </button>
           </li>
         {/each}
       </ul>
+    {/each}
+  </div>
+{:else}
+  <div class="parts">
+    <SearchField
+      label="Search components"
+      placeholder="Search components"
+      autofocus={inSheet}
+      bind:value={q}
+    />
+    {#if inSheet}
+      {@render srcLink(only)}
+      {@render prov()}
     {/if}
-  {/each}
-  {#if q.trim() && !visible.some((l) => itemsIn(l).some((i) => matchesQuery(q, i)))}
-    <p class="gf none">No components match “{q.trim()}”.</p>
-  {/if}
-</div>
+    {#each visible as l (l)}
+      {@const rows = itemsIn(l).filter((i) => matchesQuery(q, i))}
+      {#if rows.length}
+        <h3 class="lh k-{l}">
+          <span>{LABEL[l]}</span>
+          <span class="muted small">{counts[l]} on the map</span>
+        </h3>
+        <ul class="rows">
+          {#each rows as item (item.id)}
+            {@const key = componentKey(item.kind, item.id)}
+            {@const sub = subtitle(item)}
+            <li>
+              <button
+                class="row {statusClass(item)}"
+                class:two={!!sub}
+                class:sel={selKey === key}
+                aria-current={selKey === key ? 'true' : undefined}
+                type="button"
+                onclick={() => onpick(item)}
+              >
+                <span class="code dmd tile">{showId(item)}</span>
+                <span class="txt">
+                  <span class="nm">{item.name}</span>
+                  {#if sub}<span class="sub muted">{sub}</span>{/if}
+                </span>
+                {#if !posOf(item).length}<span class="muted small">not on map</span>{/if}
+                {#if statusOf(item) === 'fault'}<span class="pill fault">Fault</span>{/if}
+              </button>
+            </li>
+          {/each}
+        </ul>
+      {/if}
+    {/each}
+    {#if q.trim() && !visible.some((l) => itemsIn(l).some((i) => matchesQuery(q, i)))}
+      <p class="gf none">No components match “{q.trim()}”.</p>
+    {/if}
+  </div>
+{/if}
 
 <style>
-  /* --k is the layer's ring and dot colour; a heading in the layer colour reads --k-ink, the
-     text twin, where the ring colour is too light for text (the switch layer's --amber). */
-  .k-sw {
-    --k: var(--amber);
-    --k-ink: var(--amber-ink);
-    --k-fill: var(--tint);
-    --m: 12px;
-  }
-  .k-lamp {
-    --k: var(--violet);
-    --k-fill: var(--violet-tint);
-    --m: 10px;
-  }
-  .k-coil {
-    --k: var(--brass);
-    --k-fill: var(--brass-tint);
-    --m: 13px;
-  }
-  .k-shot {
-    --k: var(--ink);
-    --k-fill: var(--raised);
-    --m: 16px;
-  }
   /* In the parts list every status pill's tint sits on the list's own --cell, whatever the row
      paints under it: the selected row's amber tint took the dark --bad to 4.25, and a hovered row's
      --sunk the light --bad to 4.28 (AY-16). On --cell it is 5.58 light and 5.45 dark. */
@@ -194,6 +204,50 @@
     background: var(--amber-fill);
     color: var(--on-amber);
     text-shadow: none;
+  }
+  /* The handbook embed's list (spec §7.9): a card that scrolls, one heading per layer. */
+  .list {
+    max-height: 50vh;
+    overflow: auto;
+    scroll-padding-block: 6px;
+    padding: 6px;
+  }
+  .list h3 {
+    margin: 8px 8px 2px;
+    color: var(--k-ink, var(--k));
+    font-weight: 600;
+  }
+  .list ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  /* Three mono digits (3ch at the 0.92em mono, 26.5 px), in px: `ch` is kept for the prose
+     measure (spec §3.1). */
+  .row .id {
+    min-width: 27px;
+    color: var(--muted);
+  }
+  .row.st-ok .id {
+    color: var(--ok);
+  }
+  .row.st-fault .id {
+    color: var(--bad);
+  }
+  .row.st-untested .id {
+    color: var(--warn);
+  }
+  .dot {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--k);
+    margin-right: 4px;
+    vertical-align: 0;
+  }
+  .k-coil .dot {
+    border-radius: 2px;
   }
   .row {
     display: flex;

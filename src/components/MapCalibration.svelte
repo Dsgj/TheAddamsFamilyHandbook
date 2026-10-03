@@ -54,7 +54,7 @@
     canvas: HTMLElement | undefined;
     /** A part's positions, the draft first. */
     posOf: (item: Item) => Loc[];
-    /** The part's positions key (posKey). */
+    /** The part's positions key (componentKey). */
     keyOf: (item: Item) => string;
     /** The shipped drawing and positions: what the copied JSON starts from. */
     snapshot: () => { image: Playfield; pos: Record<string, Loc[]> };

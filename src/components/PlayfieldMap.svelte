@@ -3,7 +3,7 @@
   import { SvelteSet } from 'svelte/reactivity';
   import { SHOTS } from '~/data/shots';
   import { mapOf } from '~/lib/data/components';
-  import { KIND_PLURAL, agree, LAYER_KIND, plural } from '~/lib/copy';
+  import { agree, plural } from '~/lib/copy';
   import { isTypingTarget } from '~/lib/keys';
   import { liveText } from '~/lib/live.svelte';
   import type { CalibrationApi, Item, MapLayer, OverlayImage } from '~/lib/map/items';
@@ -12,7 +12,6 @@
     fullName,
     itemsIn,
     kindOf,
-    LABEL,
     LAYERS,
     layerOf,
     markerName,
@@ -21,8 +20,8 @@
   } from '~/lib/map/items';
   import { COLUMN_SIDE, fitScale } from '~/lib/map/fit';
   import { createMapZoom, dist, MAX_ZOOM } from '~/lib/map/zoom.svelte';
-  import type { PosKind } from '~/lib/data/positions';
-  import { allPositions, PLAYFIELD, positions, posKey } from '~/lib/data/positions';
+  import { allPositions, PLAYFIELD, positions } from '~/lib/data/positions';
+  import { componentKey } from '~/lib/model/key';
   import type { Loc } from '~/lib/model/types';
   import { href, parseMapId, replaceUrl } from '~/lib/url';
   import BottomSheet from './BottomSheet.svelte';
@@ -30,11 +29,10 @@
   // Type only (erased): the tool itself is import()ed under `?calib=1` (design §3.7).
   import type MapCalibration from './MapCalibration.svelte';
   import { deselectBtn, emptyCard, partBody, partHead, shotCard, srcLink } from './MapCard.svelte';
+  import MapControls from './MapControls.svelte';
   import MapParts from './MapParts.svelte';
   import { DESKTOP, PHONE, WIDE } from '~/lib/bp';
 
-  /** Short labels for the wide layers list (ShellDesktop). LABEL names the layer buttons. */
-  const shortName = (l: MapLayer) => (l === 'shot' ? 'Shots' : KIND_PLURAL[LAYER_KIND[l]]);
   /** A tap that lands on no marker selects the nearest visible marker within this many screen px. */
   const HIT = 22;
   /** Selection sheet detents (spec §8.2). */
@@ -157,19 +155,15 @@
       // `id=kind:id` (what syncUrl writes) is exact, and shows its layer.
       const kind = m.kind;
       untrack(() => on.add(layerOf(kind)));
-      selKey = posKey(kind, m.id);
+      selKey = componentKey(kind, m.id);
     } else if (m) {
       // A bare id (the link builders' form) is looked up in the layers that are on, in order.
       const i = m.id;
       const layers = untrack(() => LAYERS.filter((x) => on.has(x)));
       const hit = layers
-        .map((x) => posKey(kindOf(x), i))
-        .find(
-          (k) =>
-            positions(...(k.split(':') as [PosKind, string])).length ||
-            itemsIn(layerOf(k.split(':')[0] as PosKind)).some((c) => c.id === i),
-        );
-      selKey = hit ?? posKey(kindOf(layers[0] ?? 'sw'), i);
+        .map(kindOf)
+        .find((k) => positions(k, i).length || itemsIn(layerOf(k)).some((c) => c.id === i));
+      selKey = componentKey(hit ?? kindOf(layers[0] ?? 'sw'), i);
     }
     calib = u.get('calib') === '1';
     if (calib) void import('./MapCalibration.svelte').then((m) => (CalibCard = m.default));
@@ -232,8 +226,7 @@
   const only = $derived(visible.length === 1 ? visible[0] : undefined);
   const current = $derived.by(() => {
     if (!selKey) return undefined;
-    const [kind, id] = selKey.split(':') as [PosKind, string];
-    return itemsIn(layerOf(kind)).find((c) => c.id === id);
+    return LAYERS.flatMap(itemsIn).find((c) => componentKey(c.kind, c.id) === selKey);
   });
   const currentShot = $derived(
     current?.kind === 'shot' ? SHOTS.find((s) => s.id === current.id) : undefined,
@@ -249,7 +242,7 @@
   );
 
   function posOf(item: Item): Loc[] {
-    return draft[posKey(item.kind, item.id)] ?? positions(item.kind, item.id);
+    return draft[componentKey(item.kind, item.id)] ?? positions(item.kind, item.id);
   }
   /** The selection sheet: below 1000 on /map, with a part selected (spec §7.6). */
   const sheetOpen = $derived(!embed && !wide && !calib && !!current);
@@ -279,7 +272,7 @@
   }
   function pick(item: Item) {
     const wasOpen = sheetOpen;
-    selKey = posKey(item.kind, item.id);
+    selKey = componentKey(item.kind, item.id);
     on.add(layerOf(item.kind));
     if (!wasOpen) expanded = false; // a fresh selection opens the sheet at peek
     partsOpen = false;
@@ -464,54 +457,15 @@
   });
 </script>
 
-{#snippet layerIcon(l: MapLayer)}
-  <svg class="ico k-{l}" viewBox="0 0 20 20" width="20" height="20" aria-hidden="true">
-    {#if l === 'sw'}
-      <circle cx="10" cy="10" r="6.5" />
-    {:else if l === 'lamp'}
-      <circle cx="10" cy="10" r="4" class="fill" />
-      <circle cx="10" cy="10" r="7.5" />
-    {:else if l === 'coil'}
-      <rect x="3.5" y="3.5" width="13" height="13" rx="3.5" />
-    {:else}
-      <path d="M10 3.2 17 16.8H3z" />
-    {/if}
-  </svg>
-{/snippet}
-
-{#snippet zoomCapsule()}
-  <div class="glass capsule zooms" role="group" aria-label="Zoom">
-    <button class="ibtn sq" type="button" aria-label="Zoom in" onclick={zm.zoomIn}>
-      <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true">
-        <path d="M10 4v12M4 10h12" />
-      </svg>
-    </button>
-    <button class="ibtn sq" type="button" aria-label="Zoom out" onclick={zm.zoomOut}>
-      <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true">
-        <path d="M4 10h12" />
-      </svg>
-    </button>
-    <button
-      class="ibtn sq fit"
-      type="button"
-      aria-label="Fit whole playfield"
-      aria-disabled={zm.zoom <= 1 ? 'true' : undefined}
-      onclick={zm.fitAll}
-    >
-      <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true">
-        <path d="M3 8V3h5M12 3h5v5M17 12v5h-5M8 17H3v-5" />
-      </svg>
-    </button>
-  </div>
-{/snippet}
-
-{#snippet keyHints()}
-  <span><kbd>↑↓←→</kbd> markers</span>
-  <span><kbd>⇧↑↓←→</kbd> pan</span>
-  <span><kbd>⏎</kbd> select</span>
-  <span><kbd>Esc</kbd> deselect</span>
-  <span><kbd>+</kbd><kbd>−</kbd> zoom</span>
-  <span><kbd>0</kbd> fit</span>
+<!-- The selected part in the wide panel and the embed: its card, a shot's or the empty one. -->
+{#snippet selection()}
+  {#if current?.comp && current.kind !== 'shot'}
+    <ComponentCard kind={current.kind} item={current.comp} mapMeta={mapOf(current.kind)} inMap />
+  {:else if currentShot}
+    {@render shotCard(currentShot)}
+  {:else}
+    {@render emptyCard()}
+  {/if}
 {/snippet}
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -527,7 +481,7 @@
       layer={LAYERS.find((x) => on.has(x))}
       {canvas}
       {posOf}
-      keyOf={(i) => posKey(i.kind, i.id)}
+      keyOf={(i) => componentKey(i.kind, i.id)}
       snapshot={() => ({ image: PLAYFIELD, pos: allPositions() })}
     />
   {/if}
@@ -589,7 +543,7 @@
           {/if}
           {#each visible as l (l)}
             {#each itemsIn(l) as item (item.id)}
-              {@const key = posKey(item.kind, item.id)}
+              {@const key = componentKey(item.kind, item.id)}
               {#each posOf(item) as p, li (li)}
                 <button
                   class="marker k-{l} {statusClass(item)}"
@@ -623,66 +577,20 @@
         </div>
       </div>
 
-      <div
-        class="map-controls"
-        class:wide
-        class:sheet={sheetOpen}
-        class:gone={sheetOpen && expanded}
-      >
-        {#if !compact}
-          {#if !glassInPanel}
-            <div class="glass layers-list" role="group" aria-label="Layers">
-              {#each LAYERS as l (l)}
-                <button
-                  class="lrow k-{l}"
-                  class:off={!on.has(l)}
-                  type="button"
-                  aria-pressed={on.has(l)}
-                  aria-label="{LABEL[l]}, {counts[l]} on the map"
-                  onclick={() => toggle(l)}
-                >
-                  <span class="tile" aria-hidden="true">{@render layerIcon(l)}</span>
-                  <span class="lbl" aria-hidden="true">{shortName(l)}</span>
-                  <span class="mono cnt" aria-hidden="true">{counts[l]}</span>
-                </button>
-              {/each}
-            </div>
-          {/if}
-          <div
-            class="glass mono readout"
-            class:low={glassInPanel}
-            role={embed ? undefined : 'status'}
-          >
-            <span class="sr-only">Zoom level</span>{zm.zoomLabel}
-          </div>
-          <div class="corner">
-            {@render zoomCapsule()}
-          </div>
-          {#if desktop && floatLegend}
-            <div class="glass legend" role="note" aria-label="Keyboard shortcuts">
-              {@render keyHints()}
-            </div>
-          {/if}
-        {:else}
-          <div class="column">
-            <div class="glass capsule layers" role="group" aria-label="Layers">
-              {#each LAYERS as l (l)}
-                <button
-                  class="ibtn sq k-{l}"
-                  class:off={!on.has(l)}
-                  type="button"
-                  aria-pressed={on.has(l)}
-                  aria-label={LABEL[l]}
-                  onclick={() => toggle(l)}
-                >
-                  {@render layerIcon(l)}
-                </button>
-              {/each}
-            </div>
-            {@render zoomCapsule()}
-          </div>
-        {/if}
-      </div>
+      <MapControls
+        place="stage"
+        {on}
+        {counts}
+        {toggle}
+        {zm}
+        {compact}
+        {glassInPanel}
+        {embed}
+        {wide}
+        legend={desktop && floatLegend}
+        sheet={sheetOpen}
+        gone={sheetOpen && expanded}
+      />
 
       {#if sheetOpen && current}
         <BottomSheet
@@ -710,23 +618,15 @@
         <div class="panel-top">
           {@render srcLink(only)}
           {#if glassInPanel}
-            <div class="layers-row" role="group" aria-label="Layers">
-              {#each LAYERS as l (l)}
-                <button
-                  class="ibtn sq k-{l}"
-                  class:off={!on.has(l)}
-                  type="button"
-                  aria-pressed={on.has(l)}
-                  aria-label="{LABEL[l]}, {counts[l]} on the map"
-                  onclick={() => toggle(l)}
-                >
-                  {@render layerIcon(l)}<span class="lname" aria-hidden="true">{shortName(l)}</span>
-                </button>
-              {/each}
-            </div>
-            {#if desktop && !floatLegend}
-              <p class="keys" role="note" aria-label="Keyboard shortcuts">{@render keyHints()}</p>
-            {/if}
+            <MapControls
+              place="side"
+              {on}
+              {counts}
+              {toggle}
+              {zm}
+              layers
+              keys={desktop && !floatLegend}
+            />
           {/if}
         </div>
         <section
@@ -741,18 +641,7 @@
               {@render deselectBtn(clearSelection)}
             </div>
           {/if}
-          {#if current?.comp && current.kind !== 'shot'}
-            <ComponentCard
-              kind={current.kind}
-              item={current.comp}
-              mapMeta={mapOf(current.kind)}
-              inMap
-            />
-          {:else if currentShot}
-            {@render shotCard(currentShot)}
-          {:else}
-            {@render emptyCard()}
-          {/if}
+          {@render selection()}
         </section>
         <section class="listing" aria-label="Components on the map">
           <MapParts
@@ -773,43 +662,10 @@
       <aside class="side">
         {@render srcLink(only)}
         {#if desktop && !floatLegend}
-          <p class="keys" role="note" aria-label="Keyboard shortcuts">{@render keyHints()}</p>
+          <MapControls place="side" {on} {counts} {toggle} {zm} keys />
         {/if}
-        {#if current?.comp && current.kind !== 'shot'}
-          <ComponentCard
-            kind={current.kind}
-            item={current.comp}
-            mapMeta={mapOf(current.kind)}
-            inMap
-          />
-        {:else if currentShot}
-          {@render shotCard(currentShot)}
-        {:else}
-          {@render emptyCard()}
-        {/if}
-        <div class="card list">
-          {#each visible as l (l)}
-            {#if visible.length > 1}
-              <h3 class="small k-{l}"><i class="dot" aria-hidden="true"></i> {LABEL[l]}</h3>
-            {/if}
-            <ul>
-              {#each itemsIn(l) as item (item.id)}
-                {@const key = posKey(item.kind, item.id)}
-                <li>
-                  <button
-                    class="row {statusClass(item)}"
-                    class:sel={selKey === key}
-                    onclick={() => pick(item)}
-                  >
-                    <span class="mono id">{item.id}</span>
-                    <span>{item.name}</span>
-                    {#if !posOf(item).length}<span class="muted small">not on map</span>{/if}
-                  </button>
-                </li>
-              {/each}
-            </ul>
-          {/each}
-        </div>
+        {@render selection()}
+        <MapParts embed {visible} {counts} {selKey} {only} {posOf} onpick={pick} />
       </aside>
     {/if}
   </div>
@@ -826,41 +682,6 @@
 </div>
 
 <style>
-  /* --k is the layer's ring and dot colour; a heading in the layer colour reads --k-ink, the
-     text twin, where the ring colour is too light for text (the switch layer's --amber). */
-  .k-sw {
-    --k: var(--amber);
-    --k-ink: var(--amber-ink);
-    --k-fill: var(--tint);
-    --m: 12px;
-  }
-  .k-lamp {
-    --k: var(--violet);
-    --k-fill: var(--violet-tint);
-    --m: 10px;
-  }
-  .k-coil {
-    --k: var(--brass);
-    --k-fill: var(--brass-tint);
-    --m: 13px;
-  }
-  .k-shot {
-    --k: var(--ink);
-    --k-fill: var(--raised);
-    --m: 16px;
-  }
-  .dot {
-    display: inline-block;
-    width: 9px;
-    height: 9px;
-    border-radius: 50%;
-    background: var(--k);
-    margin-right: 4px;
-    vertical-align: 0;
-  }
-  .k-coil .dot {
-    border-radius: 2px;
-  }
   /* The calibration card (MapCalibration, no <style> of its own); the canvas carries .calib too. */
   .calib,
   .map-ui > :global(.calib) {
@@ -1093,50 +914,6 @@
     }
   }
 
-  /* Floating controls (spec §7.3–7.4). */
-  .map-controls {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: var(--z-map-controls);
-  }
-  .map-controls > *,
-  .column {
-    pointer-events: auto;
-  }
-  .column {
-    position: absolute;
-    right: 10px;
-    bottom: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    width: 44px;
-    transition:
-      bottom var(--dur-3) var(--ease-emphasized),
-      opacity var(--dur-1) var(--ease-standard),
-      visibility 0s;
-  }
-  /* The sheet at peek: the column moves 12 above it; expanded, it fades out (120 ms). */
-  .map-controls.sheet .column {
-    bottom: calc(var(--sheet-peek) + 12px);
-  }
-  .map-controls.gone .column {
-    opacity: 0;
-    visibility: hidden;
-    transition:
-      opacity var(--dur-1) var(--ease-standard),
-      visibility 0s var(--dur-1);
-  }
-  /* A phone on its side: the stage is too short for the column above the sheet at peek, which
-     rose over the top bar, so the layers and the zoom capsule sit side by side (CR2-02). */
-  @media (max-height: 560px) {
-    .column {
-      flex-direction: row;
-      align-items: flex-end;
-      width: auto;
-    }
-  }
   /* The wide panel's `.ph.slim` header (MapCard has the same rule for the sheet's header). */
   .ph {
     display: flex;
@@ -1207,170 +984,6 @@
     padding: 6px 0 4px;
     background: var(--panel-bg);
   }
-  /* The layers toggles in the panel, where the gutter is too narrow to float them (spec §7.4):
-     four equal toggles, each its glyph over its name (VL2-03). */
-  .layers-row {
-    justify-self: stretch;
-    display: flex;
-    gap: 4px;
-  }
-  .layers-row .ibtn {
-    flex: 1 1 0;
-    height: auto;
-    min-height: 56px;
-    gap: 2px;
-    font: var(--t-cap);
-  }
-  .keys {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px 12px;
-    margin: 0;
-    font: var(--t-cap);
-    color: var(--muted);
-  }
-  .capsule {
-    display: flex;
-    flex-direction: column;
-    border-radius: var(--r-md);
-  }
-  .ibtn.off {
-    color: var(--faint);
-  }
-  .ibtn.fit {
-    color: var(--amber-ink);
-  }
-  .ibtn.fit[aria-disabled='true'] {
-    color: var(--faint);
-    cursor: default;
-  }
-  .ico {
-    color: var(--k);
-    fill: var(--k-fill);
-    stroke: currentColor;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-  .ico .fill {
-    fill: var(--k);
-  }
-  .ibtn.off .ico {
-    color: var(--faint);
-    fill: none;
-  }
-  .layers-list {
-    position: absolute;
-    left: 16px;
-    top: 16px;
-    width: 164px;
-    padding: 4px 0;
-    border-radius: var(--r-md);
-    display: grid;
-  }
-  .lrow {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    height: 44px;
-    padding: 0 12px 0 6px;
-    border: 0;
-    background: none;
-    color: var(--ink);
-    cursor: pointer;
-    text-align: left;
-    font: var(--t-sub);
-  }
-  .lrow:active {
-    background: var(--press);
-  }
-  .lrow .tile {
-    display: grid;
-    place-items: center;
-    width: 32px;
-    height: 32px;
-    border-radius: var(--r-track);
-    background: var(--k-fill);
-  }
-  .lrow.k-shot .tile {
-    background: var(--sunk);
-  }
-  .lrow .lbl {
-    flex: 1;
-  }
-  .lrow .cnt {
-    font: var(--t-foot);
-    font-family: var(--font-mono);
-    font-weight: 500;
-    color: var(--muted);
-  }
-  .lrow.off {
-    color: var(--muted);
-  }
-  .lrow.off .tile {
-    background: none;
-  }
-  .corner {
-    position: absolute;
-    right: 16px;
-    bottom: 16px;
-  }
-  /* Beside the capsule when the glass floats; above it, clear of the drawing, when it does not. */
-  .readout.low {
-    right: 16px;
-    bottom: 156px;
-    width: 44px;
-    padding: 0;
-  }
-  .readout {
-    position: absolute;
-    right: 68px;
-    bottom: 68px;
-    height: 28px;
-    padding: 0 10px;
-    border-radius: var(--r-md);
-    display: grid;
-    place-items: center;
-    font: var(--t-cap);
-    font-family: var(--font-mono);
-    font-weight: 500;
-    color: var(--ink);
-  }
-  /* The legend floats in the gutter only, so its entries stack in the list's 164. */
-  .legend {
-    position: absolute;
-    left: 16px;
-    bottom: 16px;
-    padding: 10px 12px;
-    border-radius: var(--r-btn);
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 6px;
-    width: 164px;
-    font: var(--t-cap);
-    color: var(--muted);
-  }
-  .legend span,
-  .keys span {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .legend kbd,
-  .keys kbd {
-    display: inline-grid;
-    place-items: center;
-    min-width: 20px;
-    height: 20px;
-    padding: 0 4px;
-    border-radius: var(--r-xs);
-    background: var(--sunk);
-    color: var(--ink);
-    font: var(--t-tab);
-    font-family: var(--font-mono);
-  }
-
   /* Side column: the source link, the card and the list. Below 1000 it sits under the stage
      until Phase 2; from 1000 it is the panel, capped at the stage height. */
   .side {
@@ -1382,61 +995,6 @@
   }
   .side :global(.src) {
     justify-self: start;
-  }
-  .list {
-    max-height: 50vh;
-    overflow: auto;
-    scroll-padding-block: 6px;
-    padding: 6px;
-  }
-  .list h3 {
-    margin: 8px 8px 2px;
-    color: var(--k-ink, var(--k));
-    font-weight: 600;
-  }
-  .list ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
-  .row {
-    display: flex;
-    gap: 10px;
-    width: 100%;
-    text-align: left;
-    background: none;
-    border: 0;
-    border-radius: var(--r-xs);
-    padding: 6px 8px;
-    cursor: pointer;
-    /* Spec §12: contiguous rows, so each is a real 44 row. */
-    min-height: var(--touch);
-    align-items: center;
-    color: inherit;
-  }
-  @media (hover: hover) {
-    .row:hover {
-      background: var(--sunk);
-    }
-  }
-  .row.sel {
-    background: var(--sunk);
-    color: var(--amber-ink);
-  }
-  /* Three mono digits (3ch at the 0.92em mono, 26.5 px), in px: `ch` is kept for the prose
-     measure (spec §3.1). */
-  .row .id {
-    min-width: 27px;
-    color: var(--muted);
-  }
-  .row.st-ok .id {
-    color: var(--ok);
-  }
-  .row.st-fault .id {
-    color: var(--bad);
-  }
-  .row.st-untested .id {
-    color: var(--warn);
   }
   @media (min-width: 1000px) {
     .map-ui:not(.embed) .stage {
@@ -1470,11 +1028,6 @@
     .marker,
     .canvas.ready {
       transition: none;
-    }
-    .column {
-      transition:
-        opacity var(--dur-1) var(--ease-standard),
-        visibility 0s;
     }
   }
 </style>

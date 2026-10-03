@@ -9,6 +9,7 @@
    */
   import { onMount } from 'svelte';
   import { agree } from '~/lib/copy';
+  import { componentKey } from '~/lib/model/key';
   import { allStatuses } from '~/lib/model/status.svelte';
 
   let { pill = false }: { pill?: boolean } = $props();
@@ -28,7 +29,7 @@
       string[]
     >;
     known = new Set(
-      Object.entries(ids).flatMap(([kind, list]) => list.map((id) => `${kind}:${id}`)),
+      Object.entries(ids).flatMap(([kind, list]) => list.map((id) => componentKey(kind, id))),
     );
     hydrated = true;
   });

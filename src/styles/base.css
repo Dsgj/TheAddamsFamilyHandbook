@@ -1258,6 +1258,32 @@ table.t td.fuse > a::after {
   transform: translateX(20px);
 }
 
+/* ---- Map layers (spec §7.5): the switch, lamp, coil and shot colours ----
+   One home for the map's markers and list, MapControls' toggles and MapParts' headings (audit
+   AR2-02). --k is a layer's ring and dot colour; a heading in the layer colour reads --k-ink,
+   the text twin, where the ring colour is too light for text (the switch layer's --amber). */
+.k-sw {
+  --k: var(--amber);
+  --k-ink: var(--amber-ink);
+  --k-fill: var(--tint);
+  --m: 12px;
+}
+.k-lamp {
+  --k: var(--violet);
+  --k-fill: var(--violet-tint);
+  --m: 10px;
+}
+.k-coil {
+  --k: var(--brass);
+  --k-fill: var(--brass-tint);
+  --m: 13px;
+}
+.k-shot {
+  --k: var(--ink);
+  --k-fill: var(--raised);
+  --m: 16px;
+}
+
 /* ---- Chips, pills, codes, wires (spec §8.6) ----
    .chip is a control (a filter, a recent search); a label that only shows a value is a .pill,
    a .code or a .wire, never a .chip. */

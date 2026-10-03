@@ -132,7 +132,7 @@ const EM_ALLOWED: [string, string][] = [
 ];
 /* The two 2px marker details on the map are shapes, not steps of the scale (spec §4). */
 const RADIUS_ALLOWED: [string, string][] = [
-  ['src/components/PlayfieldMap.svelte', '.k-coil .dot'],
+  ['src/components/MapParts.svelte', '.k-coil .dot'],
   ['src/components/PlayfieldMap.svelte', '.marker span'],
 ];
 /* Type pairs off the --t-* scale on purpose (spec §2 "Exceptions"), keyed by file and selector. */
@@ -179,10 +179,7 @@ const SPACE_ALLOWED: [string, string, number][] = [
 const AMBER_TEXT_ALLOWED: [string, string][] = [];
 /* Custom properties that carry the ring colour, and so could reach text through var(). The map's
    switch layer --k is its marker ring, dot and icon; its headings read the text twin --k-ink. */
-const AMBER_VAR_ALLOWED: [string, string][] = [
-  ['src/components/PlayfieldMap.svelte', '.k-sw'],
-  ['src/components/MapParts.svelte', '.k-sw'],
-];
+const AMBER_VAR_ALLOWED: [string, string][] = [['src/styles/base.css', '.k-sw']];
 /** var(--amber) itself, with or without a fallback or spaces; not --amber-ink, -fill or -glow. */
 const RING = /var\(\s*--amber\s*[,)]/;
 const allowed = (list: [string, string][], r: Rule) =>
