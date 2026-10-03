@@ -222,6 +222,18 @@ if (back && main && (navigator as { standalone?: boolean }).standalone !== false
     x0 = -1;
     active = false;
   };
+  // Not through an open modal sheet, and not from a surface that pans sideways: one marked
+  // `data-no-swipe` (a zoomed manual page) or one already scrolled off its start, like a wide
+  // table (CR2-01).
+  const held = (target: EventTarget | null) => {
+    if (document.querySelector('[aria-modal="true"]')) return true;
+    let el = target instanceof Element ? target : null;
+    while (el && el !== main) {
+      if (el.scrollLeft > 0 || el.hasAttribute('data-no-swipe')) return true;
+      el = el.parentElement;
+    }
+    return false;
+  };
   main.addEventListener(
     'touchstart',
     (e) => {
@@ -231,7 +243,7 @@ if (back && main && (navigator as { standalone?: boolean }).standalone !== false
         return;
       }
       const left = main.getBoundingClientRect().left;
-      x0 = t.clientX - left <= EDGE ? t.clientX : -1;
+      x0 = t.clientX - left <= EDGE && !held(e.target) ? t.clientX : -1;
       y0 = t.clientY;
       dx = 0;
       velocity = 0;

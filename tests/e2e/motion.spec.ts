@@ -202,6 +202,101 @@ test.describe('swipe back', () => {
     expect(await navs()).toBe(0);
     await expect(page).toHaveURL(/\/switch\/32$/);
   });
+
+  /**
+   * Drags in from `x` (inside the 24 px edge) to 45% of the width at `y`; true if the page followed
+   * the finger. A page's content starts at the 16 px gutter, so a drag that starts on it uses 20.
+   */
+  async function follows(page: Page, y: number, x = 8) {
+    const cdp = await page.context().newCDPSession(page);
+    const w = page.viewportSize()!.width;
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+    for (let i = 1; i <= 6; i++) {
+      await page.waitForTimeout(30); // gesture pacing, not a wait
+      const at = x + Math.round((i * w * 0.45) / 6);
+      await cdp.send('Input.dispatchTouchEvent', {
+        type: 'touchMove',
+        touchPoints: [{ x: at, y }],
+      });
+    }
+    const swiping = await page.locator('#main').evaluate((el) => el.classList.contains('swiping'));
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await cdp.detach();
+    return swiping;
+  }
+
+  test('a plain edge drag on a handbook page goes back', async ({ page }) => {
+    await gotoHydrated(page, '/handbook/tests');
+    const parent = await page
+      .locator('header.top a.back')
+      .evaluate((a) => (a as HTMLAnchorElement).href);
+    expect(await follows(page, 400)).toBe(true);
+    await expect(page).toHaveURL(parent);
+  });
+
+  for (const c of [
+    {
+      url: '/handbook/tests',
+      dialog: 'Contents',
+      opener: (page: Page) =>
+        page.getByRole('navigation', { name: 'Reader' }).getByRole('button', { name: 'Contents' }),
+    },
+    {
+      url: '/manual/ops/80',
+      dialog: 'Go to page',
+      opener: (page: Page) =>
+        page.getByRole('toolbar', { name: 'Page' }).getByRole('button', { name: /Go to page/ }),
+    },
+  ]) {
+    test(`an edge drag over the open ${c.dialog} sheet stays on ${c.url} (CR2-01)`, async ({
+      page,
+    }) => {
+      await gotoHydrated(page, c.url);
+      await c.opener(page).click();
+      const dialog = page.getByRole('dialog', { name: c.dialog });
+      await expect(dialog).toBeVisible();
+      expect(await follows(page, 400)).toBe(false);
+      await expect(dialog).toBeVisible();
+      await expect(page).toHaveURL(new RegExp(`${c.url}$`));
+    });
+  }
+
+  test('an edge drag on a zoomed manual page pans, not goes back (CR2-01)', async ({ page }) => {
+    await gotoHydrated(page, '/manual/wpc/10');
+    const scan = page.locator('.sheet.scan');
+    await expect(page.locator('.stage img').first()).toBeVisible();
+    const fit = (await scan.boundingBox())!.width;
+    await page
+      .getByRole('group', { name: 'Zoom' })
+      .getByRole('button', { name: 'Zoom in' })
+      .click();
+    await expect.poll(async () => (await scan.boundingBox())!.width).toBeGreaterThan(fit + 1);
+    // At the page's left edge too: zoomed, the whole stage is a pan surface.
+    const stage = page.locator('.stage.zoomed');
+    await stage.evaluate((el) => (el.scrollLeft = 0));
+    const b = (await stage.boundingBox())!;
+    expect(await follows(page, b.y + b.height / 2, 20)).toBe(false);
+    await expect(page).toHaveURL(/\/manual\/wpc\/10$/);
+  });
+
+  test('an edge drag on a table scrolled sideways scrolls it back (CR2-01)', async ({ page }) => {
+    await gotoHydrated(page, '/handbook/quick');
+    const wide = page.locator('.scroll-x').filter({
+      has: page.locator('table'),
+    });
+    const table = await (async () => {
+      for (const el of await wide.all())
+        if (await el.evaluate((e) => e.scrollWidth > e.clientWidth + 1)) return el;
+      throw new Error('no table wider than the screen on /handbook/quick');
+    })();
+    await table.evaluate((e) => {
+      e.scrollIntoView({ block: 'center', behavior: 'instant' });
+      e.scrollLeft = 120;
+    });
+    const b = (await table.boundingBox())!;
+    expect(await follows(page, b.y + b.height / 2, 20)).toBe(false);
+    await expect(page).toHaveURL(/\/handbook\/quick$/);
+  });
 });
 
 test('after one online visit all five tabs open offline', async ({

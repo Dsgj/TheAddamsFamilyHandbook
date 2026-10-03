@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- **Swipe back leaves sheets and wide content alone.** An edge swipe no longer
+  leaves the page while a sheet such as Contents or Go to page is open, on a
+  zoomed manual page, or on a handbook table that is scrolled sideways.
 - **The map never covers the top bar.** Scrolling past the shot map in the
   handbook's Rules section on a phone, its controls slide under the top bar
   instead of over Back and the manual button. On /map with a phone on its

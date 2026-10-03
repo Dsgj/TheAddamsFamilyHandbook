@@ -310,6 +310,7 @@
       <div
         class="stage"
         class:zoomed={scale !== 0}
+        data-no-swipe={scale !== 0 ? '' : undefined}
         tabindex={scale !== 0 ? 0 : undefined}
         role={scale !== 0 ? 'region' : undefined}
         aria-label={scale !== 0
