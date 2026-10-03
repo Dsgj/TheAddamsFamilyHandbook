@@ -6,7 +6,6 @@
  * Every piece is `?? ''`: Svelte renders a nullish expression as nothing, where a template literal
  * would print "undefined".
  */
-import { INSTALLED_LEDS } from '~/data/installedLeds';
 import { inMatrix } from '~/lib/copy';
 import type { Coil, Kind, Lamp, Switch } from '~/lib/model/types';
 
@@ -56,7 +55,7 @@ export function wiring(kind: Kind, item: Switch | Lamp | Coil): Wiring {
       column: { n: lamp.col, colour: lamp.colWireEn ?? '', text: pair(lamp.colPin, lamp.colQ) },
       row: { n: lamp.row, colour: lamp.rowWireEn ?? '', text: pair(lamp.rowPin, lamp.rowQ) },
       bulb: { code: lamp.bulb ?? '', part: lamp.bulbPart ?? '' },
-      led: INSTALLED_LEDS[lamp.id] ?? '',
+      led: lamp.led ?? '',
       assy: lamp.assy,
     };
   }

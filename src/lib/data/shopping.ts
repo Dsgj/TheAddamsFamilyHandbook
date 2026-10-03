@@ -1,4 +1,4 @@
-import { DATA, installedLed } from '~/lib/data/components';
+import { DATA } from '~/lib/data/components';
 import type { ShoppingItem } from '~/lib/shopping';
 
 /** Every lamp, switch and solenoid as a shopping candidate; the status store says which are faults. */
@@ -10,7 +10,7 @@ export function allShoppingItems(): ShoppingItem[] {
       name: l.name,
       part: l.bulbPart,
       bulb: l.bulb,
-      led: installedLed(l.id),
+      led: l.led,
       assy: l.assy,
     })),
     ...DATA.switches.map((s) => ({

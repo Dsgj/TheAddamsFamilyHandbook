@@ -1,4 +1,5 @@
 import type { Plugin } from 'vitest/config';
+import { INSTALLED_LEDS } from '../../data/installedLeds';
 import { COMPONENT_FUSES, COMPONENT_NOTES, COMPONENT_WIRES } from '../../data/ownerNotes';
 import { translateKit } from './translate';
 
@@ -7,7 +8,8 @@ import { translateKit } from './translate';
  * and vitest, which reads astro.config.ts through getViteConfig), so the module every importer gets
  * is the English one and the Swedish never reaches a page or an island. Runs before Vite's JSON
  * plugin and hands it JSON. The overlays and en.ts are read when the config loads: restart
- * `astro dev` after editing src/data/ownerNotes.ts or src/lib/data/en.ts.
+ * `astro dev` after editing src/data/ownerNotes.ts, src/data/installedLeds.ts or
+ * src/lib/data/en.ts.
  */
 
 const KIT_COMPONENTS = /[\\/]src[\\/]data[\\/]kit[\\/]components\.json(\?.*)?$/;
@@ -23,6 +25,7 @@ export function kitPlugin(): Plugin {
         COMPONENT_NOTES,
         COMPONENT_FUSES,
         COMPONENT_WIRES,
+        INSTALLED_LEDS,
       );
       return { code: JSON.stringify(english), map: null };
     },

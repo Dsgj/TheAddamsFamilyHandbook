@@ -43,6 +43,11 @@ export interface Lamp {
   name: string;
   bulbPart: string;
   bulb: string;
+  /**
+   * The LED fitted in this machine ("555 Warm Super"), what to order when the lamp dies: the
+   * owner's overlay from src/data/installedLeds.ts, '' where none is recorded (the unused lamps).
+   */
+  led: string;
   assy: string;
   col: number;
   row: number;

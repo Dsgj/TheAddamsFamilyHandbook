@@ -1,7 +1,7 @@
 ---
 import Base from '~/layouts/Base.astro';
 import Matrix from '~/components/Matrix.svelte';
-import { DATA, installedLed } from '~/lib/data/components';
+import { DATA } from '~/lib/data/components';
 import { INSTALLED_FLASHERS, LED_KIT_SOURCE } from '~/data/installedLeds';
 import { KIND_PLURAL, TABLE_LABEL } from '~/lib/copy';
 import { pageTitleText } from '~/lib/pages';
@@ -69,7 +69,7 @@ const cells = DATA.lamps.map((l) => ({
                   )}
                 </td>
                 <td role="cell" class="mono" data-h="Installed">
-                  {installedLed(l.id)}
+                  {l.led}
                 </td>
                 <td role="cell" class="mono" data-h="Bulb">
                   {l.bulb}

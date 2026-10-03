@@ -15,11 +15,13 @@ test('Fault tick on Lamps feeds the shopping list until Fixed', async ({ page })
   await gotoHydrated(page, '/shopping');
   await expect(page.getByRole('heading', { name: 'Lamps' })).toBeVisible();
   await expect(page.getByText('1 ×')).toBeVisible();
-  await expect(page.getByText('#555')).toBeVisible();
+  // A lamp is listed under the LED fitted in it, the socket type and bulb part in brackets.
+  await expect(page.getByText('555 Warm Super')).toBeVisible();
+  await expect(page.getByText('(#555 · 24-8768)')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Copy as text' })).toBeVisible();
   await page.getByRole('button', { name: 'Show text' }).click();
   await expect(page.locator('textarea')).toHaveValue(
-    'Lamps\n1 × #555 (24-8768): L11 Thing Multiball',
+    'Lamps\n1 × 555 Warm Super (#555 · 24-8768): L11 Thing Multiball',
   );
   await expect(
     page.getByText('Mark a component Fault and it lands here. Fixed clears the fault.'),

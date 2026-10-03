@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- **The LEDs fitted in this machine.** Every lamp now names the LED from the
+  machine's Super Brite Kit sheet ("555 Warm Super"), so a dead lamp tells you
+  what to order: on the lamp's card and page, in the map's lamp card, in a new
+  Installed column on Lamps, and on the Shopping list, which groups lamps by
+  that LED with the socket type and bulb part in brackets. Lamps also lists the
+  kit's flasher LEDs. The list is the owner's, kept beside the kit's data and
+  laid onto its lamps when the app is built, so a kit update keeps it and a
+  wrong lamp number stops the build.
 - **The Rules map keeps its controls off the drawing.** On a tablet or desktop,
   the shot map in the handbook's Rules section no longer lays its layer list,
   zoom readout or keyboard legend over the playfield. Where the margin beside the

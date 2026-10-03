@@ -1,35 +1,41 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { DATA } from '~/lib/data/components';
 import { INSTALLED_FLASHERS, INSTALLED_LEDS, LED_KIT_SOURCE } from '~/data/installedLeds';
-import { installedLed } from '~/lib/data/components';
+import { DATA, find } from '~/lib/data/components';
+import { translateKit } from '~/lib/kit/translate';
+
+// The LEDs fitted in this machine are the owner's overlay on the kit's lamps (like the fuses in
+// ownerNotes.ts): the kit plugin puts each on its lamp as `led`, so every page and island reads
+// `lamp.led` and nothing looks them up a second way.
+
+const raw = () => JSON.parse(readFileSync('src/data/kit/components.json', 'utf8')) as unknown;
+const none = {};
 
 describe('installed LEDs', () => {
-  it('covers every used lamp in the matrix and nothing else', () => {
-    const used = DATA.lamps.filter((l) => !l.unused).map((l) => l.id);
-    const listed = Object.keys(INSTALLED_LEDS);
-    expect(listed.sort()).toEqual(used.sort());
+  it('covers every lamp in use and nothing else', () => {
+    const used = DATA.lamps.filter((l) => !l.unused).map((l) => `lamp:${l.id}`);
+    expect(Object.keys(INSTALLED_LEDS).sort()).toEqual(used.sort());
+    for (const led of Object.values(INSTALLED_LEDS)) expect(led.trim()).not.toBe('');
   });
 
-  it('has no unused lamp and no empty entry', () => {
-    for (const l of DATA.lamps.filter((l) => l.unused))
-      expect(INSTALLED_LEDS[l.id]).toBeUndefined();
-    for (const led of Object.values(INSTALLED_LEDS)) expect(led.trim().length).toBeGreaterThan(0);
+  it('puts each on its lamp, and leaves the unused lamps without one', () => {
+    for (const l of DATA.lamps) expect(l.led, l.id).toBe(INSTALLED_LEDS[`lamp:${l.id}`] ?? '');
+    expect(find('lamp', '11')?.led).toBe('555 Warm Super');
+    expect(find('lamp', '41')?.led).toBe('');
   });
 
   it('matches the lamp socket: 555 lamps get 555 LEDs, #44 lamps get 44 LEDs', () => {
-    for (const l of DATA.lamps.filter((l) => !l.unused)) {
-      const led = INSTALLED_LEDS[l.id] ?? '';
+    for (const l of DATA.lamps.filter((l) => !l.unused))
       expect(
-        led.startsWith(l.bulb.replace('#', '')),
-        `${l.id} ${l.name}: ${l.bulb} vs ${led}`,
+        l.led.startsWith(l.bulb.replace('#', '')),
+        `${l.id} ${l.name}: ${l.bulb} vs ${l.led}`,
       ).toBe(true);
-    }
   });
 
-  it('is reachable through installedLed()', () => {
-    expect(installedLed('11')).toBe('555 Warm Super');
-    expect(installedLed('41')).toBe('');
-    expect(installedLed('nope')).toBe('');
+  it('refuses an LED on a lamp that is not in use or not in the matrix', () => {
+    const run = (leds: Record<string, string>) => () => translateKit(raw(), none, none, none, leds);
+    expect(run({ 'lamp:41': '555 Warm Super' })).toThrow(/INSTALLED_LEDS: lamp:41 names no/);
+    expect(run({ 'lamp:99': '555 Warm Super' })).toThrow(/lamp:99 names no/);
   });
 
   it('lists the five flasher groups and names the kit', () => {

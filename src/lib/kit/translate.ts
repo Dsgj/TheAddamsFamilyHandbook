@@ -150,15 +150,17 @@ const LAMP = [
   'colWire', 'colWireEn', 'colPin', 'colQ', 'rowWire', 'rowWireEn', 'rowPin', 'rowQ',
   'speaker', 'unused', 'loc',
 ] as const;
-function toLamp(x: unknown, at: string): Lamp {
+function toLamp(x: unknown, at: string, leds: Overlay): Lamp {
   const r = record(x, at);
   only(r, at, LAMP);
+  const id = text(r, 'id', at);
   return {
-    id: text(r, 'id', at),
+    id,
     name: text(r, 'name', at),
     bulbPart: text(r, 'bulbPart', at),
     assy: text(r, 'assy', at),
     bulb: text(r, 'bulb', at),
+    led: own(leds, `lamp:${id}`) ?? '',
     col: count(r, 'col', at),
     row: count(r, 'row', at),
     colWireEn: text(r, 'colWireEn', at),
@@ -302,20 +304,22 @@ const TOP = [
 /**
  * The kit JSON to the English model, with the owner's overlays (src/data/ownerNotes.ts):
  * `notes` (COMPONENT_NOTES) and `fuses` (COMPONENT_FUSES) keyed `coil:id`, `wires`
- * (COMPONENT_WIRES) keyed `gi:id`.
+ * (COMPONENT_WIRES) keyed `gi:id`; and `leds` (src/data/installedLeds.ts INSTALLED_LEDS) keyed
+ * `lamp:id`, which may name only a lamp in use.
  */
 export function translateKit(
   raw: unknown,
   notes: Overlay,
   fuses: Overlay,
   wires: Overlay,
+  leds: Overlay,
 ): Components {
   const r = record(raw, 'root');
   only(r, 'root', TOP);
   const switches: Switch[] = list(r['switches'], 'switches').map((x, i) =>
     toSwitch(x, `switches[${i}]`),
   );
-  const lamps: Lamp[] = list(r['lamps'], 'lamps').map((x, i) => toLamp(x, `lamps[${i}]`));
+  const lamps: Lamp[] = list(r['lamps'], 'lamps').map((x, i) => toLamp(x, `lamps[${i}]`, leds));
   const coils: Coil[] = list(r['coils'], 'coils').map((x, i) =>
     toCoil(x, `coils[${i}]`, notes, fuses),
   );
@@ -324,7 +328,7 @@ export function translateKit(
     toFlipper(x, `flippers[${i}]`),
   );
   const fuseList: Fuse[] = list(r['fuses'], 'fuses').map((x, i) => toFuse(x, `fuses[${i}]`));
-  const leds: Led[] = list(r['leds'], 'leds').map((x, i) => toLed(x, `leds[${i}]`));
+  const boardLeds: Led[] = list(r['leds'], 'leds').map((x, i) => toLed(x, `leds[${i}]`));
   const maps = record(r['maps'], 'maps');
   only(maps, 'maps', ['sw', 'lamp', 'coil']);
 
@@ -339,6 +343,11 @@ export function translateKit(
     'COMPONENT_WIRES',
     gi.map((g) => `gi:${g.id}`),
   );
+  overlayKnown(
+    leds,
+    'INSTALLED_LEDS',
+    lamps.filter((l) => !l.unused).map((l) => `lamp:${l.id}`),
+  );
 
   const out: Components = {
     switches,
@@ -347,7 +356,7 @@ export function translateKit(
     gi,
     flippers,
     fuses: fuseList,
-    leds,
+    leds: boardLeds,
     swCols: headers(r['swCols'], 'swCols'),
     swRows: headers(r['swRows'], 'swRows'),
     lCols: headers(r['lCols'], 'lCols'),

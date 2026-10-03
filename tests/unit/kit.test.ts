@@ -33,11 +33,17 @@ describe('kit data boundary', () => {
     expect(DATA.switches.some((s) => Object.hasOwn(s, 'wire'))).toBe(false);
     expect(DATA.coils.some((c) => Object.hasOwn(c, 'wire'))).toBe(false);
     const none = {};
-    expect(() => translateKit({ ...raw(), extra: [] }, none, none, none)).toThrow(/unknown key/);
+    expect(() => translateKit({ ...raw(), extra: [] }, none, none, none, none)).toThrow(
+      /unknown key/,
+    );
     const hint = raw();
     hint.switches[0]!.hint = 'Ny svensk text';
-    expect(() => translateKit(hint, none, none, none)).toThrow(/no English for "Ny svensk text"/);
-    expect(() => translateKit(raw(), { 'coil:99': 'x' }, none, none)).toThrow(/coil:99 names no/);
+    expect(() => translateKit(hint, none, none, none, none)).toThrow(
+      /no English for "Ny svensk text"/,
+    );
+    expect(() => translateKit(raw(), { 'coil:99': 'x' }, none, none, none)).toThrow(
+      /coil:99 names no/,
+    );
   });
 
   it("shows the owner's coil 02 note from ownerNotes.ts", () => {
