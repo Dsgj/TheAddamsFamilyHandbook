@@ -208,14 +208,15 @@
     drag = null;
   }
 
-  // Go to page: a PDF page number, or for the Operations Manual a printed number like "2-39".
+  // Go to page: a PDF page number, or for the Operations Manual a printed label as the header
+  // shows it, "2-39", "p. 2-39" or "E".
   let go = $state(false);
   let jump = $state(untrack(() => String(page)));
   let bad = $state(false);
   function goTo(e: SubmitEvent) {
     e.preventDefault();
     const s = jump.trim();
-    const n = /^\d+$/.test(s) ? Number(s) : doc === 'ops' ? pdfPageFromLabel(s) : undefined;
+    const n = /^\d+$/.test(s) ? Number(s) : pdfPageFromLabel(doc, s);
     if (n !== undefined && n >= 1 && n <= count) replacePage(manualHref(doc, n));
     else bad = true;
   }
@@ -435,8 +436,10 @@
         id="goto-page"
         class="field mono"
         type="text"
-        inputmode="numeric"
+        inputmode={doc === 'ops' ? 'text' : 'numeric'}
         autocomplete="off"
+        autocapitalize="characters"
+        spellcheck="false"
         bind:value={jump}
         data-autofocus
         aria-invalid={bad ? 'true' : undefined}

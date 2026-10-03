@@ -25,6 +25,7 @@ import {
   pageCount,
   pageImage,
   pageLabel,
+  pdfPageFromLabel,
   pageRefText,
   pageTitleText,
   printedPageText,
@@ -171,6 +172,19 @@ describe('presentation helpers', () => {
           expect(pageImage(doc, p, suffix)).toBe(
             `assets/pages/${doc}/${p}${suffix}.${doc === 'ops' && p === 1 ? 'jpg' : 'png'}`,
           );
+  });
+
+  it('reads back every printed label to its page, and no other (CR2-04, TT2-02)', () => {
+    for (const doc of DOCS)
+      for (let p = 1; p <= pageCount(doc); p++) {
+        const label = pageLabel(doc, p);
+        if (!label) continue;
+        expect(pdfPageFromLabel(doc, label)).toBe(p);
+        expect(pdfPageFromLabel(doc, `p. ${label}`)).toBe(p);
+      }
+    expect(pdfPageFromLabel('ops', 'e')).toBe(9);
+    for (const bad of ['1-49', '1-0', '2-45', '3-22', 'G', '4-1', '', 'p.'])
+      expect(pdfPageFromLabel('ops', bad), bad).toBeUndefined();
   });
 
   it('writes a page as the old ternaries did, for every page of every manual', () => {

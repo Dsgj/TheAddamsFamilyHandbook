@@ -32,12 +32,18 @@ export function pageLabel(doc: DocId, p: number): string {
   return '';
 }
 
-/** Inverse of pageLabel for the Operations Manual: `1-15` → 25. */
-export function pdfPageFromLabel(label: string): number | undefined {
-  const m = /^([123])-(\d+)$/.exec(label.trim());
-  if (!m) return undefined;
-  const n = Number(m[2]);
-  return m[1] === '1' ? n + 10 : m[1] === '2' ? n + 58 : n + 102;
+/**
+ * The exact inverse of pageLabel, as the viewer prints it: `1-15` → 25, `p. 2-39` → 97, `E` → 9.
+ * A label the document does not print (`1-49`, `1-0`, `G`) is no page (CR2-04, TT2-02).
+ */
+export function pdfPageFromLabel(doc: DocId, label: string): number | undefined {
+  const want = label
+    .trim()
+    .replace(/^p\.?\s*/i, '')
+    .toUpperCase();
+  if (!want) return undefined;
+  for (let p = 1; p <= pageCount(doc); p++) if (pageLabel(doc, p) === want) return p;
+  return undefined;
 }
 
 /**

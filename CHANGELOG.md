@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- **Go to page takes the page numbers the header shows.** In the Operations
+  Manual you can type "2-39", "p. 2-39" or "E", and a number the manual does
+  not print says so instead of opening another page. The field offers a text
+  keyboard there.
 - **Diagnose takes codes the way they are printed.** "Check Switch 32.",
   "#32" and "32-68" now read as codes. A part number such as a fuse (F105) or
   a connector (J206) is searched in the components, handbook, manuals and

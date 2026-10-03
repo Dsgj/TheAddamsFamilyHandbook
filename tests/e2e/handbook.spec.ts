@@ -204,6 +204,23 @@ test.describe('the manual viewer', () => {
     await expect(page).toHaveURL(/manual\/ops\/97$/);
   });
 
+  test('Go to page refuses a label the manual does not print, and takes the ones it does (CR2-04)', async ({
+    page,
+  }) => {
+    await gotoHydrated(page, '/manual/ops/97');
+    await page.getByRole('button', { name: /^Go to page/ }).click();
+    const dialog = page.getByRole('dialog', { name: 'Go to page' });
+    const field = dialog.getByLabel('Page');
+    await expect(field).toHaveAttribute('inputmode', 'text');
+    await field.fill('1-49');
+    await dialog.getByRole('button', { name: 'Go' }).click();
+    await expect(dialog.locator('#goto-hint')).toContainText('No such page');
+    await expect(page).toHaveURL(/manual\/ops\/97$/);
+    await field.fill('p. E');
+    await dialog.getByRole('button', { name: 'Go' }).click();
+    await expect(page).toHaveURL(/manual\/ops\/9$/);
+  });
+
   test('zoom capsule and Rotate page act on the scan; the keys still work', async ({
     page,
     isMobile,
