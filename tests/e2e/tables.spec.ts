@@ -94,6 +94,16 @@ test.describe('the component detail page', () => {
     await expect(page.locator('.detail .kind')).toContainText('Flipper (J806)');
   });
 
+  test('a part the map does not draw says where it is, not Show on map (DA2-06)', async ({
+    page,
+  }) => {
+    await gotoHydrated(page, '/switch/F1');
+    await expect(page.getByRole('button', { name: 'Show on map' })).toHaveCount(0);
+    await expect(page.locator('.detail')).toContainText(
+      'Not on the playfield map: on the flipper assembly under the playfield.',
+    );
+  });
+
   test('carries the spec anatomy and keeps its contracts', async ({ page }) => {
     await gotoHydrated(page, '/switch/32');
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Switch 32');

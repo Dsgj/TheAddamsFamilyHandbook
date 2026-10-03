@@ -75,3 +75,25 @@ export function wiring(kind: Kind, item: Switch | Lamp | Coil): Wiring {
 export function callouts(item: { loc: { l: string }[] }): string {
   return item.loc.map((l) => l.l).join(', ');
 }
+
+/**
+ * The line that stands in for the map actions of a component with no place on the playfield map
+ * (UX2-05, DA2-06), with where it is when the kit's flags or the hardware say so: the dedicated
+ * switches are the coin door's, a flipper switch is its button or its end-of-stroke switch.
+ */
+export function offMap(kind: Kind, item: Switch | Lamp | Coil): string {
+  const where = offMapWhere(kind, item);
+  return where ? `Not on the playfield map: ${where}.` : 'Not on the playfield map.';
+}
+function offMapWhere(kind: Kind, item: Switch | Lamp | Coil): string {
+  if ('unused' in item && item.unused) return 'not used in this machine';
+  if (kind === 'coil') return (item as Coil).cabinet ? 'in the cabinet' : '';
+  if (kind !== 'switch') return '';
+  const sw = item as Switch;
+  if (sw.kind === 'ded') return 'on the coin door';
+  if (sw.kind === 'flip')
+    return /button/i.test(sw.name)
+      ? 'a flipper button on the side of the cabinet'
+      : 'on the flipper assembly under the playfield';
+  return sw.under ? 'under the playfield' : '';
+}

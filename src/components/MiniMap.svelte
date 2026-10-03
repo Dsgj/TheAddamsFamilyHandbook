@@ -29,8 +29,10 @@
   const first = $derived(pos[0]);
   const cx = $derived(first ? first.x * size : size / 2);
   const cy = $derived(first ? first.y * mapH : mapH / 2);
-  const ox = $derived(Math.max(0, Math.min(size - W, cx - W / 2)));
-  const oy = $derived(Math.max(0, Math.min(mapH - H, cy - H / 2)));
+  // Centred on the part even at the drawing's edge, where the ground shows past it: a crop
+  // clamped to the drawing showed an edge part as a blank corner with its ring cut (VL2-08).
+  const ox = $derived(cx - W / 2);
+  const oy = $derived(cy - H / 2);
   const src = href('assets/maps/playfield.png');
   const neighbours = $derived.by(() => {
     if (!others) return [];

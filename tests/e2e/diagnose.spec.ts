@@ -350,6 +350,31 @@ test.describe('the old home links live in their hubs', () => {
 });
 
 test.describe('the result card', () => {
+  test('a part the map does not draw says where it is, with no map actions (UX2-05)', async ({
+    page,
+  }) => {
+    await gotoHydrated(page, '/?q=D1');
+    const card = page.locator('article.comp[data-kind="switch"][data-id="D1"]');
+    await expect(card.locator('.off')).toHaveText('Not on the playfield map: on the coin door.');
+    await expect(card.locator('.mini, a.map-link')).toHaveCount(0);
+    await expect(card.getByRole('link', { name: 'Show on map' })).toHaveCount(0);
+    await expect(card.getByRole('link', { name: 'Details' })).toBeVisible();
+  });
+
+  test('the drawing keeps a part at its edge whole, in the middle (VL2-08)', async ({ page }) => {
+    // Switch 13 sits on the drawing's bottom edge.
+    await gotoHydrated(page, '/?q=13');
+    const mini = page.locator('article.comp[data-kind="switch"][data-id="13"] .mini');
+    await mini.scrollIntoViewIfNeeded();
+    const box = (await mini.boundingBox())!;
+    const ring = (await mini.locator('.ring').boundingBox())!;
+    expect(ring.x).toBeGreaterThanOrEqual(box.x);
+    expect(ring.x + ring.width).toBeLessThanOrEqual(box.x + box.width);
+    expect(ring.y).toBeGreaterThanOrEqual(box.y);
+    expect(ring.y + ring.height).toBeLessThanOrEqual(box.y + box.height);
+    expect(Math.abs(ring.y + ring.height / 2 - (box.y + box.height / 2))).toBeLessThan(2);
+  });
+
   test('carries the spec anatomy and keeps its contracts', async ({ page }) => {
     await gotoHydrated(page, '/?q=32');
     const card = page.locator('article.comp[data-id="32"]');

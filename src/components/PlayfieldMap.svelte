@@ -15,9 +15,9 @@
     LABEL,
     LAYERS,
     layerOf,
+    markerName,
     matchesQuery,
     statusClass,
-    statusOf,
   } from '~/lib/map/items';
   import { createMapZoom, dist, MAX_ZOOM } from '~/lib/map/zoom.svelte';
   import type { PosKind } from '~/lib/data/positions';
@@ -392,17 +392,6 @@
     void expanded;
     if (current && untrack(() => zm.zoom) > 1) requestAnimationFrame(centre);
   });
-  /** Accessible marker name (spec §7.5): "Switch 32, Upper Right Jet, Fault, selected". */
-  function markerName(item: Item, selected: boolean) {
-    const st = statusOf(item);
-    return (
-      fullName(item) +
-      ', ' +
-      item.name +
-      (st === 'fault' ? ', Fault' : '') +
-      (selected ? ', selected' : '')
-    );
-  }
   /** The "Search components" filter: id or name (Q28). */
   const findLive = liveText(
     () => q,
@@ -621,7 +610,7 @@
                   style:--x="{p.x * 100}%"
                   style:--y="{p.y * 100}%"
                   title="{item.id} {item.name}"
-                  aria-label={markerName(item, selKey === key)}
+                  aria-label={markerName(item, selKey === key, li, posOf(item).length)}
                   aria-pressed={selKey === key}
                   tabindex={calib ? 0 : -1}
                   data-key={key}
@@ -765,7 +754,12 @@
             </div>
           {/if}
           {#if current?.comp && current.kind !== 'shot'}
-            <ComponentCard kind={current.kind} item={current.comp} mapMeta={mapOf(current.kind)} />
+            <ComponentCard
+              kind={current.kind}
+              item={current.comp}
+              mapMeta={mapOf(current.kind)}
+              inMap
+            />
           {:else if currentShot}
             {@render shotCard(currentShot)}
           {:else}
@@ -794,7 +788,12 @@
           <p class="keys" role="note" aria-label="Keyboard shortcuts">{@render keyHints()}</p>
         {/if}
         {#if current?.comp && current.kind !== 'shot'}
-          <ComponentCard kind={current.kind} item={current.comp} mapMeta={mapOf(current.kind)} />
+          <ComponentCard
+            kind={current.kind}
+            item={current.comp}
+            mapMeta={mapOf(current.kind)}
+            inMap
+          />
         {:else if currentShot}
           {@render shotCard(currentShot)}
         {:else}
@@ -1021,10 +1020,14 @@
     --k: var(--ok);
     --k-fill: var(--ok-tint);
   }
+  /* A fault is filled and haloed so it stands out among a hundred tinted dots (UX2-06, UX-17). */
   .marker.st-fault {
     --k: var(--bad);
-    --k-fill: var(--bad-tint);
-    box-shadow: inset 0 0 0 2px var(--k);
+    --k-fill: var(--bad);
+    color: var(--ground);
+    box-shadow:
+      0 0 0 2px var(--ground),
+      0 0 0 4px var(--bad);
   }
   .marker.st-untested {
     --k: var(--warn);

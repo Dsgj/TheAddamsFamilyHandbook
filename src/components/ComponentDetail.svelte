@@ -23,7 +23,7 @@
   import { getStatus, setStatus, shortDate, STATUS_LABEL } from '~/lib/model/status.svelte';
   import type { Coil, Kind, Lamp, MapMeta, StatusValue, Switch } from '~/lib/model/types';
   import { pageTitleText } from '~/lib/pages';
-  import { callouts as calloutsOf, wiring } from '~/lib/present';
+  import { callouts as calloutsOf, offMap, wiring } from '~/lib/present';
   import { href, manualHref, mapHref } from '~/lib/url';
   import BottomSheet from './BottomSheet.svelte';
   import MiniMap from './MiniMap.svelte';
@@ -185,17 +185,24 @@
     <h3 class="lst-h">Location</h3>
     <ul class="lst">
       <li>
-        <button class="lrow" type="button" onclick={() => (mapOpen = true)}>
-          <span class="tile" aria-hidden="true">
-            <svg viewBox="0 0 20 20"
-              ><path
-                d="M10 18s-6-5.2-6-9.5a6 6 0 0 1 12 0C16 12.8 10 18 10 18zM10 10.5a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"
-              /></svg
-            >
-          </span>
-          <span class="txt"><span class="ttl">Show on map</span></span>
-          <svg class="chev" viewBox="0 0 14 14" aria-hidden="true"><path d="M5 2l5 5-5 5" /></svg>
-        </button>
+        {#if pos.length}
+          <button class="lrow" type="button" onclick={() => (mapOpen = true)}>
+            <span class="tile" aria-hidden="true">
+              <svg viewBox="0 0 20 20"
+                ><path
+                  d="M10 18s-6-5.2-6-9.5a6 6 0 0 1 12 0C16 12.8 10 18 10 18zM10 10.5a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"
+                /></svg
+              >
+            </span>
+            <span class="txt"><span class="ttl">Show on map</span></span>
+            <svg class="chev" viewBox="0 0 14 14" aria-hidden="true"><path d="M5 2l5 5-5 5" /></svg>
+          </button>
+        {:else}
+          <!-- Nothing to show on the map: say where it is instead (DA2-06, UX2-05). -->
+          <div class="lrow static">
+            <span class="txt">{offMap(kind, item)}</span>
+          </div>
+        {/if}
       </li>
       <li>
         {#if callouts}

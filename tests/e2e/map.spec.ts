@@ -547,6 +547,29 @@ test.describe('wide panel', () => {
     await expect(panel.locator('.rows .row').first()).toContainText('Upper Right Jet');
   });
 
+  test('the card in the panel has no drawing and no link to the map it is on (VL2-05)', async ({
+    page,
+  }) => {
+    await gotoHydrated(page, '/map?layer=sw&id=32');
+    const card = page
+      .getByRole('complementary', { name: 'Selected component and components on the map' })
+      .locator('article.comp[data-id="32"]');
+    await expect(card).toBeVisible();
+    await expect(card.locator('.mini')).toHaveCount(0);
+    await expect(card.getByRole('link', { name: 'Show on map' })).toHaveCount(0);
+    await expect(card.getByRole('link', { name: 'Details' })).toHaveAttribute(
+      'href',
+      /switch\/32$/,
+    );
+    // A part drawn at four places names each marker apart (AY2-07).
+    const names = await page
+      .getByRole('button', { name: /^Switch 44, / })
+      .evaluateAll((els) => els.map((el) => el.getAttribute('aria-label')));
+    expect(names).toHaveLength(4);
+    expect(new Set(names).size).toBe(4);
+    expect(names[0]).toMatch(/, place 1 of 4$/);
+  });
+
   test('a list row says "not used" once, in its name', async ({ page }) => {
     await gotoHydrated(page, '/map?layer=sw');
     const panel = page.getByRole('complementary', {

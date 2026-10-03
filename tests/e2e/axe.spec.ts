@@ -41,10 +41,9 @@ const ROUTES = [
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best-practice'];
 
 /** Known, not changed (app audit P4 item 4): the rules a route trips today, keyed `project route`.
- * target-size: `.map-link[aria-label="Show on map"]` in the search results; scrollable-region-
- * focusable: the two `#pg-2 > .scroll-x` tables. desktop-light is clean on every route. */
+ * scrollable-region-focusable: the two `#pg-2 > .scroll-x` tables. desktop-light is clean on every
+ * route. (target-size on /?q=12 13 went with the map link of a part the map does not draw.) */
 const KNOWN: Record<string, string[]> = {
-  'phone-dark /?q=12%2013': ['target-size'],
   'phone-dark /handbook/quick': ['scrollable-region-focusable'],
   'phone-webkit /handbook/quick': ['scrollable-region-focusable'],
 };

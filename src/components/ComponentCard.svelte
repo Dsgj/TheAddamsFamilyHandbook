@@ -3,7 +3,7 @@
   import { positions } from '~/lib/data/positions';
   import type { Coil, Kind, Lamp, MapMeta, Switch } from '~/lib/model/types';
   import { pageTitleText } from '~/lib/pages';
-  import { callouts as calloutsOf, wiring } from '~/lib/present';
+  import { callouts as calloutsOf, offMap, wiring } from '~/lib/present';
   import { componentHref, manualHref, mapHref } from '~/lib/url';
   import MiniMap from './MiniMap.svelte';
   import StatusRow from './StatusRow.svelte';
@@ -12,6 +12,9 @@
   /**
    * The component card (spec §8.5): code chip, name and kind line, wiring, a mini-map, the status
    * control, the actions and the owner's hint. Used by Diagnose, the component pages and the map.
+   * `inMap` is the map's own panel and sheet: the drawing is beside it, so no mini-map and no
+   * Show on map (VL2-05, AY2-08). A component with no place on the map gets neither anywhere,
+   * and a line that says where it is instead (UX2-05).
    */
   type Any = Switch | Lamp | Coil;
   let {
@@ -20,7 +23,15 @@
     mapMeta,
     compact = false,
     linkTitle = true,
-  }: { kind: Kind; item: Any; mapMeta: MapMeta; compact?: boolean; linkTitle?: boolean } = $props();
+    inMap = false,
+  }: {
+    kind: Kind;
+    item: Any;
+    mapMeta: MapMeta;
+    compact?: boolean;
+    linkTitle?: boolean;
+    inMap?: boolean;
+  } = $props();
 
   const sw = $derived(kind === 'switch' ? (item as Switch) : undefined);
   const coil = $derived(kind === 'coil' ? (item as Coil) : undefined);
@@ -29,6 +40,7 @@
   const callouts = $derived(calloutsOf(item));
   const mapPage = $derived(mapMeta.page);
   const pos = $derived(positions(kind, item.id));
+  const onMap = $derived(pos.length > 0);
   const code = $derived(componentCode(kind, item.id));
   const kindLine = $derived(kindLineOf(kind, item));
   /** "p. 2-39": the location map's printed label. */
@@ -115,7 +127,9 @@
     </dd>
   </dl>
 
-  {#if !compact}
+  {#if !onMap}
+    <p class="off muted">{offMap(kind, item)}</p>
+  {:else if !compact && !inMap}
     <a class="map-link" href={mapHref(layer, item.id)} aria-label="Show on map">
       <MiniMap {pos} w={310} h={120} />
     </a>
@@ -124,7 +138,9 @@
   <StatusRow {kind} id={item.id} />
 
   <div class="acts">
-    <a class="btn sm tinted" href={mapHref(layer, item.id)}>Show on map</a>
+    {#if onMap && !inMap}
+      <a class="btn sm tinted" href={mapHref(layer, item.id)}>Show on map</a>
+    {/if}
     <a class="btn sm tinted" href={manualHref('ops', mapPage)}>Manual {mapRef}</a>
     {#if linkTitle}
       <a class="btn sm tinted" href={componentHref(kind, item.id)}>Details</a>
@@ -212,6 +228,9 @@
   .map-link {
     display: block;
     max-width: 100%;
+  }
+  .off {
+    margin: 0;
   }
   /* A gap of 8 each way: the small buttons' 44 hit areas meet and never overlap (spec §8.7). */
   .acts {

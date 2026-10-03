@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- **Component cards fit where they are shown.** On the map, the selected
+  part's card no longer repeats the drawing or links to the map you are on.
+  The 33 parts the map does not draw, such as the coin door switches and the
+  flipper buttons, say where they are instead of offering Show on map. The
+  small drawing keeps a part at the edge of the playfield whole and in the
+  middle. A part marked Fault is a filled red dot on the map, and a part drawn
+  at several places names each one apart for a screen reader.
 - **Update and install prompts are reliable.** The "new version is ready"
   message no longer gets lost when it arrives while the page is still
   starting. Pull to refresh on the Workshop says "Downloading an update"

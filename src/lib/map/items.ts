@@ -55,6 +55,20 @@ export function itemsIn(l: MapLayer): Item[] {
 export function statusOf(item: Item) {
   return item.kind === 'shot' ? undefined : getStatus(item.kind, item.id)?.status;
 }
+/**
+ * Accessible marker name (spec §7.5): "Switch 32, Upper Right Jet, Fault, selected". A part
+ * drawn at more than one place says which, so no two markers share a name (AY2-07).
+ */
+export function markerName(item: Item, selected: boolean, place = 0, places = 1) {
+  return (
+    fullName(item) +
+    ', ' +
+    item.name +
+    (places > 1 ? `, place ${place + 1} of ${places}` : '') +
+    (statusOf(item) === 'fault' ? ', Fault' : '') +
+    (selected ? ', selected' : '')
+  );
+}
 /** "Switch · matrix column 3, row 2": the kind line under a name (spec §13). */
 export function kindLine(item: Item) {
   if (item.kind === 'shot') {
