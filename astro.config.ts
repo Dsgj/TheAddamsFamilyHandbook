@@ -103,5 +103,24 @@ export default defineConfig({
   vite: {
     plugins: [kitPlugin()],
     resolve: { alias: { '~': fileURLToPath(new URL('./src', import.meta.url)) } },
+    build: {
+      rollupOptions: {
+        output: {
+          // The kit's component data (src/data/kit/components.json and its loader) is the one
+          // dataset in the client graph: Diagnose, the playfield map and its calibration overlay
+          // read it (audit P4 item 5, SV-11). Its own chunk name keeps it visible in dist/
+          // instead of merging into whichever importer Rollup names it after. Only the two leaf
+          // modules: a manual chunk also swallows its modules' dependencies, so naming
+          // lib/data/components.ts here would pull lib/copy into the dataset chunk and every
+          // island that imports a label map would load the dataset.
+          manualChunks: (id: string) =>
+            /[\\/]src[\\/](data[\\/]kit[\\/]components\.json|lib[\\/]kit[\\/]components\.ts)(\?.*)?$/.test(
+              id,
+            )
+              ? 'kit-data'
+              : undefined,
+        },
+      },
+    },
   },
 });

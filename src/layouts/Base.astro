@@ -3,10 +3,11 @@ import '~/styles/tokens.css';
 import '~/styles/base.css';
 import { pwaInfo } from 'virtual:pwa-info';
 import { href } from '~/lib/url';
+import { jsonScript } from '~/lib/json-script';
 import Toast from '~/components/Toast.svelte';
 import { PARENT, TABS, tabFor, type BackLink } from '~/lib/nav';
 import { depthOf } from '~/lib/nav-state';
-import { allShoppingItems } from '~/lib/shopping';
+import { allShoppingItems } from '~/lib/data/shopping';
 import TabBadge from '~/components/TabBadge.svelte';
 
 interface Props {
@@ -52,8 +53,13 @@ const depth = depthOf(
 );
 /** What a back link to this page says (motion.ts): the phone's short title, else the heading. */
 const label = short ?? heading;
-/** The Shopping list's candidate keys, so the badge counts exactly what the list shows. */
-const shopKeys = allShoppingItems().map((i) => `${i.kind}:${i.id}`);
+/**
+ * The Shopping list's candidate ids by kind, so the badge counts exactly what the list shows:
+ * one JSON script in the shell (#tafh-shop) that both TabBadge islands read on mount, instead of
+ * the same 4 KB riding as props on each (audit P4 item 5, SV-10).
+ */
+const shopIds: Record<string, string[]> = {};
+for (const i of allShoppingItems()) (shopIds[i.kind] ??= []).push(i.id);
 const hasActions = Astro.slots.has('actions');
 ---
 
@@ -153,6 +159,7 @@ const hasActions = Astro.slots.has('actions');
   </head>
   <body>
     <a class="skip sr-only" href="#main">Skip to content</a>
+    <script is:inline type="application/json" id="tafh-shop" set:html={jsonScript(shopIds)} />
     <nav class="shell" aria-label="Sections">
       <a class="shell-logo" href={href('')} aria-label="The Addams Family Handbook home">
         <img
@@ -161,6 +168,7 @@ const hasActions = Astro.slots.has('actions');
           width="160"
           height="81"
           decoding="async"
+          loading="lazy"
         />
       </a>
       <ul class="tabs">
@@ -177,7 +185,7 @@ const hasActions = Astro.slots.has('actions');
                   <path d={t.icon} />
                 </svg>
                 <span class="lbl">{t.label}</span>
-                {t.key === 'workshop' && <TabBadge client:load keys={shopKeys} />}
+                {t.key === 'workshop' && <TabBadge client:load />}
               </a>
               {t.subs.length > 0 && (
                 <ul class="subs">
@@ -189,7 +197,7 @@ const hasActions = Astro.slots.has('actions');
                         aria-current={s.nav && nav === s.nav ? 'page' : undefined}
                       >
                         <span class="lbl">{s.label}</span>
-                        {s.count && <TabBadge client:load keys={shopKeys} pill />}
+                        {s.count && <TabBadge client:media="(min-width: 1280px)" pill />}
                       </a>
                     </li>
                   ))}

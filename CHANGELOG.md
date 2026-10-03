@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- **Lighter pages.** Installing the app stores about 16.5 MB instead of
+  about 21.5 MB, and every page weighs less on a first visit. Phones no longer
+  download the logo (it shows only in the desktop sidebar, now a 480×243 file
+  of the same image). A tiled manual page shows its overview first and loads
+  the four zoom tiles only when you zoom in, or at idle once the app is
+  installed, so they still zoom offline. A handbook section carries its
+  contents once in the page instead of twice as island props (about 110 KB
+  less per section), and Contents still opens offline. The Workshop badge
+  reads its ids from one script, the kit dataset leaves the Shopping list's
+  code, and the unreferenced 1.25 MB source drawing moved from `public/` to
+  `kit-docs/`. Pages look the same. P4 item 5 of the app audit (PF-05, PF-06,
+  PF-09, PF-10, SV-05, SV-10, SV-11, AR-07, AR-08).
 - **Gated deploys.** Every pull request and push to main runs check,
   svelte-check, lint, prettier, vitest, build and the Playwright suite on three
   projects (a WebKit iPhone 13 at 390×844 joins); only a green main deploys. Axe

@@ -1,0 +1,150 @@
+import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { join, posix } from 'node:path';
+import { describe, expect, it } from 'vitest';
+import { allShoppingItems } from '~/lib/data/shopping';
+import { jsonScript } from '~/lib/json-script';
+import { precacheKeys } from '~/lib/precache';
+
+/**
+ * Payload (audit P4 item 5): the built `dist/` is what the design says it is.
+ * - the service worker's precache list equals the build's expectation computed from `dist/` and
+ *   the workbox options in astro.config.ts (glob patterns, ignores, the size cap, the
+ *   includeAssets duplicates, precacheKeys). Both sides read `dist/`, so a file that lands in
+ *   `public/` joins both; the reference check below is what catches it (PF-09);
+ * - the drawing that left `public/` is not precached and the shell logo is;
+ * - every file in `_astro/`, `assets/figures/`, `assets/maps/`, `brand/`, `data/`, `fonts/` and
+ *   `icons/` (every precached file but the pages and the manifest) is referenced by its full path
+ *   from a page, a chunk or a stylesheet (G4; `assets/figures/ops17.png` is the allowed,
+ *   documented exception). The service worker's own files are not referrers: its precache
+ *   manifest names every precached file, so counting it would let an orphaned figure pass;
+ * - every page carries #tafh-shop (the whole shopping list) and a handbook section page
+ *   #tafh-toc, once each, and no JSON script carries a `<` (jsonScript), so both stay inert.
+ * Runs in the committed CI order: `pnpm build` before `pnpm test`. The base is read from the built
+ * manifest's scope (like links.test.ts), so a BASE_PATH build (GitHub Pages, /<repo>/) holds too.
+ */
+const DIST = join(process.cwd(), 'dist');
+const walk = (d: string, out: string[] = []): string[] => {
+  for (const n of readdirSync(d)) {
+    const p = join(d, n);
+    if (statSync(p).isDirectory()) walk(p, out);
+    else out.push(p);
+  }
+  return out;
+};
+const rel = (p: string) => p.slice(DIST.length + 1).replaceAll('\\', '/');
+const files = walk(DIST).map(rel);
+
+// the workbox options of astro.config.ts, read from the file so a config change moves the test
+const config = readFileSync(join(process.cwd(), 'astro.config.ts'), 'utf8');
+const list = (key: string) =>
+  [
+    ...(config.match(new RegExp(`${key}:\\s*\\[([^\\]]*)\\]`))?.[1] ?? '').matchAll(/'([^']+)'/g),
+  ].map((m) => m[1] ?? '');
+const globRe = (g: string) => {
+  const re = g
+    .replace(/\{([^}]+)\}/g, (_m, a: string) => `(?:${a.split(',').join('|')})`)
+    .replace(/\*\*\//g, '\u0001')
+    .replace(/\*\*/g, '\u0002')
+    .replace(/\*/g, '[^/]*')
+    .replace(/\./g, '\\.')
+    .replace(/\u0001/g, '(?:.*/)?')
+    .replace(/\u0002/g, '.*');
+  return new RegExp(`^${re}$`);
+};
+// `4 * 1024 * 1024`: a product of integers in the config
+const cap = (config.match(/maximumFileSizeToCacheInBytes:\s*([\d\s*]+)/)?.[1] ?? '0')
+  .split('*')
+  .reduce((n, x) => n * Number(x.trim()), 1);
+// the SW scope, as the build wrote it: `/`, or `/<repo>/` under BASE_PATH
+const scope = (
+  JSON.parse(readFileSync(join(DIST, 'manifest.webmanifest'), 'utf8')) as { scope: string }
+).scope.replace(/\/?$/, '/');
+
+describe('the precache list', () => {
+  const patterns = list('globPatterns').map(globRe);
+  const ignores = list('globIgnores').map(globRe);
+  const globbed = files.filter(
+    (f) =>
+      f !== 'sw.js' &&
+      !f.startsWith('workbox-') &&
+      patterns.some((p) => p.test(f)) &&
+      !ignores.some((p) => p.test(f)) &&
+      statSync(join(DIST, f)).size <= cap,
+  );
+  // includeAssets: vite-pwa adds them to the manifest once more (the duplicates the audit measured)
+  const included = list('includeAssets').flatMap((g) => files.filter((f) => globRe(g).test(f)));
+  const expected = precacheKeys(scope)(
+    [...globbed, ...included, 'manifest.webmanifest'].map((url) => ({
+      url,
+      revision: null,
+      size: 0,
+    })),
+  )
+    .manifest.map((e) => e.url)
+    .sort();
+  const sw = readFileSync(join(DIST, 'sw.js'), 'utf8');
+  const entries = [...sw.matchAll(/\{url:"([^"]+)",revision:/g)].map((m) => m[1]).sort();
+
+  it('equals the build expectation (globs, ignores, size cap, includeAssets, precacheKeys)', () => {
+    expect(entries).toEqual(expected);
+  });
+
+  it('holds the shell logo and not the drawing that left public/', () => {
+    expect(entries).toContain('brand/logo.webp');
+    expect(entries).not.toContain('assets/figures/7696d0a6-e288-4e02-941f-47e792fd01e6.png');
+    expect(files).not.toContain('assets/figures/7696d0a6-e288-4e02-941f-47e792fd01e6.png');
+  });
+});
+
+describe('references', () => {
+  const text = files
+    .filter(
+      (f) =>
+        /\.(html|js|css|webmanifest)$/.test(f) &&
+        !/(^|\/)(sw\.js|workbox-[^/]*\.js|registerSW\.js)$/.test(f),
+    )
+    .map((f) => ({ f, s: readFileSync(join(DIST, f), 'utf8') }));
+  // a root-relative reference carries the base (`/valvet/_astro/…`), a relative one does not
+  const base = scope.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const assetRef = new RegExp(
+    `["'\`(](?:${base}|/)?((?:_astro|data|assets|brand|fonts|icons)/[^"'\`()]+)["'\`)]`,
+    'g',
+  );
+  const refs = new Set<string>();
+  for (const { f, s } of text) {
+    for (const m of s.matchAll(assetRef)) if (m[1]) refs.add(m[1]);
+    for (const m of s.matchAll(/(?:from|import)[ ]*\(?["'`]\.\/([^"'`]+)["'`]/g))
+      if (m[1]) refs.add(posix.join(posix.dirname(f), m[1]));
+  }
+  it('every hashed asset, figure, map, brand asset, data file, font and icon is referenced', () => {
+    const allowed = new Set(['assets/figures/ops17.png']);
+    const unreferenced = files.filter(
+      (f) =>
+        /^(?:_astro|assets\/figures|assets\/maps|brand|data|fonts|icons)\//.test(f) &&
+        !refs.has(f) &&
+        !allowed.has(f),
+    );
+    expect(unreferenced).toEqual([]);
+  });
+  it('every page carries the shopping ids, a section page the TOC, once, whole and inert', () => {
+    // the escape: no `<` is left, so neither `</script` nor `<!--` can reach the text
+    const hostile = { a: ['</script><!--<script>'] };
+    expect(jsonScript(hostile)).not.toContain('<');
+    expect(JSON.parse(jsonScript(hostile))).toEqual(hostile);
+    const shop: Record<string, string[]> = {};
+    for (const i of allShoppingItems()) (shop[i.kind] ??= []).push(i.id);
+    const pages = text.filter(({ f }) => f.endsWith('.html'));
+    expect(pages.length).toBeGreaterThan(300);
+    for (const { f, s } of pages) {
+      const json = [...s.matchAll(/<script type="application\/json"([^>]*)>([\s\S]*?)<\/script>/g)];
+      const section = /^handbook\/[^/]+\.html$/.test(f);
+      expect(
+        json.map((m) => m[1]),
+        f,
+      ).toEqual(section ? [' id="tafh-shop"', ' id="tafh-toc"'] : [' id="tafh-shop"']);
+      for (const [, , body = ''] of json) expect(body, f).not.toContain('<');
+      expect(JSON.parse(json[0]?.[2] ?? ''), f).toEqual(shop);
+      if (section) expect(JSON.parse(json[1]?.[2] ?? '') as unknown[], f).not.toHaveLength(0);
+    }
+  });
+});

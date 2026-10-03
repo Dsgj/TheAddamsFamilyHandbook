@@ -40,7 +40,12 @@
   let scale = $state(0); // 0 = the fit (fitMode)
   let stage: HTMLDivElement | undefined = $state();
   let bar: HTMLDivElement | undefined = $state();
-  let fitScale = $state(0.5);
+  // A tiled page starts under the overview threshold until fit() measures the viewport: the
+  // server renders the overview, and the four tiles load only when a zoom takes the scale past
+  // 0.3 (audit P4 item 5, PF-06). An untiled page keeps 0.5: its one image is the same at any
+  // scale, and a smaller pre-fit stage would let the search box below it hydrate at load on
+  // desktops. `tiled` is read once, on purpose: the document never changes under a mounted viewer.
+  let fitScale = $state(untrack(() => tiled) ? 0.25 : 0.5);
   /** The viewport slice the zoomed stage fills, once scrolled just below the top bar. */
   let availH = $state(0);
 
@@ -110,6 +115,24 @@
       ro.disconnect();
       removeEventListener('resize', fit);
     };
+  });
+
+  // Offline zoom after an online visit (spec §11): the eager tiles used to land in the worker's
+  // runtime cache (tafh-scans, astro.config.ts) just by loading. Now that a page loads only its
+  // overview, a controlled page warms the four tiles at idle, through the same CacheFirst route
+  // (an <img> request is a fetch event too). An uncontrolled page (the first visit, before the
+  // worker takes over) has no cache to warm, so it loads nothing it does not show.
+  onMount(() => {
+    if (!tiled || !navigator.serviceWorker?.controller) return;
+    const warm = () => {
+      for (const q of ['00', '01', '10', '11']) {
+        const img = new Image();
+        img.fetchPriority = 'low';
+        img.src = src(`_${q}`);
+      }
+    };
+    if ('requestIdleCallback' in window) requestIdleCallback(warm, { timeout: 4000 });
+    else setTimeout(warm, 1000);
   });
 
   /** Zoom about a viewport point (the pointer, or the middle of the stage's visible part). */

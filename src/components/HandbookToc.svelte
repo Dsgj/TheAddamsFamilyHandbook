@@ -1,20 +1,56 @@
-<script lang="ts">
-  import { agree, plural } from '~/lib/copy';
-  import { liveText } from '~/lib/live.svelte';
-  import { handbookHref, href } from '~/lib/url';
-  import SearchField from './SearchField.svelte';
+<script module lang="ts">
+  import { handbookHref } from '~/lib/url';
 
   import type { TocItem } from '~/lib/handbook/types';
+  /** The rows, for HandbookTocList (a section page's server-rendered sidebar rows). */
+  export { list };
+  const link = (i: TocItem) => handbookHref(i.section, i.level === 1 ? undefined : i.id);
+
+  /**
+   * The handbook headings a section page inlines once as `<script type="application/json"
+   * id="tafh-toc">` (src/pages/handbook/[section].astro, 29 KB raw): read by the reader bar's
+   * Contents sheet on its first open and by the sidebar's filter on mount, instead of riding as
+   * props on two islands (66 KB each) or being fetched, which an uncontrolled page cannot do
+   * offline. Exported from here (not a lib module) so Rollup keeps one HandbookToc chunk: a
+   * helper module shared with ReaderBar would merge into this chunk and force a facade.
+   * Audit P4 item 5, PF-05 / SV-05.
+   */
+  export function readToc(): TocItem[] {
+    return JSON.parse(document.getElementById('tafh-toc')?.textContent ?? '[]') as TocItem[];
+  }
+</script>
+
+<script lang="ts">
+  import { onMount, type Snippet } from 'svelte';
+  import { agree, plural } from '~/lib/copy';
+  import { liveText } from '~/lib/live.svelte';
+  import { href } from '~/lib/url';
+  import SearchField from './SearchField.svelte';
+
   /**
    * The handbook contents: a filter field over every heading. On the Handbook home (`home`) the
    * field is the page's search ("Search the handbook"): the list shows only while a query is
    * typed, and a last row hands the same query to the manuals' page-text search on /manual.
+   * A section page's sidebar passes no `items`: its rows come server-rendered as `children`
+   * (HandbookTocList) and the headings are read from the page's #tafh-toc script on mount, so
+   * nothing rides as island props (audit P4 item 5, PF-05).
    */
   let {
-    items,
+    items: given,
     current = '',
     home = false,
-  }: { items: TocItem[]; current?: string; home?: boolean } = $props();
+    children,
+  }: {
+    items?: TocItem[] | undefined;
+    current?: string;
+    home?: boolean;
+    children?: Snippet;
+  } = $props();
+  let loaded = $state<TocItem[]>([]);
+  const items = $derived(given ?? loaded);
+  onMount(() => {
+    if (!given) loaded = readToc();
+  });
   let q = $state('');
   const query = $derived(q.trim());
   const shown = $derived.by(() => {
@@ -22,7 +58,6 @@
     if (!s) return home ? [] : items;
     return items.filter((i) => i.level !== 1 && i.text.toLowerCase().includes(s));
   });
-  const link = (i: TocItem) => handbookHref(i.section, i.level === 1 ? undefined : i.id);
   const scans = $derived(href(`manual?q=${encodeURIComponent(query)}`));
   /** Spec §12, audit AY-09: the match count, announced 400 ms after the filter last changed. */
   const live = liveText(
@@ -39,24 +74,30 @@
   <p class="sr-only" aria-live="polite" aria-atomic="true">{live.text}</p>
   <SearchField label="Search the handbook" placeholder="Search the handbook" bind:value={q} />
   {#if !home || query}
-    <ul>
-      {#each shown as i (i.id)}
-        <li class="lv{i.level}" class:cur={i.section === current && i.level === 1}>
-          <a href={link(i)}>
-            <span>{i.text}</span>
-            {#if i.label}<span class="mono muted small">{i.label}</span>{/if}
-          </a>
-        </li>
-      {/each}
-      {#if !shown.length}<li class="muted small none">No headings match “{query}”.</li>{/if}
-      {#if home}
-        <li class="scans">
-          <a href={scans}>Search the manuals for “{query}”</a>
-        </li>
-      {/if}
-    </ul>
+    {@render (children && !query ? children : own)()}
   {/if}
 </nav>
+
+{#snippet own()}{@render list(shown, current, home, query, scans)}{/snippet}
+
+{#snippet list(rows: TocItem[], current: string, home: boolean, query: string, scans: string)}
+  <ul>
+    {#each rows as i (i.id)}
+      <li class="lv{i.level}" class:cur={i.section === current && i.level === 1}>
+        <a href={link(i)}>
+          <span>{i.text}</span>
+          {#if i.label}<span class="mono muted small">{i.label}</span>{/if}
+        </a>
+      </li>
+    {/each}
+    {#if !rows.length}<li class="muted small none">No headings match “{query}”.</li>{/if}
+    {#if home}
+      <li class="scans">
+        <a href={scans}>Search the manuals for “{query}”</a>
+      </li>
+    {/if}
+  </ul>
+{/snippet}
 
 <style>
   .toc :global(.srch) {

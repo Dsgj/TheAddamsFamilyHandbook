@@ -1,6 +1,6 @@
 <script lang="ts">
   import BottomSheet from './BottomSheet.svelte';
-  import HandbookToc from './HandbookToc.svelte';
+  import HandbookToc, { readToc } from './HandbookToc.svelte';
   import type { TocItem } from '~/lib/handbook/types';
 
   /**
@@ -15,12 +15,7 @@
     label: string;
     title: string;
   }
-  let {
-    prev,
-    next,
-    items,
-    current,
-  }: { prev?: End | undefined; next?: End | undefined; items: TocItem[]; current: string } =
+  let { prev, next, current }: { prev?: End | undefined; next?: End | undefined; current: string } =
     $props();
 
   const SIZES = [
@@ -32,6 +27,15 @@
   const KEY = 'tafh:text';
 
   let open = $state<'' | 'toc' | 'size'>('');
+  /**
+   * The contents rows, read from the page's #tafh-toc script on the first Contents open (audit P4
+   * item 5, PF-05): nothing is fetched, so the sheet opens offline on an uncontrolled page too.
+   */
+  let items = $state<TocItem[]>();
+  function openToc() {
+    items ??= readToc();
+    open = 'toc';
+  }
   let size = $state<Size>('md');
   $effect(() => {
     const t = document.documentElement.dataset.text;
@@ -61,9 +65,7 @@
   {:else}
     <span class="rb end off" aria-hidden="true"></span>
   {/if}
-  <button class="rb" type="button" aria-haspopup="dialog" onclick={() => (open = 'toc')}>
-    Contents
-  </button>
+  <button class="rb" type="button" aria-haspopup="dialog" onclick={openToc}> Contents </button>
   <button class="rb" type="button" aria-haspopup="dialog" onclick={() => (open = 'size')}>
     Text size
   </button>

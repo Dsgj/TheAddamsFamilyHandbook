@@ -205,7 +205,8 @@ src/
 public/           data, assets, fonts, icons (synced or generated), brand/logo.webp
 scripts/          sync-kit, copy-fonts, icons, thumbnails
 tests/            vitest + Playwright e2e
-kit-docs/         build prompt, data schema, machine notes, knowledge bank, known issues
+kit-docs/         build prompt, data schema, machine notes, knowledge bank, known issues,
+                  the playfield's source drawing (not served)
 ```
 
 ## Design
