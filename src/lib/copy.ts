@@ -3,7 +3,7 @@
  * location line or a count reads the same everywhere. Kept free of the kit's data files, so an
  * island can import it without pulling components.json into its bundle.
  */
-import type { Kind, Layer } from '~/lib/model/types';
+import type { Kind, Layer, StatusValue } from '~/lib/model/types';
 
 export const KIND_LABEL: Record<Kind, string> = {
   switch: 'Switch',
@@ -41,6 +41,13 @@ export const MAP_TITLE: Record<Layer, string> = {
   sw: 'Switch Locations',
   lamp: 'Lamp Locations',
   coil: 'Solenoid/Flasher Locations',
+};
+
+/** A status's word: the pills, the status buttons and the service log (audit AR2-13). */
+export const STATUS_LABEL: Record<StatusValue, string> = {
+  ok: 'OK',
+  fault: 'Fault',
+  untested: 'Not tested',
 };
 
 /**

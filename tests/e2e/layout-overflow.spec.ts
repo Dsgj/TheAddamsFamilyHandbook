@@ -654,7 +654,7 @@ test.describe('P2-4: the manual viewer (spec §9.12)', () => {
       try {
         if (sessionStorage.getItem('p24-fit-reset')) return;
         sessionStorage.setItem('p24-fit-reset', '1');
-        localStorage.removeItem('valvet:manual-fit');
+        localStorage.removeItem('tafh:manual-fit');
       } catch {
         // Storage blocked: the default applies.
       }

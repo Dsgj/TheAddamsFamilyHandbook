@@ -45,8 +45,10 @@ const setupIds = SETUP_STEPS.flatMap((s) => s.items.map((i) => i.id));
 </Base>
 
 <script>
+  import { emit } from '~/lib/events';
+
   /* Pull-to-refresh (spec §11), on the Workshop only: a downward touch drag from the top of the
-     page past 72 px asks pwa.ts for an update check (`tafh:check-update`); the answer is a toast. */
+     page past 72 px asks pwa.ts for an update check (`check-update`); the answer is a toast. */
   const ptr = document.querySelector<HTMLElement>('[data-ptr]');
   if (ptr) {
     const LIMIT = 72;
@@ -79,7 +81,7 @@ const setupIds = SETUP_STEPS.flatMap((s) => s.items.map((i) => i.id));
       { passive: true },
     );
     const end = () => {
-      if (pull >= LIMIT) window.dispatchEvent(new CustomEvent('tafh:check-update'));
+      if (pull >= LIMIT) emit('check-update');
       startY = -1;
       setPull(0);
     };

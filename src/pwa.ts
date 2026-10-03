@@ -1,14 +1,12 @@
 import { registerSW } from 'virtual:pwa-register';
+import { listen, toast } from '~/lib/events';
 import { armInstall } from '~/lib/install';
 
 /**
- * The service worker's events become toasts (spec §8.8) through `tafh:toast` on window, which
- * Toast.svelte (mounted once in Base.astro) shows. Reload comes back as `tafh:reload`; the
- * Workshop's pull-to-refresh asks for a check with `tafh:check-update`.
+ * The service worker's events become toasts (spec §8.8), which Toast.svelte (mounted once in
+ * Base.astro) shows. Reload comes back as the `reload` event; the Workshop's pull-to-refresh asks
+ * for a check with `check-update` (events.ts).
  */
-type Kind = 'offline' | 'update' | 'info';
-const toast = (kind: Kind, text: string) =>
-  window.dispatchEvent(new CustomEvent('tafh:toast', { detail: { kind, text } }));
 const READY = 'A new version of the app is ready.';
 /** Update ready stays until Reload, so a host that hydrates later still shows it (PF2-03). */
 const ready = () => {
@@ -33,13 +31,13 @@ const update = registerSW({
   },
 });
 
-window.addEventListener('tafh:reload', () => void update(true));
+listen('reload', () => void update(true));
 
 /**
  * Pull-to-refresh: check for a new worker; the Update toast, "Downloading an update" while one
  * installs (its Update toast follows), or "up to date" (CO2-08, PF2-08).
  */
-window.addEventListener('tafh:check-update', () => {
+listen('check-update', () => {
   const settle = () => {
     if (needsRefresh) ready();
     else if (registration?.installing)

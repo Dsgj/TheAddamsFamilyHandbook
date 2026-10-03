@@ -1,9 +1,10 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { emit, listen, type ToastDetail } from '~/lib/events';
 
   /**
-   * The toast host (spec §8.8), mounted once in Base.astro. pwa.ts (and the tests) dispatch
-   * `tafh:toast` on window with `{ kind: 'offline' | 'update' | 'info', text }`. One toast at a
+   * The toast host (spec §8.8), mounted once in Base.astro. pwa.ts, the app's actions (`toast`
+   * in events.ts) and the tests raise the `toast` event with `{ kind, text }`. One toast at a
    * time: Update ready wins over everything and stays until Reload; the others leave after 4 s.
    * The host is a plain aria-live region (never `role=status`: /care, /setup and /shopping run a
    * strict `getByRole('status')`) and passes pointer events through; only Reload takes them.
@@ -11,35 +12,29 @@
    * map's sheet (BottomSheet) or the Diagnose dock, and under a modal sheet, which makes it inert
    * (spec §4, §8.8).
    */
-  type Kind = 'offline' | 'update' | 'info';
-  interface Toast {
-    kind: Kind;
-    text: string;
-  }
   const DWELL = 4000;
-  let toast = $state<Toast | null>(null);
+  let toast = $state<ToastDetail | null>(null);
   let timer: ReturnType<typeof setTimeout> | undefined;
 
-  function show(t: Toast) {
+  function show(t: ToastDetail) {
     if (toast?.kind === 'update' && t.kind !== 'update') return;
     clearTimeout(timer);
     toast = t;
     if (t.kind !== 'update') timer = setTimeout(() => (toast = null), DWELL);
   }
   function reload() {
-    window.dispatchEvent(new CustomEvent('tafh:reload'));
+    emit('reload');
   }
   onMount(() => {
-    const on = (e: Event) => {
-      const d = (e as CustomEvent<Partial<Toast>>).detail;
+    // A spec or a stale page may raise it by hand, so the detail is checked.
+    const off = listen('toast', (d?: Partial<ToastDetail>) => {
       if (d && typeof d.text === 'string')
         show({ kind: d.kind === 'update' || d.kind === 'offline' ? d.kind : 'info', text: d.text });
-    };
-    window.addEventListener('tafh:toast', on);
+    });
     // An Update ready dispatched before this host hydrated (PF2-03).
     if (window.tafhToast) show(window.tafhToast);
     return () => {
-      window.removeEventListener('tafh:toast', on);
+      off();
       clearTimeout(timer);
     };
   });

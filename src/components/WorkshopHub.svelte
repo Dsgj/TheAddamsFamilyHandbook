@@ -11,6 +11,7 @@
   import BottomSheet from './BottomSheet.svelte';
   import InstallSheet from './InstallSheet.svelte';
   import { isStandalone } from '~/lib/install';
+  import { readPref, writePref } from '~/lib/storage';
   import { plural } from '~/lib/copy';
 
   let {
@@ -30,7 +31,6 @@
   } = $props();
 
   type Theme = 'system' | 'dark' | 'light';
-  const THEME_KEY = 'tafh:theme';
   const THEMES: [Theme, string][] = [
     ['system', 'System'],
     ['dark', 'Dark'],
@@ -53,12 +53,8 @@
   onMount(() => {
     hydrated = true;
     standalone = isStandalone();
-    try {
-      const t = localStorage.getItem(THEME_KEY);
-      theme = t === 'light' || t === 'dark' ? t : 'system';
-    } catch {
-      /* private mode */
-    }
+    const t = readPref('theme');
+    theme = t === 'light' || t === 'dark' ? t : 'system';
     const sw = navigator.serviceWorker;
     if (!sw) return undefined;
     const mark = () => (offline = sw.controller ? 'Ready' : '');
@@ -72,14 +68,7 @@
   function choose(t: Theme) {
     theme = t;
     const root = document.documentElement;
-    try {
-      if (t === 'system') {
-        localStorage.removeItem(THEME_KEY);
-        localStorage.removeItem('valvet:theme');
-      } else localStorage.setItem(THEME_KEY, t);
-    } catch {
-      /* private mode */
-    }
+    writePref('theme', t === 'system' ? null : t);
     if (t === 'system') delete root.dataset.theme;
     else root.dataset.theme = t;
     // The browser's bar follows too (audit DS2-01): each theme-color meta takes the chosen

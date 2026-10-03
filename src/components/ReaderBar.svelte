@@ -2,6 +2,7 @@
   import BottomSheet from './BottomSheet.svelte';
   import HandbookToc, { readToc } from './HandbookToc.svelte';
   import type { TocItem } from '~/lib/handbook/types';
+  import { writePref } from '~/lib/storage';
 
   /**
    * The Handbook reader's bottom toolbar (spec §9.11): previous, Contents, Text size, next. The
@@ -27,7 +28,6 @@
     ['lg', 'Large'],
   ] as const;
   type Size = (typeof SIZES)[number][0];
-  const KEY = 'tafh:text';
 
   let open = $state<'' | 'toc' | 'size'>('');
   /**
@@ -48,12 +48,7 @@
     size = s;
     if (s === 'md') delete document.documentElement.dataset.text;
     else document.documentElement.dataset.text = s;
-    try {
-      if (s === 'md') localStorage.removeItem(KEY);
-      else localStorage.setItem(KEY, s);
-    } catch {
-      /* the size still applies for this page */
-    }
+    writePref('text', s === 'md' ? null : s);
   }
   // The article is tall, so it only dims under the scrim; scaling it would shift the text.
   const RECEDE = 'header.top, footer.foot';

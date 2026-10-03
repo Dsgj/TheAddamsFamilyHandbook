@@ -1,20 +1,12 @@
 import { untrack } from 'svelte';
 import { componentKey } from '~/lib/model/key';
-import type { ComponentStatus, Kind, SetupEntry, StatusValue } from './types';
-import {
-  applyBackup,
-  BackupError,
-  deserializeAll,
-  lostEntries,
-  nextStatus,
-  nowIso,
-  serialize,
-  type Snapshot,
-} from '~/lib/status-io';
+import type { ComponentStatus, Kind, StatusValue } from './types';
+import { nextStatus, nowIso } from '~/lib/status-io';
 import {
   BACKUP_KEYS,
   deferEntry,
   flush,
+  LEGACY_KEYS,
   readEntries,
   requestPersist,
   syncEntries,
@@ -22,17 +14,16 @@ import {
   watch,
   writeJson,
 } from '~/lib/storage';
-export { shortDate } from '~/lib/status-io';
 
 /**
  * Per-component test status, local to this device (M1: localStorage through lib/storage.ts; M2
  * moves it to Dexie behind the same module). Reactive via Svelte 5 runes so every island sees the
  * same state. Each component keeps a short history of status changes as a service log. Writes go
- * entry by entry to fresh storage; the state follows storage through the watcher.
+ * entry by entry to fresh storage; the state follows storage through the watcher. The labels are
+ * copy.ts STATUS_LABEL and the backup file is model/backup.ts (audit AR2-13).
  */
 const KEY = BACKUP_KEYS.status;
-/** Read-only fallback from before the rename. Never written or removed: Clear writes `{}`. */
-const LEGACY_KEY = 'valvet:status';
+const LEGACY_KEY = LEGACY_KEYS.status;
 
 const read = () => readEntries<ComponentStatus>(KEY, LEGACY_KEY);
 const state = $state<{ items: Record<string, ComponentStatus> }>({ items: read() });
@@ -93,69 +84,3 @@ export function allStatuses(): ComponentStatus[] {
 export function clearStatuses() {
   writeJson(KEY, {}, { reset: true });
 }
-
-/** Pretty JSON of everything on this device (status, machine setup, Verify ticks), for a backup. */
-export function exportStatuses(): string {
-  flush();
-  return serialize(
-    read(),
-    readEntries<SetupEntry>(BACKUP_KEYS.setup),
-    readEntries<string>(BACKUP_KEYS.verify),
-  );
-}
-
-/** Everything a backup covers, fresh from storage. */
-const snapshot = (): Snapshot => ({
-  items: read(),
-  setup: readEntries<SetupEntry>(BACKUP_KEYS.setup),
-  verify: readEntries<string>(BACKUP_KEYS.verify),
-});
-
-/**
- * How many entries on this device a replace with `json` would remove or overwrite. Writes nothing;
- * throws the same BackupError importStatuses would.
- */
-export function replaceLoss(json: string): number {
-  flush();
-  const cur = snapshot();
-  return lostEntries(cur, applyBackup(cur, deserializeAll(json), 'replace'));
-}
-
-/**
- * Reads a backup. `merge` keeps the newer entry per component, setting and check (default);
- * `replace` swaps what the file carries. A file without a setup or verify block leaves that part
- * alone. The whole file is checked before anything is written: a BackupError leaves the device as
- * it was, except `unsaved`, thrown when storage refused a write (what it kept lasts only for this
- * page). Returns what the file held.
- */
-export function importStatuses(
-  json: string,
-  mode: 'merge' | 'replace' = 'merge',
-): { components: number; settings: number; verified: number } {
-  flush();
-  const b = deserializeAll(json);
-  const cur = snapshot();
-  const next = applyBackup(cur, b, mode);
-  const writes: [string, unknown, unknown][] = [
-    [KEY, cur.items, next.items],
-    [BACKUP_KEYS.setup, cur.setup, next.setup],
-    [BACKUP_KEYS.verify, cur.verify, next.verify],
-  ];
-  let saved = true;
-  for (const [key, was, now] of writes)
-    if (JSON.stringify(was) !== JSON.stringify(now))
-      saved = writeJson(key, now, { reset: mode === 'replace' }) && saved;
-  // Storage refused a part: it lasts only until the page is left, so the import did not happen.
-  if (!saved) throw new BackupError('unsaved');
-  return {
-    components: Object.keys(b.items).length,
-    settings: Object.keys(b.setup ?? {}).length,
-    verified: Object.keys(b.verify ?? {}).length,
-  };
-}
-
-export const STATUS_LABEL: Record<StatusValue, string> = {
-  ok: 'OK',
-  fault: 'Fault',
-  untested: 'Not tested',
-};

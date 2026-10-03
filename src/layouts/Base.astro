@@ -7,6 +7,8 @@ import { jsonScript } from '~/lib/json-script';
 import Toast from '~/components/Toast.svelte';
 import { PARENT, TABS, tabFor, type BackLink } from '~/lib/nav';
 import { depthOf } from '~/lib/nav-state';
+import { eventType } from '~/lib/events';
+import { LEGACY_KEYS, PREF_KEYS, SESSION_KEYS } from '~/lib/storage';
 import { allShoppingItems } from '~/lib/data/shopping';
 import TabBadge from '~/components/TabBadge.svelte';
 import { DESKTOP } from '~/lib/bp';
@@ -94,9 +96,9 @@ const hasActions = Astro.slots.has('actions');
       media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
     />
     {pwaInfo && <Fragment set:html={pwaInfo.webManifest.linkTag} />}
-    <script is:inline>
+    <script is:inline define:vars={{ THEME: PREF_KEYS.theme, OLD_THEME: LEGACY_KEYS.theme }}>
       try {
-        const t = localStorage.getItem('tafh:theme') ?? localStorage.getItem('valvet:theme');
+        const t = localStorage.getItem(THEME) ?? localStorage.getItem(OLD_THEME);
         if (t === 'light' || t === 'dark') {
           document.documentElement.dataset.theme = t;
           // The browser's bar follows the chosen theme too (audit DS2-01), whatever the system's.
@@ -106,7 +108,7 @@ const hasActions = Astro.slots.has('actions');
         }
       } catch {}
     </script>
-    <script is:inline>
+    <script is:inline define:vars={{ PREV: SESSION_KEYS.prev }}>
       // The view transition's type (spec §10): push, pop, tab or fade, decided from the page
       // being left (motion.ts writes `tafh:prev` on pagehide) or the history direction. This must
       // run before the first render, so it is inline; the rest of the continuity is motion.ts.
@@ -119,7 +121,7 @@ const hasActions = Astro.slots.has('actions');
         }
         let prev = null;
         try {
-          prev = JSON.parse(sessionStorage.getItem('tafh:prev') || 'null');
+          prev = JSON.parse(sessionStorage.getItem(PREV) || 'null');
         } catch {}
         // A record older than 10 s (or without a time) is not about this page.
         const age = prev && typeof prev.at === 'number' ? Date.now() - prev.at : -1;
@@ -298,7 +300,7 @@ const hasActions = Astro.slots.has('actions');
       )
     }
     <Toast client:load />
-    <script is:inline>
+    <script is:inline define:vars={{ RESELECT: eventType('reselect') }}>
       (function () {
         // The large title collapses over the first 52 px of scroll (spec §6.5): the compact
         // title fades in between 40 and 52 and the hairline appears at 52. Under reduced motion
@@ -366,8 +368,9 @@ const hasActions = Astro.slots.has('actions');
               h1.focus({ preventScroll: true });
             }
             // Diagnose keeps results/search state on its own root (`?q=`), so reselecting its tab
-            // needs to pop that state too, not just scroll and focus (spec §6.1).
-            document.dispatchEvent(new CustomEvent('tafh:reselect'));
+            // needs to pop that state too, not just scroll and focus (spec §6.1). An inline
+            // script cannot import `emit`, so it raises the app event by its type (events.ts).
+            window.dispatchEvent(new CustomEvent(RESELECT));
           });
         }
       })();

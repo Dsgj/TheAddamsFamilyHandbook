@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { onDestroy, onMount } from 'svelte';
+  import { onMount } from 'svelte';
   import { agree, KIND_PLURAL } from '~/lib/copy';
-  import { later } from '~/lib/later';
   import { componentKey } from '~/lib/model/key';
+  import { canShare, copyText, shareText } from '~/lib/share';
   import { allStatuses, setStatus } from '~/lib/model/status.svelte';
   import { componentHref } from '~/lib/url';
   import {
@@ -28,36 +28,21 @@
   const kinds = $derived(KIND_ORDER.filter((k) => groups.some((g) => g.kind === k)));
 
   let show = $state(false);
-  let msg = $state('');
   let fallback = $state(false);
   // Read after mount: navigator is not there at build time.
-  let canShare = $state(false);
+  let shareable = $state(false);
   onMount(() => {
-    canShare = typeof navigator.share === 'function';
+    shareable = canShare();
   });
 
-  const msgTimer = later();
-  onDestroy(msgTimer.clear);
-  function say(s: string) {
-    msg = s;
-    msgTimer.set(() => (msg = ''), 2500);
+  /** Shows the text to select and copy by hand when nothing left the page. */
+  function byHand(sent: boolean) {
+    if (sent) return;
+    fallback = true;
+    show = true;
   }
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(text);
-      say('Copied');
-    } catch {
-      fallback = true;
-      show = true;
-    }
-  }
-  async function share() {
-    try {
-      await navigator.share({ title: 'Parts to order', text });
-    } catch (e) {
-      if ((e as Error).name !== 'AbortError') copy();
-    }
-  }
+  const copy = async () => byHand(await copyText(text));
+  const share = async () => byHand(await shareText('Parts to order', text));
   function fixed(i: ShoppingItem) {
     setStatus(i.kind, i.id, '');
   }
@@ -115,11 +100,10 @@
     </p>
     <div class="acts">
       <button type="button" class="btn sm" onclick={copy}>Copy as text</button>
-      {#if canShare}<button type="button" class="btn sm" onclick={share}>Share</button>{/if}
+      {#if shareable}<button type="button" class="btn sm" onclick={share}>Share</button>{/if}
       <button type="button" class="btn sm" aria-pressed={show} onclick={() => (show = !show)}>
         {show ? 'Hide text' : 'Show text'}
       </button>
-      {#if msg}<span class="ok small" role="status">{msg}</span>{/if}
     </div>
   </div>
   {#if show}

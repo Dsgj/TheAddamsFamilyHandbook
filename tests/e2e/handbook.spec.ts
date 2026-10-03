@@ -271,7 +271,7 @@ test.describe('the manual viewer', () => {
     // The default fit (spec §9.12): fit page from 1000, fit width below. A kept choice is cleared.
     await page.addInitScript(() => {
       try {
-        localStorage.removeItem('valvet:manual-fit');
+        localStorage.removeItem('tafh:manual-fit');
       } catch {
         // No storage: the default applies anyway.
       }

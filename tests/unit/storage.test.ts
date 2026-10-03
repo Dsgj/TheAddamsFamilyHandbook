@@ -347,7 +347,7 @@ describe('when storage fails', () => {
 
   it('an import that storage refuses fails, and says why (CO2-01)', async () => {
     await load();
-    const { importStatuses } = await import('~/lib/model/status.svelte');
+    const { importBackup } = await import('~/lib/model/backup');
     const { serialize } = await import('~/lib/status-io');
     const file = serialize({
       'switch:32': { id: 'switch:32', status: 'fault', note: '', at: '2026-09-20T10:00:00.000Z' },
@@ -355,7 +355,7 @@ describe('when storage fails', () => {
     store.failSet = true;
     let error: unknown;
     try {
-      importStatuses(file);
+      importBackup(file);
     } catch (e) {
       error = e;
     }
@@ -451,6 +451,44 @@ describe('requestPersist', () => {
     await settle();
     vi.stubGlobal('navigator', undefined);
     expect(() => s.requestPersist()).not.toThrow();
+  });
+});
+
+describe('preferences', () => {
+  it('reads the new key first, then the old one, and null when neither is set', async () => {
+    const s = await load();
+    expect(s.readPref('theme')).toBeNull();
+    store.setItem('valvet:theme', 'dark');
+    expect(s.readPref('theme')).toBe('dark');
+    store.setItem('tafh:theme', 'light');
+    expect(s.readPref('theme')).toBe('light');
+    expect(s.readPref('text')).toBeNull();
+  });
+
+  it('a write drops the old key, and null forgets the preference', async () => {
+    const s = await load();
+    store.setItem('valvet:manual-fit', 'page');
+    s.writePref('fit', 'width');
+    expect(store.map.get('tafh:manual-fit')).toBe('width');
+    expect(store.map.has('valvet:manual-fit')).toBe(false);
+    s.writePref('fit', null);
+    expect(store.map.has('tafh:manual-fit')).toBe(false);
+    expect(s.readPref('fit')).toBeNull();
+  });
+
+  it('is silent when storage refuses', async () => {
+    const s = await load();
+    store.failSet = true;
+    expect(() => s.writePref('text', 'lg')).not.toThrow();
+    store.failGet = true;
+    expect(s.readPref('text')).toBeNull();
+  });
+
+  it('names every key under the tafh: prefix but the old ones', async () => {
+    const s = await load();
+    const keys = [s.BACKUP_KEYS, s.KEYS, s.SESSION_KEYS, s.PREF_KEYS].flatMap(Object.values);
+    for (const k of keys) expect(k).toMatch(/^tafh:[a-z-]+$/);
+    expect(new Set(keys).size).toBe(keys.length);
   });
 });
 

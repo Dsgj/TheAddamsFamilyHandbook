@@ -1,3 +1,5 @@
+import { emit } from '~/lib/events';
+
 /**
  * The deferred `beforeinstallprompt` (spec §9.16, Q22). pwa.ts arms it; the Install sheet calls
  * `promptInstall`. Both live on `window`, so it does not matter that the two are separate bundles.
@@ -19,11 +21,11 @@ export function armInstall(): void {
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     window.tafhInstall = e as BeforeInstallPromptEvent;
-    window.dispatchEvent(new CustomEvent('tafh:installable'));
+    emit('installable');
   });
   window.addEventListener('appinstalled', () => {
     delete window.tafhInstall;
-    window.dispatchEvent(new CustomEvent('tafh:installable'));
+    emit('installable');
   });
 }
 
@@ -48,7 +50,7 @@ export async function promptInstall(): Promise<boolean> {
   const e = window.tafhInstall;
   if (!e) return false;
   delete window.tafhInstall;
-  window.dispatchEvent(new CustomEvent('tafh:installable'));
+  emit('installable');
   try {
     await e.prompt();
     return (await e.userChoice).outcome === 'accepted';

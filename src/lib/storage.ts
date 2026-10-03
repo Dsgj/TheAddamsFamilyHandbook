@@ -1,7 +1,10 @@
 /**
  * The one door to the device data in localStorage: the backup keys below, the Recent/Viewed
- * lists and Continue reading. Plain TS (no runes), so vitest runs it in node; M2 can move the
- * backend to IndexedDB behind the same functions.
+ * lists, Continue reading and the display preferences. Every key the app keeps is named here
+ * (audit AR2-12, SV2-14): a structure rule keeps `tafh:` strings and localStorage out of other
+ * modules, except the inline scripts that read a preference before the first paint, which get
+ * their keys from here through `define:vars`. Plain TS (no runes), so vitest runs it in node; M2
+ * can move the backend to IndexedDB behind the same functions.
  *
  * - Every write re-reads storage first and changes one entry (or one list), so a second tab or a
  *   page restored from the back/forward cache never writes an old snapshot over newer marks.
@@ -15,6 +18,8 @@
  *   edits made after the Clear.
  */
 
+import { toast } from '~/lib/events';
+
 export type Entries<V> = Record<string, V>;
 type Fn<V> = (cur: V | undefined) => V | undefined;
 
@@ -25,6 +30,31 @@ export const BACKUP_KEYS = {
   verify: 'tafh:verify',
 } as const;
 const KEPT: ReadonlySet<string> = new Set(Object.values(BACKUP_KEYS));
+
+/**
+ * Where a key lived before the rename to `tafh:`. The status map is read from its old key while
+ * the new one is absent and never writes it (Clear writes `{}`); a preference's old key is
+ * removed when the preference is next written.
+ */
+export const LEGACY_KEYS = {
+  status: 'valvet:status',
+  theme: 'valvet:theme',
+  fit: 'valvet:manual-fit',
+} as const;
+
+/**
+ * The device's other keys, not backed up: Recent and Viewed and Continue reading. The map's
+ * calibration draft (`?calib=1`) keeps its first name in MapCalibration, so the map's chunk does
+ * not carry it (SV-08).
+ */
+export const KEYS = {
+  recent: 'tafh:recent',
+  viewed: 'tafh:viewed',
+  reading: 'tafh:reading',
+} as const;
+
+/** The per-tab records in sessionStorage, which motion.ts writes and nav-state.ts reads. */
+export const SESSION_KEYS = { prev: 'tafh:prev', nav: 'tafh:nav' } as const;
 
 /** How many times each key was cleared or replaced whole, by any tab. Not backed up. */
 const RESET_KEY = 'tafh:reset';
@@ -64,8 +94,7 @@ let warned = false;
 function warnUnsaved() {
   if (warned) return;
   warned = true;
-  const text = 'This device is not saving changes. They last until you leave this page.';
-  window.dispatchEvent(new CustomEvent('tafh:toast', { detail: { kind: 'info', text } }));
+  toast('info', 'This device is not saving changes. They last until you leave this page.');
 }
 
 /** Writes unless the same text is already stored. `memory` when storage refused it. */
@@ -325,6 +354,48 @@ export function writeJson(key: string, value: unknown, opts: { reset?: boolean }
   if (r === 'written') keep(key);
   notify(key);
   return r !== 'memory';
+}
+
+// Preferences ---------------------------------------------------------------------------------
+
+/**
+ * The display preferences: the theme, the reading text size and the manual's fit. Short strings
+ * stored as they are, not JSON, because inline scripts in Base.astro and two pages read them
+ * before the first paint. Not backed up and not watched: a page reads them once.
+ */
+export const PREF_KEYS = {
+  theme: 'tafh:theme',
+  text: 'tafh:text',
+  fit: 'tafh:manual-fit',
+} as const;
+export type Pref = keyof typeof PREF_KEYS;
+const LEGACY_PREF: Partial<Record<Pref, string>> = {
+  theme: LEGACY_KEYS.theme,
+  fit: LEGACY_KEYS.fit,
+};
+
+/** A preference, else its value under the old key; null when unset or storage is blocked. */
+export function readPref(p: Pref): string | null {
+  const s = backend();
+  const legacy = LEGACY_PREF[p];
+  try {
+    return s?.getItem(PREF_KEYS[p]) ?? (legacy ? s?.getItem(legacy) : null) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** Keeps a preference, or with null forgets it. Silent when storage refuses: it still applies here. */
+export function writePref(p: Pref, value: string | null) {
+  const s = backend();
+  const legacy = LEGACY_PREF[p];
+  try {
+    if (legacy) s?.removeItem(legacy);
+    if (value === null) s?.removeItem(PREF_KEYS[p]);
+    else s?.setItem(PREF_KEYS[p], value);
+  } catch {
+    /* not kept: the next page uses the default */
+  }
 }
 
 // Persistent storage --------------------------------------------------------------------------

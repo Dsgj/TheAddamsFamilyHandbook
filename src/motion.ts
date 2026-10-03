@@ -1,3 +1,4 @@
+import { listen } from '~/lib/events';
 import { TABS } from '~/lib/nav';
 import {
   BACK_GUARD_MS,
@@ -105,7 +106,7 @@ document.addEventListener('click', (e) => {
 });
 
 // The scroll offset comes back with the view (not when a hash asks for a place). An island that
-// renders the page's content after load, like Diagnose's results, says so with `tafh:content`, and
+// renders the page's content after load, like Diagnose's results, says so with `content`, and
 // the offset is put back once more then, unless the reader has moved the page since (UX2-01).
 const saved = state.scroll[url];
 if (saved && !location.hash) {
@@ -115,7 +116,7 @@ if (saved && !location.hash) {
   };
   restore();
   addEventListener('load', restore, { once: true });
-  document.addEventListener('tafh:content', restore, { once: true });
+  listen('content', restore, { once: true });
   for (const type of ['wheel', 'touchstart', 'pointerdown', 'keydown'])
     addEventListener(type, () => (moved = true), { once: true, capture: true, passive: true });
 }

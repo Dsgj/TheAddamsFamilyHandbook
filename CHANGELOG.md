@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Copying or sharing Diagnose results, the shopping list or the map's
+  calibration JSON now confirms with a toast. Where the clipboard refuses, the
+  shopping list and the calibration card still show the text to copy by hand.
+- The manual's fit choice is kept under the app's own name; a choice made
+  before the rename carries over.
 - A component's wiring reads the same on its card, its page and the map
   sheet. The sheet now says "Installed LED", shows when a coil's fuse comes
   from the fuse list, and tags an owner's hint "(owner's experience, not the

@@ -64,10 +64,9 @@ import PlayfieldMap from '~/components/PlayfieldMap.svelte';
 </style>
 
 <script>
-  // The bar's buttons talk to the PlayfieldMap island through one document event.
-  for (const b of document.querySelectorAll<HTMLButtonElement>('button[data-map]')) {
-    b.addEventListener('click', () =>
-      document.dispatchEvent(new CustomEvent('tafh:map', { detail: b.dataset.map })),
-    );
-  }
+  import { emit } from '~/lib/events';
+
+  // The bar's buttons talk to the PlayfieldMap island through one app event.
+  for (const b of document.querySelectorAll<HTMLButtonElement>('button[data-map]'))
+    b.addEventListener('click', () => emit('map', b.dataset.map ?? ''));
 </script>

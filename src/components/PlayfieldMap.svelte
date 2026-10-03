@@ -4,6 +4,7 @@
   import { SHOTS } from '~/data/shots';
   import { mapOf } from '~/lib/data/components';
   import { agree, plural } from '~/lib/copy';
+  import { listen } from '~/lib/events';
   import { isTypingTarget } from '~/lib/keys';
   import { liveText } from '~/lib/live.svelte';
   import type { CalibrationApi, Item, MapLayer, OverlayImage } from '~/lib/map/items';
@@ -201,22 +202,20 @@
     // The top bar's buttons (map.astro, spec §6.5): "All components on the map" opens the list
     // sheet; "Search components" opens it with its field focused below 1000 and focuses the panel's field
     // from 1000 (Q28).
-    const onBar = (e: Event) => {
+    const offBar = listen('map', (what) => {
       if (embed) return;
-      const what = (e as CustomEvent<string>).detail;
       if (what === 'parts') partsOpen = true;
       else if (what === 'find') {
         if (wide)
           el?.closest('.map-ui')?.querySelector<HTMLInputElement>('.panel input.search')?.focus();
         else partsOpen = true;
       }
-    };
-    document.addEventListener('tafh:map', onBar);
+    });
     return () => {
       ro.disconnect();
       above.disconnect();
       removeEventListener('resize', measureTop);
-      document.removeEventListener('tafh:map', onBar);
+      offBar();
       for (const off of offs) off();
     };
   });
@@ -698,10 +697,6 @@
   .map-ui :global(.calib textarea) {
     width: 100%;
     font: 11px/1.3 var(--font-mono);
-  }
-  .map-ui :global(.calib .ok) {
-    color: var(--ok);
-    margin: 0;
   }
 
   /* Stage: the drawing fitted to the space left under the header (spec §7.1). */

@@ -5,7 +5,7 @@ import Diagnose from '~/components/Diagnose.svelte';
 /**
  * The Diagnose home (spec §9.1). The old quick links live in their hubs: Test menu and Error
  * messages on /handbook, Fuses on /tables, Verify, Setup and Care on /workshop, the map layers on
- * the Map tab. The bar's "Recent reports" button talks to the island through a `tafh:diag` event.
+ * the Map tab. The bar's "Recent reports" button talks to the island through the `diag` app event.
  */
 ---
 
@@ -26,11 +26,8 @@ import Diagnose from '~/components/Diagnose.svelte';
 </Base>
 
 <script>
-  document
-    .querySelectorAll<HTMLButtonElement>('button[data-diag]')
-    .forEach((b) =>
-      b.addEventListener('click', () =>
-        document.dispatchEvent(new CustomEvent('tafh:diag', { detail: b.dataset.diag })),
-      ),
-    );
+  import { emit } from '~/lib/events';
+
+  for (const b of document.querySelectorAll<HTMLButtonElement>('button[data-diag]'))
+    b.addEventListener('click', () => emit('diag', b.dataset.diag ?? ''));
 </script>

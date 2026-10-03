@@ -1,12 +1,7 @@
 <script lang="ts">
-  import {
-    getStatus,
-    saveNote,
-    setNote,
-    setStatus,
-    shortDate,
-    STATUS_LABEL,
-  } from '~/lib/model/status.svelte';
+  import { STATUS_LABEL } from '~/lib/copy';
+  import { getStatus, saveNote, setNote, setStatus } from '~/lib/model/status.svelte';
+  import { shortDate } from '~/lib/status-io';
   import type { Kind, StatusValue } from '~/lib/model/types';
 
   /** `log={false}` leaves the service log to the page (the detail page draws its own section). */

@@ -229,8 +229,39 @@ describe('structure lint', () => {
     expectNone(hits(/on the location map['"]/i, only('src/lib/copy.ts')));
   });
 
+  it('(q) names a storage key or an app event type only in storage.ts and events.ts (AR2-12, SV2-11)', () => {
+    // The calibration draft keeps its key in its lazy chunk, so the map's chunk does not carry it.
+    const homes = only(
+      'src/lib/storage.ts',
+      'src/lib/events.ts',
+      'src/components/MapCalibration.svelte',
+    );
+    expectNone(hits(/['"`](tafh:|valvet:|taf\.)/, homes));
+  });
+
+  it('(q) touches localStorage and sessionStorage only in storage.ts and the before-paint scripts (SV2-14)', () => {
+    // The inline scripts read a preference or the view-transition record before the first paint
+    // (keys through define:vars); motion.ts writes the per-tab records it owns.
+    const homes = only(
+      'src/lib/storage.ts',
+      'src/layouts/Base.astro',
+      'src/pages/handbook/[section].astro',
+      'src/pages/manual/[doc]/[page].astro',
+      'src/motion.ts',
+    );
+    expectNone(hits(/\b(localStorage|sessionStorage)\b/, homes));
+  });
+
+  it('(q) builds an app event only in events.ts (and the inline reselect script) (AR2-09)', () => {
+    expectNone(hits(/new CustomEvent\(/, only('src/lib/events.ts', 'src/layouts/Base.astro')));
+  });
+
+  it('(q) leaves copy and share to share.ts (AR2-15)', () => {
+    expectNone(hits(/navigator\.(clipboard\.writeText|share\b)/, only('src/lib/share.ts')));
+  });
+
   it('(control) every rule above still matches inside its home, so none passes vacuously', () => {
-    expect(RULES.length).toBe(15);
+    expect(RULES.length).toBe(19);
     for (const [pattern, allowed] of RULES) {
       if (pattern === KIND_TERNARY) continue;
       const home = FILES.filter((f) => allowed(f.path));

@@ -14,7 +14,10 @@
   import type { Item, MapLayer, OverlayImage } from '~/lib/map/items';
   import type { Layer, Loc } from '~/lib/model/types';
   import { pageLabel, pageRefText } from '~/lib/pages';
+  import { copyText } from '~/lib/share';
+  import { readEntries, writeJson } from '~/lib/storage';
 
+  /** Its own key, not in storage.ts, so the map's chunk does not carry it (SV-08). */
   const DRAFT_KEY = 'taf.positions.draft';
   /** Manual pages positioned so their playfield frame lands on the drawing's (calibration aid). */
   interface Overlay {
@@ -68,12 +71,9 @@
 
   let overlay = $state(overlayFor(untrack(() => layer)));
   let overlayOpacity = $state(0.5);
+  /** The JSON to copy by hand when the clipboard refused it. */
   let copied = $state('');
-  try {
-    draft = JSON.parse(localStorage.getItem(DRAFT_KEY) ?? '{}');
-  } catch {
-    draft = {};
-  }
+  draft = readEntries<Loc[]>(DRAFT_KEY);
   $effect(() => {
     const o = OVERLAYS[overlay];
     overlayImg = o ? { ...o, opacity: overlayOpacity } : undefined;
@@ -88,7 +88,7 @@
     if (!p) return;
     arr[li] = { x: +clamp(x).toFixed(4), y: +clamp(y).toFixed(4), l: p.l };
     draft = { ...draft, [key]: arr };
-    localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    writeJson(DRAFT_KEY, draft);
   }
   export function dragStart(e: PointerEvent, item: Item, li: number) {
     e.preventDefault();
@@ -118,18 +118,15 @@
     if (p) setDraft(item, li, p.x + m[0], p.y + m[1]);
   }
   const moved = $derived(Object.keys(draft).length);
-  function exportJson() {
+  async function exportJson() {
     const s = snapshot();
     const out = { image: s.image, pos: { ...s.pos, ...draft } };
     const text = JSON.stringify(out, null, 1);
-    navigator.clipboard
-      ?.writeText(text)
-      .then(() => (copied = 'Copied positions.json to the clipboard.'))
-      .catch(() => (copied = text));
+    copied = (await copyText(text, 'Copied positions.json to the clipboard.')) ? '' : text;
   }
   function resetDraft() {
     draft = {};
-    localStorage.removeItem(DRAFT_KEY);
+    writeJson(DRAFT_KEY, {});
     copied = '';
   }
 </script>
@@ -168,10 +165,6 @@
     <button class="btn sm" onclick={resetDraft} disabled={!moved}>Discard drafts</button>
   </div>
   {#if copied}
-    {#if copied.startsWith('{')}
-      <textarea readonly rows="6">{copied}</textarea>
-    {:else}
-      <p class="small ok">{copied}</p>
-    {/if}
+    <textarea readonly rows="6">{copied}</textarea>
   {/if}
 </div>

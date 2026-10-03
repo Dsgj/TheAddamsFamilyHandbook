@@ -5,7 +5,7 @@
  */
 import { untrack } from 'svelte';
 import { nowIso } from '~/lib/status-io';
-import { readList, updateJson, watch } from '~/lib/storage';
+import { KEYS, readList, updateJson, watch } from '~/lib/storage';
 import type { Kind } from '~/lib/model/types';
 
 export interface RecentEntry {
@@ -28,8 +28,8 @@ export interface ViewedEntry {
   at: string;
 }
 
-const KEY = 'tafh:recent';
-const VIEWED_KEY = 'tafh:viewed';
+const KEY = KEYS.recent;
+const VIEWED_KEY = KEYS.viewed;
 export const RECENT_MAX = 8;
 
 const load = <T>(key: string) => readList<T>(key, RECENT_MAX);

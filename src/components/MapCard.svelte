@@ -10,10 +10,9 @@
    */
   import { SHOTS } from '~/data/shots';
   import { DATA, mapOf } from '~/lib/data/components';
-  import { componentCode, MAP_TITLE, TABLE_LABEL } from '~/lib/copy';
+  import { componentCode, MAP_TITLE, STATUS_LABEL, TABLE_LABEL } from '~/lib/copy';
   import type { Item, MapLayer } from '~/lib/map/items';
   import { fullName, kindLine, statusOf } from '~/lib/map/items';
-  import { STATUS_LABEL } from '~/lib/model/status.svelte';
   import type { Coil, Switch } from '~/lib/model/types';
   import { pageTitleText } from '~/lib/pages';
   import { wiring, wiringRows } from '~/lib/present';

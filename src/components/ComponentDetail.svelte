@@ -18,10 +18,12 @@
     locationLine,
     MAP_LAYER,
     noCallout,
+    STATUS_LABEL,
   } from '~/lib/copy';
   import { positions } from '~/lib/data/positions';
   import { recordViewed } from '~/lib/model/recent.svelte';
-  import { getStatus, setStatus, shortDate, STATUS_LABEL } from '~/lib/model/status.svelte';
+  import { getStatus, setStatus } from '~/lib/model/status.svelte';
+  import { shortDate } from '~/lib/status-io';
   import type { Coil, Kind, Lamp, MapMeta, StatusValue, Switch } from '~/lib/model/types';
   import { pageTitleText } from '~/lib/pages';
   import { callouts as calloutsOf, offMap, wiring, wiringRows } from '~/lib/present';

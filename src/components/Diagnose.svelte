@@ -3,6 +3,7 @@
   import { parseCodes, type ParsedCode } from '~/lib/codes';
   import { componentCode, componentLabel, componentName, plural, TABLE_LABEL } from '~/lib/copy';
   import { DATA, find, mapOf } from '~/lib/data/components';
+  import { emit, listen } from '~/lib/events';
   import {
     clearRecent,
     normalizeInput,
@@ -11,6 +12,7 @@
   } from '~/lib/model/recent.svelte';
   import { later } from '~/lib/later';
   import { liveText } from '~/lib/live.svelte';
+  import { shareText } from '~/lib/share';
   import { whenLabel } from '~/lib/status-io';
   import { allStatuses, getStatus } from '~/lib/model/status.svelte';
   import type { Lamp, Switch } from '~/lib/model/types';
@@ -46,7 +48,6 @@
   );
   let hydrated = $state(false);
   let canPaste = $state(false);
-  let shared = $state<'' | 'copied' | 'shared'>('');
   let field: HTMLTextAreaElement | undefined = $state();
   let resultsHead: HTMLHeadingElement | undefined = $state();
   let recentHead: HTMLHeadingElement | undefined = $state();
@@ -111,18 +112,17 @@
     hydrated = true;
     // Once the results are in the page, motion.ts can put back the scroll offset this entry had:
     // its first try, before the cards existed, could not reach it (UX2-01).
-    void tick().then(() => document.dispatchEvent(new CustomEvent('tafh:content')));
+    void tick().then(() => emit('content'));
     canPaste = typeof navigator !== 'undefined' && !!navigator.clipboard?.readText;
-    const onBar = (e: Event) => {
-      if ((e as CustomEvent<string>).detail === 'recent') showRecent();
-    };
-    document.addEventListener('tafh:diag', onBar);
+    const offBar = listen('diag', (what) => {
+      if (what === 'recent') showRecent();
+    });
     // Reselecting the Diagnose tab while on results/search pops to the home (spec §6.1); Base.astro
     // dispatches this once its own scroll-and-focus handling for the reselect is done.
     const onReselect = () => {
       if (mode !== 'home') clear();
     };
-    document.addEventListener('tafh:reselect', onReselect);
+    const offReselect = listen('reselect', onReselect);
     // A link followed from the view commits first (capture phase, so the entry holds `?q=` before
     // the link navigates away from it; keyboard activation clicks too).
     const onFollow = (e: Event) => {
@@ -154,8 +154,8 @@
     document.addEventListener('visibilitychange', onVisibility);
     return () => {
       clearTimeout(pending);
-      document.removeEventListener('tafh:diag', onBar);
-      document.removeEventListener('tafh:reselect', onReselect);
+      offBar();
+      offReselect();
       root?.removeEventListener('click', onFollow, true);
       removeEventListener('pagehide', onPageHide);
       removeEventListener('pageshow', onPageShow);
@@ -333,7 +333,6 @@
   function clear() {
     input = '';
     uncommit();
-    shared = '';
     field?.focus();
   }
   function cancelSearch() {
@@ -344,11 +343,7 @@
   // Clear asks once more, as Device data does (UX2-08, CR-11): a second tap within 4 s clears.
   let clearArmed = $state(false);
   const disarm = later();
-  const sharedTimer = later();
-  onDestroy(() => {
-    disarm.clear();
-    sharedTimer.clear();
-  });
+  onDestroy(disarm.clear);
   function clearAll() {
     disarm.clear();
     if (!clearArmed) {
@@ -381,19 +376,7 @@
       ...causes.map((c) => c.text),
       `${location.origin}${href('')}?q=${encodeURIComponent(input.trim())}`,
     ];
-    const text = lines.join('\n');
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: 'The Addams Family Handbook', text });
-        shared = 'shared';
-      } else {
-        await navigator.clipboard.writeText(text);
-        shared = 'copied';
-      }
-      sharedTimer.set(() => (shared = ''), 2000);
-    } catch {
-      /* cancelled */
-    }
+    await shareText('The Addams Family Handbook', lines.join('\n'));
   }
 </script>
 
@@ -520,9 +503,7 @@
         {plural(parsed.length, 'code')}
       </h2>
       {#if parsed.length}
-        <button type="button" class="tlink" onclick={share}>
-          {shared === 'copied' ? 'Copied' : shared === 'shared' ? 'Shared' : 'Share results'}
-        </button>
+        <button type="button" class="tlink" onclick={share}>Share results</button>
       {/if}
     </div>
     <ul class="codes" aria-label="Codes">

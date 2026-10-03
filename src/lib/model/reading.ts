@@ -4,9 +4,9 @@
  * lib/storage.ts like the other device data, so a Handbook home that is open in another tab or
  * restored from the back/forward cache hears Clear all.
  */
-import { readJson, writeJson } from '~/lib/storage';
+import { KEYS, readJson, writeJson } from '~/lib/storage';
 
-export const READING_KEY = 'tafh:reading';
+export const READING_KEY = KEYS.reading;
 
 export interface Reading {
   /** The section key (`tests`). */

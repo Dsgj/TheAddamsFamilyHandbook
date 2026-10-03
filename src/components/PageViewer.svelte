@@ -2,6 +2,7 @@
   import { onMount, untrack } from 'svelte';
   import BottomSheet from './BottomSheet.svelte';
   import { isTypingTarget } from '~/lib/keys';
+  import { readPref, writePref } from '~/lib/storage';
   import type { DocId, PageMeta } from '~/lib/model/types';
   import { pageImage, pageRefText, pdfPageFromLabel } from '~/lib/pages';
   import { href, manualHref, replacePage } from '~/lib/url';
@@ -55,25 +56,16 @@
   // Spec §9.12: fit width or fit page (the whole page in the viewport). Page from 1000, width
   // below; a choice is kept, because every page turn loads a new document.
   type Fit = 'width' | 'page';
-  const FIT_KEY = 'valvet:manual-fit';
   let fitMode = $state<Fit>('width');
   function storedFit(): Fit {
-    try {
-      const v = localStorage.getItem(FIT_KEY);
-      if (v === 'width' || v === 'page') return v;
-    } catch {
-      // Storage blocked: the default applies.
-    }
+    const v = readPref('fit');
+    if (v === 'width' || v === 'page') return v;
     return matchMedia(WIDE).matches ? 'page' : 'width';
   }
   function chooseFit(m: Fit) {
     fitMode = m;
     scale = 0;
-    try {
-      localStorage.setItem(FIT_KEY, m);
-    } catch {
-      // Not kept: the next page falls back to the default.
-    }
+    writePref('fit', m);
   }
   // Read once on mount: storage and matchMedia exist only in the browser.
   onMount(() => {

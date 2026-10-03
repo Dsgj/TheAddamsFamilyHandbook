@@ -1,3 +1,5 @@
+import { SESSION_KEYS } from '~/lib/storage';
+
 /**
  * Navigation continuity (spec §10, Phase 12), the pure part. motion.ts runs it in the page.
  *
@@ -10,8 +12,8 @@
  * given when it was created (audit P1 item 7), so a reload, a Back/Forward or a restore shows the
  * same link instead of re-deriving it from whatever page happened to be left last.
  */
-export const PREV_KEY = 'tafh:prev';
-export const STATE_KEY = 'tafh:nav';
+export const PREV_KEY = SESSION_KEYS.prev;
+export const STATE_KEY = SESSION_KEYS.nav;
 /** A `tafh:prev` record older than this is not about the page now loading. */
 export const FRESH_MS = 10_000;
 /** A second back (double tap, a tap during a swipe) within this window does nothing. */

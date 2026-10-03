@@ -8,13 +8,8 @@
     viewedEntries,
   } from '~/lib/model/recent.svelte';
   import { clearSetup, setupItems } from '~/lib/model/setup.svelte';
-  import {
-    allStatuses,
-    clearStatuses,
-    exportStatuses,
-    importStatuses,
-    replaceLoss,
-  } from '~/lib/model/status.svelte';
+  import { allStatuses, clearStatuses } from '~/lib/model/status.svelte';
+  import { exportBackup, importBackup, replaceLoss } from '~/lib/model/backup';
   import { clearVerify, verifyTicks } from '~/lib/model/verify.svelte';
   import { agree, plural } from '~/lib/copy';
   import { later } from '~/lib/later';
@@ -67,7 +62,7 @@
   }
 
   function download() {
-    const blob = new Blob([exportStatuses()], { type: 'application/json' });
+    const blob = new Blob([exportBackup()], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -81,7 +76,7 @@
 
   function restore(text: string, name: string, how: 'merge' | 'replace') {
     try {
-      const n = importStatuses(text, how);
+      const n = importBackup(text, how);
       const parts = [plural(n.components, 'component')];
       if (n.settings) parts.push(plural(n.settings, 'setting'));
       if (n.verified) parts.push(plural(n.verified, 'check'));

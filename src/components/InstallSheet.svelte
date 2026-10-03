@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import BottomSheet from './BottomSheet.svelte';
+  import { listen } from '~/lib/events';
   import { canInstall, promptInstall } from '~/lib/install';
 
   /**
@@ -14,8 +15,7 @@
   onMount(() => {
     const mark = () => (installable = canInstall());
     mark();
-    window.addEventListener('tafh:installable', mark);
-    return () => window.removeEventListener('tafh:installable', mark);
+    return listen('installable', mark);
   });
   async function install() {
     if (await promptInstall()) onclose();

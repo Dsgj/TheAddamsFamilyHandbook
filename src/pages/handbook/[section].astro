@@ -7,6 +7,7 @@ import ReaderBar from '~/components/ReaderBar.svelte';
 import { SECTIONS, isAppendixPage } from '~/lib/handbook/sections';
 import { handbookToc } from '~/lib/handbook/toc';
 import { jsonScript } from '~/lib/json-script';
+import { PREF_KEYS } from '~/lib/storage';
 import HandbookTocList from '~/components/HandbookTocList.svelte';
 import { pageLabel, pageTitleText, printedPageText } from '~/lib/pages';
 import { handbookHref, manualHref } from '~/lib/url';
@@ -71,9 +72,9 @@ const description =
       </a>
     )
   }
-  <script is:inline>
+  <script is:inline define:vars={{ TEXT: PREF_KEYS.text }}>
     try {
-      const t = localStorage.getItem('tafh:text');
+      const t = localStorage.getItem(TEXT);
       if (t === 'sm' || t === 'lg') document.documentElement.dataset.text = t;
     } catch {
       /* no storage: the default size */

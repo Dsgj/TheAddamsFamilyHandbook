@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, tick, untrack } from 'svelte';
-  import { componentCode, kindLine, MAP_LAYER, TABLE_LABEL } from '~/lib/copy';
-  import { getStatus, STATUS_LABEL } from '~/lib/model/status.svelte';
+  import { componentCode, kindLine, MAP_LAYER, STATUS_LABEL, TABLE_LABEL } from '~/lib/copy';
+  import { getStatus } from '~/lib/model/status.svelte';
   import type { Kind, MatrixHeaders } from '~/lib/model/types';
   import { componentHref, mapHref } from '~/lib/url';
   import WireChip from './WireChip.svelte';
