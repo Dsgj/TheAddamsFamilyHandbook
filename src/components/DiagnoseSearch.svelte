@@ -39,6 +39,8 @@
     url: string;
     /** The lower-cased text the words are matched against. */
     text: string;
+    /** A handbook heading's own text and a manual page's OCR, shown as a snippet around a match. */
+    body?: string;
   }
   const GROUPS: { key: Group | 'all'; label: string }[] = [
     { key: 'all', label: 'All' },
@@ -52,6 +54,13 @@
     handbook: 'Handbook',
     manuals: 'Manuals',
     parts: 'Parts',
+  };
+  /** What "Show all N …" counts: a manual hit is a page, a handbook hit a heading (CP2-01). */
+  const GROUP_NOUN: Record<Group, string> = {
+    components: 'components',
+    handbook: 'handbook sections',
+    manuals: 'manual pages',
+    parts: 'parts',
   };
   /** How many rows a group shows in "All" before "Show all". */
   const TOP = 5;
@@ -131,6 +140,7 @@
             : `Handbook · ${printedPageText(t.label, t.page)}`;
           // "owner service notes": the appendix's old name, still found by the search.
           const extra = appendix ? ' owner service notes' : '';
+          const body = h.text[t.id] ?? '';
           return {
             group: 'handbook' as const,
             id: `handbook:${t.id}`,
@@ -138,7 +148,8 @@
             label: t.text,
             sub,
             url: handbookHref(t.section, t.id),
-            text: `${t.text} ${sub}${extra}`.toLowerCase(),
+            text: `${t.text} ${sub}${extra} ${body}`.toLowerCase(),
+            body,
           };
         });
     } catch {
@@ -158,9 +169,10 @@
             id: `manuals:${doc}:${i}`,
             code: '',
             label: pageRefText(doc as DocId, i + 1),
-            sub: text,
+            sub: '',
             url: manualHref(doc, i + 1),
             text: text.toLowerCase(),
+            body: text,
           });
         });
       }
@@ -217,18 +229,35 @@
   const words = $derived(q.trim().toLowerCase().split(/\s+/).filter(Boolean));
   const matches = (list: Hit[] | null) =>
     list ? list.filter((h) => words.every((w) => h.text.includes(w))) : [];
-  /** For a manual page: ~90 characters around the first word. */
+  /**
+   * A manual page: ~90 characters around the first word. A handbook heading whose title does not
+   * hold every word: its page, then the same window into the text under it (UX2-04).
+   */
   function snippet(h: Hit): string {
-    if (h.group !== 'manuals') return h.sub;
-    const i = h.text.indexOf(words[0] ?? '');
+    if (!h.body) return h.sub;
+    const title = h.label.toLowerCase();
+    if (h.group === 'handbook' && words.every((w) => title.includes(w))) return h.sub;
+    const low = h.body.toLowerCase();
+    const i = low.indexOf(words.find((w) => !title.includes(w)) ?? words[0] ?? '');
     const from = Math.max(0, i - 30);
-    const s = h.sub.slice(from, from + 90).trim();
-    return (from > 0 ? '…' : '') + s + (from + 90 < h.sub.length ? '…' : '');
+    const s = h.body.slice(from, from + 90).trim();
+    const around = (from > 0 ? '…' : '') + s + (from + 90 < h.body.length ? '…' : '');
+    return h.sub ? `${h.sub} · ${around}` : around;
+  }
+  /** Rows that would read the same (one heading repeated on a page) show once (UX2-11). */
+  function unique(hits: Hit[]): Hit[] {
+    const seen: Record<string, true> = {};
+    return hits.filter((h) => {
+      const k = `${h.label}|${snippet(h)}`;
+      if (seen[k]) return false;
+      seen[k] = true;
+      return true;
+    });
   }
   const results = $derived.by(() => {
     const all: { group: Group; hits: Hit[] }[] = [
       { group: 'components', hits: matches(components) },
-      { group: 'handbook', hits: matches(handbook) },
+      { group: 'handbook', hits: unique(matches(handbook)) },
       { group: 'manuals', hits: matches(manuals) },
       { group: 'parts', hits: matches(parts) },
     ];
@@ -284,7 +313,7 @@
           <li>
             <button type="button" class="lrow more" onclick={() => (expanded = g.group)}>
               Show all {g.hits.length}
-              {GROUP_LABEL[g.group].toLowerCase()}
+              {GROUP_NOUN[g.group]}
             </button>
           </li>
         {/if}

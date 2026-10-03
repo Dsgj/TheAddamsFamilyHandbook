@@ -288,6 +288,7 @@
     commit();
     record();
     await tick();
+    // Search too: on a phone Enter brings the first hits under the header (UX2-03).
     if (resultsHead) {
       resultsHead.focus({ preventScroll: true });
       // Under 1000 the results take the column under the sticky bar. From 1000 the field sits at
@@ -384,7 +385,9 @@
       {#if canPaste}
         <button class="btn" type="button" onclick={paste}>Paste</button>
       {/if}
-      <button class="btn primary go" type="button" onclick={diagnose}>Diagnose</button>
+      <button class="btn primary go" type="button" onclick={diagnose}>
+        {mode === 'search' ? 'Search' : 'Diagnose'}
+      </button>
     </div>
     {#if mode === 'home'}
       <p class="or">Or type a word to search everything.</p>
@@ -447,7 +450,7 @@
     </ul>
   {:else if mode === 'search'}
     <div class="rbar">
-      <h2 class="rh">Search</h2>
+      <h2 class="rh" bind:this={resultsHead} tabindex="-1">Search</h2>
       <button type="button" class="tlink" onclick={clear}>Clear search</button>
       <button type="button" class="tlink" onclick={cancelSearch}>Cancel</button>
     </div>

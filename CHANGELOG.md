@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- **Search finds handbook text.** A word search now looks in the text under
+  every handbook heading, not only in the headings, and shows the words
+  around the match. Repeated rows show once, "Show all" says what it counts
+  (manual pages, handbook sections), and on a phone the button reads Search
+  and Enter brings the hits up under the header.
 - **Data that does not load says so.** The parts list, the manual search and
   the Diagnose search show what did not load with a Retry button instead of
   waiting forever or showing nothing. A search fetches each data file once. A

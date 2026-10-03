@@ -13,7 +13,6 @@ export interface RenderedPage {
   page: number;
   label: string;
   html: string;
-  plain: string;
   headings: Heading[];
 }
 
@@ -73,7 +72,22 @@ export function renderPage(page: number, body: string, label: string): RenderedP
     /<p><em>\[Figure:\s*([\s\S]*?)\]<\/em><\/p>/g,
     '<p class="fig-note">Figure in the original: $1</p>',
   );
-  return { page, label, html, plain: stripTags(html), headings };
+  return { page, label, html, headings };
+}
+
+/**
+ * The text under each heading of a page, for the search (UX2-04): `{ 'p25-1': 'Remove the…' }`.
+ * Text above the first heading belongs to that heading.
+ */
+export function textByHeading(html: string): Record<string, string> {
+  const parts = html.split(/<h[23] id="([^"]+)">[\s\S]*?<\/h[23]>/);
+  const out: Record<string, string> = {};
+  const intro = stripTags(parts[0] ?? '');
+  for (let i = 1; i < parts.length; i += 2) {
+    const text = stripTags(parts[i + 1] ?? '');
+    out[parts[i]!] = i === 1 && intro ? `${intro} ${text}` : text;
+  }
+  return out;
 }
 
 export function indexHeadings(pages: RenderedPage[]): HeadingIndex {

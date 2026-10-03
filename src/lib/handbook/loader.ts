@@ -13,7 +13,6 @@ export interface HandbookEntry {
   sectionTitle: string;
   order: number;
   headings: Heading[];
-  plain: string;
 }
 
 /**
@@ -54,7 +53,6 @@ export function handbookLoader(dir = 'src/content/handbook'): Loader {
             sectionTitle: sec.title,
             order: SECTIONS.indexOf(sec) * 100 + sec.pages.indexOf(r.page),
             headings: r.headings,
-            plain: r.plain,
           } satisfies HandbookEntry,
         });
         store.set({ id, data, rendered: { html: finish(r, idx, base) } });

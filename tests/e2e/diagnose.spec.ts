@@ -217,6 +217,31 @@ test.describe('search', () => {
     await expect(page.getByRole('navigation', { name: 'Quick links' })).toBeVisible();
   });
 
+  // UX2-04, UX2-03: the handbook was searched by heading only, every manual hit said the same
+  // thing, the "Show all" button had no noun, and Enter did nothing on a phone.
+  test('the handbook body is searched, each hit says where, and Enter brings the hits up', async ({
+    page,
+  }) => {
+    await gotoHydrated(page, '/');
+    // No heading says thermistor; only the text under a few of them does.
+    await field(page).fill('thermistor');
+    const hb = page.locator('h3.lst-h:has-text("Handbook") + ul.lst a.lrow');
+    await expect(hb.first()).toBeVisible();
+    const subs = await hb.locator('.sub').allTextContents();
+    for (const t of subs) expect(t.toLowerCase()).toContain('thermistor');
+    const rows = await hb.evaluateAll((as) =>
+      as.map(
+        (a) => `${a.querySelector('.ttl')?.textContent}|${a.querySelector('.sub')?.textContent}`,
+      ),
+    );
+    expect(new Set(rows).size).toBe(rows.length);
+    await field(page).fill('flipper');
+    await expect(page.getByRole('button', { name: /^Show all \d+ manual pages/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Search', exact: true })).toBeVisible();
+    await field(page).press('Enter');
+    await expect(page.getByRole('heading', { level: 2, name: 'Search' })).toBeFocused();
+  });
+
   test('"Clear search" empties the field and keeps focus in it', async ({ page }) => {
     await gotoHydrated(page, '/');
     await field(page).fill('vault');

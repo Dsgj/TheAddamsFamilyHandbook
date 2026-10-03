@@ -18,7 +18,6 @@ const handbook = defineCollection({
         page: z.number(),
       }),
     ),
-    plain: z.string(),
   }),
 });
 
