@@ -1,7 +1,8 @@
 ---
 import Base from '~/layouts/Base.astro';
 import Matrix from '~/components/Matrix.svelte';
-import { DATA } from '~/lib/data/components';
+import { DATA, installedLed } from '~/lib/data/components';
+import { INSTALLED_FLASHERS, LED_KIT_SOURCE } from '~/data/installedLeds';
 import { KIND_PLURAL, TABLE_LABEL } from '~/lib/copy';
 import { pageTitleText } from '~/lib/pages';
 import { componentHref, href, manualHref } from '~/lib/url';
@@ -32,8 +33,10 @@ const cells = DATA.lamps.map((l) => ({
   <section class="card lamps">
     <h2>All lamps</h2>
     <p class="muted small">
-      Tick Fault to put the lamp on the <a href={href('shopping')}>shopping list</a> with its bulb type.
-      It turns red in the matrix and on the map.
+      Tick Fault to put the lamp on the <a href={href('shopping')}>shopping list</a> with the LED to order.
+      It turns red in the matrix and on the map. Installed is the LED fitted in this machine ({
+        LED_KIT_SOURCE
+      }); Bulb is the manual's socket type.
     </p>
     <div class="scroll-x">
       <table class="t two" role="table">
@@ -41,6 +44,7 @@ const cells = DATA.lamps.map((l) => ({
           <tr role="row">
             <th role="columnheader" class="key">#</th>
             <th role="columnheader">Name</th>
+            <th role="columnheader">Installed</th>
             <th role="columnheader">Bulb</th>
             <th role="columnheader">Part</th>
             <th role="columnheader">Assembly</th>
@@ -64,6 +68,9 @@ const cells = DATA.lamps.map((l) => ({
                     </span>
                   )}
                 </td>
+                <td role="cell" class="mono" data-h="Installed">
+                  {installedLed(l.id)}
+                </td>
                 <td role="cell" class="mono" data-h="Bulb">
                   {l.bulb}
                 </td>
@@ -84,6 +91,31 @@ const cells = DATA.lamps.map((l) => ({
                     />
                   </label>
                 </td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card lamps">
+    <h2>Installed flashers</h2>
+    <p class="muted small">
+      The flasher LEDs from the same kit, as its sheet groups them. The flashers themselves are on
+      the <a href={href('coils')}>solenoids page</a>.
+    </p>
+    <div class="scroll-x">
+      <table class="t">
+        <thead>
+          <tr><th>Where</th><th>Installed</th></tr>
+        </thead>
+        <tbody>
+          {
+            INSTALLED_FLASHERS.map((f) => (
+              <tr>
+                <td>{f.where}</td>
+                <td class="mono">{f.led}</td>
               </tr>
             ))
           }

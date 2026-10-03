@@ -6,6 +6,7 @@
  * Every piece is `?? ''`: Svelte renders a nullish expression as nothing, where a template literal
  * would print "undefined".
  */
+import { INSTALLED_LEDS } from '~/data/installedLeds';
 import { inMatrix } from '~/lib/copy';
 import type { Coil, Kind, Lamp, Switch } from '~/lib/model/types';
 
@@ -17,7 +18,15 @@ type SwitchBase = { kind: 'switch'; part: string; assy: string };
 export type Wiring =
   | (SwitchBase & { matrix: { column: Axis; row: Axis }; wire: null })
   | (SwitchBase & { matrix: null; wire: Wire })
-  | { kind: 'lamp'; column: Axis; row: Axis; bulb: { code: string; part: string }; assy: string }
+  | {
+      kind: 'lamp';
+      column: Axis;
+      row: Axis;
+      bulb: { code: string; part: string };
+      /** The LED fitted in this machine (what to order); '' when none is recorded. */
+      led: string;
+      assy: string;
+    }
   | { kind: 'coil'; wire: Wire; part: string; assy: string; fuse: string };
 
 /** "J206-3 · U20-16": a connector pin and the IC pin, transistor or driver behind it. */
@@ -47,6 +56,7 @@ export function wiring(kind: Kind, item: Switch | Lamp | Coil): Wiring {
       column: { n: lamp.col, colour: lamp.colWireEn ?? '', text: pair(lamp.colPin, lamp.colQ) },
       row: { n: lamp.row, colour: lamp.rowWireEn ?? '', text: pair(lamp.rowPin, lamp.rowQ) },
       bulb: { code: lamp.bulb ?? '', part: lamp.bulbPart ?? '' },
+      led: INSTALLED_LEDS[lamp.id] ?? '',
       assy: lamp.assy,
     };
   }

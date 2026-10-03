@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DATA, find } from '~/lib/data/components';
+import { DATA, find, installedLed } from '~/lib/data/components';
 import { callouts, wiring } from '~/lib/present';
 
 // The oracle: the old inline Svelte text. `{a} · {b}` renders a nullish piece as nothing.
@@ -81,6 +81,7 @@ describe('wiring', () => {
         column: { n: lamp.col, colour: lamp.colWireEn, text: pair(lamp.colPin, lamp.colQ) },
         row: { n: lamp.row, colour: lamp.rowWireEn, text: pair(lamp.rowPin, lamp.rowQ) },
         bulb: { code: text(lamp.bulb), part: text(lamp.bulbPart) },
+        led: installedLed(lamp.id),
         assy: lamp.assy,
       });
     }

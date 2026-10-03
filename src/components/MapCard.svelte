@@ -125,6 +125,9 @@
         <li>
           <span class="lbl">Bulb</span><span class="mono muted">{w.bulb.code} · {w.bulb.part}</span>
         </li>
+        {#if w.led}<li>
+            <span class="lbl">LED</span><span class="mono muted">{w.led}</span>
+          </li>{/if}
       {:else if w.kind === 'coil'}
         <li>
           <WireChip colour={w.wire.colour} /><span>Wire</span>

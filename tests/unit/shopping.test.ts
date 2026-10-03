@@ -9,13 +9,67 @@ const items: ShoppingItem[] = [
     name: 'Thing Multiball',
     part: '24-8768',
     bulb: '#555',
+    led: '',
     assy: 'A-15114',
   },
-  { kind: 'lamp', id: '12', name: 'Left Ramp', part: '24-8768', bulb: '#555', assy: 'A-15114' },
-  { kind: 'lamp', id: '21', name: 'Bumper', part: '24-6549', bulb: '#44', assy: '' },
-  { kind: 'switch', id: '32', name: 'Left Outlane', part: 'SW-1A-120', assy: 'A-12345', bulb: '' },
-  { kind: 'switch', id: 'F1', name: 'Right Flipper EOS', part: '', assy: '', bulb: '' },
-  { kind: 'coil', id: '01', name: 'Chair Kickout', part: 'AE-26-1200', assy: 'A-15115', bulb: '' },
+  {
+    kind: 'lamp',
+    id: '12',
+    name: 'Left Ramp',
+    part: '24-8768',
+    bulb: '#555',
+    led: '',
+    assy: 'A-15114',
+  },
+  { kind: 'lamp', id: '21', name: 'Bumper', part: '24-6549', bulb: '#44', led: '', assy: '' },
+  {
+    kind: 'switch',
+    id: '32',
+    name: 'Left Outlane',
+    part: 'SW-1A-120',
+    assy: 'A-12345',
+    bulb: '',
+    led: '',
+  },
+  { kind: 'switch', id: 'F1', name: 'Right Flipper EOS', part: '', assy: '', bulb: '', led: '' },
+  {
+    kind: 'coil',
+    id: '01',
+    name: 'Chair Kickout',
+    part: 'AE-26-1200',
+    assy: 'A-15115',
+    bulb: '',
+    led: '',
+  },
+];
+const ledItems: ShoppingItem[] = [
+  {
+    kind: 'lamp',
+    id: '11',
+    name: 'Thing Multiball',
+    part: '24-8768',
+    bulb: '#555',
+    led: '555 Warm Super',
+    assy: '',
+  },
+  {
+    kind: 'lamp',
+    id: '12',
+    name: 'Extra Ball',
+    part: '24-8768',
+    bulb: '#555',
+    led: '555 Orange Super',
+    assy: '',
+  },
+  {
+    kind: 'lamp',
+    id: '52',
+    name: 'Raise The Dead',
+    part: '24-8768',
+    bulb: '#555',
+    led: '555 Warm Super',
+    assy: '',
+  },
 ];
 const st = (id: string, status: ComponentStatus['status']): ComponentStatus => ({
   id,
@@ -37,6 +91,17 @@ describe('groupFaults', () => {
     expect(g.map((x) => [x.kind, x.label, x.part, x.items.map((i) => i.id)])).toEqual([
       ['lamp', '#555', '24-8768', ['11', '12']],
       ['lamp', '#44', '24-6549', ['21']],
+    ]);
+  });
+  it('groups lamps by installed LED when one is recorded, socket type in brackets', () => {
+    const g = groupFaults(ledItems, [
+      st('lamp:11', 'fault'),
+      st('lamp:12', 'fault'),
+      st('lamp:52', 'fault'),
+    ]);
+    expect(g.map((x) => [x.label, x.part, x.items.map((i) => i.id)])).toEqual([
+      ['555 Warm Super', '#555 · 24-8768', ['11', '52']],
+      ['555 Orange Super', '#555 · 24-8768', ['12']],
     ]);
   });
   it('lists switches and coils by part number after the lamps', () => {

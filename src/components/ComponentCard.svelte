@@ -82,6 +82,8 @@
       </dd>
       <dt>Bulb</dt>
       <dd><span class="mono">{w.bulb.code}</span> · {w.bulb.part}</dd>
+      {#if w.led}<dt>Installed LED</dt>
+        <dd class="mono">{w.led}</dd>{/if}
       {#if w.assy}<dt>Assembly</dt>
         <dd class="mono">{w.assy}</dd>{/if}
     {:else if w.kind === 'coil'}
