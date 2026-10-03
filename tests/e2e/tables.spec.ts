@@ -84,6 +84,28 @@ test.describe('the switch matrix tabs', () => {
     await page.keyboard.press('ArrowRight');
     await expect(page.locator('[data-cell-card="42"]')).toBeVisible();
   });
+
+  test('a link to one part lands on its cell, its panel or its row (UX2-07)', async ({ page }) => {
+    await gotoHydrated(page, '/switches#c32');
+    await expect(page.locator('[data-cell="32"]')).toBeFocused();
+    await expect(page.locator('[data-cell="32"]')).toHaveClass(/target/);
+    await expect(page.locator('[data-cell-card="32"] h2')).toHaveText('Upper Right Jet');
+    await expect(page.locator('[data-cell-card="32"]')).toBeInViewport();
+    // A switch the map does not draw says so on its card instead of Show on map (UX2-05).
+    await page.locator('[data-cell="14"]').focus();
+    const tilt = page.locator('[data-cell-card="14"]');
+    await expect(tilt.getByRole('link', { name: 'Show on map' })).toHaveCount(0);
+    await expect(tilt).toContainText('Not on the playfield map.');
+    await gotoHydrated(page, '/coils#coil-01');
+    await expect(page.locator('#coil-01')).toBeInViewport();
+    await expect(page.locator('#coil-01')).toContainText('Chair Kickout');
+    // Another page in between: a hash on the same page would not load it again.
+    await gotoHydrated(page, '/switches#j205');
+    await expect(page.getByRole('tab', { name: 'Dedicated' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+  });
 });
 
 test.describe('the component detail page', () => {

@@ -44,6 +44,17 @@ export function tableHref(kind: Kind, anchor?: string): string {
 }
 
 /**
+ * One part on its table page (UX2-07): its matrix cell (`switches#c32`, which Matrix focuses), the
+ * Dedicated or Flippers panel for a switch outside the matrix, or its coil row (`coils#coil-01`).
+ */
+export function tableSpotHref(kind: Kind, part: { id: string; kind?: 'ded' | 'flip' }): string {
+  if (kind === 'coil') return tableHref('coil', `coil-${part.id}`);
+  if (part.kind === 'ded') return tableHref(kind, 'j205');
+  if (part.kind === 'flip') return tableHref(kind, 'j806');
+  return tableHref(kind, `c${part.id}`);
+}
+
+/**
  * Rewrites this history entry's URL in place. It keeps `history.state`, which carries the entry's
  * back link (motion.ts), and swallows the error Safari throws past about 100 calls in a short
  * window (Chrome drops those calls silently).

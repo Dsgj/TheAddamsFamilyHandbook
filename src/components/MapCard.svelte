@@ -17,7 +17,7 @@
   import type { Coil, Switch } from '~/lib/model/types';
   import { pageTitleText } from '~/lib/pages';
   import { wiring } from '~/lib/present';
-  import { componentHref, href, manualHref, tableHref } from '~/lib/url';
+  import { componentHref, href, manualHref, tableSpotHref } from '~/lib/url';
   import WireChip from './WireChip.svelte';
 
   export { deselectBtn, emptyCard, partBody, partHead, prov, shotCard, srcLink };
@@ -146,7 +146,7 @@
     <nav class="more" aria-label="More about {fullName(item).toLowerCase()}">
       <a class="btn sm" href={componentHref(item.kind, item.id)}>Details</a>
       <a class="btn sm" href={manualHref('ops', page)}>Manual {pageTitleText('ops', page)}</a>
-      <a class="btn sm" href={tableHref(item.kind)}>{TABLE_LABEL[item.kind]}</a>
+      <a class="btn sm" href={tableSpotHref(item.kind, item.comp)}>{TABLE_LABEL[item.kind]}</a>
       {#if statusOf(item) === 'fault'}
         <a class="btn sm" href={href('shopping')}>On the shopping list</a>
       {/if}

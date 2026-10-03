@@ -15,13 +15,18 @@ export interface ShoppingItem {
   assy: string;
 }
 
+/** A faulted item on the list, with the note the owner typed on its status (CR2-03). */
+export interface ShoppingRow extends ShoppingItem {
+  note: string;
+}
+
 export interface ShoppingGroup {
   kind: Kind;
   /** Installed LED (or bulb type when none is recorded) for lamps, part number for the rest. */
   label: string;
   /** Secondary reference shown in brackets: bulb type and bulbPart for lamps, assembly for the rest. */
   part: string;
-  items: ShoppingItem[];
+  items: ShoppingRow[];
 }
 
 export const NO_PART = 'no part number';
@@ -39,14 +44,17 @@ function groupKey(i: ShoppingItem): [label: string, part: string] {
 
 /** Every item whose status is Fault, grouped by orderable part, lamps first, biggest groups first. */
 export function groupFaults(items: ShoppingItem[], statuses: ComponentStatus[]): ShoppingGroup[] {
-  const faulty = new Set(statuses.filter((s) => s.status === 'fault').map((s) => s.id));
+  const faulty = new Map(
+    statuses.filter((s) => s.status === 'fault').map((s) => [s.id, s.note.trim()]),
+  );
   const groups = new Map<string, ShoppingGroup>();
   for (const i of items) {
-    if (!faulty.has(`${i.kind}:${i.id}`)) continue;
+    const note = faulty.get(`${i.kind}:${i.id}`);
+    if (note === undefined) continue;
     const [label, part] = groupKey(i);
     const key = `${i.kind}|${label}|${part}`;
     const g = groups.get(key) ?? { kind: i.kind, label, part, items: [] };
-    g.items.push(i);
+    g.items.push({ ...i, note });
     groups.set(key, g);
   }
   const cmp = new Intl.Collator('en', { numeric: true }).compare;
@@ -60,9 +68,11 @@ export function groupFaults(items: ShoppingItem[], statuses: ComponentStatus[]):
     );
 }
 
+/** "2 × #555 (24-8768): L11 Thing Multiball (socket loose), L12 Left Ramp": a note in brackets. */
 export function formatGroup(g: ShoppingGroup): string {
   const ref = g.part ? `${g.label} (${g.part})` : g.label;
-  return `${g.items.length} × ${ref}: ${g.items.map((i) => `${itemRef(i)} ${i.name}`).join(', ')}`;
+  const item = (i: ShoppingRow) => `${itemRef(i)} ${i.name}` + (i.note ? ` (${i.note})` : '');
+  return `${g.items.length} × ${ref}: ${g.items.map(item).join(', ')}`;
 }
 
 /** Plain text for the clipboard: a heading per kind, one line per group. */

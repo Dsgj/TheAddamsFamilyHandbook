@@ -151,4 +151,14 @@ describe('formatShopping', () => {
   it('is empty for no groups', () => {
     expect(formatShopping([])).toBe('');
   });
+  it('carries the note typed on a fault, trimmed, in brackets (CR2-03)', () => {
+    const g = groupFaults(items, [
+      { ...st('lamp:11', 'fault'), note: '  socket loose ' },
+      st('lamp:12', 'fault'),
+    ]);
+    expect(g[0]!.items.map((i) => i.note)).toEqual(['socket loose', '']);
+    expect(formatShopping(g)).toBe(
+      'Lamps\n2 × #555 (24-8768): L11 Thing Multiball (socket loose), L12 Left Ramp',
+    );
+  });
 });

@@ -53,7 +53,12 @@ test('Workshop: rows and counts from the device', async ({ page }) => {
   await rowsAreTall(page);
   await expect(page.locator('[data-count="shopping"]')).toHaveText('');
   await expect(page.locator('[data-count="verify"]')).toHaveText('0 of 15');
-  await expect(hub(page).getByRole('link', { name: /Machine setup/ })).toContainText('7 steps');
+  await expect(hub(page).getByRole('link', { name: /Machine setup/ })).toContainText(
+    '47 settings in 7 steps',
+  );
+  await expect(hub(page).getByRole('link', { name: /^Verify/ })).toContainText(
+    '15 data points to check on the machine',
+  );
   await expect(hub(page).getByRole('link', { name: /^Care/ })).toContainText(
     'Every week to every year',
   );

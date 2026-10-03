@@ -58,7 +58,7 @@ const groups = ['High Power', 'Low Power', 'Flasher'] as const;
               {DATA.coils
                 .filter((c) => c.type === g)
                 .map((c) => (
-                  <tr role="row">
+                  <tr role="row" id={`coil-${c.id}`}>
                     <td role="cell" class="key">
                       <a class="mono" href={componentHref('coil', c.id)}>
                         {c.id}
@@ -221,6 +221,10 @@ const groups = ['High Power', 'Low Power', 'Flasher'] as const;
 <style>
   .grp {
     margin-bottom: var(--gap);
+  }
+  /* The row a link names (`/coils#coil-01`, UX2-07). */
+  tr:target > td {
+    background: color-mix(in srgb, var(--amber) 16%, transparent);
   }
   /* Spec §8.9: the flipper and GI tables stack at every width. Side by side they scrolled at 1000
      and broke their part numbers at 1440 (VP-05). */

@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- **The workshop lists link up.** A note you type on a Fault now shows on the
+  Shopping list and in the text you copy from it. Diagnose says how many
+  faults are open and links to the list, and Clear under Recent asks once
+  more before it empties it. A code chip in Diagnose jumps to its card. A link
+  to one switch or lamp opens the table with that cell selected and its panel
+  in view, a link to a coil lands on its row, and a part the map does not draw
+  says where it is instead of offering Show on map. The Workshop rows say what
+  each list holds.
 - **Component cards fit where they are shown.** On the map, the selected
   part's card no longer repeats the drawing or links to the map you are on.
   The 33 parts the map does not draw, such as the coin door switches and the

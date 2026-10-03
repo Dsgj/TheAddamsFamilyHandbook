@@ -100,8 +100,11 @@ test.describe('home on a phone', () => {
     const row = page.locator('.recent .lrow').first();
     await expect(row).toContainText('Check Switch 68');
     await expect(row).toContainText('1 switch · 1 marked Fault');
+    // Clear asks once more before it empties Recent (UX2-08).
     await page.getByRole('button', { name: 'Clear', exact: true }).click();
-    await expect(page.getByRole('heading', { level: 2, name: 'Try' })).toBeVisible();
+    await expect(row).toBeVisible();
+    await page.getByRole('button', { name: 'Really clear?' }).click();
+    await expect(page.getByRole('heading', { level: 2, name: 'Try' })).toBeFocused();
   });
 
   test('the bar button "Recent reports" returns to the home and focuses the list', async ({
@@ -350,6 +353,18 @@ test.describe('the old home links live in their hubs', () => {
 });
 
 test.describe('the result card', () => {
+  test('a code chip jumps to its card, with no history entry (UX2-12)', async ({ page }) => {
+    await gotoHydrated(page, '/?q=32%2068%2099');
+    const url = page.url();
+    const chips = page.getByRole('list', { name: 'Codes' });
+    await expect(chips.getByRole('link')).toHaveCount(2);
+    await chips.getByRole('link', { name: '68' }).click();
+    const card = page.locator('#card-switch-68');
+    await expect(card).toBeFocused();
+    await expect(card).toBeInViewport();
+    expect(page.url()).toBe(url);
+  });
+
   test('a part the map does not draw says where it is, with no map actions (UX2-05)', async ({
     page,
   }) => {

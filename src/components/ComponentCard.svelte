@@ -24,6 +24,7 @@
     compact = false,
     linkTitle = true,
     inMap = false,
+    id,
   }: {
     kind: Kind;
     item: Any;
@@ -31,6 +32,8 @@
     compact?: boolean;
     linkTitle?: boolean;
     inMap?: boolean;
+    /** An anchor for links to this card (Diagnose's code chips, UX2-12). */
+    id?: string | undefined;
   } = $props();
 
   const sw = $derived(kind === 'switch' ? (item as Switch) : undefined);
@@ -47,7 +50,7 @@
   const mapRef = $derived(pageTitleText('ops', mapPage));
 </script>
 
-<article class="card comp" data-kind={kind} data-id={item.id}>
+<article class="card comp" data-kind={kind} data-id={item.id} {id}>
   <header>
     <span class="code lg dmd">{code}</span>
     <div class="head">

@@ -151,6 +151,7 @@
                 <a class="lnk" href={componentHref(i.kind, i.id)} draggable="false">
                   <span class="code dmd id">{itemRef(i)}</span>
                   {i.name}
+                  {#if i.note}<span class="note muted">{i.note}</span>{/if}
                 </a>
                 <button
                   type="button"
@@ -287,6 +288,12 @@
   }
   .id {
     margin-right: 4px;
+  }
+  /* The note typed on the fault, under the name: what to order or fix (CR2-03). */
+  .note {
+    display: block;
+    font: var(--t-cap);
+    overflow-wrap: anywhere;
   }
   .fix {
     flex: 0 0 auto;

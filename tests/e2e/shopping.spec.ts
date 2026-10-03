@@ -47,6 +47,23 @@ test('Fault tick on Switches and Solenoids lands on the shopping list', async ({
   );
 });
 
+test('a note typed on a Fault rides along to the list and its text (CR2-03)', async ({ page }) => {
+  await gotoHydrated(page, '/switch/32');
+  await page.getByRole('button', { name: 'Fault' }).click();
+  await page.getByLabel('Note').fill('cap cracked');
+  await page.getByLabel('Note').blur();
+  await gotoHydrated(page, '/shopping');
+  await expect(page.locator('a.lnk .note')).toHaveText('cap cracked');
+  await page.getByRole('button', { name: 'Show text' }).click();
+  await expect(page.locator('textarea')).toHaveValue(/: 32 Upper Right Jet \(cap cracked\)$/);
+  // The Diagnose home counts the open faults and leads to this list (UX2-10).
+  await gotoHydrated(page, '/');
+  await expect(page.getByRole('link', { name: /^1 open fault/ })).toHaveAttribute(
+    'href',
+    /shopping$/,
+  );
+});
+
 /* P3 item 1 of the app audit (spec §13): a solenoid's code is SOL 07 everywhere. */
 test('a Fault solenoid is listed as SOL 07', async ({ page }) => {
   await gotoHydrated(page, '/coils');

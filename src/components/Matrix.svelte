@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { tick, untrack } from 'svelte';
+  import { onMount, tick, untrack } from 'svelte';
   import { componentCode, kindLine, MAP_LAYER } from '~/lib/copy';
   import { getStatus, STATUS_LABEL } from '~/lib/model/status.svelte';
   import type { Kind, MatrixHeaders } from '~/lib/model/types';
@@ -12,6 +12,8 @@
     col: number;
     row: number;
     unused?: boolean;
+    /** Where it is, for a part the playfield map does not draw: the card says so (UX2-05). */
+    off?: string | undefined;
   }
   let {
     kind,
@@ -37,6 +39,26 @@
   let hoverCol = $state(0);
   let hoverRow = $state(0);
   let card = $state<HTMLElement>();
+  let table = $state<HTMLElement>();
+  /** The ringed cell: the `highlight` prop, or the one a link names (`#c32`). */
+  let target = $state(untrack(() => highlight));
+
+  // A link to one part lands on its cell (UX2-07): `/switches#c32` focuses cell 32 and shows its
+  // card, so the reader does not have to find it in the 64.
+  onMount(() => {
+    const id = /^#c(.+)$/.exec(location.hash)?.[1];
+    const cell = id ? cells.find((c) => c.id === decodeURIComponent(id)) : undefined;
+    if (!cell) return;
+    target = cell.id;
+    selected = cell.id;
+    focus = `${cell.col}${cell.row}`;
+    void tick().then(() => {
+      const el = table?.querySelector<HTMLElement>(`[data-cell="${focus}"]`);
+      el?.focus({ preventScroll: true });
+      card?.scrollIntoView({ block: 'nearest' });
+      el?.scrollIntoView({ block: 'nearest' });
+    });
+  });
 
   /** Spec §9.6: a keyboard selection brings its card into view above the tab bar, then the focused
    *  cell back if both cannot fit. Instant, so reduced motion needs no branch. Only for a visible
@@ -69,7 +91,7 @@
 </script>
 
 <div class="scroll-x">
-  <table class="matrix" role="grid" aria-label="{kind} matrix" onkeydown={onKey}>
+  <table class="matrix" role="grid" aria-label="{kind} matrix" onkeydown={onKey} bind:this={table}>
     <thead>
       <tr>
         <th class="corner">
@@ -121,7 +143,7 @@
                   aria-label={st && !cell.unused
                     ? `${cell.id} ${cell.name}, ${STATUS_LABEL[st]}`
                     : undefined}
-                  class:target={highlight === cell.id}
+                  class:target={target === cell.id}
                   onfocus={(e) => {
                     focus = id;
                     const changed = selected !== cell.id;
@@ -193,8 +215,9 @@
     </dl>
     <div class="acts">
       <a class="btn sm tinted" href={componentHref(kind, sel.id)}>Details</a>
-      <a class="btn sm tinted" href={mapHref(layer, sel.id)}>Show on map</a>
+      {#if !sel.off}<a class="btn sm tinted" href={mapHref(layer, sel.id)}>Show on map</a>{/if}
     </div>
+    {#if sel.off}<p class="muted off">{sel.off}</p>{/if}
   </div>
 {/if}
 
@@ -492,6 +515,9 @@
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
+  }
+  .off {
+    margin: 8px 0 0;
   }
   /* Print (audit DS-03): the whole matrix fits the width of an A4 page between 1 cm margins (718
      px); on screen it scrolls sideways from 860. Eight equal columns, the names wrap. */

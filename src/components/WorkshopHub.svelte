@@ -111,17 +111,23 @@
   <h2 class="lst-h">Work</h2>
   <ul class="lst">
     <li>
-      <a class="lrow" href={links.shopping}>
+      <a class="lrow two" href={links.shopping}>
         {@render tile(ICON.cart)}
-        <span class="txt"><span class="ttl">Shopping list</span></span>
+        <span class="txt">
+          <span class="ttl">Shopping list</span>
+          <span class="sub">Parts for what you marked Fault</span>
+        </span>
         <span class="val" data-count="shopping">{faults || ''}</span>
         {@render chev()}
       </a>
     </li>
     <li>
-      <a class="lrow" href={links.verify}>
+      <a class="lrow two" href={links.verify}>
         {@render tile(ICON.check)}
-        <span class="txt"><span class="ttl">Verify</span></span>
+        <span class="txt">
+          <span class="ttl">Verify</span>
+          <span class="sub">{plural(verifyIds.length, 'data point')} to check on the machine</span>
+        </span>
         <span class="val" data-count="verify"
           >{hydrated ? `${verified} of ${verifyIds.length}` : ''}</span
         >
@@ -143,7 +149,10 @@
         {@render tile(ICON.setup)}
         <span class="txt">
           <span class="ttl">Machine setup</span>
-          <span class="sub">{plural(setupSteps, 'step')}</span>
+          <!-- The page's unit: it counts settings done, not steps (UX2-10). -->
+          <span class="sub"
+            >{plural(setupIds.length, 'setting')} in {plural(setupSteps, 'step')}</span
+          >
         </span>
         <span class="val" data-count="setup"
           >{setupDone ? `${setupDone} of ${setupIds.length}` : ''}</span

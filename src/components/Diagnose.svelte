@@ -11,7 +11,7 @@
   } from '~/lib/model/recent.svelte';
   import { liveText } from '~/lib/live.svelte';
   import { whenLabel } from '~/lib/status-io';
-  import { getStatus } from '~/lib/model/status.svelte';
+  import { allStatuses, getStatus } from '~/lib/model/status.svelte';
   import type { Lamp, Switch } from '~/lib/model/types';
   import { lampSharedCauses, sharedCauses } from '~/lib/shared-cause';
   import { href, replaceUrl, tableHref } from '~/lib/url';
@@ -191,12 +191,28 @@
       .join(' '),
   );
   const recent = $derived(hydrated ? recentEntries() : []);
+  /** Faults marked on this device: the home leads to them (UX2-10). */
+  const openFaults = $derived(
+    hydrated ? allStatuses().filter((s) => s.status === 'fault').length : 0,
+  );
 
   const EXAMPLES = ['32 68 F1 F3', 'Check Switch 32', 'L11 L12 L13', 'SOL 7'];
   const RANGES =
     'Matrix switches are 11–88, dedicated D1–D8, flipper F1–F8, lamps L11–L88, solenoids SOL 01–28.';
   const label = (p: ParsedCode) => (p.kind === 'unknown' ? p.raw : componentName(p.kind, p.id));
   const codeText = (p: ParsedCode) => (p.kind === 'unknown' ? p.raw : componentCode(p.kind, p.id));
+  /** The anchor of a found code's card; the code chips link to it (UX2-12). */
+  const cardId = (kind: string, id: string) => `card-${kind}-${id}`;
+  const hasCard = (p: ParsedCode) => found.some((r) => r.kind === p.kind && r.id === p.id);
+  /** A chip brings its card up under the header and focuses it, with no history entry. */
+  function jump(e: MouseEvent, anchor: string) {
+    const card = document.getElementById(anchor);
+    if (!card) return;
+    e.preventDefault();
+    card.tabIndex = -1;
+    card.focus({ preventScroll: true });
+    card.scrollIntoView({ block: 'start' });
+  }
 
   /** "1 switch · 1 marked Fault", "2 lamps · both marked Fault", "1 solenoid". */
   function summary(): string {
@@ -322,6 +338,21 @@
     uncommit();
     field?.blur();
   }
+  // Clear asks once more, as Device data does (UX2-08, CR-11): a second tap within 4 s clears.
+  let clearArmed = $state(false);
+  let clearTimer: ReturnType<typeof setTimeout> | undefined;
+  function clearAll() {
+    clearTimeout(clearTimer);
+    if (!clearArmed) {
+      clearArmed = true;
+      clearTimer = setTimeout(() => (clearArmed = false), 4000);
+      return;
+    }
+    clearArmed = false;
+    clearRecent();
+    // The button goes with the list: the heading, now Try, takes the focus.
+    recentHead?.focus();
+  }
   async function showRecent() {
     input = '';
     uncommit();
@@ -420,10 +451,25 @@
       </a>
     </nav>
 
+    {#if openFaults}
+      <ul class="lst faults">
+        <li>
+          <a class="lrow two" href={href('shopping')}>
+            <span class="txt">
+              <span class="ttl">{plural(openFaults, 'open fault')}</span>
+              <span class="sub">The parts to order, on the Shopping list</span>
+            </span>
+          </a>
+        </li>
+      </ul>
+    {/if}
+
     <div class="lst-h rec-h">
       <h2 bind:this={recentHead} tabindex="-1">{recent.length ? 'Recent' : 'Try'}</h2>
       {#if recent.length}
-        <button type="button" class="tlink sm" onclick={clearRecent}>Clear</button>
+        <button type="button" class="tlink sm" class:armed={clearArmed} onclick={clearAll}
+          >{clearArmed ? 'Really clear?' : 'Clear'}</button
+        >
       {/if}
     </div>
     <ul class="lst recent">
@@ -469,8 +515,15 @@
     </div>
     <ul class="codes" aria-label="Codes">
       {#each parsed as p, i (p.raw + i)}
-        <li class="code" class:dmd={p.kind !== 'unknown'} class:unk={p.kind === 'unknown'}>
-          {codeText(p)}
+        <li>
+          {#if hasCard(p)}
+            {@const anchor = cardId(p.kind, p.id)}
+            <a class="code dmd" href="#{anchor}" onclick={(e) => jump(e, anchor)}>{codeText(p)}</a>
+          {:else}
+            <span class="code" class:dmd={p.kind !== 'unknown'} class:unk={p.kind === 'unknown'}
+              >{codeText(p)}</span
+            >
+          {/if}
         </li>
       {/each}
     </ul>
@@ -520,7 +573,12 @@
     <div class="cards">
       {#each found as r (r.kind + r.id)}
         {#if r.item && r.kind !== 'unknown'}
-          <ComponentCard kind={r.kind} item={r.item} mapMeta={mapOf(r.kind)} />
+          <ComponentCard
+            kind={r.kind}
+            item={r.item}
+            mapMeta={mapOf(r.kind)}
+            id={cardId(r.kind, r.id)}
+          />
         {/if}
       {/each}
     </div>
@@ -609,6 +667,9 @@
     letter-spacing: 0;
     cursor: pointer;
   }
+  .tlink.sm.armed {
+    color: var(--bad);
+  }
   .recent {
     margin: 0;
   }
@@ -654,13 +715,25 @@
   .diag[data-mode='search'] .rbar .tlink {
     justify-self: end;
   }
+  /* A chip that links to its card reaches 44 by its ::after (spec §12): 9 above and below its
+     border box, 4 to the sides (the inset counts from inside the 1 px border), so gaps of 20 and 10
+     keep 2 px between two reaches. */
   .codes {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
-    margin: 4px 0 12px;
+    gap: 20px 10px;
+    margin: 13px 0 21px;
     padding: 0;
     list-style: none;
+  }
+  a.code {
+    position: relative;
+    text-decoration: none;
+  }
+  a.code::after {
+    content: '';
+    position: absolute;
+    inset: -10px -5px;
   }
   .codes .unk {
     background: var(--sunk);
