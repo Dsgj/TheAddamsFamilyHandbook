@@ -42,7 +42,8 @@
   />
   {#if showLog && log.length}
     <ol class="log muted small" aria-label="Service log">
-      {#each log as e (e.at)}
+      <!-- Keyed by place: a hand-edited backup can repeat a time (SV2-01). -->
+      {#each log as e, i (i)}
         <li><span class="mono">{shortDate(e.at)}</span> {eventLabel(e.status)}</li>
       {/each}
     </ol>

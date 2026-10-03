@@ -77,11 +77,13 @@
     } catch (e) {
       const reason = e instanceof BackupError ? e.reason : '';
       say(
-        reason === 'newer'
-          ? 'That backup comes from a newer version of the app.'
-          : reason === 'empty'
-            ? 'That file holds nothing to restore.'
-            : 'Could not read that file as a backup.',
+        reason === 'unsaved'
+          ? 'This device would not save the backup: its storage is full or blocked.'
+          : reason === 'newer'
+            ? 'That backup comes from a newer version of the app.'
+            : reason === 'empty'
+              ? 'That file holds nothing to restore.'
+              : 'Could not read that file as a backup.',
         true,
       );
     }

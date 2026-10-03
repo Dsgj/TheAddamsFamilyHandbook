@@ -9,7 +9,7 @@ import { readList, updateJson, watch } from '~/lib/storage';
 import type { Kind } from '~/lib/model/types';
 
 export interface RecentEntry {
-  /** What was typed, trimmed. */
+  /** What was typed, tidied by `tidyInput`: a pasted report keeps its lines. */
   input: string;
   /** "1 switch · 1 marked Fault" */
   summary: string;
@@ -57,8 +57,19 @@ export function recentEntries(): RecentEntry[] {
   return state.items;
 }
 
+/**
+ * What Recent keeps of an input: each line trimmed with its runs of spaces collapsed, blank lines
+ * dropped. The lines stay, since a pasted test report is read line by line (CO2-02).
+ */
+export const tidyInput = (input: string) =>
+  input
+    .split('\n')
+    .map((line) => line.trim().replace(/\s+/g, ' '))
+    .filter(Boolean)
+    .join('\n');
+
 export function recordRecent(input: string, summary: string, at = nowIso()) {
-  const text = input.trim().replace(/\s+/g, ' ');
+  const text = tidyInput(input);
   if (!text) return;
   const norm = normalizeInput(text);
   updateJson<RecentEntry[]>(

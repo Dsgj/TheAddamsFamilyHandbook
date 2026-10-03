@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- **Your records survive every round trip.** Recent keeps a pasted
+  multi-line report as it was, so replaying it finds the same codes. A
+  service log or a backup with two entries at the same moment opens and
+  imports cleanly. When this device's storage refuses to save, the app says
+  so once, and a restore that cannot be kept reports that it failed.
 - **Back to Diagnose results returns to your card.** Coming back from a
   component to a list of results, by the header's back or the phone's own,
   shows the card you opened instead of the top or the bottom of the list.

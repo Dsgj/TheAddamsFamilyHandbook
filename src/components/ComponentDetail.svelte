@@ -251,7 +251,8 @@
     <h3 class="lst-h">Service log</h3>
     {#if history.length}
       <ol class="lst" aria-label="Service log">
-        {#each history as e (e.at)}
+        <!-- Keyed by place: a hand-edited backup can repeat a time (SV2-01). -->
+        {#each history as e, i (i)}
           <li>
             <div class="lrow static">
               <span class="mono when">{shortDate(e.at)}</span>

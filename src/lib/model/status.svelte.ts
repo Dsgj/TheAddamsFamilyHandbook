@@ -2,6 +2,7 @@ import { untrack } from 'svelte';
 import type { ComponentStatus, Kind, SetupEntry, StatusValue } from './types';
 import {
   applyBackup,
+  BackupError,
   deserializeAll,
   lostEntries,
   nextStatus,
@@ -125,7 +126,8 @@ export function replaceLoss(json: string): number {
  * Reads a backup. `merge` keeps the newer entry per component, setting and check (default);
  * `replace` swaps what the file carries. A file without a setup or verify block leaves that part
  * alone. The whole file is checked before anything is written: a BackupError leaves the device as
- * it was. Returns what the file held.
+ * it was, except `unsaved`, thrown when storage refused a write (what it kept lasts only for this
+ * page). Returns what the file held.
  */
 export function importStatuses(
   json: string,
@@ -140,9 +142,12 @@ export function importStatuses(
     [BACKUP_KEYS.setup, cur.setup, next.setup],
     [BACKUP_KEYS.verify, cur.verify, next.verify],
   ];
+  let saved = true;
   for (const [key, was, now] of writes)
     if (JSON.stringify(was) !== JSON.stringify(now))
-      writeJson(key, now, { reset: mode === 'replace' });
+      saved = writeJson(key, now, { reset: mode === 'replace' }) && saved;
+  // Storage refused a part: it lasts only until the page is left, so the import did not happen.
+  if (!saved) throw new BackupError('unsaved');
   return {
     components: Object.keys(b.items).length,
     settings: Object.keys(b.setup ?? {}).length,

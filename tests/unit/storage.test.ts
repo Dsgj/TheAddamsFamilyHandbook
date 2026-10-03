@@ -335,6 +335,34 @@ describe('when storage fails', () => {
     expect(parse('k')).toEqual({ b: 1 });
   });
 
+  it('a refused write says so once per page, through a toast (CO2-01)', async () => {
+    const s = await load();
+    const toasts: unknown[] = [];
+    win.addEventListener('tafh:toast', (e) => toasts.push((e as CustomEvent).detail));
+    store.failSet = true;
+    expect(s.writeJson('k', { a: 1 })).toBe(false);
+    s.updateEntry<number>('k', 'b', () => 2);
+    expect(toasts).toEqual([{ kind: 'info', text: expect.stringMatching(/not saving changes/) }]);
+  });
+
+  it('an import that storage refuses fails, and says why (CO2-01)', async () => {
+    await load();
+    const { importStatuses } = await import('~/lib/model/status.svelte');
+    const { serialize } = await import('~/lib/status-io');
+    const file = serialize({
+      'switch:32': { id: 'switch:32', status: 'fault', note: '', at: '2026-09-20T10:00:00.000Z' },
+    });
+    store.failSet = true;
+    let error: unknown;
+    try {
+      importStatuses(file);
+    } catch (e) {
+      error = e;
+    }
+    expect(error).toMatchObject({ name: 'BackupError', reason: 'unsaved' });
+    // The store module's first import is a cold transform, slow on a busy machine.
+  }, 20_000);
+
   it('a refused write gives way once another tab writes the key or clears storage', async () => {
     const s = await load();
     s.watch('k', () => {});

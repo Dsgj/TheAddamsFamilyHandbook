@@ -84,13 +84,20 @@ function isEvent(e: unknown): e is StatusEvent {
   );
 }
 
+/** One event per moment, oldest first, the last HISTORY_MAX: a hand-edited file can repeat an `at`. */
+function tidyHistory(events: StatusEvent[]): StatusEvent[] {
+  const seen = new Map<string, StatusEvent>();
+  for (const e of events) seen.set(e.at, e);
+  return [...seen.values()].sort((a, b) => a.at.localeCompare(b.at)).slice(-HISTORY_MAX);
+}
+
 function clean(key: string, v: unknown): ComponentStatus | undefined {
   if (typeof v !== 'object' || v === null || !KEY_RE.test(key)) return undefined;
   const o = v as Partial<ComponentStatus>;
   if (!VALUES.has(o.status ?? '')) return undefined;
   const status = (o.status ?? '') as StatusValue | '';
   const note = typeof o.note === 'string' ? o.note : '';
-  const history = Array.isArray(o.history) ? o.history.filter(isEvent).slice(-HISTORY_MAX) : [];
+  const history = Array.isArray(o.history) ? tidyHistory(o.history.filter(isEvent)) : [];
   // An entry with only a log is what "Fixed" leaves behind (nextStatus keeps it), so keep it too.
   if (!status && !note && !history.length) return undefined;
   const out: ComponentStatus = {
@@ -126,7 +133,9 @@ export interface Backup {
 }
 
 /** Why a file cannot be read as a backup. Nothing on the device has been touched. */
-export type BackupProblem = 'json' | 'not-backup' | 'foreign' | 'newer' | 'malformed' | 'empty';
+/** `unsaved`: the file was fine, but this device's storage refused to keep it. */
+export type BackupProblem =
+  'json' | 'not-backup' | 'foreign' | 'newer' | 'malformed' | 'empty' | 'unsaved';
 
 export class BackupError extends Error {
   readonly reason: BackupProblem;
@@ -263,14 +272,8 @@ export function merge(
   const out = { ...current };
   for (const [k, inc] of Object.entries(incoming)) {
     const cur = out[k];
-    if (!cur) {
-      out[k] = inc;
-      continue;
-    }
-    const newer = inc.at > cur.at ? inc : cur;
-    const seen = new Map<string, StatusEvent>();
-    for (const e of [...(cur.history ?? []), ...(inc.history ?? [])]) seen.set(e.at, e);
-    const history = [...seen.values()].sort((a, b) => a.at.localeCompare(b.at)).slice(-HISTORY_MAX);
+    const newer = !cur || inc.at > cur.at ? inc : cur;
+    const history = tidyHistory([...(cur?.history ?? []), ...(inc.history ?? [])]);
     const next: ComponentStatus = { ...newer };
     if (history.length) next.history = history;
     else delete next.history;

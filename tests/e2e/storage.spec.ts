@@ -377,6 +377,38 @@ test('marks stay on screen when storage is full', async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
+test('a log that repeats a moment still opens, and an import keeps one of each (CO2-03)', async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  const at = '2026-09-23T10:00:00Z';
+  const twice = {
+    ...fault('switch:32'),
+    at,
+    history: [
+      { status: 'fault', at },
+      { status: 'fault', at },
+    ],
+  };
+  // Straight into storage, as a hand-edited copy would land: the page must still draw it.
+  await seed(page, { 'switch:32': twice });
+  await gotoHydrated(page, '/switch/32');
+  await expect(page.getByRole('list', { name: 'Service log' }).locator('li')).toHaveCount(2);
+  // Through "Read backup file", the same log comes back with the repeat folded away.
+  await seed(page, {});
+  await gotoHydrated(page, '/shopping');
+  await page.getByLabel('Read backup file').setInputFiles({
+    name: 'backup.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify({ app: 'tafh', version: 1, items: { 'switch:32': twice } })),
+  });
+  await expect
+    .poll(async () => ((await stored(page)) as Record<string, typeof twice>)['switch:32']?.history)
+    .toEqual([{ status: 'fault', at }]);
+  expect(errors).toEqual([]);
+});
+
 test('asks once to keep storage, on the first mark and not on load', async ({ page }) => {
   await page.clock.install();
   await page.addInitScript(() => {

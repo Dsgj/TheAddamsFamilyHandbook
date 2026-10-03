@@ -420,7 +420,7 @@
           <li>
             <button type="button" class="lrow two" onclick={() => refill(e.input)}>
               <span class="txt">
-                <span class="ttl mono">{e.input}</span>
+                <span class="ttl mono">{e.input.replaceAll('\n', ' ')}</span>
                 <span class="sub">{e.summary} – {whenLabel(e.at)}</span>
               </span>
             </button>

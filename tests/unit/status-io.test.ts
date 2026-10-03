@@ -166,6 +166,24 @@ describe('the service log', () => {
   it('drops an entry with nothing left', () => {
     expect(nextStatus('switch:32', undefined, '', '', '2026-09-20')).toBeUndefined();
   });
+  it('holds one event per moment, oldest first, from a file and from a merge (CO2-03)', () => {
+    const at = ['2026-09-20T10:00:00.000Z', '2026-09-21T10:00:00.000Z'] as const;
+    const edited: ComponentStatus = {
+      ...st('switch:32', 'ok', at[1]),
+      history: [
+        { status: 'ok', at: at[1] },
+        { status: 'fault', at: at[0] },
+        { status: 'untested', at: at[1] },
+      ],
+    };
+    const read = deserialize(serialize({ 'switch:32': edited }))['switch:32']!;
+    expect(read.history).toEqual([
+      { status: 'fault', at: at[0] },
+      { status: 'untested', at: at[1] },
+    ]);
+    const merged = merge({}, { 'switch:32': edited })['switch:32']!;
+    expect(merged.history?.map((e) => e.at)).toEqual([...at]);
+  });
 });
 
 describe('applyBackup', () => {

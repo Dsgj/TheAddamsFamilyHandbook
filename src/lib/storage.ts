@@ -56,6 +56,18 @@ function getRaw(key: string): string | null {
   }
 }
 
+let warned = false;
+/**
+ * The first write storage refuses on a page says so, through Toast.svelte: it is kept in memory
+ * and lost when the page is left (CO2-01). Once per page, not per write.
+ */
+function warnUnsaved() {
+  if (warned) return;
+  warned = true;
+  const text = 'This device is not saving changes. They last until you leave this page.';
+  window.dispatchEvent(new CustomEvent('tafh:toast', { detail: { kind: 'info', text } }));
+}
+
 /** Writes unless the same text is already stored. `memory` when storage refused it. */
 function put(key: string, value: unknown): 'same' | 'written' | 'memory' {
   if (!browser()) return 'memory';
@@ -72,6 +84,7 @@ function put(key: string, value: unknown): 'same' | 'written' | 'memory' {
     }
   }
   mem.set(key, raw);
+  warnUnsaved();
   return 'memory';
 }
 
