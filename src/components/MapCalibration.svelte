@@ -3,8 +3,8 @@
    * The map's calibration tool (`?calib=1`, P4-2, AR-06): drag or arrow-key a marker, then copy
    * the JSON. PlayfieldMap imports it only while calibrating, binds the drafts, the overlay image
    * and the card element, and calls the drag and nudge handlers from its markers. No style block: the
-   * card's rules live in PlayfieldMap as :global rules under .map-ui (design probe 1). Only type
-   * imports from the map's own modules, so no module is shared across the dynamic boundary.
+   * card's rules live in PlayfieldMap as :global rules under .map-ui (design probe 1), the overlay
+   * row's three as inline styles. Only type imports from the map's own modules, so no module is shared across the dynamic boundary.
    */
   import { untrack } from 'svelte';
   import overlaysRaw from '~/data/overlays.json';
@@ -141,10 +141,10 @@
     stay in this browser until you copy the JSON into
     <code>src/data/positions.json</code>.
   </span>
-  <div class="actions overlay-row">
+  <div class="actions overlay-row" style="align-items: center">
     <label class="small"
       >Overlay
-      <select bind:value={overlay}>
+      <select bind:value={overlay} style="margin-left: 4px">
         <option value="">none</option>
         {#each Object.keys(OVERLAYS) as k (k)}
           <option value={k}>{OVERLAY_LABEL[k] ?? k}</option>
@@ -153,7 +153,14 @@
     >
     <label class="small"
       >Opacity
-      <input type="range" min="0.1" max="0.9" step="0.05" bind:value={overlayOpacity} /></label
+      <input
+        type="range"
+        min="0.1"
+        max="0.9"
+        step="0.05"
+        bind:value={overlayOpacity}
+        style="vertical-align: middle; width: 120px"
+      /></label
     >
   </div>
   <div class="actions">

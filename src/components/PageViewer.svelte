@@ -48,6 +48,8 @@
   let fitScale = $state(untrack(() => tiled) ? 0.25 : 0.5);
   /** The viewport slice the zoomed stage fills, once scrolled just below the top bar. */
   let availH = $state(0);
+  /** Until fit() has run, CSS sizes the server-rendered scan to the same fit (PF2-02). */
+  let fitted = $state(false);
 
   // Spec §9.12: fit width or fit page (the whole page in the viewport). Page from 1000, width
   // below; a choice is kept, because every page turn loads a new document.
@@ -103,6 +105,7 @@
     const byW = (stage.clientWidth - 2) / (rotated ? H : W);
     const byH = (pageH - 2) / (rotated ? W : H);
     fitScale = Math.min(1, byW, fitMode === 'page' ? byH : Infinity);
+    fitted = true;
   }
   $effect(() => {
     void rot;
@@ -326,11 +329,18 @@
         onpointercancel={up}
         class:dragging={!!drag}
       >
-        <div class="box" style:width="{boxW}px" style:height="{boxH}px">
+        <div
+          class="box"
+          class:pre={!fitted}
+          style:width={fitted ? `${boxW}px` : undefined}
+          style:height={fitted ? `${boxH}px` : undefined}
+          style:--w={W}
+          style:--h={H}
+        >
           <div
             class="sheet scan"
-            style:width="{W * effScale}px"
-            style:height="{H * effScale}px"
+            style:width={fitted ? `${W * effScale}px` : undefined}
+            style:height={fitted ? `${H * effScale}px` : undefined}
             style:transform="translate(-50%,-50%) rotate({rot}deg)"
           >
             {#if tiled && !useOverview}
@@ -524,6 +534,25 @@
   .box {
     position: relative;
     margin: 0 auto;
+  }
+  /* The server-rendered scan already has the size fit() will give it (PF2-02): the stage's width
+     less 2, at most 1:1, and to the page also the height from the stage's top to 18 above the
+     tab bar. The manual page's inline script sets the fit mode and --viewer-top before the first
+     paint. */
+  .box.pre {
+    width: min(100% - 2px, var(--w) * 1px);
+    aspect-ratio: var(--w) / var(--h);
+  }
+  :global(html[data-manual-fit='page']) .box.pre {
+    width: min(
+      100% - 2px,
+      var(--w) * 1px,
+      (100dvh - var(--viewer-top, 0px) - var(--tabbar-h) - 18px) * var(--w) / var(--h)
+    );
+  }
+  .box.pre .sheet {
+    width: 100%;
+    height: 100%;
   }
   .sheet {
     position: absolute;

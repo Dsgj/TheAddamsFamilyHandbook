@@ -68,6 +68,23 @@ const around = toc.slice(from, from + 7).map(([p, name], i) => ({
     }
   </nav>
   <PageViewer client:load {doc} {page} {meta} count={pageCount(doc)} {text} {title} />
+  <script is:inline>
+    // Before the first paint (PF2-02): the fit the viewer is about to choose (PageViewer's
+    // storedFit) and, for a fit to the page, the stage's top, so the scan is drawn at its size.
+    (function () {
+      let fit = null;
+      try {
+        fit = localStorage.getItem('valvet:manual-fit');
+      } catch {}
+      if (fit !== 'width' && fit !== 'page')
+        fit = matchMedia('(min-width: 1000px)').matches ? 'page' : 'width';
+      const html = document.documentElement;
+      html.dataset.manualFit = fit;
+      const stage = document.querySelector('.viewer .stage');
+      if (stage)
+        html.style.setProperty('--viewer-top', stage.getBoundingClientRect().top + scrollY + 'px');
+    })();
+  </script>
 
   <div class="below">
     <section>

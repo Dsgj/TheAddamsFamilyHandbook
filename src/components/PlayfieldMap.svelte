@@ -195,10 +195,12 @@
   $effect(() => {
     const el = scroller;
     if (!el) return;
-    const ro = new ResizeObserver(() => {
+    const measure = () => {
       stageW = el.clientWidth;
       stageH = el.clientHeight;
-    });
+    };
+    measure(); // now too: the panel's first render then knows the fit (PF2-01)
+    const ro = new ResizeObserver(measure);
     ro.observe(el);
     // The stage top moves when the header, the calibration card or the viewport changes.
     const above = new ResizeObserver(measureTop);
@@ -558,7 +560,7 @@
         role="region"
         aria-label="Playfield drawing"
         tabindex="0"
-        style:--stage-top="{stageTop}px"
+        style:--stage-top={stageTop ? `${stageTop}px` : undefined}
         style:height={embed && stageW ? `${embedH}px` : undefined}
         bind:this={scroller}
         onpointerdown={zm.pointerDown}
@@ -576,6 +578,7 @@
           style:--shift="{shift}px"
           style:width={fit ? `${zm.canvasW}px` : undefined}
           style:height={fit ? `${zm.canvasH}px` : undefined}
+          style:--r={PLAYFIELD.w / PLAYFIELD.h}
           bind:this={canvas}
         >
           <img
@@ -912,7 +915,8 @@
   }
   .scroller {
     position: relative;
-    height: calc(100dvh - var(--stage-top, 0px) - var(--tabbar-h) - var(--safe-bot));
+    /* Until the stage is measured its top is the top bar's height, as it is on /map. */
+    height: calc(100dvh - var(--stage-top, var(--topbar-h)) - var(--tabbar-h) - var(--safe-bot));
     overflow: hidden;
     background: var(--ground);
     touch-action: pan-x pan-y;
@@ -936,6 +940,20 @@
     /* Expanded at 1× the canvas moves so the part sits in the band above the sheet (spec §7.6). */
     transform: translateY(var(--shift, 0px));
   }
+  /* /map draws the canvas at its fit before it hydrates (PF2-01): fit() in CSS from the scroller's
+     size; from 1000 the larger fit beside or above the controls (CTRL_SIDE 64, CTRL_FOOT 188). */
+  .map-ui:not(.embed) .scroller {
+    container-type: size;
+  }
+  .map-ui:not(.embed) .canvas {
+    width: min(100cqw, 100cqh * var(--r));
+    aspect-ratio: var(--r);
+  }
+  @media (min-width: 1000px) {
+    .map-ui:not(.embed) .canvas {
+      width: max(min(100cqw - 128px, 100cqh * var(--r)), min(100cqw, (100cqh - 188px) * var(--r)));
+    }
+  }
   /* Re-fits (the sheet at peek, deselect) and the expanded translate animate once fitted. */
   .canvas.ready {
     transition:
@@ -956,16 +974,6 @@
     position: absolute;
     max-width: none;
     pointer-events: none;
-  }
-  .map-ui :global(.overlay-row) {
-    align-items: center;
-  }
-  .map-ui :global(.overlay-row select) {
-    margin-left: 4px;
-  }
-  .map-ui :global(.overlay-row input[type='range']) {
-    vertical-align: middle;
-    width: 120px;
   }
 
   /* Markers (spec §7.5): fixed px, the box is the visible size; the canvas's pointerup handler

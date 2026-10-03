@@ -433,6 +433,8 @@ test.describe('phone selection sheet', () => {
     await gotoHydrated(page, '/map?layer=sw&id=32');
     const sheet = page.locator(SHEET);
     await expect.poll(() => fitted(page)).toBe(true);
+    // The sheet has risen in: the grabber is where the press lands.
+    await expect.poll(() => sheet.evaluate((el) => el.getAnimations().length)).toBe(0);
     const grab = sheet.locator('button.grab');
     // A press, a drag and a release on the grabber: the release ends in a click, which must not
     // toggle the sheet back.

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- **The map and manual pages no longer jump as they load.** The map drawing
+  and a manual page now take their final size before the page becomes
+  interactive, so the side panel and the page below no longer move once it
+  does.
 - **Clicks and messages behave.** A Ctrl or Cmd click on the tab you are on
   opens it in a new tab again. With site data blocked, the back link and swipe
   still work. A message that follows another within a few seconds stays for
