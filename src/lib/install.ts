@@ -39,12 +39,20 @@ export function isStandalone(): boolean {
   );
 }
 
-/** Shows the browser's prompt; resolves to whether the user accepted. */
+/**
+ * Shows the browser's prompt; resolves to whether the user accepted. A prompt shows once, so the
+ * event is spent either way: Install hides until the browser offers a fresh one, which the
+ * listener above keeps (CO2-09).
+ */
 export async function promptInstall(): Promise<boolean> {
   const e = window.tafhInstall;
   if (!e) return false;
-  await e.prompt();
-  const { outcome } = await e.userChoice;
-  if (outcome === 'accepted') delete window.tafhInstall;
-  return outcome === 'accepted';
+  delete window.tafhInstall;
+  window.dispatchEvent(new CustomEvent('tafh:installable'));
+  try {
+    await e.prompt();
+    return (await e.userChoice).outcome === 'accepted';
+  } catch {
+    return false;
+  }
 }

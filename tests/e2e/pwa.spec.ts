@@ -120,6 +120,55 @@ test.describe('data files that do not load (AR2-03, CO2-06, SV2-02)', () => {
   });
 });
 
+test('an Update ready said before the toast host hydrated still shows, with Reload (PF2-03)', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    window.tafhToast = { kind: 'update', text: 'A new version of the app is ready.' };
+  });
+  await gotoHydrated(page, '/workshop');
+  const t = page.locator('.toast[data-kind="update"]');
+  await expect(t).toContainText('A new version of the app is ready.');
+  await expect(t.getByRole('button', { name: 'Reload' })).toBeVisible();
+});
+
+test('a dismissed install prompt is spent; a fresh one brings Install back (CO2-09)', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    const w = window as unknown as { offer: (o: string) => void; prompts: number };
+    w.prompts = 0;
+    w.offer = (outcome) => {
+      const e = new Event('beforeinstallprompt', { cancelable: true });
+      Object.assign(e, {
+        prompt: () => {
+          w.prompts++;
+          return Promise.resolve();
+        },
+        userChoice: Promise.resolve({ outcome }),
+      });
+      window.dispatchEvent(e);
+    };
+  });
+  const prompts = () => page.evaluate(() => (window as unknown as { prompts: number }).prompts);
+  await gotoHydrated(page, '/workshop');
+  await page.evaluate(() =>
+    (window as unknown as { offer: (o: string) => void }).offer('dismissed'),
+  );
+  await page.getByRole('button', { name: 'Install the app' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Install the app' });
+  const install = dialog.getByRole('button', { name: 'Install', exact: true });
+  await install.click();
+  expect(await prompts()).toBe(1);
+  await expect(install).toHaveCount(0);
+  await page.evaluate(() =>
+    (window as unknown as { offer: (o: string) => void }).offer('accepted'),
+  );
+  await install.click();
+  expect(await prompts()).toBe(2);
+  await expect(dialog).toHaveCount(0);
+});
+
 test('the Install sheet opens from the Workshop, closes on Esc and returns focus', async ({
   page,
   browserName,
@@ -144,8 +193,9 @@ test('pull-to-refresh lives on the Workshop only and ends in a toast', async ({ 
   // A first visit may still be showing "Ready to work offline"; let it leave first.
   await expect(page.locator('.toast[data-kind="offline"]')).toHaveCount(0, { timeout: 8000 });
   await page.evaluate(() => window.dispatchEvent(new CustomEvent('tafh:check-update')));
+  // A first visit's worker may still be installing; the check says so instead of "up to date" (PF2-08).
   await expect(page.locator('.toast')).toContainText(
-    /The app is up to date\.|A new version of the app is ready\./,
+    /The app is up to date\.|A new version of the app is ready\.|Downloading an update\./,
     { timeout: 8000 },
   );
 });

@@ -36,6 +36,8 @@
         show({ kind: d.kind === 'update' || d.kind === 'offline' ? d.kind : 'info', text: d.text });
     };
     window.addEventListener('tafh:toast', on);
+    // An Update ready dispatched before this host hydrated (PF2-03).
+    if (window.tafhToast) show(window.tafhToast);
     return () => {
       window.removeEventListener('tafh:toast', on);
       clearTimeout(timer);

@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- **Update and install prompts are reliable.** The "new version is ready"
+  message no longer gets lost when it arrives while the page is still
+  starting. Pull to refresh on the Workshop says "Downloading an update"
+  while one downloads instead of "up to date". Install works again after
+  you once dismissed the browser's prompt.
 - **Search finds handbook text.** A word search now looks in the text under
   every handbook heading, not only in the headings, and shows the words
   around the match. Repeated rows show once, "Show all" says what it counts

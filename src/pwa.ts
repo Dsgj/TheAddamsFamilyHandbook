@@ -9,6 +9,12 @@ import { armInstall } from '~/lib/install';
 type Kind = 'offline' | 'update' | 'info';
 const toast = (kind: Kind, text: string) =>
   window.dispatchEvent(new CustomEvent('tafh:toast', { detail: { kind, text } }));
+const READY = 'A new version of the app is ready.';
+/** Update ready stays until Reload, so a host that hydrates later still shows it (PF2-03). */
+const ready = () => {
+  window.tafhToast = { kind: 'update', text: READY };
+  toast('update', READY);
+};
 
 let registration: ServiceWorkerRegistration | undefined;
 let needsRefresh = false;
@@ -20,7 +26,7 @@ const update = registerSW({
   },
   onNeedRefresh() {
     needsRefresh = true;
-    toast('update', 'A new version of the app is ready.');
+    ready();
   },
   onOfflineReady() {
     toast('offline', 'Ready to work offline. Manual pages are saved as you open them.');
@@ -29,10 +35,15 @@ const update = registerSW({
 
 window.addEventListener('tafh:reload', () => void update(true));
 
-/** Pull-to-refresh: check for a new worker; the Update toast or "up to date" follows. */
+/**
+ * Pull-to-refresh: check for a new worker; the Update toast, "Downloading an update" while one
+ * installs (its Update toast follows), or "up to date" (CO2-08, PF2-08).
+ */
 window.addEventListener('tafh:check-update', () => {
   const settle = () => {
-    if (needsRefresh) toast('update', 'A new version of the app is ready.');
+    if (needsRefresh) ready();
+    else if (registration?.installing)
+      toast('info', 'Downloading an update. It is ready in a moment.');
     else toast('info', 'The app is up to date.');
   };
   if (!registration) {
