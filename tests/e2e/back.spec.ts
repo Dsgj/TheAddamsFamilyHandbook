@@ -276,6 +276,23 @@ test.describe('Diagnose ?q', () => {
     await expect(field(page)).toHaveValue('32 68');
   });
 
+  test('Back to the results lands on the card that was opened (UX2-01)', async ({ page }) => {
+    const codes = '11 12 13 14 15 16 17 18 21 22 23 24 25 26 27 28 31 32 33 34';
+    const results = new RegExp(`[?]q=${encodeURIComponent(codes)}$`);
+    await gotoHydrated(page, `./?q=${encodeURIComponent(codes)}`);
+    const opened = page.locator('article.comp h2 a[href$="/switch/32"]');
+    await opened.scrollIntoViewIfNeeded();
+    await expect(opened).toBeInViewport();
+    // By system back, then by the header back link.
+    for (const back of [() => page.goBack(), () => backLink(page).click()]) {
+      await opened.click();
+      await settle(page, CARD);
+      await back();
+      await settle(page, results);
+      await expect(opened).toBeInViewport();
+    }
+  });
+
   test('the field losing focus commits, and a card link commits before it leaves', async ({
     page,
   }) => {

@@ -94,14 +94,20 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// The scroll offset comes back with the view (not when a hash asks for a place).
+// The scroll offset comes back with the view (not when a hash asks for a place). An island that
+// renders the page's content after load, like Diagnose's results, says so with `tafh:content`, and
+// the offset is put back once more then, unless the reader has moved the page since (UX2-01).
 const saved = state.scroll[url];
 if (saved && !location.hash) {
+  let moved = false;
   const restore = () => {
-    if (Math.abs(scrollY - saved) > 1) scrollTo(0, saved);
+    if (!moved && Math.abs(scrollY - saved) > 1) scrollTo(0, saved);
   };
   restore();
   addEventListener('load', restore, { once: true });
+  document.addEventListener('tafh:content', restore, { once: true });
+  for (const type of ['wheel', 'touchstart', 'pointerdown', 'keydown'])
+    addEventListener(type, () => (moved = true), { once: true, capture: true, passive: true });
 }
 
 // The back link this entry was given when it was created, else the one this load decides.

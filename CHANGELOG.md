@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- **Back to Diagnose results returns to your card.** Coming back from a
+  component to a list of results, by the header's back or the phone's own,
+  shows the card you opened instead of the top or the bottom of the list.
 - **Swipe back leaves sheets and wide content alone.** An edge swipe no longer
   leaves the page while a sheet such as Contents or Go to page is open, on a
   zoomed manual page, or on a handbook table that is scrolled sideways.

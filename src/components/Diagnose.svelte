@@ -108,6 +108,9 @@
     committed = !!q && !!input.trim();
     writeUrl();
     hydrated = true;
+    // Once the results are in the page, motion.ts can put back the scroll offset this entry had:
+    // its first try, before the cards existed, could not reach it (UX2-01).
+    void tick().then(() => document.dispatchEvent(new CustomEvent('tafh:content')));
     canPaste = typeof navigator !== 'undefined' && !!navigator.clipboard?.readText;
     const onBar = (e: Event) => {
       if ((e as CustomEvent<string>).detail === 'recent') showRecent();
