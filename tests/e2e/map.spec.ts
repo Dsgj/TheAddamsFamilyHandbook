@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { activate, gotoHydrated, twoFrames } from './helpers';
+import { activate, barCovered, gotoHydrated, twoFrames } from './helpers';
 
 /** Playfield map, Phases 1–2 of the app redesign: fit, zoom, keys, markers, the sheets, the panel. */
 
@@ -477,6 +477,31 @@ test.describe('phone selection sheet', () => {
     );
     expect(moving).toEqual([]);
   });
+});
+
+test.describe('phone on its side, a part selected (CR2-02)', () => {
+  for (const viewport of [
+    { width: 740, height: 360 },
+    { width: 839, height: 412 },
+    { width: 915, height: 412 },
+  ]) {
+    test(`at ${viewport.width}x${viewport.height} the controls stay below the top bar`, async ({
+      page,
+    }) => {
+      await page.setViewportSize(viewport);
+      await gotoHydrated(page, '/map?layer=sw&id=32');
+      await expect(page.locator(SHEET)).toHaveAttribute('data-id', '32');
+      await expect.poll(() => fitted(page)).toBe(true);
+      await twoFrames(page);
+      const gap = await page.evaluate(
+        () =>
+          document.querySelector('.map-controls .column')!.getBoundingClientRect().top -
+          document.querySelector('header.top')!.getBoundingClientRect().bottom,
+      );
+      expect(gap).toBeGreaterThanOrEqual(0);
+      expect(await barCovered(page)).toEqual([]);
+    });
+  }
 });
 
 for (const size of SIZES) {

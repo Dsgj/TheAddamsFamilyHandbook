@@ -30,6 +30,25 @@ export function twoFrames(page: Page) {
 }
 
 /**
+ * The top bar's visible links and buttons whose centre something else paints over. The bar stays
+ * above whatever scrolls or rises beneath it, so this is empty (AY2-01, CR2-02).
+ */
+export function barCovered(page: Page) {
+  return page.evaluate(() => {
+    const bar = document.querySelector('header.top')!;
+    return [...bar.querySelectorAll<HTMLElement>('a, button')]
+      .filter((b) => {
+        const r = b.getBoundingClientRect();
+        if (!b.checkVisibility() || r.width < 1 || r.top < 0 || r.bottom > innerHeight)
+          return false;
+        const at = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+        return !at || !bar.contains(at);
+      })
+      .map((b) => b.getAttribute('aria-label') || b.textContent!.trim());
+  });
+}
+
+/**
  * Counts the navigations the page starts from now on: the Navigation API's `navigate` event fires
  * as `history.back()` or `location.replace()` is called, before anything loads (Chromium).
  */

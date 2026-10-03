@@ -905,6 +905,12 @@
     position: relative;
     min-width: 0;
   }
+  /* The handbook embed keeps its controls' z-index to itself: scrolled under the top bar, its
+     glass passes beneath the bar and never over the bar's buttons (AY2-01). Only the embed: the
+     full map's sheet stacks against the shell's bars. */
+  .map-ui.embed {
+    isolation: isolate;
+  }
   .scroller {
     position: relative;
     height: calc(100dvh - var(--stage-top, 0px) - var(--tabbar-h) - var(--safe-bot));
@@ -1121,6 +1127,15 @@
     transition:
       opacity var(--dur-1) var(--ease-standard),
       visibility 0s var(--dur-1);
+  }
+  /* A phone on its side: the stage is too short for the column above the sheet at peek, which
+     rose over the top bar, so the layers and the zoom capsule sit side by side (CR2-02). */
+  @media (max-height: 560px) {
+    .column {
+      flex-direction: row;
+      align-items: flex-end;
+      width: auto;
+    }
   }
   /* The wide panel's `.ph.slim` header (MapCard has the same rule for the sheet's header). */
   .ph {

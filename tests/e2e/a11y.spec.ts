@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { gotoHydrated, twoFrames } from './helpers';
+import { barCovered, gotoHydrated, twoFrames } from './helpers';
 
 /*
  * P2 item 5 of the app audit: accessibility (AY-01, AY-02, AY-05, AY-06, AY-07, AY-09, AY-10,
@@ -338,6 +338,41 @@ test.describe('focus is never under a bar (AY-02)', () => {
     }
     expect(bad).toEqual([]);
   });
+});
+
+test('the rules embed passes beneath the top bar, never over its buttons (AY2-01)', async ({
+  page,
+}) => {
+  await gotoHydrated(page, '/handbook/rules');
+  const embed = page.locator('#pg-9 .shot-map');
+  await embed.scrollIntoViewIfNeeded();
+  await expect
+    .poll(() =>
+      embed.locator('.canvas').evaluate((el) => (el as HTMLElement).style.width.endsWith('px')),
+    )
+    .toBe(true);
+  // From the embed's top at mid-screen until its bottom has passed under the bar, 32 px a step.
+  const { from, to } = await embed.evaluate((el) => {
+    const r = el.getBoundingClientRect();
+    return { from: Math.max(0, scrollY + r.top - innerHeight / 2), to: scrollY + r.bottom };
+  });
+  let beneath = 0;
+  const bad: string[] = [];
+  for (let y = from; y <= to; y += 32) {
+    await page.evaluate((top) => scrollTo({ top, behavior: 'instant' }), y);
+    await twoFrames(page);
+    const under = await embed.evaluate((el) => {
+      const b = document.querySelector('header.top')!.getBoundingClientRect();
+      return [...el.querySelectorAll('.map-controls .glass')].some((g) => {
+        const a = g.getBoundingClientRect();
+        return a.top < b.bottom && a.bottom > b.top;
+      });
+    });
+    if (under) beneath++;
+    for (const name of await barCovered(page)) bad.push(`${name} at scrollY ${Math.round(y)}`);
+  }
+  expect(beneath, 'the controls passed the bar').toBeGreaterThan(0);
+  expect(bad).toEqual([]);
 });
 
 test('the skip link is a 44 pill centred in the top bar (AY-05)', async ({ page, browserName }) => {

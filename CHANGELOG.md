@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- **The map never covers the top bar.** Scrolling past the shot map in the
+  handbook's Rules section on a phone, its controls slide under the top bar
+  instead of over Back and the manual button. On /map with a phone on its
+  side, the layer list and the zoom buttons sit side by side, so they stay
+  below the bar with a part selected.
 - **The LEDs fitted in this machine.** Every lamp now names the LED from the
   machine's Super Brite Kit sheet ("555 Warm Super"), so a dead lamp tells you
   what to order: on the lamp's card and page, in the map's lamp card, in a new
