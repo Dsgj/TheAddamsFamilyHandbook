@@ -1,6 +1,5 @@
 import type { ComponentStatus, Kind } from './model/types';
 import { componentCode, KIND_PLURAL } from '~/lib/copy';
-import { DATA } from '~/lib/data/components';
 
 /** Compact per-component row the Shopping list island receives (keeps components.json out of the bundle). */
 export interface ShoppingItem {
@@ -71,34 +70,4 @@ export function formatShopping(groups: ShoppingGroup[]): string {
     out.push(KIND_PLURAL[kind], ...gs.map(formatGroup));
   }
   return out.join('\n');
-}
-
-/** Every lamp, switch and solenoid as a shopping candidate; the status store says which are faults. */
-export function allShoppingItems(): ShoppingItem[] {
-  return [
-    ...DATA.lamps.map((l) => ({
-      kind: 'lamp' as const,
-      id: l.id,
-      name: l.name,
-      part: l.bulbPart,
-      bulb: l.bulb,
-      assy: l.assy,
-    })),
-    ...DATA.switches.map((s) => ({
-      kind: 'switch' as const,
-      id: s.id,
-      name: s.name,
-      part: s.part,
-      bulb: '',
-      assy: s.assy,
-    })),
-    ...DATA.coils.map((c) => ({
-      kind: 'coil' as const,
-      id: c.id,
-      name: c.name,
-      part: c.part,
-      bulb: '',
-      assy: c.assy,
-    })),
-  ];
 }

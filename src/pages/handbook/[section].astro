@@ -6,6 +6,8 @@ import PlayfieldMap from '~/components/PlayfieldMap.svelte';
 import ReaderBar from '~/components/ReaderBar.svelte';
 import { SECTIONS, isAppendixPage } from '~/lib/handbook/sections';
 import { handbookToc } from '~/lib/handbook/toc';
+import { jsonScript } from '~/lib/json-script';
+import HandbookTocList from '~/components/HandbookTocList.svelte';
 import { pageLabel, pageTitleText, printedPageText } from '~/lib/pages';
 import { handbookHref, manualHref } from '~/lib/url';
 import { APPENDICES, appendixHref } from '~/data/appendix';
@@ -76,11 +78,14 @@ const description =
       /* no storage: the default size */
     }
   </script>
+  <script is:inline type="application/json" id="tafh-toc" set:html={jsonScript(toc)} />
   <div class="hb">
     <aside class="side">
       <details class="card" open>
         <summary>Contents</summary>
-        <HandbookToc client:load items={toc} current={section.key} />
+        <HandbookToc client:media="(min-width: 960px)" current={section.key}>
+          <HandbookTocList items={toc} current={section.key} />
+        </HandbookToc>
       </details>
     </aside>
     <article class="prose" data-section={section.key} data-title={section.title}>
@@ -143,7 +148,7 @@ const description =
       }
     </article>
   </div>
-  <ReaderBar client:load prev={prevEnd} next={nextEnd} items={toc} current={section.key} />
+  <ReaderBar client:load prev={prevEnd} next={nextEnd} current={section.key} />
 </Base>
 
 <script>

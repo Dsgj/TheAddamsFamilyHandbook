@@ -11,17 +11,27 @@
   import { agree } from '~/lib/copy';
   import { allStatuses } from '~/lib/model/status.svelte';
 
-  let { keys, pill = false }: { keys: string[]; pill?: boolean } = $props();
+  let { pill = false }: { pill?: boolean } = $props();
 
   let hydrated = $state(false);
   let host = $state<HTMLElement | null>(null);
 
-  const known = new Set(keys);
+  /** `kind:id` of every orderable component, from the shell's JSON script (Base.astro). */
+  let known = $state(new Set<string>());
   const count = $derived(
     hydrated ? allStatuses().filter((s) => s.status === 'fault' && known.has(s.id)).length : 0,
   );
 
-  onMount(() => (hydrated = true));
+  onMount(() => {
+    const ids = JSON.parse(document.getElementById('tafh-shop')?.textContent ?? '{}') as Record<
+      string,
+      string[]
+    >;
+    known = new Set(
+      Object.entries(ids).flatMap(([kind, list]) => list.map((id) => `${kind}:${id}`)),
+    );
+    hydrated = true;
+  });
 
   $effect(() => {
     if (pill || !host) return;
