@@ -171,6 +171,11 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
+  /* 285 rows: those off screen skip style and layout, so Contents opens faster (PF2-06). */
+  .sheet-toc :global(li) {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 44px;
+  }
   .sheet-toc,
   .sheet-size {
     padding: 4px 16px 16px;

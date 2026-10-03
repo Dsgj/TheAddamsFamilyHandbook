@@ -89,7 +89,7 @@ test("another tab's Clear all is not undone by a note still waiting to be saved"
   await page.clock.install();
   await seed(page, { 'lamp:11': fault('lamp:11') });
   const other = await context.newPage();
-  await gotoHydrated(other, '/shopping');
+  await gotoHydrated(other, '/shopping', ['DeviceData']);
   await gotoHydrated(page, '/switch/32');
   await other.getByRole('button', { name: 'Clear all' }).click();
   // Typed but not saved yet (the input waits for a pause) when the other tab clears everything.
@@ -109,7 +109,7 @@ test('a page restored from the back/forward cache shows and keeps later marks', 
   page,
 }) => {
   await seed(page, { 'switch:32': fault('switch:32') });
-  await gotoHydrated(page, '/shopping');
+  await gotoHydrated(page, '/shopping', ['DeviceData']);
   await expect(page.locator('.device')).toContainText('1 component recorded');
   // A later page (gone now) marked lamp 11; this page comes back from bfcache.
   await page.evaluate((entry) => {
@@ -147,7 +147,7 @@ test.describe('replace everything refuses a file that is not a backup', () => {
     test(name, async ({ page }) => {
       const items = { 'switch:32': fault('switch:32'), 'lamp:11': fault('lamp:11') };
       await seed(page, items);
-      await gotoHydrated(page, '/shopping');
+      await gotoHydrated(page, '/shopping', ['DeviceData']);
       await page.getByLabel('Import mode').selectOption('replace');
       await page.getByLabel('Read backup file').setInputFiles({
         name,
@@ -164,7 +164,7 @@ test.describe('replace everything refuses a file that is not a backup', () => {
 test('a message said soon after another keeps its full time (CO2-12)', async ({ page }) => {
   await page.clock.install();
   await seed(page, { 'switch:32': fault('switch:32') });
-  await gotoHydrated(page, '/shopping');
+  await gotoHydrated(page, '/shopping', ['DeviceData']);
   await Promise.all([
     page.waitForEvent('download'),
     page.getByRole('button', { name: 'Download backup' }).click(),
@@ -189,7 +189,7 @@ test('a message said soon after another keeps its full time (CO2-12)', async ({ 
 test('replace everything asks once more when the file would drop entries', async ({ page }) => {
   const items = { 'switch:32': fault('switch:32'), 'lamp:11': fault('lamp:11') };
   await seed(page, items);
-  await gotoHydrated(page, '/shopping');
+  await gotoHydrated(page, '/shopping', ['DeviceData']);
   await page.getByLabel('Import mode').selectOption('replace');
   await page.getByLabel('Read backup file').setInputFiles({
     name: 'coil.json',
@@ -228,7 +228,7 @@ test.describe('the replace confirm lapses without losing focus', () => {
   test.beforeEach(async ({ page }) => {
     await seed(page, items);
     await page.clock.install();
-    await gotoHydrated(page, '/shopping');
+    await gotoHydrated(page, '/shopping', ['DeviceData']);
     await page.getByLabel('Import mode').selectOption('replace');
     await page.getByLabel('Read backup file').setInputFiles(coilFile);
     await expect(page.getByRole('button', { name: /^Really replace\?/ })).toBeFocused();
@@ -273,7 +273,7 @@ test('Clear all also empties Recent, Recently viewed and Continue reading', asyn
       JSON.stringify({ section: 'tests', title: 'Test menu', anchor: 'top' }),
     );
   });
-  await gotoHydrated(page, '/shopping');
+  await gotoHydrated(page, '/shopping', ['DeviceData']);
   await page.getByRole('button', { name: 'Clear all' }).click();
   await page.getByRole('button', { name: 'Really clear all?' }).click();
   await expect(page.locator('.device')).toContainText('Nothing saved on this device yet.');
@@ -304,7 +304,7 @@ test.describe('Clear all is usable while only a list holds something', () => {
         k: key,
         v: value,
       });
-      await gotoHydrated(page, '/shopping');
+      await gotoHydrated(page, '/shopping', ['DeviceData']);
       await expect(page.getByRole('button', { name: 'Download backup' })).toBeDisabled();
       await page.getByRole('button', { name: 'Clear all' }).click();
       await page.getByRole('button', { name: 'Really clear all?' }).click();
@@ -325,7 +325,7 @@ test.describe('an open Handbook home drops Continue reading after Clear all', ()
 
   test('when another tab clears', async ({ page, context }) => {
     const other = await context.newPage();
-    await gotoHydrated(other, '/shopping');
+    await gotoHydrated(other, '/shopping', ['DeviceData']);
     await other.getByRole('button', { name: 'Clear all' }).click();
     await other.getByRole('button', { name: 'Really clear all?' }).click();
     await expect(page.locator('[data-continue]')).toBeHidden();
@@ -343,7 +343,7 @@ test.describe('an open Handbook home drops Continue reading after Clear all', ()
 test('Verify ticks travel in the backup and go with Clear all', async ({ page }) => {
   await gotoHydrated(page, '/verify');
   await page.locator('input.verify-check[data-id="flasher-count"]').check();
-  await gotoHydrated(page, '/shopping');
+  await gotoHydrated(page, '/shopping', ['DeviceData']);
   await expect(page.locator('.device')).toContainText('1 check verified');
   const [download] = await Promise.all([
     page.waitForEvent('download'),
@@ -364,7 +364,7 @@ test('Verify ticks travel in the backup and go with Clear all', async ({ page })
   await gotoHydrated(page, '/verify');
   await expect(page.locator('input.verify-check[data-id="flasher-count"]')).not.toBeChecked();
 
-  await gotoHydrated(page, '/shopping');
+  await gotoHydrated(page, '/shopping', ['DeviceData']);
   await page.getByLabel('Read backup file').setInputFiles(path);
   await expect(page.getByRole('status')).toContainText('and 1 check read');
   await gotoHydrated(page, '/verify');
@@ -422,7 +422,7 @@ test('a log that repeats a moment still opens, and an import keeps one of each (
   await expect(page.getByRole('list', { name: 'Service log' }).locator('li')).toHaveCount(2);
   // Through "Read backup file", the same log comes back with the repeat folded away.
   await seed(page, {});
-  await gotoHydrated(page, '/shopping');
+  await gotoHydrated(page, '/shopping', ['DeviceData']);
   await page.getByLabel('Read backup file').setInputFiles({
     name: 'backup.json',
     mimeType: 'application/json',

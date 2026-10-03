@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- **First taps are quicker on a phone.** The handbook Contents opens faster,
+  the map is ready sooner, the drawing in a handbook page loads only when you
+  scroll to it, and a few page parts start up when they are needed rather than
+  at once. A map link that opens a part at a zoom now lands in place, and the
+  part's sheet is simply there instead of rising in.
 - **The map and manual pages no longer jump as they load.** The map drawing
   and a manual page now take their final size before the page becomes
   interactive, so the side panel and the page below no longer move once it

@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { hydrated } from './helpers';
 
 /**
  * Payload (audit P4 item 5): what a page loads and when.
@@ -14,16 +15,6 @@ import { expect, test, type Page } from '@playwright/test';
  */
 const TILES = ['10_00.png', '10_01.png', '10_10.png', '10_11.png'];
 const MISSING = "isn't on the device yet";
-
-/** Every client:load island hydrated, and every client:media island whose query matches. */
-const hydrated = (page: Page) =>
-  page.waitForFunction(
-    () =>
-      !document.querySelector('astro-island[ssr][client="load"]') &&
-      [...document.querySelectorAll('astro-island[ssr][client="media"]')].every(
-        (el) => !matchMedia(JSON.parse(el.getAttribute('opts') ?? '{}').value ?? 'not all').matches,
-      ),
-  );
 
 /** Zoom in (x1.2 a click) until the viewer swaps the overview for the tiles (scale >= 0.3). */
 async function zoomToTiles(page: Page) {

@@ -36,7 +36,7 @@ test('setup values travel in the backup file', async ({ page }) => {
   await item.getByRole('textbox').fill('EDUCATION FIRST / PINBALL SECOND');
   await item.getByRole('textbox').press('Tab');
 
-  await gotoHydrated(page, '/shopping');
+  await gotoHydrated(page, '/shopping', ['DeviceData']);
   await expect(page.locator('.device')).toContainText('1 setting recorded');
   const [download] = await Promise.all([
     page.waitForEvent('download'),

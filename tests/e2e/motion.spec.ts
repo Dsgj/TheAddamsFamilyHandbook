@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { countNavigations, gotoHydrated } from './helpers';
+import { countNavigations, gotoHydrated, hydrated } from './helpers';
 
 /* Phase 12 of the app redesign: view transitions between pages, swipe back, and the per-tab
    stack, scroll and Map state. */
@@ -116,7 +116,7 @@ test('under reduced motion a push holds only opacity animations of 150 ms or les
 /** Waits for the page's scripts: motion.ts has re-pointed the tab hrefs and the islands are live. */
 const settled = async (page: Page) => {
   await page.waitForLoadState('load');
-  await expect(page.locator('astro-island[ssr][client="load"]')).toHaveCount(0);
+  await hydrated(page);
 };
 
 test('each tab keeps its stack, scroll and the Map zoom and selection', async ({ page }) => {

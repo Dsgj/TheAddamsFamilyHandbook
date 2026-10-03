@@ -4,9 +4,10 @@ import { gotoHydrated, twoFrames } from './helpers';
 /**
  * The map and a manual page are drawn at their fitted size before they hydrate (PF2-01, PF2-02),
  * so loading them shifts the layout less than 0.1, the "good" CLS. A phone loads at 4x CPU, as
- * the audit measured. Layout-shift entries are Chromium's.
+ * the audit measured. A map link that restores a zoom and a selection is sized before hydration
+ * too (map.astro's --map-z and --map-inset). Layout-shift entries are Chromium's.
  */
-for (const url of ['/map', '/manual/wpc/10', '/manual/ops/77']) {
+for (const url of ['/map', '/map?layer=sw&id=32&z=2', '/manual/wpc/10', '/manual/ops/77']) {
   test(`${url} loads without a layout shift`, async ({ page, browserName, isMobile }) => {
     test.skip(browserName !== 'chromium', 'the Layout Instability API is Chromium only');
     if (isMobile) {

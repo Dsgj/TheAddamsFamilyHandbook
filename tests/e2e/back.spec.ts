@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { countNavigations, gotoHydrated } from './helpers';
+import { countNavigations, gotoHydrated, hydrated } from './helpers';
 
 /* Audit P1 item 7, back behaviour. The header back link and swipe back step back through history
    when the previous entry is where they lead, and otherwise replace the page they leave; each
@@ -30,8 +30,6 @@ const where = (page: Page): Promise<Where> =>
     };
   });
 
-const hydrated = (page: Page) =>
-  expect(page.locator('astro-island[ssr][client="load"]')).toHaveCount(0);
 /** A navigation the page started (a click, history) has landed and the new page is live. */
 async function settle(page: Page, url: RegExp) {
   await expect(page).toHaveURL(url);

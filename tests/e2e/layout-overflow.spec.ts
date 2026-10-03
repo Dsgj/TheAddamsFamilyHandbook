@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { gotoHydrated } from './helpers';
+import { gotoHydrated, hydrated } from './helpers';
 import { TABS } from '~/lib/nav';
 import { SECTIONS } from '~/lib/handbook/sections';
 import { SETUP_STEPS } from '~/data/setup';
@@ -728,7 +728,7 @@ test.describe('P2-4: the manual viewer (spec §9.12)', () => {
     await expect(fitWidth).toHaveAttribute('aria-pressed', 'true');
     await page.getByRole('link', { name: 'Next page' }).click();
     await expect(page).not.toHaveURL(/\/106\/?$/);
-    await expect(page.locator('astro-island[ssr][client="load"]')).toHaveCount(0);
+    await hydrated(page);
     await expect(fitWidth).toHaveAttribute('aria-pressed', 'true');
   });
 });

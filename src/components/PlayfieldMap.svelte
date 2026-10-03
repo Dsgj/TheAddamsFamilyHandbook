@@ -44,10 +44,9 @@
   /** The stacked keyboard legend floats at the stage's foot only below the layers list:
    *  16 + the list (4 rows of 44 + 8) + 16 + the legend (6 lines of 20, 5 gaps of 6, 20 padding) + 16. */
   const LEGEND_STAGE_H = 16 + (4 * 44 + 8) + 16 + (6 * 20 + 5 * 6 + 20) + 16;
-  /** Spec §7.4: from 1000 the zoom capsule (44 wide, at right 16, bottom 16) and the readout
-   *  above it (44 wide, bottom 156, 28 tall) stand at the stage's right. The fit keeps the
-   *  drawing clear of that column: a side gutter of 16 + 44 + 4, or, top-aligned, a foot of
-   *  156 + 28 + 4 under it. */
+  /** Spec §7.4: from 1000 the zoom capsule (44 wide, right 16, bottom 16) and its readout (44 wide,
+   *  bottom 156, 28 tall) stand at the stage's right. The fit keeps the drawing clear of them: a
+   *  side gutter of 16 + 44 + 4, or, top-aligned, a foot of 156 + 28 + 4. */
   const CTRL_SIDE = 16 + 44 + 4;
   const CTRL_FOOT = 156 + 28 + 4;
   /** Spec §7.9: where its gutter can't hold the glass, the embed keeps the phone's control column
@@ -320,11 +319,10 @@
     await tick();
     selectionEl()?.focus({ preventScroll: true });
   }
-  /** Esc or Deselect. When focus was in the sheet or the panel's card, which unmounts or empties,
-   *  it returns to the part's first marker (tabindex -1 but focusable), so the next arrow goes on
-   *  from there; the drawing takes it when that marker's layer is off. A pointer click on Deselect
-   *  (`detail` above 0) moves focus without scrolling, so the drawing stays where it was panned;
-   *  Esc or a keyboard press scrolls the marker into view. */
+  /** Esc or Deselect. Focus in the sheet or the panel's card, which unmounts or empties, returns to
+   *  the part's first marker (tabindex -1), so the next arrow goes on from there; the drawing takes
+   *  it when that marker's layer is off. A pointer click on Deselect (`detail` > 0) moves focus
+   *  without scrolling, so the pan stays; Esc or a keyboard press scrolls the marker into view. */
   function clearSelection(e?: MouseEvent) {
     const key = selKey;
     const a = document.activeElement;
@@ -587,6 +585,8 @@
             alt="Playfield drawing"
             width={PLAYFIELD.w}
             height={PLAYFIELD.h}
+            loading={embed ? 'lazy' : undefined}
+            decoding={embed ? 'async' : undefined}
             draggable="false"
           />
           {#if overlayImg}
@@ -940,18 +940,19 @@
     /* Expanded at 1× the canvas moves so the part sits in the band above the sheet (spec §7.6). */
     transform: translateY(var(--shift, 0px));
   }
-  /* /map draws the canvas at its fit before it hydrates (PF2-01): fit() in CSS from the scroller's
-     size; from 1000 the larger fit beside or above the controls (CTRL_SIDE 64, CTRL_FOOT 188). */
+  /* /map sizes the canvas before it hydrates (PF2-01) with map.astro's --map-z and --map-inset
+     (the URL's zoom, a phone's peek); from 1000 the larger fit beside or above the controls. */
   .map-ui:not(.embed) .scroller {
     container-type: size;
   }
   .map-ui:not(.embed) .canvas {
-    width: min(100cqw, 100cqh * var(--r));
+    --fit: min(100cqw, (100cqh - var(--map-inset, 0px)) * var(--r));
+    width: calc(var(--map-z, 1) * var(--fit));
     aspect-ratio: var(--r);
   }
   @media (min-width: 1000px) {
     .map-ui:not(.embed) .canvas {
-      width: max(min(100cqw - 128px, 100cqh * var(--r)), min(100cqw, (100cqh - 188px) * var(--r)));
+      --fit: max(min(100cqw - 128px, 100cqh * var(--r)), min(100cqw, (100cqh - 188px) * var(--r)));
     }
   }
   /* Re-fits (the sheet at peek, deselect) and the expanded translate animate once fitted. */
@@ -976,8 +977,7 @@
     pointer-events: none;
   }
 
-  /* Markers (spec §7.5): fixed px, the box is the visible size; the canvas's pointerup handler
-     gives every marker its 44 px reach. */
+  /* Markers (spec §7.5): fixed px, the box is the visible size; pointerup gives each a 44 reach. */
   .marker {
     position: absolute;
     /* Off-playfield parts sit on the edge; keep the whole box inside the drawing. */

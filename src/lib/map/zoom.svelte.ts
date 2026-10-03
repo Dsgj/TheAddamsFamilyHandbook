@@ -53,15 +53,18 @@ export function createMapZoom(ctx: ZoomContext) {
   let zoomSync: ReturnType<typeof setTimeout> | undefined;
   /** True once the first fit has landed, so later re-fits animate and the first never does. */
   let ready = $state(false);
+  let readying = false;
   // Whole px, rounded down, so a fitted canvas never overflows its stage by a rounding px.
   const canvasW = $derived(Math.floor(PLAYFIELD.w * ctx.fit() * zoom));
   const canvasH = $derived(Math.floor(PLAYFIELD.h * ctx.fit() * zoom));
   const zoomLabel = $derived(`${Math.round(zoom * 10) / 10}×`);
   $effect(() => {
     const canvas = ctx.canvas();
-    if (ctx.fit() > 0 && canvas && !ready) {
-      void canvas.offsetWidth; // commit the first px size before transitions switch on
-      ready = true;
+    if (ctx.fit() > 0 && canvas && !ready && !readying) {
+      // Transitions switch on a frame after the first px size has been drawn: no forced layout
+      // inside hydration (PF2-05).
+      readying = true;
+      requestAnimationFrame(() => requestAnimationFrame(() => (ready = true)));
       // The zoom the URL asked for (spec §10), after this flush: zoomTo calls flushSync, which
       // must not run inside an effect (SV-03).
       const z = startZoom;

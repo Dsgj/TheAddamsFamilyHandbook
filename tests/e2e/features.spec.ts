@@ -51,7 +51,7 @@ test('lamp and solenoid cards carry the status row', async ({ page }) => {
 test('device data downloads a backup and reads one back', async ({ page }) => {
   await gotoHydrated(page, '/switch/32');
   await page.getByRole('button', { name: 'Fault' }).click();
-  await gotoHydrated(page, '/shopping');
+  await gotoHydrated(page, '/shopping', ['DeviceData']);
   await expect(page.locator('.device')).toContainText('1 component recorded');
 
   const [download] = await Promise.all([
@@ -86,7 +86,7 @@ test('device data downloads a backup and reads one back', async ({ page }) => {
 test('device data needs two taps to clear everything', async ({ page }) => {
   await gotoHydrated(page, '/switch/32');
   await page.getByRole('button', { name: 'Fault' }).click();
-  await gotoHydrated(page, '/shopping');
+  await gotoHydrated(page, '/shopping', ['DeviceData']);
   await page.getByRole('button', { name: 'Clear all' }).click();
   await expect(page.locator('.device')).toContainText('1 component recorded');
   await page.getByRole('button', { name: 'Really clear all?' }).click();

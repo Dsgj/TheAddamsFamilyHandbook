@@ -185,7 +185,7 @@ const hasActions = Astro.slots.has('actions');
                   <path d={t.icon} />
                 </svg>
                 <span class="lbl">{t.label}</span>
-                {t.key === 'workshop' && <TabBadge client:load />}
+                {t.key === 'workshop' && <TabBadge client:idle />}
               </a>
               {t.subs.length > 0 && (
                 <ul class="subs">

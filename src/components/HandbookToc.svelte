@@ -141,6 +141,11 @@
   li.none {
     padding: 9px 12px;
   }
+  /* The ring inside the row: the list scrolls (and in the sheet each row is contained), which
+     would clip a ring outside it. */
+  li a:focus-visible {
+    outline-offset: -2px;
+  }
   @media (hover: hover) {
     li a:hover {
       background: var(--sunk);

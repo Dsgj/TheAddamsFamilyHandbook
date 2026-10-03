@@ -42,6 +42,11 @@
 
   /** --dur-0, the reduced-motion fade, as a number for the Svelte transitions. */
   const DUR_0 = 150;
+  /* A map sheet open before the page has been touched (the selection a link restores) is there at
+     once, as the link's zoom is: it rises in answer to a tap. */
+  const still = $derived(
+    kind === 'map' && globalThis.navigator?.userActivation?.hasBeenActive === false,
+  );
   const reduced = () =>
     typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -150,6 +155,15 @@
     html.style.setProperty('--toast-lift', `calc(${expanded ? full : peek}px + var(--safe-bot))`);
     return () => html.style.removeProperty('--toast-lift');
   });
+  // A page left with the map sheet up goes without the cross-fade: that view transition crashed
+  // WebKit (Playwright's, a selected part to another tab). map.astro skips the one into it.
+  $effect(() => {
+    if (kind !== 'map') return;
+    const cut = (e: Event) =>
+      (e as Event & { viewTransition?: ViewTransition | null }).viewTransition?.skipTransition();
+    addEventListener('pageswap', cut);
+    return () => removeEventListener('pageswap', cut);
+  });
 
   // ---- modal kind: focus, inert, Esc, recede
   let dialog: HTMLElement | undefined = $state();
@@ -255,6 +269,7 @@
   <section
     class="sheet map"
     class:dragging
+    class:still
     aria-label={label}
     style:height="calc({height}px + var(--safe-bot))"
     {...rest}
@@ -351,6 +366,9 @@
   }
   .map.dragging {
     transition: none;
+  }
+  .map.still {
+    animation: none;
   }
   /* The grabber's hit area is 88×44 (spec §7.6, audit AY-12): the ::after reaches 10 px above
      and below the 24 px bar, into the sheet's top edge and the gap over the head. */

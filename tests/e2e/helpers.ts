@@ -1,14 +1,48 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 
 /**
- * Navigates and waits until every Astro island has hydrated. Island markup is server-rendered, so
- * a click that lands before hydration hits a button with no handler yet; Astro drops the `ssr`
- * attribute from `<astro-island>` once the component is live. Only `client:load` islands count;
- * `client:visible` ones stay unhydrated off-screen.
+ * Navigates and waits until every Astro island that hydrates on its own is live, and the
+ * `client:visible` ones named in `visible` (component file names) too. Island markup is
+ * server-rendered, so a click that lands before hydration hits a button with no handler yet.
  */
-export async function gotoHydrated(page: Page, url: string) {
+export async function gotoHydrated(page: Page, url: string, visible: string[] = []) {
   await page.goto(url);
-  await expect(page.locator('astro-island[ssr][client="load"]')).toHaveCount(0);
+  await hydrated(page);
+  for (const c of visible) await hydrateVisible(page, c);
+}
+
+/**
+ * Every `client:load` and `client:idle` island hydrated, and every `client:media` one whose query
+ * matches: Astro drops the `ssr` attribute from `<astro-island>` once the component is live.
+ * `client:visible` ones stay server-rendered off screen (see hydrateVisible).
+ */
+export async function hydrated(page: Page) {
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          !document.querySelector('astro-island[ssr]:is([client="load"], [client="idle"])') &&
+          [...document.querySelectorAll('astro-island[ssr][client="media"]')].every(
+            (el) =>
+              !matchMedia(JSON.parse(el.getAttribute('opts') ?? '{}').value ?? 'not all').matches,
+          ),
+      ),
+    )
+    .toBe(true);
+}
+
+/**
+ * Scrolls a `client:visible` island on screen and waits until it is live. The island itself is
+ * `display: contents` (no box, so it cannot scroll into view): its first child with one does.
+ */
+export async function hydrateVisible(page: Page, component: string) {
+  const island = page.locator(`astro-island[component-url*="/${component}."]`);
+  await island.evaluate((el) =>
+    ([...el.children].find((c) => c.getClientRects().length) ?? el).scrollIntoView({
+      block: 'center',
+    }),
+  );
+  await expect(island).not.toHaveAttribute('ssr');
 }
 
 /**
