@@ -10,7 +10,7 @@ test('diagnose flags two lamps in one column as a driver problem', async ({ page
   const causes = page.locator('.causes');
   await expect(causes).toContainText('share lamp column 1');
   await expect(causes).toContainText('Q98');
-  await expect(causes.getByRole('link', { name: 'matrix' })).toHaveAttribute('href', /lamps/);
+  await expect(causes.getByRole('link', { name: 'Lamp matrix' })).toHaveAttribute('href', /lamps/);
 });
 
 test('diagnose accepts a pasted multi-line test report', async ({ page }) => {
@@ -48,7 +48,7 @@ test('lamp and solenoid cards carry the status row', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Fault' })).toBeVisible();
 });
 
-test('device data downloads a backup and reads one back', async ({ page }) => {
+test('device data downloads a backup and restores it', async ({ page }) => {
   await gotoHydrated(page, '/switch/32');
   await page.getByRole('button', { name: 'Fault' }).click();
   await gotoHydrated(page, '/shopping', ['DeviceData']);
@@ -69,15 +69,15 @@ test('device data downloads a backup and reads one back', async ({ page }) => {
       'coil:07': { id: 'coil:07', status: 'fault', note: '', at: '2026-09-23T00:00:00Z' },
     },
   });
-  await page.getByLabel('Import mode').selectOption('replace');
-  await page.getByLabel('Read backup file').setInputFiles({
+  await page.getByLabel('When restoring').selectOption('replace');
+  await page.getByLabel('Restore from backup').setInputFiles({
     name: 'backup.json',
     mimeType: 'application/json',
     buffer: Buffer.from(backup),
   });
   // The file drops the switch marked above, so replace asks once more before writing.
   await page.getByRole('button', { name: /^Really replace\? 1 entry here will be lost/ }).click();
-  await expect(page.getByRole('status')).toContainText('2 components read');
+  await expect(page.getByRole('status')).toContainText('2 components restored from backup.json');
   await expect(page.locator('.device')).toContainText('2 components recorded');
   await expect(page.locator('.grp', { hasText: 'Lamps' })).toContainText('Thing Multiball');
   await expect(page.locator('.grp', { hasText: 'Switches' })).toHaveCount(0);

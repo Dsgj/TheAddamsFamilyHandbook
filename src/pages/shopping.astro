@@ -15,9 +15,7 @@ const items = allShoppingItems();
 >
   <h1>Shopping list</h1>
   <p class="muted">
-    Everything marked Fault on this device, grouped by the part to order. Tick Fault in the tables
-    on the Switch matrix, Lamp matrix and Solenoids and flashers pages, or set Fault on a component
-    card. Press Fixed here when a part has been replaced.
+    Parts to order for every component marked Fault on this device, grouped by part number.
   </p>
   <ShoppingList client:load items={items} />
   <section class="kit">

@@ -5,22 +5,34 @@
  * fix the data and remove it here (and in KNOWN-ISSUES.md when it is listed there).
  */
 import { appendixHref } from '~/data/appendix';
-import { componentCode, KIND_PLURAL } from '~/lib/copy';
+import { componentCode, KIND_PLURAL, MAP_LAYER } from '~/lib/copy';
 import { pageRefText } from '~/lib/pages';
 import { componentHref, handbookHref, href, manualHref, mapHref, tableHref } from '~/lib/url';
+
+type Link = [label: string, href: string];
+
+/** The glossary verbs (spec §13) after the component's code: "F1: Details", "L13: Show on map". */
+const details = (kind: 'switch' | 'lamp' | 'coil', id: string): Link => [
+  `${componentCode(kind, id)}: Details`,
+  componentHref(kind, id),
+];
+const onMap = (kind: 'switch' | 'lamp', id: string): Link => [
+  `${componentCode(kind, id)}: Show on map`,
+  mapHref(MAP_LAYER[kind], id),
+];
 
 export interface VerifyItem {
   id: string;
   group: string;
   text: string;
-  links: [label: string, href: string][];
+  links: Link[];
 }
 
 export const VERIFY_ITEMS: VerifyItem[] = [
   {
     id: 'flasher-count',
     group: 'Component data',
-    text: 'Count the flashers in the machine. The solenoid table (3-6) gives 6 flasher circuits with 14 bulbs; the parts list sums to 15 × #906, three of them on top of the backbox.',
+    text: `Count the flashers in the machine. The solenoid table on ${pageRefText('ops', 108)} gives 6 flasher circuits with 14 bulbs; the parts list sums to 15 × #906, three of them on top of the backbox.`,
     links: [
       [KIND_PLURAL.coil, tableHref('coil')],
       [pageRefText('ops', 108), manualHref('ops', 108)],
@@ -29,12 +41,8 @@ export const VERIFY_ITEMS: VerifyItem[] = [
   {
     id: 'eos-type',
     group: 'Component data',
-    text: 'Check the EOS switch type on the lower and upper flippers. The parts list says SW-1A-194 (make) lower and SW-1A-193 upper; flipper page 2-16 lists only SW-1A-193 for base model A-15205-R, and its assembly note describes contacts that open at end of stroke, which is the opposite of a make switch. Look at the switch at rest with the coil unpowered: contacts apart means normally open (make), contacts touching means normally closed. Write down what each flipper has.',
-    links: [
-      ['F1 card', componentHref('switch', 'F1')],
-      ['F2 card', componentHref('switch', 'F2')],
-      ['A6 Flippers', appendixHref('A6')],
-    ],
+    text: `Check the EOS switch type on the lower and upper flippers. The parts list says SW-1A-194 (make) lower and SW-1A-193 upper; the flipper page, ${pageRefText('ops', 74)}, lists only SW-1A-193 for base model A-15205-R, and its assembly note describes contacts that open at end of stroke, which is the opposite of a make switch. Look at the switch at rest with the coil unpowered: contacts apart means normally open (make), contacts touching means normally closed. Write down what each flipper has.`,
+    links: [details('switch', 'F1'), details('switch', 'F2'), ['A6 Flippers', appendixHref('A6')]],
   },
   {
     id: 'coil-fuses',
@@ -49,16 +57,13 @@ export const VERIFY_ITEMS: VerifyItem[] = [
     id: 'lamp-13-71',
     group: 'Maps',
     text: 'Lamp 13 and lamp 71 are placed by hand on the map, not snapped to a callout on the manual page. Compare their markers with the machine.',
-    links: [
-      ['L13 on the map', mapHref('lamp', 13)],
-      ['L71 on the map', mapHref('lamp', 71)],
-    ],
+    links: [onMap('lamp', '13'), onMap('lamp', '71')],
   },
   {
     id: 'cousin-it',
     group: 'Maps',
     text: 'Cousin It (44a/44b) has four markers in the original callout drawing. Confirm which two are the switch positions.',
-    links: [['44 on the map', mapHref('sw', 44)]],
+    links: [onMap('switch', '44')],
   },
   {
     id: 'pages-26-28',
@@ -91,13 +96,13 @@ export const VERIFY_ITEMS: VerifyItem[] = [
   {
     id: 'w16',
     group: 'This machine',
-    text: 'The jumper row W11–W18 next to J204 on the CPU board is visible in the photos but not readable. A European game should have W16 out and the others in; read them and note it here.',
+    text: 'The jumper row W11–W18 next to J204 on the CPU board is visible in the photos but not readable. A European game should have W16 out and the others in; read them and write down what you find.',
     links: [[pageRefText('ops', 2), manualHref('ops', 2)]],
   },
   {
     id: 'serial',
     group: 'This machine',
-    text: 'The machine label on the backbox reads "20017 …" in the photos; read the full serial number and record it in the machine card.',
+    text: 'The machine label on the backbox reads "20017 …" in the photos; read the full serial number and write it down.',
     links: [],
   },
   {
@@ -118,7 +123,7 @@ export const VERIFY_ITEMS: VerifyItem[] = [
   {
     id: 'custom-message',
     group: 'Adjustments',
-    text: 'The custom message format (2 rows × 16 characters per frame) comes from the owner’s machine, not the manual. Count how many frames the menu accepts.',
+    text: "The custom message format (2 rows × 16 characters per frame) comes from the owner's machine, not the manual. Count how many frames the menu accepts.",
     links: [
       ['Machine setup step 6', href('setup#step-utilities')],
       ['Adjustments', handbookHref('adjustments')],
@@ -127,7 +132,7 @@ export const VERIFY_ITEMS: VerifyItem[] = [
   {
     id: 'gi-colours',
     group: 'Component data',
-    text: `The manual gives two wire colours for G.I. strings 2, 4, 5: the G.I. table on ${pageRefText('ops', 2)} has Orange, Green and Violet, the fuse list on ${pageRefText('ops', 57)} has White-Violet, White-Orange and White-Green. The app shows the table’s colours. Read the wire at J120-2, J121-5 and J121-6 on the power driver board and note which source is right for each string.`,
+    text: `The manual gives two wire colours for G.I. strings 2, 4, 5: the G.I. table on ${pageRefText('ops', 2)} has Orange, Green and Violet, the fuse list on ${pageRefText('ops', 57)} has White-Violet, White-Orange and White-Green. The app shows the table's colours. Read the wire at J120-2, J121-5 and J121-6 on the power driver board and note which source is right for each string.`,
     links: [
       ['Fuses', href('fuses')],
       [pageRefText('ops', 2), manualHref('ops', 2)],
@@ -138,9 +143,6 @@ export const VERIFY_ITEMS: VerifyItem[] = [
     id: 'magnet-fuse',
     group: 'Component data',
     text: `The magnets 16, 23 and 24 are starred in the solenoid table, and its footnote on ${pageRefText('ops', 2)} puts their fuse, a 5A S.B., on the underside of the playfield. The app shows that fuse for them instead of the F104 and F111 the fuse list gives by solenoid number. Find the fuse under the playfield, check its rating and note which magnets it feeds.`,
-    links: [
-      [`${componentCode('coil', '16')} card`, componentHref('coil', '16')],
-      [pageRefText('ops', 2), manualHref('ops', 2)],
-    ],
+    links: [details('coil', '16'), [pageRefText('ops', 2), manualHref('ops', 2)]],
   },
 ];

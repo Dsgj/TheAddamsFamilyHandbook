@@ -10,7 +10,7 @@ Service companion for one Bally _The Addams Family_ pinball machine (1992, WPC)
 ![Astro 7](https://img.shields.io/badge/Astro-7-ECE6DA?style=flat-square&labelColor=0E0B10)
 ![Svelte 5](https://img.shields.io/badge/Svelte-5-ECE6DA?style=flat-square&labelColor=0E0B10)
 ![PWA](https://img.shields.io/badge/PWA-offline%20ready-C9A0DC?style=flat-square&labelColor=0E0B10)
-![Milestone](https://img.shields.io/badge/milestone-M1%20%C2%B7%20foundation%20%26%20parity-B08D57?style=flat-square&labelColor=0E0B10)
+![Status](https://img.shields.io/badge/status-redesign%20and%20audit%20round%202-B08D57?style=flat-square&labelColor=0E0B10)
 
 [**Open the app**](https://dsgj.github.io/TheAddamsFamilyHandbook/) ·
 [Features](#features) · [Quick start](#quick-start) · [Deploy](#deploy) ·
@@ -26,7 +26,7 @@ fully usable offline under the playfield glass.
 
 The app is organised in five tabs (Diagnose, Map, Tables, Handbook, Workshop),
 the result of a twelve-phase redesign in September 2026 and of the app audit
-that followed it (fixes P0–P3, see the [changelog](CHANGELOG.md)).
+that followed it in two rounds (fixes P0–P4, see the [changelog](CHANGELOG.md)).
 
 |      Diagnose       |       Playfield map       | Switch matrix |
 | :-----------------: | :-----------------------: | :-----------: |
@@ -39,8 +39,8 @@ that followed it (fixes P0–P3, see the [changelog](CHANGELOG.md)).
 
 ![Desktop light theme: playfield map on the clean drawing, all three component layers on, with the card for switch 32 Upper Right Jet](docs/readme/desktop-map.png)
 
-_Dark on the phone in the workshop, light on the desk. The toggle lives in the
-header._
+_Dark on the phone in the workshop, light on the desk. Workshop › Appearance
+switches between System, Light and Dark._
 
 ## Features
 
@@ -94,7 +94,7 @@ header._
   component page as "Service notes".
 - **Device data.** Download a backup of everything recorded on the device
   (status, notes, the service log, setup values, care and verify ticks) and
-  read it back on another phone, merge or replace.
+  restore it on another phone, merging or replacing what is there.
 - **Workshop.** The hub for the shopping list, Verify, care, machine setup,
   device data, the appearance setting, installing the app and About the app.
 - **Offline.** Manifest, icons, precached shell, data, the playfield drawing
@@ -224,8 +224,8 @@ for headings.
 | Codes, wiring, numbers | IBM Plex Mono      |
 
 Fonts are self-hosted from `public/fonts` so they load under any base path. Dark
-is the default; the light theme follows `prefers-color-scheme` or the header
-toggle. Tokens live in [`src/styles/tokens.css`](src/styles/tokens.css).
+is the default; the light theme follows `prefers-color-scheme` or the choice in
+Workshop › Appearance (System, Light, Dark). Tokens live in [`src/styles/tokens.css`](src/styles/tokens.css).
 
 ## Decisions
 

@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { appendixHref } from '~/data/appendix';
+  import { APPENDICES, appendixHref } from '~/data/appendix';
   import { parseCodes, type ParsedCode } from '~/lib/codes';
-  import { componentCode, componentName, plural } from '~/lib/copy';
+  import { componentCode, componentLabel, componentName, plural, TABLE_LABEL } from '~/lib/copy';
   import { DATA, find, mapOf } from '~/lib/data/components';
   import {
     clearRecent,
@@ -375,7 +375,9 @@
   async function share() {
     const lines = [
       `Diagnose: ${input.trim()}`,
-      ...found.map((r) => `${label(r)} – ${r.item?.name ?? ''}`),
+      ...found.map((r) =>
+        r.kind === 'unknown' ? r.raw : componentLabel(r.kind, r.id, r.item?.name ?? ''),
+      ),
       ...causes.map((c) => c.text),
       `${location.origin}${href('')}?q=${encodeURIComponent(input.trim())}`,
     ];
@@ -568,10 +570,10 @@
               <span class="ctext">
                 {c.text}
                 {#if c.kind === 'column' || c.kind === 'row'}
-                  · <a href={tableHref(c.matrix)}>matrix</a>
+                  · <a href={tableHref(c.matrix)}>{TABLE_LABEL[c.matrix]}</a>
                 {/if}
                 {#if c.appendix}
-                  · <a href={appendixHref(c.appendix)}>{c.appendix}</a>
+                  · <a href={appendixHref(c.appendix)}>{c.appendix} {APPENDICES[c.appendix]}</a>
                 {/if}
               </span>
             </li>

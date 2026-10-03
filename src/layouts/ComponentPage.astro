@@ -4,7 +4,7 @@ import ComponentDetail, { type Related } from '~/components/ComponentDetail.svel
 import type { AnyComponent } from '~/lib/data/components';
 import { DATA, mapOf } from '~/lib/data/components';
 import type { Kind } from '~/lib/model/types';
-import { componentCode, componentName, KIND_PLURAL, kindLine } from '~/lib/copy';
+import { componentCode, componentLabel, componentName, KIND_PLURAL, kindLine } from '~/lib/copy';
 import { componentHref, handbookHref, tablePath } from '~/lib/url';
 import { appendixFor, APPENDICES, serviceNotes } from '~/data/appendix';
 import { findHeading } from '~/lib/handbook/render';
@@ -66,9 +66,9 @@ const svc = serviceNotes(kind, item)
 ---
 
 <Base
-  title={`${compName} ${item.name}`}
+  title={componentLabel(kind, item.id, item.name)}
   heading={compName}
-  description={`${compName}, ${item.name}: where it sits, its part numbers, and its status and service log on this device.`}
+  description={`${componentLabel(kind, item.id, item.name)}: where it sits, its part numbers, and its status and service log on this device.`}
   nav={listPath}
   h1="bar"
   back={{ path: listPath, label: listLabel }}

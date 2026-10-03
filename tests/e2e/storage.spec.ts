@@ -148,8 +148,8 @@ test.describe('replace everything refuses a file that is not a backup', () => {
       const items = { 'switch:32': fault('switch:32'), 'lamp:11': fault('lamp:11') };
       await seed(page, items);
       await gotoHydrated(page, '/shopping', ['DeviceData']);
-      await page.getByLabel('Import mode').selectOption('replace');
-      await page.getByLabel('Read backup file').setInputFiles({
+      await page.getByLabel('When restoring').selectOption('replace');
+      await page.getByLabel('Restore from backup').setInputFiles({
         name,
         mimeType: 'application/json',
         buffer: Buffer.from(body),
@@ -171,17 +171,17 @@ test('a message said soon after another keeps its full time (CO2-12)', async ({ 
   ]);
   await expect(page.getByRole('status')).toHaveText('Downloaded');
   await page.clock.runFor(3000);
-  await page.getByLabel('Read backup file').setInputFiles({
+  await page.getByLabel('Restore from backup').setInputFiles({
     name: 'coil.json',
     mimeType: 'application/json',
     buffer: Buffer.from(
       JSON.stringify({ app: 'tafh', version: 1, items: { 'coil:07': fault('coil:07') } }),
     ),
   });
-  await expect(page.getByRole('status')).toContainText('read from coil.json');
+  await expect(page.getByRole('status')).toContainText('restored from coil.json');
   // Past the first message's 4 s: the second still shows, until its own 4 s are up.
   await page.clock.runFor(2000);
-  await expect(page.getByRole('status')).toContainText('read from coil.json');
+  await expect(page.getByRole('status')).toContainText('restored from coil.json');
   await page.clock.runFor(2500);
   await expect(page.getByRole('status')).toHaveText('');
 });
@@ -190,8 +190,8 @@ test('replace everything asks once more when the file would drop entries', async
   const items = { 'switch:32': fault('switch:32'), 'lamp:11': fault('lamp:11') };
   await seed(page, items);
   await gotoHydrated(page, '/shopping', ['DeviceData']);
-  await page.getByLabel('Import mode').selectOption('replace');
-  await page.getByLabel('Read backup file').setInputFiles({
+  await page.getByLabel('When restoring').selectOption('replace');
+  await page.getByLabel('Restore from backup').setInputFiles({
     name: 'coil.json',
     mimeType: 'application/json',
     buffer: Buffer.from(
@@ -206,7 +206,7 @@ test('replace everything asks once more when the file would drop entries', async
   expect(await stored(page)).toEqual(items);
   await expect(page.locator('.device')).toContainText('2 components recorded');
   await confirm.click();
-  await expect(page.getByRole('status')).toContainText('1 component read from coil.json');
+  await expect(page.getByRole('status')).toContainText('1 component restored from coil.json');
   await expect(confirm).toHaveCount(0);
   expect(Object.keys((await stored(page)) as Stored)).toEqual(['coil:07']);
   await expect(page.locator('.device')).toContainText('1 component recorded');
@@ -229,8 +229,8 @@ test.describe('the replace confirm lapses without losing focus', () => {
     await seed(page, items);
     await page.clock.install();
     await gotoHydrated(page, '/shopping', ['DeviceData']);
-    await page.getByLabel('Import mode').selectOption('replace');
-    await page.getByLabel('Read backup file').setInputFiles(coilFile);
+    await page.getByLabel('When restoring').selectOption('replace');
+    await page.getByLabel('Restore from backup').setInputFiles(coilFile);
     await expect(page.getByRole('button', { name: /^Really replace\?/ })).toBeFocused();
   });
 
@@ -247,10 +247,10 @@ test.describe('the replace confirm lapses without losing focus', () => {
 
   test('without focus it lapses after 8 s and says so', async ({ page }) => {
     const confirm = page.getByRole('button', { name: /^Really replace\?/ });
-    await page.getByLabel('Import mode').focus();
+    await page.getByLabel('When restoring').focus();
     await page.clock.runFor(8500);
     await expect(confirm).toHaveCount(0);
-    await expect(page.getByLabel('Import mode')).toBeFocused();
+    await expect(page.getByLabel('When restoring')).toBeFocused();
     await expect(page.getByRole('status')).toHaveText('Replace cancelled');
     expect(await stored(page)).toEqual(items);
   });
@@ -365,8 +365,8 @@ test('Verify ticks travel in the backup and go with Clear all', async ({ page })
   await expect(page.locator('input.verify-check[data-id="flasher-count"]')).not.toBeChecked();
 
   await gotoHydrated(page, '/shopping', ['DeviceData']);
-  await page.getByLabel('Read backup file').setInputFiles(path);
-  await expect(page.getByRole('status')).toContainText('and 1 check read');
+  await page.getByLabel('Restore from backup').setInputFiles(path);
+  await expect(page.getByRole('status')).toContainText('and 1 check restored');
   await gotoHydrated(page, '/verify');
   const box = page.locator('input.verify-check[data-id="flasher-count"]');
   await expect(box).toBeChecked();
@@ -420,10 +420,10 @@ test('a log that repeats a moment still opens, and an import keeps one of each (
   await seed(page, { 'switch:32': twice });
   await gotoHydrated(page, '/switch/32');
   await expect(page.getByRole('list', { name: 'Service log' }).locator('li')).toHaveCount(2);
-  // Through "Read backup file", the same log comes back with the repeat folded away.
+  // Through "Restore from backup", the same log comes back with the repeat folded away.
   await seed(page, {});
   await gotoHydrated(page, '/shopping', ['DeviceData']);
-  await page.getByLabel('Read backup file').setInputFiles({
+  await page.getByLabel('Restore from backup').setInputFiles({
     name: 'backup.json',
     mimeType: 'application/json',
     buffer: Buffer.from(JSON.stringify({ app: 'tafh', version: 1, items: { 'switch:32': twice } })),

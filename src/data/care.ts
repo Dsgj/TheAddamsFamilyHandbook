@@ -109,7 +109,7 @@ export const CARE_STEPS: SetupStep[] = [
         id: 'care-wax',
         name: 'Wax the playfield',
         suggested: '',
-        why: 'Pure carnauba paste wax (Blitz, P21S, Meguiar’s Gold Class paste). The manual allows carnauba wax used sparingly. No cleaner-wax and nothing with silicone; silicone soaks into the wood and nothing sticks later. Thin coat, buff off, let it cure an hour before playing.',
+        why: "Pure carnauba paste wax (Blitz, P21S, Meguiar's Gold Class paste). The manual allows carnauba wax used sparingly. No cleaner-wax and nothing with silicone; silicone soaks into the wood and nothing sticks later. Thin coat, buff off, let it cure an hour before playing.",
         find: '',
       },
       {
@@ -123,7 +123,7 @@ export const CARE_STEPS: SetupStep[] = [
         id: 'care-pivots',
         name: 'A dab of grease on the slingshot arm pivots and the ball shooter lane feeder pivots',
         suggested: '',
-        why: 'The manual’s two lubrication points: the kicker arm pivots and the feeder arm pivots take a switch target grease (Williams 20-8886, MBI Instrument Grease; any light instrument grease does). Pivots only, nothing near the plunger.',
+        why: "The manual's two lubrication points: the kicker arm pivots and the feeder arm pivots take a switch target grease (Williams 20-8886, MBI Instrument Grease; any light instrument grease does). Pivots only, nothing near the plunger.",
         find: 'Maintenance Information',
       },
       {
@@ -197,7 +197,7 @@ export const CARE_STEPS: SetupStep[] = [
         id: 'care-fuses',
         name: 'Look at the fuses and fuse clips',
         suggested: '',
-        why: 'A discoloured fuse or a loose clip runs hot. The right values are on the Fuses page; never go up a size.',
+        why: 'A discoloured fuse or a loose clip runs hot. The right values are on the Fuses, LEDs and jumpers page; never go up a size.',
         find: 'Fuse List',
       },
       {
@@ -211,7 +211,7 @@ export const CARE_STEPS: SetupStep[] = [
         id: 'care-report',
         name: 'Run the Test Report and paste it into Diagnose',
         suggested: '',
-        why: 'Diagnose reads the codes and the component cards keep the history, so next year’s report has something to compare with.',
+        why: "Diagnose reads the codes and the component cards keep the history, so next year's report has something to compare with.",
         find: 'Test Report',
       },
     ],

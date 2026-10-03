@@ -73,6 +73,14 @@ export function componentName(kind: Kind, id: string): string {
 }
 
 /**
+ * "Switch 32, Upper Right Jet": a component named with its name, one separator on every surface
+ * (the page title, the meta description, the map sheet, the shared results; audit CP2-12).
+ */
+export function componentLabel(kind: Kind, id: string, name: string): string {
+  return `${componentName(kind, id)}, ${name}`;
+}
+
+/**
  * The id on a map list tile: lamp `L55`, any other kind its bare id. The exception to
  * componentCode: the layer heading above the tile already names the kind.
  */

@@ -13,7 +13,7 @@
   import {
     capitalise,
     componentCode,
-    componentName,
+    componentLabel,
     kindLine as kindLineOf,
     locationLine,
     MAP_LAYER,
@@ -277,7 +277,7 @@
 
 {#if mapOpen}
   <BottomSheet
-    label="{componentName(kind, item.id)} · {item.name}"
+    label={componentLabel(kind, item.id, item.name)}
     detent="large"
     recede="header.top, .detail, .notes, .pn, footer.foot"
     onclose={() => (mapOpen = false)}

@@ -79,13 +79,13 @@
     say('Downloaded');
   }
 
-  function read(text: string, name: string, how: 'merge' | 'replace') {
+  function restore(text: string, name: string, how: 'merge' | 'replace') {
     try {
       const n = importStatuses(text, how);
       const parts = [plural(n.components, 'component')];
       if (n.settings) parts.push(plural(n.settings, 'setting'));
       if (n.verified) parts.push(plural(n.verified, 'check'));
-      say(`${parts.join(' and ')} read from ${name}`);
+      say(`${parts.join(' and ')} restored from ${name}`);
     } catch (e) {
       const reason = e instanceof BackupError ? e.reason : '';
       say(
@@ -111,9 +111,9 @@
     try {
       lost = mode === 'replace' ? replaceLoss(text) : 0;
     } catch {
-      /* not a usable backup: read() below says why */
+      /* not a usable backup: restore() below says why */
     }
-    if (!lost) return read(text, f.name, mode);
+    if (!lost) return restore(text, f.name, mode);
     const p = { text, name: f.name, lost };
     pending = p;
     lapsed = false;
@@ -137,7 +137,7 @@
     const { text, name } = pending;
     pending = null;
     lapsed = false;
-    read(text, name, 'replace');
+    restore(text, name, 'replace');
   }
 
   function clear() {
@@ -173,7 +173,7 @@
           {#if empty}Nothing saved on this device yet.{/if}
         </span>
         <span class="sub">
-          Download a backup before clearing site data or switching phones, then read it back here.
+          Download a backup before clearing site data or switching phones, then restore it here.
           Clear all also empties Recent, Recently viewed and Continue reading.
         </span>
       </span>
@@ -188,11 +188,11 @@
     </li>
     <li>
       <label class="lrow file">
-        <span class="txt"><span class="ttl">Read backup…</span></span>
+        <span class="txt"><span class="ttl">Restore from backup…</span></span>
         <input
           type="file"
           accept="application/json,.json"
-          aria-label="Read backup file"
+          aria-label="Restore from backup"
           bind:this={file}
           onchange={onFile}
         />
@@ -202,8 +202,8 @@
       </label>
     </li>
     <li class="lrow static">
-      <span class="txt"><span class="ttl">When reading</span></span>
-      <select class="field mode" bind:value={mode} aria-label="Import mode">
+      <span class="txt"><span class="ttl" id="restore-mode">When restoring</span></span>
+      <select class="field mode" bind:value={mode} aria-labelledby="restore-mode">
         <option value="merge">merge, newer wins</option>
         <option value="replace">replace everything</option>
       </select>
@@ -223,7 +223,7 @@
           <span class="txt"
             ><span class="ttl"
               >Really replace? {plural(pending.lost, 'entry', 'entries')} here will be lost</span
-            ><span class="sub">Reads {pending.name}</span></span
+            ><span class="sub">Restores {pending.name}</span></span
           >
         </button>
       </li>

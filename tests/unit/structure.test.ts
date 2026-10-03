@@ -83,7 +83,10 @@ describe('structure lint', () => {
   });
 
   it('(d) types a printed page label only in pages.ts (and the quoted hint prose)', () => {
-    expectNone(hits(/\bp\. \d-\d+\b(?! to )/, only('src/lib/pages.ts', 'src/lib/data/en.ts')));
+    // ownerNotes.ts is read by the kit plugin while the config loads, before the ~ alias exists,
+    // so it cannot import pages.ts; its owner notes type the label (copy rule n).
+    const typed = only('src/lib/pages.ts', 'src/lib/data/en.ts', 'src/data/ownerNotes.ts');
+    expectNone(hits(/\bp\. \d-\d+\b(?! to )/, typed));
   });
 
   it('(d) writes "p." or "PDF page" before a page only in pages.ts', () => {

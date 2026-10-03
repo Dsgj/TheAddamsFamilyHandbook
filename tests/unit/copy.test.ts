@@ -413,6 +413,23 @@ export const RULES: Record<string, [string, Rule]> = {
     'a Source link names its page, not a bare "p. n"',
     inMarkup(/Source:\s*(\{…\}\s*)?<a\b[^>]*>\s*p\.\s/),
   ],
+  m: [
+    'one verb pair for the backup: back up (Download backup) and restore',
+    inCopy(/\b(read|import|load)(ing)? (a |the )?backup\b|\bimport mode\b|\bstatus export\b/i),
+  ],
+  n: [
+    'a printed page label after "page" or "table" carries "p."',
+    inCopy(/\b(page|table|list)\s+\(?\d-\d{1,3}\b/),
+  ],
+  o: ["one apostrophe, the straight '", inCopy(/[‘’]/)],
+  p: [
+    'a link to a component says Details or Show on map, and names a real place',
+    any(inStrings(/^[A-Z]*\d+\w* (card|on the map)$/), inCopy(/\bmachine card\b/i)),
+  ],
+  q: [
+    'a page is named by its title, not a nickname',
+    inCopy(/\b(Setup|Fuses|Switches|Lamps|Solenoids|error code) page\b/),
+  ],
 };
 
 function check(x: Extract): Record<string, Hit[]> {
@@ -472,6 +489,16 @@ describe('copy rules: self-test', () => {
     ['k', 'x.astro', '<p class="prov warn">These pages are the owner\'s own notes.</p>'],
     ['l', 'x.astro', "<p>Source: <a\n  href={manualHref('ops', 112)}>p. 3-10</a\n>.</p>"],
     ['l', 'x.astro', "<p>Source:{' '}\n  <a href={x}>p. 3-10</a>.</p>"],
+    ['m', 'x.svelte', '<span class="ttl">Read backup…</span>'],
+    ['m', 'x.svelte', '<select aria-label="Import mode"></select>'],
+    ['n', 'x.ts', "const s = 'The solenoid table (3-6) gives 6 circuits.';"],
+    ['n', 'x.ts', "const s = 'flipper page 2-16 lists only SW-1A-193';"],
+    ['o', 'x.ts', "const s = 'The manual’s two points';"],
+    ['p', 'x.ts', "const l = [['F1 card', componentHref('switch', 'F1')]];"],
+    ['p', 'x.ts', "const l = [['L13 on the map', mapHref('lamp', 13)]];"],
+    ['p', 'x.ts', "const s = 'Record it in the machine card.';"],
+    ['q', 'x.ts', "const s = 'The right values are on the Fuses page.';"],
+    ['q', 'x.astro', '<p>Blink codes are on <a href="/x">the error code page</a>.</p>'],
   ];
   const PASS: [string, string, string][] = [
     ['a', 'x.ts', "el.scrollIntoView({ behavior: 'smooth', block: 'center' });"],
@@ -494,6 +521,14 @@ describe('copy rules: self-test', () => {
     ['k', 'x.astro', '<p>These pages are notes written for this machine, not manual text.</p>'],
     ['l', 'x.astro', '<p>Source: <a href={x}>Flipper Circuits p. 3-10</a>.</p>'],
     ['l', 'x.astro', '<p>Callout 32 on <a href="/x">p. 2-39</a>.</p>'],
+    ['m', 'x.ts', "const s = 'Could not read that file as a backup.';"],
+    ['m', 'x.svelte', '<span class="ttl">Restore from backup…</span>'],
+    ['n', 'x.ts', "const s = 'The solenoid table on Operations Manual p. 3-6 gives 6 circuits.';"],
+    ['n', 'x.ts', "const s = 'Read on 2026-09-24, page 3 of the photos.';"],
+    ['o', 'x.ts', 'const s = "The manual\'s two points";'],
+    ['p', 'x.ts', "const l = [['F1: Details', componentHref('switch', 'F1')]];"],
+    ['p', 'x.svelte', '<button>All components on the map</button>'],
+    ['q', 'x.ts', "const s = 'The right values are on the Fuses, LEDs and jumpers page.';"],
   ];
 
   for (const [k, file, src] of FAIL) {
@@ -527,6 +562,13 @@ describe('README copy (spec §13)', () => {
 
   it('says "manual page" or "page image", not scan', () => {
     expect(prose.match(/.{0,30}\bscans?\b.{0,30}/gi) ?? []).toEqual([]);
+  });
+
+  it('puts the theme control in Workshop › Appearance, not the header', () => {
+    expect(
+      prose.match(/.{0,30}\b(header toggle|toggle lives in the header)\b.{0,30}/gi) ?? [],
+    ).toEqual([]);
+    expect(prose).toContain('Workshop › Appearance');
   });
 
   it('spells UK English', () => {

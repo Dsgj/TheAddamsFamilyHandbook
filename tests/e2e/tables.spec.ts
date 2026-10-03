@@ -204,7 +204,7 @@ test.describe('the component detail page', () => {
     await gotoHydrated(page, '/switch/32');
     const open = page.getByRole('button', { name: 'Show on map' });
     await activate(open, browserName);
-    const dialog = page.getByRole('dialog', { name: 'Switch 32 · Upper Right Jet' });
+    const dialog = page.getByRole('dialog', { name: 'Switch 32, Upper Right Jet' });
     await expect(dialog).toBeVisible();
     await expect(dialog.getByRole('link', { name: 'Show on map' })).toHaveAttribute(
       'href',
@@ -279,5 +279,20 @@ test.describe('one name per thing', () => {
     await expect(sheet.getByRole('link', { name: 'Show on map', exact: true })).toHaveCount(1);
     await expect(sheet.getByRole('link', { name: /^Manual p\. 2-\d+$/ })).toHaveCount(1);
     await expect(sheet.getByRole('link', { name: /^Open|^Manual page$/ })).toHaveCount(0);
+  });
+
+  test('the grid and the map sheet carry the page and component names (CP2-12, CP2-18)', async ({
+    page,
+  }) => {
+    await gotoHydrated(page, '/switches');
+    await expect(page.getByRole('grid', { name: 'Switch matrix', exact: true })).toBeAttached();
+    // The arrow-key hint shows only where there are arrow keys: not on a touch phone.
+    const touch = await page.evaluate(() => matchMedia('(hover: none), (pointer: coarse)').matches);
+    expect(touch).toBe(!!test.info().project.use.isMobile);
+    const hint = page.getByText('Use the arrow keys to move between cells.');
+    await (touch ? expect(hint).toBeHidden() : expect(hint).toBeVisible());
+
+    await gotoHydrated(page, '/switch/32');
+    await expect(page).toHaveTitle('Switch 32, Upper Right Jet · The Addams Family Handbook');
   });
 });

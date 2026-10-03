@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, tick, untrack } from 'svelte';
-  import { componentCode, kindLine, MAP_LAYER } from '~/lib/copy';
+  import { componentCode, kindLine, MAP_LAYER, TABLE_LABEL } from '~/lib/copy';
   import { getStatus, STATUS_LABEL } from '~/lib/model/status.svelte';
   import type { Kind, MatrixHeaders } from '~/lib/model/types';
   import { componentHref, mapHref } from '~/lib/url';
@@ -91,7 +91,13 @@
 </script>
 
 <div class="scroll-x">
-  <table class="matrix" role="grid" aria-label="{kind} matrix" onkeydown={onKey} bind:this={table}>
+  <table
+    class="matrix"
+    role="grid"
+    aria-label={TABLE_LABEL[kind]}
+    onkeydown={onKey}
+    bind:this={table}
+  >
     <thead>
       <tr>
         <th class="corner">

@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Backups use two verbs: Download backup and Restore from backup, with
+  "When restoring" for merge or replace and "restored" in the result. A
+  component page's title and its map sheet read "Switch 32, Upper Right
+  Jet". Verify's links say "F1: Details" and "L13: Show on map", and other
+  pages are named by their titles. Touch phones no longer see the
+  arrow-key hint on the Switch matrix. README describes the theme choice
+  in Workshop › Appearance.
 - The browser's colour bar now follows the Light or Dark choice in
   Appearance, not only the system setting. Spacing, type sizes, icon buttons,
   status pills and screen-width steps follow one set of rules across the app.
@@ -148,6 +155,14 @@
   scans 26 routes; a unit test proves every built link, icon and precache URL
   resolves. Line endings are LF in git; a stale preview can no longer be tested
   by mistake. No page changes.
+- **No Swedish left from the kit's data.** Every component, fuse and table
+  reads in English. The magnet fuse on solenoids 16, 23 and 24 reads "5A S.B.
+  (under the playfield)", as the manual prints it. The menu map's P.1 to P.8
+  links open their headings, and the three fuse rows the manual prints
+  without an id each have their own link. Verify asks which G.I. wire colours
+  the machine has, where the G.I. table and the fuse list disagree. P4 item 3
+  of the app audit (AR-01, DA-02, AR-03, DA-05, DA-03, DA-04, DA-12, DA-07,
+  DA-09, DA-16).
 - **One name per thing.** Fault replaces Broken on the tick column; codes are
   32, L55 and SOL 01; one name per page; one verb per destination (Show on map,
   Details, Manual p. n); UK spelling with Grey; dates carry the year and use

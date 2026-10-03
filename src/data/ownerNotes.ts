@@ -12,7 +12,7 @@ export const OWNER_NOTES: Record<number, OwnerNote[]> = {
   2: [
     {
       code: 'A2',
-      text: 'The four loads on J122 (25, 26, 27, 28) have their flyback diodes tied back to the board in two pairs: grey-yellow on pins 5 and 8, violet-green on pins 6 and 9 (schematic page 3-17). A lost tieback destroys the driver transistor. The magnet transistors on page 3-9 are drawn on the wrong connector: Q44 is on J127-9, Q34 on J126-7, Q32 on J126-8.',
+      text: 'The four loads on J122 (25, 26, 27, 28) have their flyback diodes tied back to the board in two pairs: grey-yellow on pins 5 and 8, violet-green on pins 6 and 9 (Operations Manual p. 3-17). A lost tieback destroys the driver transistor. The magnet transistors on p. 3-9 are drawn on the wrong connector: Q44 is on J127-9, Q34 on J126-7, Q32 on J126-8.',
     },
     {
       code: 'A6',
@@ -22,13 +22,13 @@ export const OWNER_NOTES: Record<number, OwnerNote[]> = {
   14: [
     {
       code: 'A1',
-      text: 'The coin door parts list (page 2-30) includes an interlock switch that cuts the 50 V and 20 V rails when the door opens. Check that yours is there and works, and measure before you touch anything anyway.',
+      text: 'The coin door parts list (Operations Manual p. 2-30) includes an interlock switch that cuts the 50 V and 20 V rails when the door opens. Check that yours is there and works, and measure before you touch anything anyway.',
     },
   ],
   25: [
     {
       code: 'A3',
-      text: 'A switch that fails here is its gap, the wire at the lug or its diode. Clean contacts by closing them on card stock and pulling it through, never a file. Several switches wrong at once point at a shared column, row or connector; the start page’s Diagnose box finds those.',
+      text: "A switch that fails here is its gap, the wire at the lug or its diode. Clean contacts by closing them on card stock and pulling it through, never a file. Several switches wrong at once point at a shared column, row or connector; the start page's Diagnose box finds those.",
     },
   ],
   26: [
@@ -50,7 +50,7 @@ export const OWNER_NOTES: Record<number, OwnerNote[]> = {
     },
     {
       code: 'A5',
-      text: 'On this machine U8 holds an NVRAM module and there are no batteries (observed 2026-09-24, photo), so reset, lost settings and a Factory Settings Restored message point at the 5 V rail (BR2 and C5 on the driver board, the J101/J114 connectors) or at the module’s seating, not at batteries. The clock stopping while the game is off is normal here.',
+      text: "On this machine U8 holds an NVRAM module and there are no batteries (observed 2026-09-24, photo), so reset, lost settings and a Factory Settings Restored message point at the 5 V rail (BR2 and C5 on the driver board, the J101/J114 connectors) or at the module's seating, not at batteries. The clock stopping while the game is off is normal here.",
     },
   ],
   57: [
@@ -78,7 +78,7 @@ export const OWNER_NOTES: Record<number, OwnerNote[]> = {
 /** The owner's note on a component; replaces the kit's own note. */
 export const COMPONENT_NOTES: Record<string, string> = {
   'coil:02':
-    'Coil missing on this machine: the A-15267 bracket and the rubber pad are in the cabinet, the AE-23-800 coil is not. The game plays without it; the knocker only sounds on awards. Fitting it is on the Setup page under Upgrades and upkeep.',
+    'Coil missing on this machine: the A-15267 bracket and the rubber pad are in the cabinet, the AE-23-800 coil is not. The game plays without it; the knocker only sounds on awards. Fitting it is Machine setup step 7, Upgrades and upkeep.',
 };
 
 /**

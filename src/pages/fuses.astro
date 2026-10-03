@@ -58,7 +58,8 @@ const boards = [...new Set(DATA.fuses.map((f) => f.board))];
     <h2 id="leds">Diagnostic LEDs</h2>
     <p class="muted small">
       Source: <a href={manualHref('ops', 56)}>LED List {pageTitleText('ops', 56)}</a>. Blink codes
-      for the CPU LED are on <a href={handbookHref('errors')}>the error code page</a>.
+      for the CPU LED are in the handbook's{' '}
+      <a href={handbookHref('errors')}>Error messages and codes</a>.
     </p>
     <div class="scroll-x">
       <table class="t ids">

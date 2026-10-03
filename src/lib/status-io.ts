@@ -140,7 +140,7 @@ export type BackupProblem =
 export class BackupError extends Error {
   readonly reason: BackupProblem;
   constructor(reason: BackupProblem) {
-    super(`Not a status export (${reason})`);
+    super(`Not a backup (${reason})`);
     this.name = 'BackupError';
     this.reason = reason;
   }

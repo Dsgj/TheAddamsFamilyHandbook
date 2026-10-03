@@ -49,8 +49,8 @@ test('setup values travel in the backup file', async ({ page }) => {
     'EDUCATION FIRST / PINBALL SECOND',
   );
 
-  await page.getByLabel('Import mode').selectOption('replace');
-  await page.getByLabel('Read backup file').setInputFiles({
+  await page.getByLabel('When restoring').selectOption('replace');
+  await page.getByLabel('Restore from backup').setInputFiles({
     name: 'setup.json',
     mimeType: 'application/json',
     buffer: Buffer.from(
@@ -68,7 +68,7 @@ test('setup values travel in the backup file', async ({ page }) => {
   });
   // The file drops the custom message typed above, so replace asks once more before writing.
   await page.getByRole('button', { name: /^Really replace\? 1 entry here will be lost/ }).click();
-  await expect(page.getByRole('status')).toContainText('0 components and 2 settings read');
+  await expect(page.getByRole('status')).toContainText('0 components and 2 settings restored');
   await gotoHydrated(page, '/setup');
   await expect(page.getByRole('status')).toContainText('2 of 47');
   await expect(

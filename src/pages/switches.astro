@@ -66,8 +66,8 @@ const TABS = [
       Columns are driven from CPU J206/J207 through U20, rows read on J208/J209 through U18. Source:{
         ' '
       }
-      <a href={manualHref('ops', 106)}>Switch Matrix {pageTitleText('ops', 106)}</a>. Use the arrow
-      keys to move between cells.
+      <a href={manualHref('ops', 106)}>Switch Matrix {pageTitleText('ops', 106)}</a>.{' '}
+      <span class="kbd-only">Use the arrow keys to move between cells.</span>
     </p>
     <Matrix client:load kind="switch" cells={matrix} cols={DATA.swCols} rows={DATA.swRows} />
   </div>

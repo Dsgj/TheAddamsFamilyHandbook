@@ -1343,6 +1343,12 @@ table.t td.key > a::after {
   line-height: 18px;
   color: var(--brass-ink);
 }
+/* A keyboard hint: a touch phone has no arrow keys to press (audit CP2-18). */
+@media (hover: none), (pointer: coarse) {
+  .kbd-only {
+    display: none;
+  }
+}
 
 /* ---- The search field (spec §8.7) ----
    One field: a 36-tall pill (radius 10, --seg-track) painted inside a 44 box, so the hit area

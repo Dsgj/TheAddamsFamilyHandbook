@@ -7,6 +7,7 @@
  */
 import type { AnyComponent } from '~/lib/data/components';
 import type { Coil, Kind, Lamp, Switch } from '~/lib/model/types';
+import { pageRefText } from '~/lib/pages';
 import { handbookHref } from '~/lib/url';
 
 export const APPENDICES: Record<string, string> = {
@@ -90,8 +91,8 @@ function coilNote(c: Coil): ServiceNote {
     const o = coilOhms(c.part);
     const ohms = o ? `${o.ohms} Ω (${o.mark})` : 'a few ohms';
     const supply = /20-9247/.test(c.part)
-      ? ' The three Power magnets and the upper flippers get their 50 V from the Extra Flipper Supply board A-15416 in the backbox; manual page 3-9 shows the wrong connector for the magnet transistors.'
-      : ' Measure at the coil’s own connector, unplugged.';
+      ? ` The three Power magnets and the upper flippers get their 50 V from the Extra Flipper Supply board A-15416 in the backbox; ${pageRefText('ops', 111)} shows the wrong connector for the magnet transistors.`
+      : " Measure at the coil's own connector, unplugged.";
     return {
       code: 'A2',
       text: `Magnet coil: ${ohms} across the coil, game off. A magnet that never pulls is the driver transistor ${c.driver} and${fuse} first, then the coil; one that stays on is the transistor.${supply}`,
