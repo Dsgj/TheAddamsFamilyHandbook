@@ -1,5 +1,5 @@
 import type { ComponentStatus, Kind } from './model/types';
-import { DATA } from '~/lib/data/components';
+import { DATA, installedLed } from '~/lib/data/components';
 
 /** Compact per-component row the Shopping list island receives (keeps components.json out of the bundle). */
 export interface ShoppingItem {
@@ -10,14 +10,16 @@ export interface ShoppingItem {
   part: string;
   /** Bulb type (#555 / #44 / #906) for lamps, empty otherwise. */
   bulb: string;
+  /** The LED installed in this machine for lamps (what to order), empty otherwise. */
+  led: string;
   assy: string;
 }
 
 export interface ShoppingGroup {
   kind: Kind;
-  /** Bulb type for lamps, part number for the rest. */
+  /** Installed LED (or bulb type when none is recorded) for lamps, part number for the rest. */
   label: string;
-  /** Secondary reference shown in brackets: bulbPart for lamps, assembly for the rest. */
+  /** Secondary reference shown in brackets: bulb type and bulbPart for lamps, assembly for the rest. */
   part: string;
   items: ShoppingItem[];
 }
@@ -34,7 +36,10 @@ const KIND_PREFIX: Record<Kind, string> = { lamp: 'L', switch: 'S', coil: 'C' };
 export const itemRef = (i: ShoppingItem) => `${KIND_PREFIX[i.kind]}${i.id}`;
 
 function groupKey(i: ShoppingItem): [label: string, part: string] {
-  if (i.kind === 'lamp') return [i.bulb || NO_PART, i.part];
+  if (i.kind === 'lamp') {
+    if (i.led) return [i.led, [i.bulb, i.part].filter(Boolean).join(' · ')];
+    return [i.bulb || NO_PART, i.part];
+  }
   return [i.part || NO_PART, i.assy];
 }
 
@@ -87,6 +92,7 @@ export function allShoppingItems(): ShoppingItem[] {
       name: l.name,
       part: l.bulbPart,
       bulb: l.bulb,
+      led: installedLed(l.id),
       assy: l.assy,
     })),
     ...DATA.switches.map((s) => ({
@@ -95,6 +101,7 @@ export function allShoppingItems(): ShoppingItem[] {
       name: s.name,
       part: s.part,
       bulb: '',
+      led: '',
       assy: s.assy,
     })),
     ...DATA.coils.map((c) => ({
@@ -103,6 +110,7 @@ export function allShoppingItems(): ShoppingItem[] {
       name: c.name,
       part: c.part,
       bulb: '',
+      led: '',
       assy: c.assy,
     })),
   ];

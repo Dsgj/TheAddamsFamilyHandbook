@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { KIND_LABEL, MAP_LAYER } from '~/lib/data/components';
+  import { installedLed, KIND_LABEL, MAP_LAYER } from '~/lib/data/components';
   import { COIL_NOTE, HINT, t } from '~/lib/data/en';
   import { positions } from '~/lib/data/positions';
   import type { Coil, Kind, Lamp, MapMeta, Switch } from '~/lib/model/types';
@@ -94,6 +94,8 @@
       </dd>
       <dt>Bulb</dt>
       <dd><span class="mono">{lamp.bulb}</span> · {lamp.bulbPart}</dd>
+      {#if installedLed(lamp.id)}<dt>Installed LED</dt>
+        <dd class="mono">{installedLed(lamp.id)}</dd>{/if}
       {#if lamp.assy}<dt>Assembly</dt>
         <dd class="mono">{lamp.assy}</dd>{/if}
     {:else if coil}

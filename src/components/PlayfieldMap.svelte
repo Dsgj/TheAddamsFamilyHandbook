@@ -4,6 +4,7 @@
   import overlaysRaw from '~/data/overlays.json';
   import { SHOTS } from '~/data/shots';
   import type { AnyComponent } from '~/lib/data/components';
+  import { installedLed } from '~/lib/data/components';
   import {
     DATA,
     itemsOf,
@@ -809,6 +810,9 @@
         <li>
           <span class="lbl">Bulb</span><span class="mono muted">{lamp.bulb} · {lamp.bulbPart}</span>
         </li>
+        {#if installedLed(lamp.id)}<li>
+            <span class="lbl">LED</span><span class="mono muted">{installedLed(lamp.id)}</span>
+          </li>{/if}
       {:else if coil}
         <li>
           <WireChip colour={coil.wireEn} /><span>Wire</span>

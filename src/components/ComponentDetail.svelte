@@ -10,7 +10,7 @@
 
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { KIND_LABEL, MAP_LAYER } from '~/lib/data/components';
+  import { installedLed, KIND_LABEL, MAP_LAYER } from '~/lib/data/components';
   import { COIL_NOTE, HINT, t } from '~/lib/data/en';
   import { positions } from '~/lib/data/positions';
   import { recordViewed } from '~/lib/model/recent.svelte';
@@ -69,6 +69,8 @@
 
   const part = $derived(sw?.part || lamp?.bulbPart || coil?.part || '');
   const partLabel = $derived(sw ? 'Switch' : lamp ? `Bulb ${lamp.bulb}` : coil ? 'Coil' : 'Part');
+  /** The LED fitted in this machine (what to order when a lamp dies); '' for non-lamps. */
+  const led = $derived(lamp ? installedLed(lamp.id) : '');
 
   let mapOpen = $state(false);
   let mapW = $state(340);
@@ -142,6 +144,16 @@
     <section>
       <h3 class="lst-h">Parts</h3>
       <ul class="lst">
+        {#if led}
+          <li>
+            <div class="lrow two static">
+              <span class="txt">
+                <span class="ttl">Installed LED</span>
+                <span class="sub mono">{led}</span>
+              </span>
+            </div>
+          </li>
+        {/if}
         {#if part}
           <li>
             <div class="lrow two static">
