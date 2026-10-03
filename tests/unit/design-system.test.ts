@@ -449,11 +449,16 @@ describe('design system source rules', () => {
     const prose = '.prose :where(p, ul, ol, dl, blockquote, h2, h3, h4, .owner-note)';
     expect(decl('src/styles/base.css', prose, 'max-width')).toBe('var(--measure)');
     expect(decl('src/layouts/ComponentPage.astro', '.notes p', 'max-width')).toBe('var(--measure)');
-    // A page's own paragraphs, a tab panel's, the group footers and the provenance notes, and the
-    // Care and Setup step text and Setup's item names.
-    expect(decl('src/styles/base.css', '.wrap > p, .panel > p, .gf, .prov', 'max-width')).toBe(
-      'var(--measure)',
-    );
+    // A page's own paragraphs, a tab panel's, the group footers, the provenance notes and a static
+    // list row's text (VL2-06), and the Care and Setup step text and Setup's item names.
+    expect(
+      decl(
+        'src/styles/base.css',
+        '.wrap > p, .panel > p, .gf, .prov, .lrow.static .txt',
+        'max-width',
+      ),
+    ).toBe('var(--measure)');
+    expect(decl('src/components/Diagnose.svelte', '.ctext', 'max-width')).toBe('var(--measure)');
     expect(
       decl('src/components/SetupGuide.svelte', '.intro, .warn, .why, .step > p', 'max-width'),
     ).toBe('var(--measure)');
@@ -523,7 +528,7 @@ describe('design system source rules', () => {
     expect(global).toEqual([]);
   });
 
-  it('(p) fits the matrix from 1000: a fixed layout, and the header wire labels wrap', () => {
+  it('(p) fits the matrix from 1000: a fixed layout, and the headers set in fixed lines', () => {
     // Spec §9.6 "Fit": the switch and lamp grids fit the column at 1440 with no sideways scroll.
     const wide = RULES.filter(
       (r) =>
@@ -535,7 +540,8 @@ describe('design system source rules', () => {
       );
     expect(sets(/^\.matrix$/, 'table-layout', 'fixed'), 'table-layout: fixed').toBe(true);
     expect(sets(/\.wire\b/, 'white-space', 'normal'), '.wire white-space').toBe(true);
-    expect(sets(/\.wire\b/, 'flex-wrap', 'wrap'), '.wire flex-wrap').toBe(true);
+    // The swatch over the colour's name, so every header has one height (VL2-07).
+    expect(sets(/\.wire\b/, 'flex-direction', 'column'), '.wire flex-direction').toBe(true);
   });
 
   it('(s) leaves typing and modified keys alone in every page-wide key handler', () => {

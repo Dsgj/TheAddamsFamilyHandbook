@@ -143,8 +143,10 @@
   .row > :global(.srch) {
     flex: 1 1 136px;
   }
+  /* Its pill on the row's edge, as the field's (VL2-09). */
   .sel {
     flex: 0 0 auto;
+    margin-left: -4px;
   }
   .hits {
     list-style: none;

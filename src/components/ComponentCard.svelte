@@ -168,6 +168,9 @@
        320px phone the Diagnose results scrolled sideways (WCAG 1.4.10). Its max-width: 100% then
        fits it to the column. */
     grid-template-columns: minmax(0, 1fr);
+    /* Beside a taller card in Diagnose's two columns, the rows stay their own height and the room
+       left over goes under the last one (VL2-02). */
+    align-content: start;
     gap: 14px;
   }
   header {

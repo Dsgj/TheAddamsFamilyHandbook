@@ -120,9 +120,10 @@
             <div class="hd">
               <span class="n">{r}</span>
               <!-- Each code is a nowrap .tok (base.css): the pin wraps at the separator, never at a
-                   code's hyphen ('U18-11' in the 104 of the row header from 1000 and on paper). -->
+                   code's hyphen ('U18-11' on paper). From 1000 each code takes its own line. -->
               {#if h}<WireChip colour={h[0]} /><span class="mono pin"
-                  ><span class="tok">{h[1]}</span> · <span class="tok">{h[2]}</span></span
+                  ><span class="tok">{h[1]}</span> <span class="sep">·</span>
+                  <span class="tok">{h[2]}</span></span
                 >{/if}
             </div>
           </th>
@@ -388,9 +389,25 @@
     .nm {
       overflow-wrap: anywhere;
     }
+    /* Fixed lines, so every header has one height (VL2-07): the swatch over the colour's name,
+       then the two pins, each on its own line in a row header as in a column header. The
+       separator stays for screen readers. */
     .hd :global(.wire) {
-      flex-wrap: wrap;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
       white-space: normal;
+    }
+    .rowh .pin .tok {
+      display: block;
+    }
+    .rowh .pin .sep {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
     }
   }
   /* 600–999: the 860 grid scrolls sideways under a pinned row header. Sticky cells paint above the

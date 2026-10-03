@@ -842,6 +842,8 @@ test.describe('P2-4: widths and measure (spec §3.1)', () => {
         ['/switches', '.panel > p', 1],
         ['/shopping', '.gf', 1],
         ['/setup', '.item .name', 1],
+        ['/shopping', '.lrow.static .txt', 3],
+        ['/?q=32%2068%20F1%20F3', '.ctext', 1],
       ] as const) {
         await at(page, width, url);
         const [counts, lasts] = await lines(sel);
@@ -975,6 +977,112 @@ test('at 412 the /setup progress row stays one line with every setting done', as
   const row = page.locator('p.progress');
   await expect(row).toContainText('47 of 47');
   expect((await row.boundingBox())!.height).toBeLessThanOrEqual(40);
+});
+
+/* P2 item 6 of the app audit, round 2: large screens. Each test names the finding it holds; VL2-06
+ * (the measure of the kit rows and the shared-cause text) is in the P2-4 measure test above. */
+test.describe('large screens (P2 item 6 of the app audit, round 2)', () => {
+  test.skip(({ isMobile }) => isMobile, 'desktop widths');
+
+  test('a sidebar sub-row label keeps the row size (VL2-01)', async ({ page }) => {
+    await at(page, 1440, '/switches');
+    const sizes = await page
+      .locator('.shell .sub .lbl')
+      .evaluateAll((ls) =>
+        ls.map((l) => `${getComputedStyle(l).fontSize}/${getComputedStyle(l).lineHeight}`),
+      );
+    expect(sizes.length).toBeGreaterThan(5);
+    expect(new Set(sizes)).toEqual(new Set(['15px/20px']));
+  });
+
+  test('two Diagnose cards side by side keep their own rows and buttons (VL2-02)', async ({
+    page,
+  }) => {
+    await at(page, 1440, '/?q=12%2013%2068');
+    await expect(page.locator('.cards > *')).toHaveCount(3);
+    const heights = await page
+      .locator('.cards .acts .btn')
+      .evaluateAll((bs) => bs.map((b) => Math.round(b.getBoundingClientRect().height)));
+    expect(new Set(heights).size, heights.join(' ')).toBe(1);
+  });
+
+  test('a single result lines up with the field: bar, chips and card (VL2-04)', async ({
+    page,
+  }) => {
+    await at(page, 1440, '/?q=32');
+    await expect(page.locator('.cards > *')).toHaveCount(1);
+    const [field, bar, card] = await Promise.all(
+      ['.dock', '.rbar', '.cards > *'].map((sel) => page.locator(sel).first().boundingBox()),
+    );
+    for (const box of [bar!, card!]) {
+      expect(Math.abs(box.x - field!.x)).toBeLessThanOrEqual(1);
+      expect(Math.abs(box.x + box.width - (field!.x + field!.width))).toBeLessThanOrEqual(1);
+    }
+  });
+
+  for (const width of [1024, 1180]) {
+    test(`${width}: the map panel's layer toggles show their names (VL2-03)`, async ({ page }) => {
+      await at(page, width, '/map');
+      const toggles = page.locator('.layers-row .ibtn');
+      await expect(toggles).toHaveCount(4);
+      expect(await toggles.locator('.lname').allInnerTexts()).toEqual([
+        'Switches',
+        'Lamps',
+        'Solenoids',
+        'Shots',
+      ]);
+      // Each name is drawn whole under its glyph, and each toggle keeps a 44 target.
+      for (const [w, h, name, room] of await toggles.evaluateAll((bs) =>
+        bs.map((b) => {
+          const r = b.getBoundingClientRect();
+          const n = b.querySelector('.lname')!;
+          return [r.width, r.height, n.getBoundingClientRect().width, n.scrollWidth];
+        }),
+      )) {
+        expect(Math.min(w!, h!)).toBeGreaterThanOrEqual(44);
+        expect(name).toBeGreaterThan(24);
+        expect(name).toBeGreaterThanOrEqual(room! - 1);
+      }
+    });
+  }
+
+  test('the switch matrix headers are fixed lines of one height (VL2-07)', async ({ page }) => {
+    await at(page, 1440, '/switches');
+    for (const sel of ['.colh .hd', '.rowh .hd']) {
+      const heights = await page
+        .locator(`#panel-matrix ${sel}`)
+        .evaluateAll((hs) => hs.map((h) => Math.round(h.getBoundingClientRect().height)));
+      expect(heights, sel).toHaveLength(8);
+      expect(new Set(heights).size, `${sel} ${heights.join(' ')}`).toBe(1);
+    }
+    // A row header's pins read as one line to a screen reader, each code on its own line on screen.
+    await expect(page.locator('#panel-matrix .rowh').first()).toContainText('J208-1 · U18-11');
+  });
+
+  test('a search pill lines up with the list under it (VL2-09)', async ({ page }) => {
+    for (const [url, list] of [
+      ['/tables', '.lst'],
+      ['/parts', '.scroll-x'],
+    ] as const) {
+      await at(page, 1440, url);
+      const [pill, below] = await Promise.all([
+        page
+          .locator('.srch .search')
+          .first()
+          .evaluate((f) => {
+            const r = f.getBoundingClientRect();
+            const b = parseFloat(getComputedStyle(f).borderLeftWidth);
+            return [r.left + b, r.right - b];
+          }),
+        page.locator(list).evaluateAll((ls) => {
+          const r = ls.map((l) => l.getBoundingClientRect()).find((b) => b.width > 0)!;
+          return [r.left, r.right];
+        }),
+      ]);
+      expect(Math.abs(pill[0]! - below[0]!), url).toBeLessThanOrEqual(1);
+      expect(Math.abs(pill[1]! - below[1]!), url).toBeLessThanOrEqual(1);
+    }
+  });
 });
 
 /* P2 item 5 of the app audit, round 2 (VP2-05): Setup, Care and Verify draw one checklist row, a

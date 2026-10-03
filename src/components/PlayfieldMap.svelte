@@ -719,7 +719,7 @@
                   aria-label="{LABEL[l]}, {counts[l]} on the map"
                   onclick={() => toggle(l)}
                 >
-                  {@render layerIcon(l)}
+                  {@render layerIcon(l)}<span class="lname" aria-hidden="true">{shortName(l)}</span>
                 </button>
               {/each}
             </div>
@@ -1204,10 +1204,19 @@
     padding: 6px 0 4px;
     background: var(--panel-bg);
   }
-  /* The layers toggles in the panel, where the gutter is too narrow to float them (spec §7.4). */
+  /* The layers toggles in the panel, where the gutter is too narrow to float them (spec §7.4):
+     four equal toggles, each its glyph over its name (VL2-03). */
   .layers-row {
+    justify-self: stretch;
     display: flex;
     gap: 4px;
+  }
+  .layers-row .ibtn {
+    flex: 1 1 0;
+    height: auto;
+    min-height: 56px;
+    gap: 2px;
+    font: var(--t-cap);
   }
   .keys {
     display: flex;

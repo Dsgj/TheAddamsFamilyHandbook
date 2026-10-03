@@ -777,8 +777,10 @@
     border-left: 3px solid var(--warn);
     padding-left: 10px;
   }
+  /* The prose measure: from 1000 the shared-cause text ran 130 characters a line (VL2-06). */
   .ctext {
     flex: 1 1 15em;
+    max-width: var(--measure);
     font: var(--t-sub);
   }
   .cards {
@@ -786,9 +788,18 @@
     gap: var(--gap);
     margin-top: 12px;
   }
+  /* From 1000 two columns, and the bar lines up with the field's 720 above it. A lone card takes
+     that 720 too, so bar, chips and card share one edge (VL2-04). The cards keep a row's height,
+     but each lays its own rows out from the top (ComponentCard's .comp, VL2-02). */
   @media (min-width: 1000px) {
     .cards {
       grid-template-columns: 1fr 1fr;
+    }
+    .cards:has(> :global(:only-child)) {
+      grid-template-columns: minmax(0, 720px);
+    }
+    .rbar {
+      max-width: 720px;
     }
   }
 

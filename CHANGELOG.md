@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- **Large screens line up.** From 1280 the sidebar's sub-pages use the same
+  text size as the main tabs. Two Diagnose results side by side keep their
+  own buttons instead of stretching to match each other, and a single result
+  lines up with the field above it. The map's layer buttons beside the panel
+  show their names. Long lines on the shopping list and in the shared-cause
+  text wrap at a readable width. The switch-matrix headers all have the same
+  height. Search fields line up with the lists under them.
 - **Setup, Care and Verify look like one checklist.** Each row has its tick box
   at the top left, the text beside it and its links underneath, and each page
   shows its progress the same way: a count, a word and a bar. Text fields have
