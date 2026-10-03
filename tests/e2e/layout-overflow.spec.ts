@@ -976,3 +976,149 @@ test('at 412 the /setup progress row stays one line with every setting done', as
   await expect(row).toContainText('47 of 47');
   expect((await row.boundingBox())!.height).toBeLessThanOrEqual(40);
 });
+
+/* P2 item 4 of the app audit, round 2: the reading surfaces on a phone. Each test names the finding
+ * it holds (VP2-01, 04, 08 to 13, 15, 16, 18); VP2-14 (the dark bar's alpha) is held by contrast.spec
+ * and VP2-17 (the handbook ranges) by handbook.spec. */
+test.describe('reading surfaces on a phone (P2 item 4 of the app audit, round 2)', () => {
+  test.skip(({ isMobile }) => !isMobile, 'the phone projects');
+
+  test('a table cut by its scroller fades at the edge that has more to show (VP2-04)', async ({
+    page,
+  }) => {
+    await gotoHydrated(page, 'handbook/quick');
+    const all = page.locator('.scroll-x');
+    const flags = await all.evaluateAll((list) =>
+      list.map((s) => s.scrollWidth > s.clientWidth + 1),
+    );
+    const edges = (el: Locator) =>
+      el.evaluate((s) => {
+        const c = getComputedStyle(s);
+        return [c.getPropertyValue('--edge-l'), c.getPropertyValue('--edge-r')];
+      });
+    const cut = all.nth(flags.indexOf(true));
+    await expect.poll(() => edges(cut)).toEqual(['0px', '24px']);
+    await cut.evaluate((s) => s.scrollTo({ left: s.scrollWidth }));
+    await expect.poll(() => edges(cut)).toEqual(['24px', '0px']);
+    // A scroller that fits has no timeline to run, so both edges stay solid.
+    expect(await edges(all.nth(flags.indexOf(false)))).toEqual(['0px', '0px']);
+  });
+
+  test('the fitted map ends left of the control column (VP2-11)', async ({ page }) => {
+    await gotoHydrated(page, 'map');
+    const gap = async () => {
+      const canvas = (await page.locator('.map-ui .canvas').boundingBox())!;
+      const column = (await page.locator('.map-controls .column').boundingBox())!;
+      return column.x - (canvas.x + canvas.width);
+    };
+    await expect.poll(gap).toBeGreaterThanOrEqual(4);
+  });
+
+  test('the manual viewer: zoom under the scan, contents title in the header (VP2-12, 13)', async ({
+    page,
+  }) => {
+    await gotoHydrated(page, 'manual/ops/10');
+    const stage = page.locator('.viewer .stage');
+    await expect(stage.locator('img').first()).toBeVisible();
+    await stage.evaluate((s) => s.scrollIntoView({ block: 'end' }));
+    const zoom = (await page.getByRole('group', { name: 'Zoom' }).boundingBox())!;
+    const box = (await stage.boundingBox())!;
+    expect(zoom.y).toBeGreaterThanOrEqual(box.y + box.height - 0.5);
+    expect(zoom.width).toBeGreaterThan(zoom.height);
+    await expect(page.locator('header.top .short')).toHaveText('Shot maps');
+    await expect(page.locator('.viewer .ttl')).toHaveText('p. F · Shot maps');
+  });
+
+  test('the fuse and LED tables share their column lines (VP2-16)', async ({ page }) => {
+    await gotoHydrated(page, 'fuses');
+    const lefts = await page
+      .locator('table.ids')
+      .evaluateAll((tables) =>
+        (tables as HTMLTableElement[]).map((t) =>
+          [...t.rows[0]!.cells].slice(0, 2).map((c) => Math.round(c.getBoundingClientRect().left)),
+        ),
+      );
+    expect(lefts.length).toBeGreaterThan(1);
+    for (const l of lefts) expect(l).toEqual(lefts[0]);
+  });
+
+  test('an untested part shows Not tested chosen, and it stays chosen (VP2-01)', async ({
+    page,
+  }) => {
+    await gotoHydrated(page, 'switch/32');
+    const row = statusRow(page);
+    const pressed = () =>
+      row
+        .getByRole('button')
+        .evaluateAll((b) =>
+          b
+            .filter((x) => x.getAttribute('aria-pressed') === 'true')
+            .map((x) => x.textContent!.trim()),
+        );
+    await expect.poll(pressed).toEqual(['Not tested']);
+    await row.getByRole('button', { name: 'Not tested' }).click();
+    await expect.poll(pressed).toEqual(['Not tested']);
+    await row.getByRole('button', { name: 'OK' }).click();
+    await expect.poll(pressed).toEqual(['OK']);
+    await row.getByRole('button', { name: 'OK' }).click();
+    await expect.poll(pressed).toEqual(['Not tested']);
+  });
+
+  test('the Text size sheet fits its control and keeps the page bright (VP2-10)', async ({
+    page,
+  }) => {
+    await gotoHydrated(page, 'handbook/tests');
+    await page.getByRole('button', { name: 'Text size' }).click();
+    const sheet = page.getByRole('dialog', { name: 'Text size' });
+    await expect(sheet).toBeVisible();
+    expect((await sheet.boundingBox())!.height).toBeLessThan(200);
+    expect(await page.locator('.scrim').evaluate((s) => getComputedStyle(s).backgroundColor)).toBe(
+      'rgba(0, 0, 0, 0)',
+    );
+  });
+
+  test('at the end of a handbook section the footer clears the reader bar (VP2-09)', async ({
+    page,
+  }) => {
+    await gotoHydrated(page, 'handbook/tests');
+    await page.evaluate(() => scrollTo(0, document.documentElement.scrollHeight));
+    const clear = async () => {
+      const foot = (await page.locator('footer.foot').boundingBox())!;
+      const bar = (await page.locator('nav.rbar').boundingBox())!;
+      return bar.y - (foot.y + foot.height);
+    };
+    await expect.poll(clear).toBeGreaterThanOrEqual(-0.5);
+  });
+
+  test('the manual search shows its whole placeholder (VP2-08)', async ({ page }) => {
+    await gotoHydrated(page, 'manual');
+    const field = page.locator('input[aria-label="Search the manuals"]');
+    await expect(field).toHaveAttribute('placeholder', 'Search');
+  });
+
+  test('every Workshop row has its own icon (VP2-15)', async ({ page }) => {
+    await gotoHydrated(page, 'workshop');
+    const icons = await page
+      .locator('.lst > li')
+      .evaluateAll((rows) =>
+        rows.map((r) => r.querySelector('svg:not(.chev) path')?.getAttribute('d') ?? ''),
+      );
+    expect(icons.length).toBeGreaterThan(5);
+    expect(new Set(icons).size).toBe(icons.length);
+  });
+
+  test('codes in the /verify checks never break at a hyphen (VP2-18)', async ({ page }) => {
+    await gotoHydrated(page, 'verify');
+    const loose = await page.locator('.checks .text').evaluateAll((texts) =>
+      texts.flatMap((t) => {
+        const bare = t.cloneNode(true) as HTMLElement;
+        bare.querySelectorAll('.tok').forEach((k) => k.remove());
+        return bare.textContent!.match(/\b[A-Z0-9]+(?:-[A-Z0-9]+)+\b/g) ?? [];
+      }),
+    );
+    expect(loose).toEqual([]);
+    const toks = page.locator('.checks .text .tok');
+    expect(await toks.count()).toBeGreaterThan(0);
+    expect(await toks.first().evaluate((k) => getComputedStyle(k).whiteSpace)).toBe('nowrap');
+  });
+});

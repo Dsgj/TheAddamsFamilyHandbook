@@ -1,0 +1,13 @@
+---
+/**
+ * Running text whose codes never break at their hyphens (VP2-18): each part number or page
+ * reference ('SW-1A-193', 'A-15205-R', '2-16') is a .tok, which keeps one line, and the words
+ * around them wrap as before. Copying the text still gives plain hyphens.
+ */
+interface Props {
+  text: string;
+}
+const parts = Astro.props.text.split(/\b([A-Z0-9]+(?:-[A-Z0-9]+)+)\b/);
+---
+
+{parts.map((p, i) => (i % 2 ? <span class="tok">{p}</span> : p))}

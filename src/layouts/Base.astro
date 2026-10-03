@@ -124,26 +124,32 @@ const hasActions = Astro.slots.has('actions');
           else type = prev.tab === d.tab ? 'fade' : 'tab';
         }
         vt.types.add(type);
-        // What ran, for the tests: `window.tafhMotion`.
+        // What ran, for the tests: `window.tafhMotion`. Only the clock's animations: a scroller's
+        // edge fade runs on its scroll timeline and has no duration (VP2-04).
         window.tafhMotion = { type: type, animations: [], pending: true };
         const ran = function () {
           window.tafhMotion = {
             type: type,
-            animations: document.getAnimations().map(function (a) {
-              const fx = a.effect;
-              const keys = fx && fx.getKeyframes ? fx.getKeyframes() : [];
-              const props = {};
-              keys.forEach(function (k) {
-                Object.keys(k).forEach(function (p) {
-                  if (!/^(offset|computedOffset|easing|composite)$/.test(p)) props[p] = 1;
+            animations: document
+              .getAnimations()
+              .filter(function (a) {
+                return a.timeline === document.timeline;
+              })
+              .map(function (a) {
+                const fx = a.effect;
+                const keys = fx && fx.getKeyframes ? fx.getKeyframes() : [];
+                const props = {};
+                keys.forEach(function (k) {
+                  Object.keys(k).forEach(function (p) {
+                    if (!/^(offset|computedOffset|easing|composite)$/.test(p)) props[p] = 1;
+                  });
                 });
-              });
-              return {
-                name: a.animationName || a.transitionProperty || a.id || '',
-                duration: fx ? Number(fx.getTiming().duration) : 0,
-                props: Object.keys(props).sort(),
-              };
-            }),
+                return {
+                  name: a.animationName || a.transitionProperty || a.id || '',
+                  duration: fx ? Number(fx.getTiming().duration) : 0,
+                  props: Object.keys(props).sort(),
+                };
+              }),
           };
         };
         // One chain with both handlers: a `.then` beside a `.catch` leaves its own promise

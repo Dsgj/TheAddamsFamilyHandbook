@@ -1,4 +1,5 @@
 ---
+import Codes from '~/components/Codes.astro';
 import Base from '~/layouts/Base.astro';
 import { VERIFY_ITEMS as ITEMS } from '~/data/verify';
 const groups = [...new Set(ITEMS.map((i) => i.group))];
@@ -26,7 +27,9 @@ const groups = [...new Set(ITEMS.map((i) => i.group))];
             <li>
               <label>
                 <input type="checkbox" class="verify-check" data-id={i.id} />
-                <span class="text">{i.text}</span>
+                <span class="text">
+                  <Codes text={i.text} />
+                </span>
               </label>
               <p class="links small">
                 {i.links.map(([label, url]) => (
@@ -96,6 +99,8 @@ const groups = [...new Set(ITEMS.map((i) => i.group))];
     justify-content: center;
     min-height: var(--touch);
     min-width: var(--touch);
+    /* A source label ('Manual p. 2-16') wraps as a whole to the next row (VP2-18). */
+    white-space: nowrap;
   }
 </style>
 

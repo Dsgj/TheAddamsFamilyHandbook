@@ -1,5 +1,4 @@
 ---
-import Phrase from '~/components/Phrase.astro';
 import Base from '~/layouts/Base.astro';
 import { DATA } from '~/lib/data/components';
 import { pageRefText, pageTitleText } from '~/lib/pages';
@@ -27,13 +26,13 @@ const boards = [...new Set(DATA.fuses.map((f) => f.board))];
         <div class="board">
           <h3>{b}</h3>
           <div class="scroll-x">
-            <table class="t">
+            <table class="t ids">
               <thead>
                 <tr>
                   <>
                     <th>Fuse</th>
                     <th>Circuit</th>
-                    <th>Rating</th>
+                    <th class="rate">Rating</th>
                   </>
                 </tr>
               </thead>
@@ -62,15 +61,13 @@ const boards = [...new Set(DATA.fuses.map((f) => f.board))];
       for the CPU LED are on <a href={handbookHref('errors')}>the error code page</a>.
     </p>
     <div class="scroll-x">
-      <table class="t">
+      <table class="t ids">
         <thead><tr><th>LED</th><th>What</th><th>Normal</th></tr></thead>
         <tbody>
           {
             DATA.leds.map((l) => (
               <tr>
-                <td class="mono phrase">
-                  <Phrase text={l.id} />
-                </td>
+                <td class="mono">{l.id}</td>
                 <td>{l.what}</td>
                 <td>{l.normal}</td>
               </tr>
@@ -96,6 +93,18 @@ const boards = [...new Set(DATA.fuses.map((f) => f.board))];
   }
   .board {
     margin-top: 12px;
+  }
+  /* One column grid for every board and the LEDs (VP2-16, VP-16): an id keeps one line in a column
+     as wide in each table, a fuse's rating has its own, and the circuit or the LED's text takes the
+     rest, so Circuit and Rating start at one x in every group. */
+  .ids {
+    table-layout: fixed;
+  }
+  .ids th:first-child {
+    width: 88px;
+  }
+  .ids th.rate {
+    width: 104px;
   }
   .board h3 {
     font: var(--t-sub);

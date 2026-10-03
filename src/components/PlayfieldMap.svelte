@@ -19,6 +19,7 @@
     matchesQuery,
     statusClass,
   } from '~/lib/map/items';
+  import { COLUMN_SIDE, fitScale } from '~/lib/map/fit';
   import { createMapZoom, dist, MAX_ZOOM } from '~/lib/map/zoom.svelte';
   import type { PosKind } from '~/lib/data/positions';
   import { allPositions, PLAYFIELD, positions, posKey } from '~/lib/data/positions';
@@ -44,14 +45,6 @@
   /** The stacked keyboard legend floats at the stage's foot only below the layers list:
    *  16 + the list (4 rows of 44 + 8) + 16 + the legend (6 lines of 20, 5 gaps of 6, 20 padding) + 16. */
   const LEGEND_STAGE_H = 16 + (4 * 44 + 8) + 16 + (6 * 20 + 5 * 6 + 20) + 16;
-  /** Spec §7.4: from 1000 the zoom capsule (44 wide, right 16, bottom 16) and its readout (44 wide,
-   *  bottom 156, 28 tall) stand at the stage's right. The fit keeps the drawing clear of them: a
-   *  side gutter of 16 + 44 + 4, or, top-aligned, a foot of 156 + 28 + 4. */
-  const CTRL_SIDE = 16 + 44 + 4;
-  const CTRL_FOOT = 156 + 28 + 4;
-  /** Spec §7.9: where its gutter can't hold the glass, the embed keeps the phone's control column
-   *  (44 wide at right 10); from 1000 its fit keeps a side gutter of 10 + 44 + 4 clear of it. */
-  const COLUMN_SIDE = 10 + 44 + 4;
 
   let {
     layer: initialLayer = '',
@@ -111,17 +104,7 @@
   let partsOpen = $state(false);
   /** The "Search components" filter (Q28). */
   let q = $state('');
-  const fit = $derived.by(() => {
-    if (!stageW || !stageH) return 0;
-    const whole = Math.min(stageW / PLAYFIELD.w, (stageH - inset) / PLAYFIELD.h);
-    if (!wide) return whole;
-    if (embed) return Math.min(whole, (stageW - 2 * COLUMN_SIDE) / PLAYFIELD.w);
-    // From 1000 on /map: the larger of the fits that clear the controls (VL-04). A tall or
-    // portrait stage shortens the drawing above them; a short one narrows it beside them.
-    const beside = Math.min((stageW - 2 * CTRL_SIDE) / PLAYFIELD.w, stageH / PLAYFIELD.h);
-    const above = Math.min(stageW / PLAYFIELD.w, (stageH - CTRL_FOOT) / PLAYFIELD.h);
-    return Math.min(whole, Math.max(beside, above));
-  });
+  const fit = $derived.by(() => fitScale({ w: stageW, h: stageH, inset, wide, embed }, PLAYFIELD));
   /** Zoom, first fit and pointer gestures (spec §7.2, §7.5); the canvas size comes from here. */
   const zm = createMapZoom({
     fit: () => fit,
@@ -576,6 +559,7 @@
           style:--shift="{shift}px"
           style:width={fit ? `${zm.canvasW}px` : undefined}
           style:height={fit ? `${zm.canvasH}px` : undefined}
+          style:--canvas-w={fit ? `${zm.canvasW}px` : undefined}
           style:--r={PLAYFIELD.w / PLAYFIELD.h}
           bind:this={canvas}
         >
@@ -940,19 +924,22 @@
     /* Expanded at 1× the canvas moves so the part sits in the band above the sheet (spec §7.6). */
     transform: translateY(var(--shift, 0px));
   }
-  /* /map sizes the canvas before it hydrates (PF2-01) with map.astro's --map-z and --map-inset
-     (the URL's zoom, a phone's peek); from 1000 the larger fit beside or above the controls. */
+  /* /map sizes the canvas before it hydrates (PF2-01) with map.astro's --map-z and --map-inset; below
+     1000 it stays centred, or moves left, to leave COLUMN_SIDE at the right (VP2-11). */
   .map-ui:not(.embed) .scroller {
     container-type: size;
   }
   .map-ui:not(.embed) .canvas {
-    --fit: min(100cqw, (100cqh - var(--map-inset, 0px)) * var(--r));
+    --fit: min(100cqw - 58px, (100cqh - var(--map-inset, 0px)) * var(--r));
+    --w: var(--canvas-w, calc(var(--map-z, 1) * var(--fit)));
     width: calc(var(--map-z, 1) * var(--fit));
     aspect-ratio: var(--r);
+    margin-inline: max(0px, min((100cqw - var(--w)) / 2, 100cqw - var(--w) - 58px)) 0;
   }
   @media (min-width: 1000px) {
     .map-ui:not(.embed) .canvas {
       --fit: max(min(100cqw - 128px, 100cqh * var(--r)), min(100cqw, (100cqh - 188px) * var(--r)));
+      margin-inline: auto;
     }
   }
   /* Re-fits (the sheet at peek, deselect) and the expanded translate animate once fitted. */

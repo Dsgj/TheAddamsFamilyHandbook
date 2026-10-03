@@ -14,14 +14,16 @@ import { handbookHref, href, manualHref } from '~/lib/url';
  */
 const toc = await handbookToc();
 const manual = SECTIONS.filter((s) => s.key !== 'appendix');
-/** "1-15–1-19" for a contiguous run of labelled pages; "A–F" for the shot maps; else nothing. */
+/** "1-15 – 1-19" for a contiguous run of labelled pages; "A – F" for the shot maps; else nothing.
+ * Narrow no-break spaces set the dash apart: in the mono face it was barely wider than the labels'
+ * hyphens, and '1-1–1-6' read as one code (VP2-17). */
 const range = (pages: number[]): string => {
   const first = pages[0]!;
   const last = pages.at(-1)!;
   if (last - first !== pages.length - 1) return '';
   const a = pageLabel('ops', first);
   const b = pageLabel('ops', last);
-  return a && b ? (a === b ? a : `${a}–${b}`) : '';
+  return a && b ? (a === b ? a : `${a}\u202f–\u202f${b}`) : '';
 };
 ---
 

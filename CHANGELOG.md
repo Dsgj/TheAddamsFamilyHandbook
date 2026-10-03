@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- **Reading on a phone is easier.** A table cut off at the edge of the screen
+  now fades out on the side that has more to show, so you can see it scrolls.
+  The manual search field reads "Search" instead of a cut-off word. The end of
+  a handbook section is no longer hidden behind its toolbar, and the Text size
+  panel is small and leaves the page visible while you choose. On the map the
+  drawing moves left so the zoom buttons no longer cover its right edge, and on
+  a manual page the zoom buttons sit under the scan. A manual page's title bar
+  names the subject ("Shot maps") when it fits. A part you have not tested
+  shows "Not tested" as chosen. Smaller fixes: the fuse and LED tables line up,
+  the Workshop rows have their own icons, page ranges and part numbers no
+  longer break at the hyphen, and the dark title bar is a little more solid.
 - **Diagnose and lists fit a phone better.** Over results and a search the
   field at the foot is slimmer and its heading is gone, so it takes about a
   fifth of the screen. On a phone on its side the field sits above the results

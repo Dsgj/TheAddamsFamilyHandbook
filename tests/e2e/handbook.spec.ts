@@ -30,7 +30,9 @@ test.describe('the Handbook home', () => {
       'href',
       /handbook\/tests$/,
     );
-    await expect(page.getByRole('link', { name: /^Test menu/ })).toContainText('1-15–1-19');
+    await expect(page.getByRole('link', { name: /^Test menu/ })).toContainText(
+      '1-15\u202f–\u202f1-19',
+    );
     await expect(page.getByRole('link', { name: /A6.*Flippers/ })).toHaveAttribute(
       'href',
       /handbook\/appendix#p106-1$/,

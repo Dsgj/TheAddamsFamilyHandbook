@@ -86,7 +86,8 @@
     </div>
   </BottomSheet>
 {:else if open === 'size'}
-  <BottomSheet label="Text size" detent="medium" recede={RECEDE} onclose={() => (open = '')}>
+  <!-- As tall as its two rows, over an undimmed page: the text it sizes stays in view (VP2-10). -->
+  <BottomSheet label="Text size" detent="fit" dim={false} onclose={() => (open = '')}>
     <div class="sheet-size">
       <div class="seg sizes" role="group" aria-label="Text size">
         {#each SIZES as [k, name] (k)}
@@ -109,6 +110,11 @@
      bar is a div.rbar, so the match names the nav. */
   :global(:root:has(nav.rbar)) {
     --toast-lift: 62px;
+  }
+  /* The page ends that far above the tab bar too, so the footer's last lines clear the toolbar
+     (VP2-09). */
+  :global(body:has(nav.rbar)) {
+    padding-bottom: calc(var(--tabbar-h) + var(--safe-bot) + 62px);
   }
   .rbar {
     position: fixed;

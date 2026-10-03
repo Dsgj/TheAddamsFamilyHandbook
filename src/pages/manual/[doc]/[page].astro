@@ -32,6 +32,10 @@ const text = OCR[doc][page - 1] ?? '';
 /** "p. 1-15" before a printed label, "PDF page 2" where the page prints none (spec §13). */
 const pageTitle = pageTitleText(doc, page);
 const title = tocTitle(doc, page);
+/** Below 600 the bar names the contents entry, not just 'p. F' or 'PDF page 10', when it fits the
+ * bar at 320 (14 characters); the caption under the toolbar carries both (VP2-13). */
+const short = title && title.length <= 14 ? title : pageTitle;
+const caption = title ? `${pageTitle} · ${title}` : '';
 const sec = doc === 'ops' ? sectionOfPage(page) : undefined;
 /** The segment words. The scanned hb document is "Operator's", never bare "Handbook" (the tab). */
 const SHORT: Record<DocId, string> = { ops: 'Operations', hb: "Operator's", wpc: 'Schematics' };
@@ -52,7 +56,7 @@ const around = toc.slice(from, from + 7).map(([p, name], i) => ({
 
 <Base
   title={`${DOC_NAME[doc]} ${pageTitle}`}
-  short={pageTitle}
+  {short}
   description={`${DOC_NAME[doc]} ${pageTitle}, the page image with its text.`}
   nav="manual"
   h1="bar"
@@ -67,7 +71,7 @@ const around = toc.slice(from, from + 7).map(([p, name], i) => ({
       ))
     }
   </nav>
-  <PageViewer client:load {doc} {page} {meta} count={pageCount(doc)} {text} {title} />
+  <PageViewer client:load {doc} {page} {meta} count={pageCount(doc)} {text} title={caption} />
   <script is:inline>
     // Before the first paint (PF2-02): the fit the viewer is about to choose (PageViewer's
     // storedFit) and, for a fit to the page, the stage's top, so the scan is drawn at its size.

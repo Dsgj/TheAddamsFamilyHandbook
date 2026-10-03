@@ -93,7 +93,7 @@
   <div class="row">
     <SearchField
       label="Search the manuals"
-      placeholder="Search the manuals"
+      placeholder="Search"
       bind:value={q}
       onfocus={ensure}
       oninput={ensure}
@@ -132,7 +132,9 @@
 
 <style>
   /* The field keeps at least 136 px beside the select (its clear button takes 44 of it); on a
-     320 phone that no longer fits, so the select wraps under the field. */
+     320 phone that no longer fits, so the select wraps under the field. The placeholder is one
+     word, as the select beside it names what is searched: "Search the manuals" was cut to
+     "Search the manu" at 150 px (VP2-08). */
   .row {
     display: flex;
     flex-wrap: wrap;

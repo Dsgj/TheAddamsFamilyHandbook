@@ -67,6 +67,9 @@ const fitted = (page: Page) =>
     .evaluate((el) => (el as HTMLElement).style.width.endsWith('px'));
 /** Within the plan's ±1 px. */
 const near = (a: number, b: number) => Math.abs(a - b) <= 1;
+/** Below 1000 the fitted drawing leaves the control column's 58 px at the right (VP2-11). */
+const fitWidth = (page: Page, stage: number) =>
+  stage - (page.viewportSize()!.width < 1000 ? 58 : 0);
 
 for (const size of SIZES) {
   test(`fits the whole playfield at ${size.width}×${size.height}`, async ({ page }) => {
@@ -79,8 +82,8 @@ for (const size of SIZES) {
     expect(g.canvas.right).toBeLessThanOrEqual(g.scroller.right + 0.5);
     expect(g.canvas.bottom).toBeLessThanOrEqual(g.scroller.bottom + 0.5);
     expect(Math.abs(g.canvas.top - g.scroller.top)).toBeLessThanOrEqual(0.5);
-    // Fills the width or the height.
-    const fillsW = Math.abs(g.canvas.width - g.scroller.width) <= 1;
+    // Fills the width (less the control column below 1000) or the height.
+    const fillsW = Math.abs(g.canvas.width - fitWidth(page, g.scroller.width)) <= 1;
     const fillsH = Math.abs(g.canvas.height - g.scroller.height) <= 1;
     expect(fillsW || fillsH, 'canvas fills the stage width or height').toBe(true);
     // Aspect ratio of the drawing.
@@ -424,7 +427,10 @@ test.describe('phone selection sheet', () => {
     await expect
       .poll(async () => {
         const g = await geometry(page);
-        return near(g.canvas.height, g.scroller.height) || near(g.canvas.width, g.scroller.width);
+        return (
+          near(g.canvas.height, g.scroller.height) ||
+          near(g.canvas.width, fitWidth(page, g.scroller.width))
+        );
       })
       .toBe(true);
   });

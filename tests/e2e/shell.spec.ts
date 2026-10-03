@@ -82,7 +82,8 @@ test.describe('phone tab bar', () => {
   });
 
   test('the toast sits 10 above the tab bar and covers no tab', async ({ page }) => {
-    await gotoHydrated(page, '/');
+    // Not Home: there the toast clears the Diagnose field above the bar (VP2-02).
+    await gotoHydrated(page, '/tables');
     await page.evaluate(() => {
       window.dispatchEvent(
         new CustomEvent('tafh:toast', { detail: { kind: 'update', text: 'Update ready' } }),

@@ -90,10 +90,13 @@
     care: 'M10 3l2 4 4 .6-3 3 .8 4.4L10 13l-3.8 2 .8-4.4-3-3L8 7z',
     setup: 'M4 6h12M4 10h12M4 14h8M14 13l1.5 1.5L18 12',
     theme: 'M10 3a7 7 0 1 0 0 14V3z',
-    data: 'M10 3v9M6 8l4 4 4-4M4 16h12',
+    // One icon per row (VP2-15): a stack of records for the device's data, the download arrow
+    // for Install, a tag for the version and the circled i for About.
+    data: 'M4 5a6 2 0 1 0 12 0a6 2 0 1 0-12 0M4 5v10a6 2 0 0 0 12 0V5M4 10a6 2 0 0 0 12 0',
     offline: 'M3 9a10 10 0 0 1 14 0M6 12a6 6 0 0 1 8 0M10 15h.01',
     install: 'M10 3v9M6 8l4 4 4-4M4 16h12',
     info: 'M10 9v5M10 6h.01M10 2a8 8 0 1 0 0 16 8 8 0 1 0 0-16z',
+    version: 'M3 3h7l7 7-7 7-7-7zM7 7h.01',
   };
 </script>
 
@@ -215,7 +218,7 @@
   <ul class="lst">
     <li>
       <div class="lrow static">
-        {@render tile(ICON.info)}
+        {@render tile(ICON.version)}
         <span class="txt"><span class="ttl">Version</span></span>
         <span class="val mono">{version}</span>
       </div>

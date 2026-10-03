@@ -16,17 +16,17 @@
   let note = $derived(current?.note ?? '');
   const log = $derived((current?.history ?? []).slice().reverse());
   const eventLabel = (st: StatusValue | '') => (st ? STATUS_LABEL[st] : 'Cleared');
+  /** No status reads as Not tested, as the subtitle says, so that segment shows pressed (VP2-01).
+   *  Pressing it records the choice, with its history line and matrix mark; pressing a recorded
+   *  choice clears it (§8.3). */
+  const shown = $derived<StatusValue>(current?.status || 'untested');
+  const press = (o: StatusValue) => setStatus(kind, id, current?.status === o ? '' : o);
 </script>
 
 <div class="status" role="group" aria-label="Test status">
   <div class="seg">
     {#each options as o (o)}
-      <button
-        type="button"
-        class="st-{o}"
-        aria-pressed={current?.status === o}
-        onclick={() => setStatus(kind, id, current?.status === o ? '' : o)}
-      >
+      <button type="button" class="st-{o}" aria-pressed={shown === o} onclick={() => press(o)}>
         {STATUS_LABEL[o]}
       </button>
     {/each}

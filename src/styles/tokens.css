@@ -93,7 +93,9 @@
   --warn-tint: rgba(227, 181, 87, 0.16);
   --dmd-ink: #ff8a3d;
   --dmd-dot: rgba(255, 138, 61, 0.13);
-  --bar: rgba(14, 11, 16, 0.82);
+  /* 0.9, not 0.82: text scrolled under a bar read crisply through it where the blur is not drawn
+     (VP2-14); the light theme's is 0.94. */
+  --bar: rgba(14, 11, 16, 0.9);
   --scrim: rgba(5, 3, 6, 0.56);
   --press: rgba(236, 230, 218, 0.07);
   --wire-edge: inset 0 0 0 1px rgba(255, 255, 255, 0.2);

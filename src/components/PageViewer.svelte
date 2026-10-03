@@ -605,6 +605,29 @@
   .capsule .ibtn + .ibtn {
     border-top: 1px solid var(--sep);
   }
+  /* Below 1000 the scan fills the width, and the capsule's resting place at the scan's end lay over
+     its bottom-right corner, so a callout there was never in view at the fit (VP2-12). There the
+     capsule is a row in a 56 px band under the scan: it still rides the viewport's foot, over a
+     strip that scrolls clear, and comes to rest below the scan. */
+  @media (max-width: 999px) {
+    .corner {
+      height: 56px;
+      margin: 0;
+    }
+    .corner .capsule {
+      flex-direction: row;
+    }
+    .capsule .ibtn:first-child {
+      border-radius: var(--r-md) 0 0 var(--r-md);
+    }
+    .capsule .ibtn:last-child {
+      border-radius: 0 var(--r-md) var(--r-md) 0;
+    }
+    .capsule .ibtn + .ibtn {
+      border-top: 0;
+      border-left: 1px solid var(--sep);
+    }
+  }
   .capsule .ibtn svg {
     width: 20px;
     height: 20px;

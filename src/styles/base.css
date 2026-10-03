@@ -425,6 +425,56 @@ main.fullbleed {
   -webkit-overflow-scrolling: touch;
   max-width: 100%;
 }
+/* A scroller cut mid-table fades at the edge that has more to show (VP2-04): the left fade grows
+   in over the start of the scroll and the right one goes at the end. Scroll-driven, so a scroller
+   that does not overflow (an inactive timeline) keeps both edges solid, and without the timeline
+   the table scrolls as before. From 600 a table with pinned columns (§8.9) keeps them solid. */
+@property --edge-l {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+@property --edge-r {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+@keyframes scroll-edge {
+  from {
+    --edge-r: 24px;
+  }
+  6%,
+  94% {
+    --edge-l: 24px;
+    --edge-r: 24px;
+  }
+  to {
+    --edge-l: 24px;
+  }
+}
+@supports (animation-timeline: scroll()) {
+  .scroll-x {
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      #000 var(--edge-l),
+      #000 calc(100% - var(--edge-r)),
+      transparent
+    );
+    /* Longhands: the minifier folds a shorthand plus animation-timeline into one shorthand,
+       which browsers drop. */
+    animation-name: scroll-edge;
+    animation-timing-function: linear;
+    animation-fill-mode: both;
+    animation-timeline: scroll(self inline);
+  }
+  @media (min-width: 600px) {
+    .scroll-x:has(.key, .chk) {
+      mask-image: none;
+      animation-name: none;
+    }
+  }
+}
 
 /* ---- Buttons (spec §8.7) ----
    The base is the gray variant: 50 tall, radius 12, 17/22 weight 600, no border. .primary, .tinted
@@ -1717,6 +1767,10 @@ html:active-view-transition-type(pop)::view-transition-new(root) {
     background: #fff;
     color: #000;
     font-size: 12px;
+  }
+  /* Paper does not scroll: no edge fade on a cut table. */
+  .scroll-x {
+    mask-image: none;
   }
   .shell,
   .btn,

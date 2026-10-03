@@ -19,6 +19,7 @@
     peek = 96,
     full = 416,
     detent = 'large',
+    dim = true,
     recede = '',
     onclose,
     children,
@@ -32,8 +33,11 @@
     expanded?: boolean;
     peek?: number;
     full?: number;
-    /** Modal height: medium ≈ 470, large = top at 57. */
-    detent?: 'medium' | 'large';
+    /** Modal height: medium ≈ 470, large = top at 57, fit = its content's (capped as large). */
+    detent?: 'medium' | 'large' | 'fit';
+    /** False leaves the page behind the modal undimmed, for a control whose effect shows there
+     * (Text size, VP2-10); the clear scrim still closes it on a tap. */
+    dim?: boolean;
     /** Selector for the elements that recede behind a modal. */
     recede?: string;
     onclose?: () => void;
@@ -294,7 +298,12 @@
 {:else}
   <div class="modal" {...rest}>
     <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-    <div class="scrim" onclick={close} transition:fade|global={{ duration: 300 }}></div>
+    <div
+      class="scrim"
+      class:clear={!dim}
+      onclick={close}
+      transition:fade|global={{ duration: 300 }}
+    ></div>
     <div
       class="sheet dialog {detent}"
       role="dialog"
@@ -418,6 +427,9 @@
     inset: 0;
     background: var(--scrim);
   }
+  .scrim.clear {
+    background: none;
+  }
   .dialog {
     position: relative;
     width: 100%;
@@ -430,6 +442,9 @@
   }
   .dialog.medium {
     height: min(470px, calc(100dvh - 57px));
+  }
+  .dialog.fit {
+    max-height: calc(100dvh - 57px);
   }
   .sheet-head {
     flex: 0 0 auto;
