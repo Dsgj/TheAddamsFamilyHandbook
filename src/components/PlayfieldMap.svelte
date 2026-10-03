@@ -31,6 +31,7 @@
   import type MapCalibration from './MapCalibration.svelte';
   import { deselectBtn, emptyCard, partBody, partHead, shotCard, srcLink } from './MapCard.svelte';
   import MapParts from './MapParts.svelte';
+  import { DESKTOP, PHONE, WIDE } from '~/lib/bp';
 
   /** Short labels for the wide layers list (ShellDesktop). LABEL names the layer buttons. */
   const shortName = (l: MapLayer) => (l === 'shot' ? 'Shots' : KIND_PLURAL[LAYER_KIND[l]]);
@@ -192,9 +193,9 @@
     addEventListener('resize', measureTop);
     measureTop();
     const mqs: [MediaQueryList, (m: boolean) => void][] = [
-      [matchMedia('(min-width: 1000px)'), (m) => (wide = m)],
-      [matchMedia('(min-width: 1280px)'), (m) => (desktop = m)],
-      [matchMedia('(max-width: 599px)'), (m) => (phone = m)],
+      [matchMedia(WIDE), (m) => (wide = m)],
+      [matchMedia(DESKTOP), (m) => (desktop = m)],
+      [matchMedia(PHONE), (m) => (phone = m)],
       [matchMedia('(prefers-reduced-motion: reduce)'), (m) => (reduced = m)],
     ];
     const offs = mqs.map(([mq, set]) => {
@@ -480,18 +481,18 @@
 
 {#snippet zoomCapsule()}
   <div class="glass capsule zooms" role="group" aria-label="Zoom">
-    <button class="ibtn" type="button" aria-label="Zoom in" onclick={zm.zoomIn}>
+    <button class="ibtn sq" type="button" aria-label="Zoom in" onclick={zm.zoomIn}>
       <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true">
         <path d="M10 4v12M4 10h12" />
       </svg>
     </button>
-    <button class="ibtn" type="button" aria-label="Zoom out" onclick={zm.zoomOut}>
+    <button class="ibtn sq" type="button" aria-label="Zoom out" onclick={zm.zoomOut}>
       <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true">
         <path d="M4 10h12" />
       </svg>
     </button>
     <button
-      class="ibtn fit"
+      class="ibtn sq fit"
       type="button"
       aria-label="Fit whole playfield"
       aria-disabled={zm.zoom <= 1 ? 'true' : undefined}
@@ -667,7 +668,7 @@
             <div class="glass capsule layers" role="group" aria-label="Layers">
               {#each LAYERS as l (l)}
                 <button
-                  class="ibtn k-{l}"
+                  class="ibtn sq k-{l}"
                   class:off={!on.has(l)}
                   type="button"
                   aria-pressed={on.has(l)}
@@ -712,7 +713,7 @@
             <div class="layers-row" role="group" aria-label="Layers">
               {#each LAYERS as l (l)}
                 <button
-                  class="ibtn k-{l}"
+                  class="ibtn sq k-{l}"
                   class:off={!on.has(l)}
                   type="button"
                   aria-pressed={on.has(l)}
@@ -988,7 +989,7 @@
   /* Spec §7.5: the keyboard cursor scrolls a zoomed drawing to keep the focused marker clear of
      the edge; a focused marker comes on top (a jet under its lamp), after the layer z-indexes. */
   .marker {
-    scroll-margin: 44px;
+    scroll-margin: var(--touch);
   }
   .marker i {
     font-style: normal;
@@ -1142,7 +1143,7 @@
     align-items: center;
     gap: 10px;
     min-height: 56px;
-    margin-top: 9px;
+    margin-top: 8px;
     padding: 0 16px;
   }
   .ph.slim {
@@ -1233,21 +1234,6 @@
     flex-direction: column;
     border-radius: var(--r-md);
   }
-  .ibtn {
-    display: grid;
-    place-items: center;
-    width: 44px;
-    height: 44px;
-    padding: 0;
-    border: 0;
-    background: none;
-    color: var(--ink);
-    cursor: pointer;
-    border-radius: var(--r-md);
-  }
-  .ibtn:active {
-    background: var(--press);
-  }
   .ibtn.off {
     color: var(--faint);
   }
@@ -1258,17 +1244,13 @@
     color: var(--faint);
     cursor: default;
   }
-  .ico,
-  .ibtn svg {
-    fill: none;
+  .ico {
+    color: var(--k);
+    fill: var(--k-fill);
     stroke: currentColor;
     stroke-width: 2;
     stroke-linecap: round;
     stroke-linejoin: round;
-  }
-  .ico {
-    color: var(--k);
-    fill: var(--k-fill);
   }
   .ico .fill {
     fill: var(--k);
@@ -1381,7 +1363,7 @@
     place-items: center;
     min-width: 20px;
     height: 20px;
-    padding: 0 5px;
+    padding: 0 4px;
     border-radius: var(--r-xs);
     background: var(--sunk);
     color: var(--ink);

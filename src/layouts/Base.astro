@@ -9,6 +9,7 @@ import { PARENT, TABS, tabFor, type BackLink } from '~/lib/nav';
 import { depthOf } from '~/lib/nav-state';
 import { allShoppingItems } from '~/lib/data/shopping';
 import TabBadge from '~/components/TabBadge.svelte';
+import { DESKTOP } from '~/lib/bp';
 
 interface Props {
   /** The document title. Also the top bar's text unless `heading` says otherwise. */
@@ -70,8 +71,19 @@ const hasActions = Astro.slots.has('actions');
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>{title} · The Addams Family Handbook</title>
     <meta name="description" content={description} />
-    <meta name="theme-color" content="#0E0B10" media="(prefers-color-scheme: dark)" />
-    <meta name="theme-color" content="#EFE9DA" media="(prefers-color-scheme: light)" />
+    <!-- data-own keeps each colour: the head script and Appearance point both at the chosen theme. -->
+    <meta
+      name="theme-color"
+      content="#0E0B10"
+      media="(prefers-color-scheme: dark)"
+      data-own="#0E0B10"
+    />
+    <meta
+      name="theme-color"
+      content="#EFE9DA"
+      media="(prefers-color-scheme: light)"
+      data-own="#EFE9DA"
+    />
     <link rel="icon" href={href('icons/icon.svg')} type="image/svg+xml" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="TAF Handbook" />
@@ -85,7 +97,13 @@ const hasActions = Astro.slots.has('actions');
     <script is:inline>
       try {
         const t = localStorage.getItem('tafh:theme') ?? localStorage.getItem('valvet:theme');
-        if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+        if (t === 'light' || t === 'dark') {
+          document.documentElement.dataset.theme = t;
+          // The browser's bar follows the chosen theme too (audit DS2-01), whatever the system's.
+          const metas = document.querySelectorAll('meta[name="theme-color"]');
+          const own = [...metas].find((m) => m.getAttribute('media')?.includes(t))?.dataset.own;
+          if (own) for (const m of metas) m.content = own;
+        }
       } catch {}
     </script>
     <script is:inline>
@@ -257,7 +275,7 @@ const hasActions = Astro.slots.has('actions');
                         aria-current={s.nav && nav === s.nav ? 'page' : undefined}
                       >
                         <span class="lbl">{s.label}</span>
-                        {s.count && <TabBadge client:media="(min-width: 1280px)" pill />}
+                        {s.count && <TabBadge client:media={DESKTOP} pill />}
                       </a>
                     </li>
                   ))}

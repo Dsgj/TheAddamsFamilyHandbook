@@ -112,7 +112,8 @@ textarea {
   background: var(--amber-fill);
   color: var(--on-amber);
   border-radius: var(--r-sm);
-  font: 600 15px/20px var(--font-body);
+  font: var(--t-sub);
+  font-weight: 600;
   text-decoration: none;
   outline: 2px solid var(--on-amber);
   outline-offset: -4px;
@@ -245,6 +246,18 @@ main.fullbleed {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+/* Spec §6.5 (audit DS2-03): the map's icon button. The same 44 box with --r-md corners, a 2 px
+   line and a press tint, for the zoom capsules, the layer toggles and Deselect. A capsule squares
+   its inner corners itself. */
+.ibtn.sq {
+  border-radius: var(--r-md);
+}
+.ibtn.sq svg {
+  stroke-width: 2;
+}
+.ibtn.sq:active {
+  background: var(--press);
+}
 /* Spec §6 and §12: a 44 target both ways, so a short label ("Clear") is never narrower than a tap. */
 .tlink {
   display: inline-flex;
@@ -375,23 +388,6 @@ main.fullbleed {
     var(--shadow-2),
     inset 0 0 0 1px var(--sep);
 }
-/* minmax(0,1fr), not 1fr: a plain 1fr track is minmax(auto,1fr), so a wide table sets the
-   column's minimum to its own min-content width and blows the page out past the viewport
-   (VP-02, VL-02, DS-12), on phone and at every desktop width up to 1366px. */
-.grid-2 {
-  display: grid;
-  gap: var(--gap);
-  grid-template-columns: minmax(0, 1fr);
-}
-@media (min-width: 900px) {
-  .grid-2 {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .grid-2.wide-first {
-    grid-template-columns: 3fr 2fr;
-  }
-}
-
 /* Cards and surfaces */
 /* The card (spec §8.5): --cell with an inset hairline; `.lifted` adds the shadow. */
 .card {
@@ -404,10 +400,6 @@ main.fullbleed {
   box-shadow:
     inset 0 0 0 1px var(--sep),
     var(--shadow-1);
-}
-.sunk {
-  background: var(--sunk);
-  border-radius: var(--r-xs);
 }
 .muted {
   color: var(--muted);
@@ -500,10 +492,6 @@ main.fullbleed {
   width: 20px;
   height: 20px;
 }
-.btn.gray {
-  background: var(--sunk);
-  color: var(--ink);
-}
 .btn.primary {
   background: var(--amber-fill);
   color: var(--on-amber);
@@ -516,9 +504,7 @@ main.fullbleed {
   background: none;
   color: var(--amber-ink);
 }
-/* .small is the old name, kept for one release (2026-09-30); new markup says .sm. */
-.btn.sm,
-.btn.small {
+.btn.sm {
   position: relative;
   min-height: 36px;
   /* 44 wide at least, so a one-glyph value ("3", "YES") keeps the 44 target (audit AY-12). */
@@ -530,8 +516,7 @@ main.fullbleed {
 }
 /* A small button still offers a 44 hit area: 4 above and 4 below its 36 box. Rows of small
    buttons keep a gap of at least 8, so the areas meet and never overlap. */
-.btn.sm::after,
-.btn.small::after {
+.btn.sm::after {
   content: '';
   position: absolute;
   inset: -4px 0;
@@ -1268,7 +1253,8 @@ table.t td.key > a::after {
   border-radius: var(--r-chip);
   background: var(--sunk);
   color: var(--ink);
-  font: 500 14px/18px var(--font-body);
+  font: var(--t-sub);
+  font-weight: 500;
   cursor: pointer;
 }
 .chip.on {
@@ -1277,6 +1263,9 @@ table.t td.key > a::after {
   color: var(--amber-ink);
 }
 .pill {
+  /* The tint is a variable so a list can lay it over its own ground (MapParts, AY-16). */
+  --pill-tint: var(--sunk);
+  flex: none;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -1285,19 +1274,19 @@ table.t td.key > a::after {
   border-radius: var(--r-btn);
   font: var(--t-foot);
   font-weight: 600;
-  background: var(--sunk);
+  background: var(--pill-tint);
   color: var(--muted);
 }
 .pill.ok {
-  background: var(--ok-tint);
+  --pill-tint: var(--ok-tint);
   color: var(--ok);
 }
 .pill.fault {
-  background: var(--bad-tint);
+  --pill-tint: var(--bad-tint);
   color: var(--bad);
 }
 .pill.untested {
-  background: var(--warn-tint);
+  --pill-tint: var(--warn-tint);
   color: var(--warn);
 }
 .pill .dot {
@@ -1418,7 +1407,7 @@ select.search {
 }
 /* Room for the clear button only while there is text to clear, so a long placeholder is not cut. */
 .srch .search:not(:placeholder-shown) {
-  padding-right: 44px;
+  padding-right: var(--touch);
 }
 .srch .clear {
   position: absolute;
@@ -1453,10 +1442,6 @@ select.search {
 .hub > .srch {
   width: calc(100% - 32px);
   margin: 0 16px 4px;
-}
-.hub > .search {
-  width: calc(100% - 24px);
-  margin: 0 12px 4px;
 }
 .hub .lst-h:first-of-type {
   margin-top: 10px;
@@ -1496,7 +1481,7 @@ select.search {
   left: calc(50% + 5px);
   min-width: 18px;
   height: 18px;
-  padding: 0 5px;
+  padding: 0 4px;
   border-radius: var(--r-full);
   background: var(--amber-fill);
   color: var(--on-amber);
@@ -1534,7 +1519,7 @@ select.search {
   .shell .tab {
     height: var(--tabbar-h);
     padding-top: 6px;
-    gap: 3px;
+    gap: 2px;
     color: var(--faint);
   }
   .shell .ico {
@@ -1686,7 +1671,7 @@ select.search {
   .shell .cnt {
     margin-left: auto;
     height: 20px;
-    padding: 0 7px;
+    padding: 0 6px;
     border-radius: var(--r-full);
     background: var(--tint);
     color: var(--amber-ink);
@@ -1696,50 +1681,9 @@ select.search {
   }
 }
 
-/* ---- Type utilities (spec §2): one class per step of the scale ---- */
-.t-lt {
-  font: var(--t-lt);
-  letter-spacing: 0.01em;
-}
-.t-h1-wide {
-  font: var(--t-h1-wide);
-}
-.t-title {
-  font: var(--t-title);
-}
+/* ---- Type utility (spec §2): a step as a class where markup wants one; rules use the token ---- */
 .t-name {
   font: var(--t-name);
-}
-.t-head {
-  font: var(--t-head);
-}
-.t-body {
-  font: var(--t-body);
-}
-.t-callout {
-  font: var(--t-callout);
-}
-.t-sub {
-  font: var(--t-sub);
-}
-.t-foot {
-  font: var(--t-foot);
-}
-.t-cap {
-  font: var(--t-cap);
-}
-.t-tab {
-  font: var(--t-tab);
-}
-.t-mono {
-  font: var(--t-mono);
-  font-variant-numeric: tabular-nums;
-}
-.t-code {
-  font: var(--t-code);
-}
-.t-code-lg {
-  font: var(--t-code-lg);
 }
 
 /* ---- Page transitions (spec §10) ------------------------------------------------------------
@@ -1854,9 +1798,10 @@ html:active-view-transition-type(pop)::view-transition-new(root) {
    prints once, as the page's real h1 (the bar's on bar pages, the large title's on large-title
    pages, the page's own on the rest). */
 @media print {
+  /* Colours come from the print tokens (tokens.css): white ground, black ink, --line rules. */
   body {
-    background: #fff;
-    color: #000;
+    background: var(--ground);
+    color: var(--ink);
     font-size: 12px;
   }
   /* Paper does not scroll: no edge fade on a cut table. */
@@ -1873,7 +1818,6 @@ html:active-view-transition-type(pop)::view-transition-new(root) {
   .map-controls,
   .sr-only,
   .top astro-island,
-  .no-print,
   .ibtn,
   .tlink,
   .seg,
@@ -1946,7 +1890,7 @@ html:active-view-transition-type(pop)::view-transition-new(root) {
   /* The Diagnose well is hidden with the dock. */
   .dmd {
     text-shadow: none;
-    border-color: #999;
+    border-color: var(--line);
   }
   .wrap {
     max-width: none;
@@ -1968,11 +1912,11 @@ html:active-view-transition-type(pop)::view-transition-new(root) {
   .card {
     break-inside: avoid;
     box-shadow: none;
-    border: 1px solid #999;
+    border: 1px solid var(--line);
   }
   a,
   :is(a:not([class]), a.small, .prose a, .owner-note a):not(.btn, .seg > a) {
-    color: #000;
+    color: var(--ink);
     text-decoration: none;
   }
   /* Paper has no touch targets: a page ref prints as plain text again. */
@@ -1982,6 +1926,6 @@ html:active-view-transition-type(pop)::view-transition-new(root) {
   a[href^='http']::after {
     content: ' (' attr(href) ')';
     font-size: 0.85em;
-    color: #444;
+    color: var(--muted);
   }
 }

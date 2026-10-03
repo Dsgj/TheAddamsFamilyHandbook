@@ -116,8 +116,8 @@ test.describe('payload on an uncontrolled page', () => {
     await hydrated(page);
     await page.waitForLoadState('networkidle');
     await context.setOffline(true);
-    // under 960 the list is the Contents sheet, from 960 the sidebar
-    const wide = (page.viewportSize()?.width ?? 0) >= 960;
+    // under 1000 the list is the Contents sheet, from 1000 the sidebar
+    const wide = (page.viewportSize()?.width ?? 0) >= 1000;
     if (!wide) await page.getByRole('button', { name: 'Contents' }).click();
     const scope = wide ? page.locator('.side') : page.getByRole('dialog', { name: 'Contents' });
     await expect(scope.getByRole('link', { name: 'Utilities' }).first()).toBeVisible();
@@ -168,7 +168,7 @@ test.describe('payload without JavaScript', () => {
   test.use({ javaScriptEnabled: false, serviceWorkers: 'block' });
 
   test('the sidebar Contents list is in the page before any script runs', async ({ page }) => {
-    test.skip((page.viewportSize()?.width ?? 0) < 960, 'the sidebar shows at 960 px and up');
+    test.skip((page.viewportSize()?.width ?? 0) < 1000, 'the sidebar shows at 1000 px and up');
     await page.goto('/handbook/rules');
     const side = page.locator('.side');
     expect(await side.getByRole('link').count()).toBeGreaterThan(100);

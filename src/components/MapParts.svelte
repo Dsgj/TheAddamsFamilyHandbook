@@ -116,20 +116,6 @@
     --k-fill: var(--raised);
     --m: 16px;
   }
-  .pill {
-    --pill-tint: var(--sunk);
-    flex: 0 0 auto;
-    padding: 2px 8px;
-    border-radius: var(--r-btn);
-    font: var(--t-cap);
-    font-weight: 600;
-    background: var(--pill-tint);
-    color: var(--muted);
-  }
-  .pill.fault {
-    --pill-tint: var(--bad-tint);
-    color: var(--bad);
-  }
   /* In the parts list every status pill's tint sits on the list's own --cell, whatever the row
      paints under it: the selected row's amber tint took the dark --bad to 4.25, and a hovered row's
      --sunk the light --bad to 4.28 (AY-16). On --cell it is 5.58 light and 5.45 dark. */
@@ -193,8 +179,7 @@
     display: grid;
   }
   .rows .nm {
-    font-size: 16px;
-    line-height: 22px;
+    font: var(--t-callout);
   }
   .rows .sub {
     font-size: 13px;

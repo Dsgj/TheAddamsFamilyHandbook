@@ -10,6 +10,7 @@ import { jsonScript } from '~/lib/json-script';
 import HandbookTocList from '~/components/HandbookTocList.svelte';
 import { pageLabel, pageTitleText, printedPageText } from '~/lib/pages';
 import { handbookHref, manualHref } from '~/lib/url';
+import { WIDE } from '~/lib/bp';
 import { APPENDICES, appendixHref } from '~/data/appendix';
 import { OWNER_NOTES } from '~/data/ownerNotes';
 
@@ -83,7 +84,7 @@ const description =
     <aside class="side">
       <details class="card" open>
         <summary>Contents</summary>
-        <HandbookToc client:media="(min-width: 960px)" current={section.key}>
+        <HandbookToc client:media={WIDE} current={section.key}>
           <HandbookTocList items={toc} current={section.key} />
         </HandbookToc>
       </details>
@@ -195,7 +196,7 @@ const description =
   .side {
     display: none;
   }
-  @media (min-width: 960px) {
+  @media (min-width: 1000px) {
     .hb {
       grid-template-columns: 300px minmax(0, 1fr);
     }

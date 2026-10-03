@@ -732,7 +732,7 @@
     display: flex;
     flex-wrap: wrap;
     gap: 20px 10px;
-    margin: 13px 0 21px;
+    margin: 12px 0 20px;
     padding: 0;
     list-style: none;
   }
@@ -880,7 +880,7 @@
     font: 500 26px/32px var(--font-mono);
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    text-shadow: 0 0 10px rgba(255, 138, 61, 0.5);
+    text-shadow: 0 0 10px rgba(255, 138, 61, 0.45);
   }
   /* Over results and a search the field is one line and its label is for screen readers only, so
      the dock takes about a fifth of a phone's height, not a third (VP2-20). */

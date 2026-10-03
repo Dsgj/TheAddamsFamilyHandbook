@@ -127,6 +127,8 @@
   --t-code: 500 14px/18px var(--font-mono);
   --t-code-lg: 500 22px/26px var(--font-mono);
 
+  /* Spec §3: spacing literals take a step of 0 2 4 6 8 10 12 14 16 18 20 24 32, or a listed
+     exception (design-system test (x)); a touch-target length is var(--touch). */
   --gap: 12px;
   --pad: 16px;
   --touch: 44px;

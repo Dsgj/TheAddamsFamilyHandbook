@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- The browser's colour bar now follows the Light or Dark choice in
+  Appearance, not only the system setting. Spacing, type sizes, icon buttons,
+  status pills and screen-width steps follow one set of rules across the app.
+  The handbook's side contents and the manual's three columns now start at
+  the same width as the map's side panel. The manual's page counter is back
+  in the code typeface.
 - **Focus rings show whole, and the page reads in order.** A keyboard focus
   ring is no longer cut off at the edge of a list, a row of chips, a
   scrolling table or the side rail. Screen readers now meet the page title

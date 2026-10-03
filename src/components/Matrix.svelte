@@ -287,7 +287,7 @@
   td .empty {
     display: block;
     height: 100%;
-    padding: 5px 6px;
+    padding: 4px 6px;
     color: var(--ink);
     text-decoration: none;
   }
@@ -557,7 +557,7 @@
     }
     td a,
     td .empty {
-      padding: 3px 4px;
+      padding: 4px;
     }
     .nm {
       font-size: 10px;

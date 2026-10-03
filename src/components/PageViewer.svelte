@@ -5,6 +5,7 @@
   import type { DocId, PageMeta } from '~/lib/model/types';
   import { pageImage, pageRefText, pdfPageFromLabel } from '~/lib/pages';
   import { href, manualHref, replacePage } from '~/lib/url';
+  import { WIDE } from '~/lib/bp';
 
   /**
    * The manual page viewer (spec §9.12). Toolbar: Previous page, "97 of 124" (opens the Go to page
@@ -63,7 +64,7 @@
     } catch {
       // Storage blocked: the default applies.
     }
-    return matchMedia('(min-width: 1000px)').matches ? 'page' : 'width';
+    return matchMedia(WIDE).matches ? 'page' : 'width';
   }
   function chooseFit(m: Fit) {
     fitMode = m;
@@ -243,7 +244,7 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
     </a>
     <button
-      class="pgno mono"
+      class="pgno"
       type="button"
       aria-haspopup="dialog"
       aria-label="Go to page ({page} of {count})"
@@ -378,7 +379,7 @@
       <div class="corner">
         <div class="glass capsule" role="group" aria-label="Zoom">
           <button
-            class="ibtn"
+            class="ibtn sq"
             type="button"
             aria-label="Zoom in"
             title="Zoom in (+)"
@@ -389,7 +390,7 @@
             </svg>
           </button>
           <button
-            class="ibtn"
+            class="ibtn sq"
             type="button"
             aria-label="Zoom out"
             title="Zoom out (−)"
@@ -400,7 +401,7 @@
             </svg>
           </button>
           <button
-            class="ibtn fit"
+            class="ibtn sq fit"
             type="button"
             aria-label="Fit width"
             title={fitMode === 'width' ? 'Fit width (W, 0)' : 'Fit width (W)'}
@@ -412,7 +413,7 @@
             </svg>
           </button>
           <button
-            class="ibtn fit"
+            class="ibtn sq fit"
             type="button"
             aria-label="Fit page"
             title={fitMode === 'page' ? 'Fit page (P, 0)' : 'Fit page (P)'}
@@ -426,7 +427,7 @@
         </div>
       </div>
     </div>
-    <p class="muted small hint keys">
+    <p class="muted keys">
       Ctrl + wheel or pinch to zoom, drag to pan. Keys: ← → pages, + − zoom, 0 back to the fit, W P
       fit width or page, R rotate, T text.
     </p>
@@ -496,7 +497,9 @@
     border-radius: var(--r-sm);
     background: var(--cell);
     color: var(--ink);
-    font: var(--t-sub);
+    /* The page count in the mono face (audit DS2-07): a .mono class lost to this shorthand. */
+    font: var(--t-mono);
+    font-variant-numeric: tabular-nums;
     cursor: pointer;
   }
   .grow {
@@ -631,9 +634,6 @@
   .capsule .ibtn svg {
     width: 20px;
     height: 20px;
-    stroke: currentColor;
-    stroke-width: 2;
-    stroke-linecap: round;
   }
   /* The fit in force reads as selected. */
   .capsule .fit[aria-pressed='true'] {
@@ -648,8 +648,6 @@
   .keys {
     display: none;
     margin: 6px 0 0;
-    padding: 0;
-    background: none;
     font: var(--t-foot);
   }
   @media (min-width: 1000px), (hover: hover) {

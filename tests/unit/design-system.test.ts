@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { BREAKPOINTS, DESKTOP, PHONE, WIDE } from '~/lib/bp';
 
 /* The design system's source rules (spec §1, §2, §4, §7.5, §8.6, §8.7, §9.12, §12; audit P2 items
    2, 3 and 5): the z-index scale, hover styles behind @media (hover: hover), type on the px scale,
@@ -133,6 +134,45 @@ const EM_ALLOWED: [string, string][] = [
 const RADIUS_ALLOWED: [string, string][] = [
   ['src/components/PlayfieldMap.svelte', '.k-coil .dot'],
   ['src/components/PlayfieldMap.svelte', '.marker span'],
+];
+/* Type pairs off the --t-* scale on purpose (spec §2 "Exceptions"), keyed by file and selector. */
+const TYPE_ALLOWED: [string, string, string][] = [
+  // The DMD field's code (spec §9.1), and the print matrix's wire labels and pins (spec §1.4).
+  ['src/components/Diagnose.svelte', '.well', '26/32'],
+  ['src/components/Matrix.svelte', '.hd :global(.wire)', '9/12'],
+  ['src/components/Matrix.svelte', '.pin', '9/12'],
+];
+/* Font shorthands written in px on purpose: the body's 16/1.5 (spec §2, Q14), the DMD field, the
+   map markers' 10 px (spec §7.5) and the ?calib=1 textarea. */
+const FONT_LITERAL_ALLOWED: [string, string][] = [
+  ['src/styles/base.css', 'body'],
+  ['src/components/Diagnose.svelte', '.well'],
+  ['src/components/PlayfieldMap.svelte', '.marker'],
+  ['src/components/PlayfieldMap.svelte', '.marker span'],
+  ['src/components/PlayfieldMap.svelte', '.map-ui :global(.calib textarea)'],
+];
+/* Spec §3: the spacing scale. Padding, margin and gap literals take one of these steps. */
+const SPACE_STEPS = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 24, 32];
+/* Off the scale on purpose, keyed by file, selector and value (spec §3 "Exceptions"). */
+const SPACE_ALLOWED: [string, string, number][] = [
+  // The kit's group header and footer: 22 over and 7 under the header, 7 over the footer.
+  ['src/styles/base.css', '.lst-h', 22],
+  ['src/styles/base.css', '.lst-h', 7],
+  ['src/styles/base.css', '.gf', 7],
+  ['src/components/Diagnose.svelte', '.rec-h', 22],
+  ['src/components/Diagnose.svelte', '.rec-h', 7],
+  ['src/components/DiagnoseSearch.svelte', '.lst-h', 7],
+  // The kit's large title sits 5 over the content; a row has 11 over and under its text.
+  ['src/styles/base.css', '.lt', 5],
+  ['src/styles/base.css', '.checklist .body', 11],
+  // A handbook table's page ref: 3 over and under the 20 line, taken back by its margin.
+  ['src/styles/base.css', ".prose td > :is(a[href*='#pg-'], a[href*='/manual/'])", 3],
+  // Indents that line text up with the label beside an icon: 12 + the 22 icon + 12, and the
+  // Appearance control under its label past the 30 icon and its 12 gap.
+  ['src/styles/base.css', '.shell .sub', 46],
+  ['src/components/WorkshopHub.svelte', '.appearance .seg', 42],
+  // The matrix scrolls a cell clear of the sticky 112 header column and its 12 gap.
+  ['src/components/Matrix.svelte', 'td a, td .empty', 124],
 ];
 /* Text in the ring colour --amber (3.7 on the light ground). Empty: amber text is --amber-ink
    (spec §12). --amber stays for rings, borders and outlines, which need 3:1. */
@@ -328,6 +368,15 @@ describe('design system source rules', () => {
       (r) => r.file === 'src/styles/base.css' && r.at.includes('@media print'),
     ).flatMap((r) => r.decls.filter(([p]) => p.startsWith('--')).map(([p]) => `${where(r)} ${p}`));
     expect(basePrintTokens).toEqual([]);
+    // Nor a colour of its own: it reads the print tokens (audit DS2-10).
+    const basePrintColours = RULES.filter(
+      (r) => r.file === 'src/styles/base.css' && r.at.includes('@media print'),
+    ).flatMap((r) =>
+      r.decls
+        .filter(([, v]) => /#[0-9a-f]{3,8}\b|rgba?\(/i.test(v))
+        .map(([p, v]) => `${where(r)} ${p}: ${v}`),
+    );
+    expect(basePrintColours).toEqual([]);
   });
 
   it('(j) keeps the two light blocks identical', () => {
@@ -689,6 +738,111 @@ describe('design system source rules', () => {
     expect(own.get('line-height')).toBe('21px');
   });
 
+  it('(x) spaces on the scale: every padding, margin and gap literal is a step, or listed', () => {
+    // Spec §3, audit DS2-02. Lengths inside calc(), min(), max(), clamp(), env() and var() are
+    // derived from a step, a safe area or a box, so only the bare literals are read.
+    const strip = (v: string) => {
+      let out = v;
+      for (let prev = ''; prev !== out;) {
+        prev = out;
+        out = out.replace(/(\b(calc|min|max|clamp|env|var))?\([^()]*\)/g, ' ');
+      }
+      return out;
+    };
+    const space =
+      /^(padding|margin|gap|row-gap|column-gap|scroll-padding|scroll-margin)(-[a-z]+)*$/;
+    const off = RULES.flatMap((r) =>
+      r.decls
+        .filter(([p]) => space.test(p))
+        .flatMap(([p, v]) =>
+          [...strip(v).matchAll(/-?\d*\.?\d+px/g)]
+            .map((m) => Math.abs(parseFloat(m[0])))
+            .filter((n) => !SPACE_STEPS.includes(n))
+            .filter(
+              (n) =>
+                !SPACE_ALLOWED.some(([f, s, x]) => f === r.file && s === r.selector && x === n),
+            )
+            .map((n) => `${where(r)} ${p}: ${n}`),
+        ),
+    );
+    expect(off).toEqual([]);
+    // Every listed exception is still there, so the list cannot outlive its rule.
+    const stale = SPACE_ALLOWED.filter(
+      ([f, s, x]) =>
+        !RULES.some(
+          (r) =>
+            r.file === f &&
+            r.selector === s &&
+            r.decls.some(
+              ([p, v]) =>
+                space.test(p) &&
+                [...strip(v).matchAll(/-?\d*\.?\d+px/g)].some(
+                  (m) => Math.abs(parseFloat(m[0])) === x,
+                ),
+            ),
+        ),
+    );
+    expect(stale).toEqual([]);
+  });
+
+  it('(y) queries the width at the breakpoints of the scale, and scripts take them from bp.ts', () => {
+    // Spec §5, audit DS2-05: CSS @media, matchMedia and client:media all name 599/600, 999/1000 or
+    // 1279/1280. Container queries size a component to its own box and are not read.
+    const off: string[] = [];
+    for (const file of sources(SCOPE).concat(['src/lib/bp.ts'])) {
+      const text = readFileSync(join(ROOT, file), 'utf8');
+      for (const m of text.matchAll(/\((min|max)-width:\s*(\d+)px\)/g)) {
+        if (!(BREAKPOINTS as readonly number[]).includes(Number(m[2]))) off.push(`${file} ${m[0]}`);
+      }
+      // A module script imports the query; only an inline script (which cannot) writes one.
+      for (const m of text.matchAll(/(matchMedia|client:media=)\(?['"]\((min|max)-width/g)) {
+        const before = text.slice(0, m.index);
+        const inline = before.lastIndexOf('<script is:inline>') > before.lastIndexOf('</script>');
+        if (!inline) off.push(`${file} ${m[0]}: import it from ~/lib/bp`);
+      }
+    }
+    expect(off).toEqual([]);
+    expect([PHONE, WIDE, DESKTOP]).toEqual([
+      '(max-width: 599px)',
+      '(min-width: 1000px)',
+      '(min-width: 1280px)',
+    ]);
+  });
+
+  it('(z) sets type from the --t-* scale: a literal size and line height are a step, or listed', () => {
+    // Spec §2, audit DS2-08. A step is a size / line-height pair of a --t-* token; a rule that sets
+    // font-size and line-height (or a font shorthand) by hand must land on one, or be listed.
+    const steps = new Set(
+      [
+        ...styleText(join(ROOT, 'src/styles/tokens.css')).matchAll(
+          /--t-[a-z0-9-]+:[^;]*?(\d+)px\/(\d+)px/g,
+        ),
+      ].map((m) => `${m[1]}/${m[2]}`),
+    );
+    const off = RULES.flatMap((r) => {
+      const d = new Map(r.decls);
+      const short = /(\d+)px\/(\d+)px/.exec(d.get('font') ?? '');
+      const size = short?.[1] ?? /^(\d+)px$/.exec(d.get('font-size') ?? '')?.[1];
+      const line = short?.[2] ?? /^(\d+)px$/.exec(d.get('line-height') ?? '')?.[1];
+      if (!size || !line) return [];
+      const pair = `${size}/${line}`;
+      if (
+        steps.has(pair) ||
+        TYPE_ALLOWED.some(([f, s, p]) => f === r.file && s === r.selector && p === pair)
+      )
+        return [];
+      return [`${where(r)} ${pair}`];
+    });
+    expect(off).toEqual([]);
+    // A font shorthand takes its token; one written in px by hand is listed.
+    const literal = RULES.filter((r) =>
+      r.decls.some(([p, v]) => p === 'font' && !v.startsWith('var(') && /\d+px/.test(v)),
+    )
+      .filter((r) => !allowed(FONT_LITERAL_ALLOWED, r))
+      .map(where);
+    expect(literal).toEqual([]);
+  });
+
   it('defines the tokens and classes the components build on', () => {
     const tokens = readFileSync(join(ROOT, 'src/styles/tokens.css'), 'utf8');
     const names = [
@@ -711,10 +865,8 @@ describe('design system source rules', () => {
       '.btn',
       '.btn.primary',
       '.btn.tinted',
-      '.btn.gray',
       '.btn.plain',
       '.btn.sm',
-      '.btn.small',
       '.btn.mono',
       ".btn[aria-pressed='true']",
       '.search',
@@ -730,10 +882,20 @@ describe('design system source rules', () => {
       '.code.lg',
       '.dmd',
       '.ibtn',
-      ...['lt', 'title', 'name', 'h1-wide', 'head', 'body', 'callout', 'sub', 'foot', 'cap']
-        .concat(['tab', 'mono', 'code', 'code-lg'])
-        .map((t) => `.t-${t}`),
+      '.ibtn.sq',
+      '.pill',
+      '.t-name',
     ];
     expect(classes.filter((c) => !base.has(c))).toEqual([]);
+    // And markup uses each of them (audit DS2-06, AR2-10): a class nothing writes is deleted, not
+    // pinned here. A class is used when a class attribute, a class: directive or a string has it.
+    const markup = sources(SCOPE)
+      .filter((f) => /\.(svelte|astro|ts)$/.test(f))
+      .map((f) => readFileSync(join(ROOT, f), 'utf8'))
+      .join('\n');
+    const unused = classes
+      .flatMap((c) => [...c.matchAll(/\.([a-z][\w-]*)/g)].map((m) => m[1]!))
+      .filter((c) => !new RegExp(`(class="[^"]*|class:|['" ])${c}(?![\\w-])`).test(markup));
+    expect([...new Set(unused)]).toEqual([]);
   });
 });

@@ -24,7 +24,7 @@
 </script>
 
 {#snippet deselectBtn(onDeselect: (e: MouseEvent) => void)}
-  <button class="ibtn desel" type="button" aria-label="Deselect" onclick={onDeselect}>
+  <button class="ibtn sq desel" type="button" aria-label="Deselect" onclick={onDeselect}>
     <span class="x" aria-hidden="true">
       <svg viewBox="0 0 20 20" width="14" height="14">
         <path d="M5 5l10 10M15 5L5 15" />
@@ -174,7 +174,7 @@
     align-items: center;
     gap: 10px;
     min-height: 56px;
-    margin-top: 9px;
+    margin-top: 8px;
     padding: 0 16px;
   }
   .pt {
@@ -192,28 +192,6 @@
     margin: 0;
     font-size: 13px;
     line-height: 18px;
-  }
-  .pill {
-    --pill-tint: var(--sunk);
-    flex: 0 0 auto;
-    padding: 2px 8px;
-    border-radius: var(--r-btn);
-    font: var(--t-cap);
-    font-weight: 600;
-    background: var(--pill-tint);
-    color: var(--muted);
-  }
-  .pill.fault {
-    --pill-tint: var(--bad-tint);
-    color: var(--bad);
-  }
-  .pill.ok {
-    --pill-tint: var(--ok-tint);
-    color: var(--ok);
-  }
-  .pill.untested {
-    --pill-tint: var(--warn-tint);
-    color: var(--warn);
   }
   .desel {
     flex: 0 0 auto;
@@ -283,29 +261,6 @@
   }
   .shot-note {
     margin: 4px 16px 12px;
-  }
-  /* The deselect button is an .ibtn: the map's icon-button rules, after .desel as in the map. */
-  .ibtn {
-    display: grid;
-    place-items: center;
-    width: 44px;
-    height: 44px;
-    padding: 0;
-    border: 0;
-    background: none;
-    color: var(--ink);
-    cursor: pointer;
-    border-radius: var(--r-md);
-  }
-  .ibtn:active {
-    background: var(--press);
-  }
-  .ibtn svg {
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
   }
   /* Spec §12: the source link stands on its own line, not in running text, so it is a real 44
      target (in the side panel and under the phone parts list). */

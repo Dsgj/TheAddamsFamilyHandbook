@@ -82,6 +82,11 @@
     }
     if (t === 'system') delete root.dataset.theme;
     else root.dataset.theme = t;
+    // The browser's bar follows too (audit DS2-01): each theme-color meta takes the chosen
+    // theme's colour, or its own again for System. Base.astro's head script does it on load.
+    const metas = [...document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')];
+    const pick = metas.find((m) => m.getAttribute('media')?.includes(t))?.dataset.own;
+    for (const m of metas) m.content = (t === 'system' ? m.dataset.own : pick) ?? m.content;
   }
 
   const ICON = {

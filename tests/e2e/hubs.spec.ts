@@ -83,17 +83,32 @@ test('Workshop: rows and counts from the device', async ({ page }) => {
 });
 
 test('Appearance stores Light, survives a reload, and System clears it', async ({ page }) => {
+  // The browser's bar follows the choice (audit DS2-01): both theme-color metas, whatever the
+  // system's scheme, until System gives each its own colour back.
+  const bar = () =>
+    page.evaluate(() =>
+      [...document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')].map(
+        (m) => m.content,
+      ),
+    );
   await gotoHydrated(page, '/workshop');
+  const own = await bar();
+  expect(own).toEqual(['#0E0B10', '#EFE9DA']);
   const seg = page.getByRole('group', { name: 'Toggle theme' });
   await seg.getByRole('button', { name: 'Light' }).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  expect(await bar()).toEqual(['#EFE9DA', '#EFE9DA']);
   expect(await page.evaluate(() => localStorage.getItem('tafh:theme'))).toBe('light');
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  expect(await bar()).toEqual(['#EFE9DA', '#EFE9DA']);
   await expect(seg.getByRole('button', { name: 'Light' })).toHaveAttribute('aria-pressed', 'true');
+  await seg.getByRole('button', { name: 'Dark' }).click();
+  expect(await bar()).toEqual(['#0E0B10', '#0E0B10']);
   await seg.getByRole('button', { name: 'System' }).click();
   expect(await page.evaluate(() => localStorage.getItem('tafh:theme'))).toBeNull();
   await expect(page.locator('html')).not.toHaveAttribute('data-theme', /./);
+  expect(await bar()).toEqual(own);
 });
 
 test('About the app opens a dialog and hands focus back', async ({ page, browserName }) => {

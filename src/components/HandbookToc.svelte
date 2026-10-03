@@ -127,19 +127,19 @@
     align-items: center;
     min-height: 44px;
     gap: 8px;
-    padding: 5px 8px;
+    padding: 4px 8px;
     border-radius: var(--r-xs);
     color: var(--ink);
     font: var(--t-sub);
   }
   .home li a {
-    padding: 9px 12px;
+    padding: 10px 12px;
     border-radius: var(--r-sm);
     min-height: 44px;
     align-items: center;
   }
   li.none {
-    padding: 9px 12px;
+    padding: 10px 12px;
   }
   /* The ring inside the row: the list scrolls (and in the sheet each row is contained), which
      would clip a ring outside it. */
@@ -161,10 +161,10 @@
     color: var(--amber-ink);
   }
   li.lv2 a {
-    padding-left: 14px;
+    padding-left: 16px;
   }
   li.lv3 a {
-    padding-left: 26px;
+    padding-left: 24px;
     color: var(--muted);
   }
   .home li.lv2 a,

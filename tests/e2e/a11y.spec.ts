@@ -303,7 +303,7 @@ test.describe('map keyboard model (AY-01, spec §7.5)', () => {
 });
 
 /** The desktop panel is always there; the phone sheet only while a part is selected. */
-const isWide = (page: Page) => page.evaluate(() => innerWidth >= 960);
+const isWide = (page: Page) => page.evaluate(() => innerWidth >= 1000);
 
 test.describe('focus is never under a bar (AY-02)', () => {
   for (const url of ['/', '/?q=flipper', '/setup', '/shopping']) {

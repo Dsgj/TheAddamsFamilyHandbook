@@ -304,7 +304,7 @@ test('a wire swatch keeps an edge as strong as the 1 px border it replaced', asy
 });
 
 test('the handbook Contents heading keeps its display face', async ({ page, isMobile }) => {
-  test.skip(isMobile, 'the side contents shows from 960');
+  test.skip(isMobile, 'the side contents shows from 1000');
   await gotoHydrated(page, '/handbook/menus');
   const s = await page.locator('aside.side summary').evaluate((el) => ({
     family: getComputedStyle(el).fontFamily,
