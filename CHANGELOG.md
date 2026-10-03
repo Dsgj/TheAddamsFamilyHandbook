@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- **Focus rings show whole, and the page reads in order.** A keyboard focus
+  ring is no longer cut off at the edge of a list, a row of chips, a
+  scrolling table or the side rail. Screen readers now meet the page title
+  and content before the tab bar. Dimmed map markers keep a clear outline
+  beside the selected one. Handbook figures keep their space while they load,
+  and their captions are no longer read twice. The handbook's Previous and
+  Next buttons are named with the page they show.
 - **Large screens line up.** From 1280 the sidebar's sub-pages use the same
   text size as the main tabs. Two Diagnose results side by side keep their
   own buttons instead of stretching to match each other, and a single result

@@ -160,13 +160,67 @@ const hasActions = Astro.slots.has('actions');
       });
     </script>
     <link rel="expect" href="#main" blocking="render" />
+    {
+      /* The tab bar comes after the page now, so the first frame (and a view transition's new
+        snapshot) waits for it too. */
+    }
+    <link rel="expect" href="#sections" blocking="render" />
     <script src="~/pwa.ts"></script>
     <script src="~/motion.ts"></script>
   </head>
   <body>
     <a class="skip sr-only" href="#main">Skip to content</a>
     <script is:inline type="application/json" id="tafh-shop" set:html={jsonScript(shopIds)} />
-    <nav class="shell" aria-label="Sections">
+    <header class="top" data-h1={h1}>
+      <div class="tb">
+        <div class="lead">
+          {
+            back && (
+              <a class="back" href={href(back.path)}>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M15 5l-7 7 7 7" />
+                </svg>
+                <span>{back.label}</span>
+              </a>
+            )
+          }
+        </div>
+        {
+          h1 === 'bar' ? (
+            <h1 class="ct">
+              <span class:list={['full', { 'has-short': !!short }]}>{heading}</span>
+              {short && (
+                <span class="short" aria-hidden="true">
+                  {short}
+                </span>
+              )}
+            </h1>
+          ) : (
+            <div class="ct" aria-hidden="true">
+              <span class:list={['full', { 'has-short': !!short }]}>{heading}</span>
+              {short && <span class="short">{short}</span>}
+            </div>
+          )
+        }
+        <div class="trail">{hasActions && <slot name="actions" />}</div>
+      </div>
+    </header>
+    <main id="main" class:list={[{ wrap: !fullbleed, fullbleed }]}>
+      {
+        h1 === 'large' && (
+          <div class="lt">
+            <h1>{heading}</h1>
+          </div>
+        )
+      }
+      <slot />
+    </main>
+    {
+      /* After the page, so a screen reader and the Tab key meet the header and the content
+        first, in the order a phone shows them (AY2-04); the shell is fixed, so its place in the
+        DOM moves nothing on screen. */
+    }
+    <nav id="sections" class="shell" aria-label="Sections">
       <a class="shell-logo" href={href('')} aria-label="The Addams Family Handbook home">
         <img
           src={href('brand/logo.webp')}
@@ -214,50 +268,6 @@ const hasActions = Astro.slots.has('actions');
         }
       </ul>
     </nav>
-    <header class="top" data-h1={h1}>
-      <div class="tb">
-        <div class="lead">
-          {
-            back && (
-              <a class="back" href={href(back.path)}>
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M15 5l-7 7 7 7" />
-                </svg>
-                <span>{back.label}</span>
-              </a>
-            )
-          }
-        </div>
-        {
-          h1 === 'bar' ? (
-            <h1 class="ct">
-              <span class:list={['full', { 'has-short': !!short }]}>{heading}</span>
-              {short && (
-                <span class="short" aria-hidden="true">
-                  {short}
-                </span>
-              )}
-            </h1>
-          ) : (
-            <div class="ct" aria-hidden="true">
-              <span class:list={['full', { 'has-short': !!short }]}>{heading}</span>
-              {short && <span class="short">{short}</span>}
-            </div>
-          )
-        }
-        <div class="trail">{hasActions && <slot name="actions" />}</div>
-      </div>
-    </header>
-    <main id="main" class:list={[{ wrap: !fullbleed, fullbleed }]}>
-      {
-        h1 === 'large' && (
-          <div class="lt">
-            <h1>{heading}</h1>
-          </div>
-        )
-      }
-      <slot />
-    </main>
     {
       !fullbleed && (
         <footer class="foot wrap muted small">

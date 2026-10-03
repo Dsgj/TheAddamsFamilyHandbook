@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { activate, gotoHydrated } from './helpers';
+import { activate, gotoHydrated, hydrated } from './helpers';
 
 /* Phase 8 of the app redesign: the Handbook tab's segmented links, the Handbook home, the reader
    toolbar, the manual viewer toolbar with its Go to page sheet and zoom capsule, and Parts. */
@@ -89,11 +89,14 @@ test.describe('the reader', () => {
       'href',
       /manual\/ops\/25$/,
     );
+    // Each end's name holds the page it shows, so a voice command can say it (AY2-09).
     const bar = page.getByRole('navigation', { name: 'Reader' });
     await expect(
-      bar.getByRole('link', { name: 'Previous: Menu system and bookkeeping' }),
+      bar.getByRole('link', { name: 'Previous: 1-14 Menu system and bookkeeping', exact: true }),
     ).toHaveText('1-14');
-    await expect(bar.getByRole('link', { name: 'Next: Utilities' })).toHaveText('1-20');
+    await expect(bar.getByRole('link', { name: 'Next: 1-20 Utilities', exact: true })).toHaveText(
+      '1-20',
+    );
     await expect(page.locator('.pg-bar').first()).toContainText('p. 1-15');
     // The bar says the page once: the marker, then a "Manual" button named with the page.
     const pg = page.locator('.pg-bar').first();
@@ -140,6 +143,44 @@ test.describe('the reader', () => {
       .getByRole('button', { name: 'Default' })
       .click();
     await expect(page.locator('html')).not.toHaveAttribute('data-text', /./);
+  });
+
+  test('a figure holds its box before its file arrives; its caption carries its text (AY2-06)', async ({
+    page,
+  }) => {
+    let release = () => {};
+    const gate = new Promise<void>((r) => (release = r));
+    await page.route('**/assets/figures/**', async (route) => {
+      await gate;
+      await route.continue();
+    });
+    await page.goto('/handbook/rules', { waitUntil: 'domcontentloaded' });
+    await hydrated(page);
+    const img = page.locator('figure.fig img').first();
+    await img.scrollIntoViewIfNeeded();
+    const g = await img.evaluate((el: HTMLImageElement) => {
+      const r = el.getBoundingClientRect();
+      return {
+        w: r.width,
+        h: r.height,
+        loaded: el.naturalWidth > 0,
+        ratio: Number(el.getAttribute('width')) / Number(el.getAttribute('height')),
+        alt: el.getAttribute('alt'),
+        cap: el.closest('figure')?.querySelector('figcaption')?.textContent?.trim() ?? '',
+      };
+    });
+    release();
+    expect(g.loaded, 'the file is held back').toBe(false);
+    expect(g.w).toBeGreaterThan(100);
+    expect(g.w / g.h).toBeCloseTo(g.ratio, 1);
+    expect(g.alt).toBe('');
+    expect(g.cap.length).toBeGreaterThan(10);
+    // Once it arrives, the box keeps its size.
+    await expect
+      .poll(() => img.evaluate((el: HTMLImageElement) => el.naturalWidth))
+      .toBeGreaterThan(0);
+    const after = await img.boundingBox();
+    expect(Math.abs(after!.height - g.h)).toBeLessThan(1.5);
   });
 });
 

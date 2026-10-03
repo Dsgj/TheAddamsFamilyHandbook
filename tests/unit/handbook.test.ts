@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { APPENDICES } from '~/data/appendix';
 import { CARE_STEPS } from '~/data/care';
 import { SETUP_STEPS } from '~/data/setup';
+import { imageSize, type ImageSize } from '~/lib/handbook/image-size';
 import { headingHref, tocIndex } from '~/lib/handbook/links';
 import {
   findHeading,
@@ -79,6 +80,40 @@ describe('handbook rendering', () => {
     const p9 = pages.find((p) => p.page === 9)!;
     expect(finish(p9, indexHeadings(pages), '')).toContain('src="/assets/figures/ops9.png"');
     expect(p9.html).toContain('<figure class="fig">');
+  });
+
+  it('gives every figure its size and leaves its text to the caption (AY2-06)', async () => {
+    const pages = await loadAll();
+    const figures = 'public/assets/figures';
+    const sizes = new Map<string, ImageSize>();
+    for (const f of await readdir(figures)) {
+      const z = imageSize(await readFile(`${figures}/${f}`));
+      expect(z, f).not.toBeNull();
+      sizes.set(f, z!);
+    }
+    expect(sizes.get('ops9.png')).toEqual({ width: 1955, height: 2448 });
+    const html = pages.map((p) => finish(p, indexHeadings(pages), '', sizes)).join('\n');
+    const imgs = [...html.matchAll(/<img src="\/assets\/figures\/[^>]*>/g)].map((m) => m[0]);
+    expect(imgs.length).toBeGreaterThanOrEqual(7);
+    for (const img of imgs) {
+      expect(img).toMatch(/ width="\d+" height="\d+" style="--w: \d+; --h: \d+"/);
+      expect(img).toContain('alt=""');
+    }
+    for (const [, cap] of html.matchAll(/<figcaption>([^<]*)<\/figcaption>/g))
+      expect(cap!.trim()).not.toBe('');
+  });
+
+  it('reads a size from a PNG and a JPEG header, and nothing from other bytes', () => {
+    const png = new Uint8Array(24);
+    png.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52]);
+    png.set([0, 0, 2, 0, 0, 0, 1, 0x2c], 16);
+    expect(imageSize(png)).toEqual({ width: 512, height: 300 });
+    // SOI, an APP0 of 4 bytes, then SOF2 (progressive): height 480, width 640.
+    const jpg = Uint8Array.from([
+      0xff, 0xd8, 0xff, 0xe0, 0, 4, 0, 0, 0xff, 0xc2, 0, 11, 8, 1, 0xe0, 2, 0x80, 3, 0, 0, 0,
+    ]);
+    expect(imageSize(jpg)).toEqual({ width: 640, height: 480 });
+    expect(imageSize(new TextEncoder().encode('GIF89a and more bytes here'))).toBeNull();
   });
 });
 

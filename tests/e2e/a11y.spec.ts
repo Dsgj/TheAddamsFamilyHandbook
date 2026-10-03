@@ -340,6 +340,124 @@ test.describe('focus is never under a bar (AY-02)', () => {
   });
 });
 
+/** The focused element's ring, and every scroller or clipping box between it and the page that
+ * cuts it: `a.tab "Map" <- nav.shell:left/right`. Null when the ring shows whole, or none is drawn
+ * on the element itself (an invisible file input lends its ring to its row). */
+function clippedRing(): string | null {
+  const el = document.activeElement;
+  if (!el || el === document.body) return null;
+  const cs = getComputedStyle(el);
+  if (cs.outlineStyle === 'none' || cs.opacity === '0') return null;
+  const g = parseFloat(cs.outlineOffset) + parseFloat(cs.outlineWidth);
+  const b = el.getBoundingClientRect();
+  if (!b.width) return null;
+  const ring = { l: b.left - g, t: b.top - g, r: b.right + g, b: b.bottom + g };
+  const cut: string[] = [];
+  const k = (window as unknown as KitWindow).__a11y;
+  for (let a = el.parentElement; a && a !== document.documentElement; a = a.parentElement) {
+    const s = getComputedStyle(a);
+    const x = s.overflowX !== 'visible';
+    const y = s.overflowY !== 'visible';
+    const cv = s.contentVisibility === 'auto';
+    if (!x && !y && !cv) continue;
+    const q = a.getBoundingClientRect();
+    const l = q.left + a.clientLeft;
+    const t = q.top + a.clientTop;
+    const sides = [
+      (x || cv) && ring.l < l - 0.5 && 'left',
+      (x || cv) && ring.r > l + a.clientWidth + 0.5 && 'right',
+      (y || cv) && ring.t < t - 0.5 && 'top',
+      (y || cv) && ring.b > t + a.clientHeight + 0.5 && 'bottom',
+    ].filter(Boolean);
+    if (sides.length) cut.push(`${k.describe(a).replace(/ ".*$/, '')}:${sides.join('/')}`);
+  }
+  return cut.length ? `${k.describe(el)} <- ${cut.join(', ')}` : null;
+}
+
+/** Tabs through the page once; every focused element whose ring a box cuts. */
+async function ringWalk(page: Page, max = 160) {
+  const bad = new Set<string>();
+  let first: string | null = null;
+  for (let i = 0; i < max; i++) {
+    await page.keyboard.press('Tab');
+    const at = await page.evaluate(() => {
+      const a = document.activeElement;
+      if (!a || a === document.body) return '';
+      const w = window as unknown as KitWindow;
+      return w.__a11y.describe(a) + (a.getBoundingClientRect().top + scrollY).toFixed(0);
+    });
+    if (!at || at === first) break;
+    first ??= at;
+    await twoFrames(page);
+    const c = await page.evaluate(clippedRing);
+    if (c) bad.add(c);
+  }
+  return [...bad];
+}
+
+test.describe('focus rings and reading order (P2 item 7 of the app audit, round 2)', () => {
+  const RINGS: [string, boolean][] = [
+    ['/workshop', false],
+    ['/?q=flipper', false],
+    // MapParts: the desktop panel's part list.
+    ['/map', true],
+  ];
+  for (const [url, wide] of RINGS) {
+    test(`no box cuts a focus ring on ${url} (AY2-02, AY2-03)`, async ({ page }) => {
+      test.setTimeout(180_000);
+      const widths = test.info().project.use.isMobile ? [0] : [0, 1024];
+      for (const w of widths) {
+        if (w) await page.setViewportSize({ width: w, height: 800 });
+        await gotoHydrated(page, url);
+        if (wide && !(await isWide(page))) continue;
+        expect(await ringWalk(page), `at ${w || 'the project width'}`).toEqual([]);
+      }
+    });
+  }
+
+  test('the DOM reads header, main, then the tab bar (AY2-04)', async ({ page, browserName }) => {
+    await gotoHydrated(page, '/coils');
+    const order = await page.evaluate(() =>
+      [...document.querySelectorAll('body > header.top, body > main, body > nav.shell')].map((e) =>
+        e.tagName.toLowerCase(),
+      ),
+    );
+    expect(order).toEqual(['header', 'main', 'nav']);
+    // The skip link stays the first stop (WebKit's Tab skips links, Safari's default).
+    if (browserName === 'webkit') return;
+    await page.keyboard.press('Tab');
+    await expect(page.locator('a.skip')).toBeFocused();
+  });
+
+  test('a dimmed marker keeps a 3:1 ring beside the selected one (AY2-05)', async ({ page }) => {
+    await gotoHydrated(page, '/map?layer=sw&id=32');
+    await expect(page.locator('.canvas.has-sel .marker.sel')).toBeVisible();
+    const rings = await page.locator('.canvas.has-sel .marker:not(.sel)').evaluateAll((els) => {
+      const k = (window as unknown as KitWindow).__a11y;
+      return els.slice(0, 12).map((el) => {
+        let alpha = 1;
+        for (let e: Element | null = el; e; e = e.parentElement)
+          alpha *= parseFloat(getComputedStyle(e).opacity);
+        const ring = /^(rgba?\([^)]*\))[^,]*\binset\b/.exec(getComputedStyle(el).boxShadow)?.[1];
+        let bg = 'rgb(255, 255, 255)';
+        for (let e = el.parentElement; e; e = e.parentElement) {
+          const c = getComputedStyle(e).backgroundColor;
+          if (c && !/rgba\(.*,\s*0\)$/.test(c) && c !== 'transparent') {
+            bg = c;
+            break;
+          }
+        }
+        return { key: el.getAttribute('data-key'), alpha, ratio: ring ? k.contrast(ring, bg) : 0 };
+      });
+    });
+    expect(rings.length).toBeGreaterThan(5);
+    for (const r of rings) {
+      expect(r.alpha, `${r.key} fades only its fill`).toBe(1);
+      expect(r.ratio, `${r.key} ring`).toBeGreaterThanOrEqual(3);
+    }
+  });
+});
+
 test('the rules embed passes beneath the top bar, never over its buttons (AY2-01)', async ({
   page,
 }) => {

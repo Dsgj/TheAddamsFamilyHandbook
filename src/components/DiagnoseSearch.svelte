@@ -336,11 +336,15 @@
 <style>
   /* The row scrolls sideways on a phone. Chrome does not scroll it to a chip that Tab reaches
      half-hidden, so each chip scrolls itself into view on focus (spec §12, audit AY-02). */
+  /* 4 of room each side inside the scroller, given back by the margin, and a focus scroll that
+     stops 4 short of the edge, so a chip's focus ring is whole (AY2-03). */
   .chips {
     display: flex;
     gap: 8px;
-    padding: 6px 0;
+    padding: 6px 4px;
+    margin-inline: -4px;
     overflow-x: auto;
+    scroll-padding-inline: 4px;
     scrollbar-width: none;
   }
   .chips::-webkit-scrollbar {

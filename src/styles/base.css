@@ -712,11 +712,13 @@ table.t th {
   background: var(--sunk);
   border-radius: var(--r-xs);
 }
+/* Its own width, the column's, or the width that keeps it 70vh tall, whichever is least: a definite
+   width, so the box its width and height give is there before the file arrives (AY2-06). */
 .prose figure.fig img {
   display: block;
   margin: 0 auto;
   max-height: 70vh;
-  width: auto;
+  width: min(100%, var(--w) * 1px, 70vh * var(--w) / var(--h));
   filter: var(--scan-filter);
   background: #fff;
 }
@@ -921,6 +923,12 @@ table.t td.key > a::after {
   table.t.two td.key {
     order: 0;
   }
+  /* The rows wrap, so nothing scrolls sideways: the scroller and its edge mask let a key link's
+     focus ring show whole at the column's edge (AY2-03). */
+  .scroll-x:has(> table.t.two) {
+    overflow-x: visible;
+    mask-image: none;
+  }
   table.t.two td.nm {
     order: 1;
     flex: 1 1 0;
@@ -1008,6 +1016,13 @@ table.t td.key > a::after {
 }
 .lrow.two {
   min-height: 60px;
+}
+/* The ring goes inside the row: .lst clips to its rounded box, and the global ring outside the
+   row showed as two separator-like lines (AY2-02). Rounded, so the first and last rows fit the
+   list's corners. */
+.lrow:focus-visible {
+  outline-offset: -2px;
+  border-radius: var(--r-md);
 }
 .lrow:is(a, button):active {
   background: var(--press);
@@ -1545,6 +1560,8 @@ select.search {
     background: var(--surface);
     box-shadow: 1px 0 0 var(--sep);
     overflow-y: auto;
+    /* A focus scroll stops short of the ring, so the first and last rows keep theirs (AY2-03). */
+    scroll-padding-block: 8px;
   }
   .shell .tabs {
     display: flex;
@@ -1557,6 +1574,11 @@ select.search {
     justify-content: center;
     gap: 2px;
     color: var(--muted);
+  }
+  /* The rail tab is the scroller's full width, so its ring goes inside (AY2-03). */
+  .shell .tab:focus-visible {
+    outline-offset: -2px;
+    border-radius: var(--r-sm);
   }
   .shell .ico {
     width: 56px;

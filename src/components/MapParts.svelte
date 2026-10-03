@@ -179,6 +179,11 @@
   .rows .row.two {
     min-height: 60px;
   }
+  /* Inside the row, as a list row's: .rows clips to its rounded box (AY2-02). */
+  .rows .row:focus-visible {
+    outline-offset: -2px;
+    border-radius: var(--r-md);
+  }
   .rows .tile {
     flex: none;
   }

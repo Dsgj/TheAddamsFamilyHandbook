@@ -278,6 +278,7 @@
   .file:focus-within {
     outline: 2px solid var(--amber);
     outline-offset: -2px;
+    border-radius: var(--r-md);
   }
   .mode {
     flex: 0 1 auto;

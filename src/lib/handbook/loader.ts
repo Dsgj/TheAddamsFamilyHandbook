@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Loader } from 'astro/loaders';
 import { finish, indexHeadings, parseHeader, renderPage, type Heading } from './render';
+import { imageSize, type ImageSize } from './image-size';
 import { SECTIONS, sectionOfPage } from './sections';
 import { plural } from '../copy';
 
@@ -36,6 +37,13 @@ export function handbookLoader(dir = 'src/content/handbook'): Loader {
         rendered.push(renderPage(p, body, label));
       }
       const idx = indexHeadings(rendered);
+      const figures = join(fileURLToPath(config.publicDir), 'assets/figures');
+      const sizes = new Map<string, ImageSize>();
+      for (const f of await readdir(figures).catch(() => [])) {
+        const z = imageSize(await readFile(join(figures, f)));
+        if (z) sizes.set(f, z);
+        else logger.warn(`handbook: no size read from figure ${f}`);
+      }
       store.clear();
       for (const r of rendered) {
         const sec = sectionOfPage(r.page);
@@ -55,7 +63,7 @@ export function handbookLoader(dir = 'src/content/handbook'): Loader {
             headings: r.headings,
           } satisfies HandbookEntry,
         });
-        store.set({ id, data, rendered: { html: finish(r, idx, base) } });
+        store.set({ id, data, rendered: { html: finish(r, idx, base, sizes) } });
       }
       logger.info(`handbook: ${plural(rendered.length, 'page')}, ${plural(idx.size, 'heading')}`);
     },

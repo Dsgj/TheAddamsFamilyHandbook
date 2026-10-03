@@ -1,6 +1,7 @@
 import { marked } from 'marked';
 import { HANDBOOK_ATTR } from '~/lib/data/en';
 import { sectionOfPage } from './sections';
+import type { ImageSize } from './image-size';
 
 export interface Heading {
   id: string;
@@ -66,7 +67,9 @@ export function renderPage(page: number, body: string, label: string): RenderedP
   html = html.replace(
     /<p><img\s+src="fig\/([^"]+)"\s+alt="([^"]*)"\s*\/?>\s*<\/p>/g,
     (_m, file: string, alt: string) =>
-      `<figure class="${/\.jpe?g$/i.test(file) ? 'fig photo' : 'fig'}"><img src="assets/figures/${file}" alt="${alt}" loading="lazy" decoding="async"><figcaption>${alt}</figcaption></figure>`,
+      // The caption carries the text, so the image is alt="": a screen reader read it twice
+      // (AY-17, AY2-06).
+      `<figure class="${/\.jpe?g$/i.test(file) ? 'fig photo' : 'fig'}"><img src="assets/figures/${file}" alt="" loading="lazy" decoding="async"><figcaption>${alt}</figcaption></figure>`,
   );
   html = html.replace(
     /<p><em>\[Figure:\s*([\s\S]*?)\]<\/em><\/p>/g,
@@ -112,12 +115,24 @@ export function findHeading(idx: HeadingIndex, code: string): Heading | undefine
 
 /**
  * Second pass: resolve `#find:CODE` and `#goto:ops:N` links. `base` is the site base without
- * trailing slash; `figBase` prefixes figure paths. A code with no heading of its own (`P.3`)
+ * trailing slash; `sizes` gives each figure file its width and height, so the image keeps its
+ * box while it loads (AY2-06). A code with no heading of its own (`P.3`)
  * links to its menu's heading (`P.`). The kit's Swedish `title` attributes in the menu map get
  * their English from en.ts HANDBOOK_ATTR; the kit's markdown stays as the kit ships it.
  */
-export function finish(p: RenderedPage, idx: HeadingIndex, base: string): string {
+export function finish(
+  p: RenderedPage,
+  idx: HeadingIndex,
+  base: string,
+  sizes?: ReadonlyMap<string, ImageSize>,
+): string {
   let html = p.html;
+  html = html.replace(/<img src="assets\/figures\/([^"]+)"/g, (m, file: string) => {
+    const z = sizes?.get(file);
+    return z
+      ? `${m} width="${z.width}" height="${z.height}" style="--w: ${z.width}; --h: ${z.height}"`
+      : m;
+  });
   html = html.replace(/href="#find:([^"]+)"/g, (_m, code: string) => {
     const c = decodeURIComponent(code);
     const h = findHeading(idx, c) ?? findHeading(idx, c.replace(/\.\d+$/, '.'));

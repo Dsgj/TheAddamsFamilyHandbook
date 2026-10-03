@@ -99,3 +99,14 @@ for (const url of ROUTES) {
     ).toEqual(expect.arrayContaining(known));
   });
 }
+
+/* label-content-name-mismatch is experimental, so the tags above leave it out. The reader bar's
+   ends show a page label ("1-20") and once had a name without it (AY2-09). */
+test('every control on a handbook section is named with the words it shows', async ({ page }) => {
+  await gotoHydrated(page, '/handbook/tests');
+  const result = await new AxeBuilder({ page })
+    .withRules(['label-content-name-mismatch'])
+    .analyze();
+  expect(result.violations.flatMap((v) => v.nodes.map((n) => n.target.join(' ')))).toEqual([]);
+  expect(result.passes.map((v) => v.id)).toContain('label-content-name-mismatch');
+});

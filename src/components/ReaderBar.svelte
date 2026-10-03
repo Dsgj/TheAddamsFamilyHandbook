@@ -17,6 +17,9 @@
   }
   let { prev, next, current }: { prev?: End | undefined; next?: End | undefined; current: string } =
     $props();
+  /** The link's name holds the label it shows ("1-1"), so a voice command can say it (AY2-09). */
+  const named = (dir: string, e: End) =>
+    `${dir}: ${e.title.includes(e.label) ? e.title : `${e.label} ${e.title}`}`;
 
   const SIZES = [
     ['sm', 'Small'],
@@ -58,7 +61,7 @@
 
 <nav class="rbar glass" aria-label="Reader">
   {#if prev}
-    <a class="rb end" href={prev.href} aria-label="Previous: {prev.title}">
+    <a class="rb end" href={prev.href} aria-label={named('Previous', prev)}>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
       <span class="lbl">{prev.label}</span>
     </a>
@@ -70,7 +73,7 @@
     Text size
   </button>
   {#if next}
-    <a class="rb end" href={next.href} aria-label="Next: {next.title}">
+    <a class="rb end" href={next.href} aria-label={named('Next', next)}>
       <span class="lbl">{next.label}</span>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" /></svg>
     </a>

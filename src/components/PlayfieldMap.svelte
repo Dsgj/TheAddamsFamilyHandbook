@@ -983,7 +983,7 @@
     color: var(--ink);
     cursor: pointer;
     font: 700 10px/1 var(--font-mono);
-    transition: opacity var(--dur-1) var(--ease-standard);
+    transition: background-color var(--dur-1) var(--ease-standard);
   }
   /* Spec §7.5: the keyboard cursor scrolls a zoomed drawing to keep the focused marker clear of
      the edge; a focused marker comes on top (a jet under its lamp), after the layer z-indexes. */
@@ -1069,8 +1069,9 @@
     color: var(--amber-ink);
     background: var(--surface);
   }
+  /* Dimmed beside a selection: the fill fades, the ring keeps its 3:1 (AY2-05). */
   .canvas.has-sel .marker:not(.sel) {
-    opacity: 0.4;
+    background: color-mix(in srgb, var(--k-fill) 35%, transparent);
   }
   .canvas.calib .marker {
     touch-action: none;
@@ -1164,6 +1165,7 @@
     padding: 0;
     gap: 0;
     overflow-y: auto;
+    scroll-padding-block: 8px;
     height: var(--stage-h, auto);
     border-left: 1px solid var(--sep);
     background: var(--panel-bg);
@@ -1402,6 +1404,7 @@
   .list {
     max-height: 50vh;
     overflow: auto;
+    scroll-padding-block: 6px;
     padding: 6px;
   }
   .list h3 {
