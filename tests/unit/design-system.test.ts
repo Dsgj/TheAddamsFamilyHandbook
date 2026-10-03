@@ -642,6 +642,47 @@ describe('design system source rules', () => {
     );
   });
 
+  it('(w) draws every field one way: its corners and its line come from .field alone', () => {
+    // Spec §8.7, audit DS2-09: a component sizes a field (width, height, padding, type size), but
+    // its radius and line-height are `.field`'s, so the note, the select and the Set field match.
+    const sets = (r: Rule) => r.decls.some(([p]) => p === 'border-radius' || p === 'line-height');
+    const subjects = (r: Rule) =>
+      r.selector.split(',').map((s) =>
+        s
+          .trim()
+          .split(/[\s>+~]+/)
+          .pop()!,
+      );
+    const off = RULES.filter(
+      (r) =>
+        r.file === 'src/styles/base.css' && r.selector !== '.field' && /\.field\b/.test(r.selector),
+    )
+      .filter(sets)
+      .map(where);
+    for (const file of sources(SCOPE).filter((f) => /\.(svelte|astro)$/.test(f))) {
+      const text = readFileSync(join(ROOT, file), 'utf8');
+      // The classes beside `field` in this file's markup.
+      const beside = [...text.matchAll(/class="([^"{]*\bfield\b[^"{]*)"/g)]
+        .flatMap((m) => m[1]!.split(/\s+/))
+        .filter((c) => c && c !== 'field');
+      if (!/class="[^"{]*\bfield\b/.test(text)) continue;
+      const hit = (c: string) =>
+        /\.field\b/.test(c) || beside.some((b) => new RegExp(`\.${b}(?![\w-])`).test(c));
+      off.push(
+        ...RULES.filter((r) => r.file === file && subjects(r).some(hit))
+          .filter(sets)
+          .map(where),
+      );
+    }
+    expect(off).toEqual([]);
+    const own = new Map(
+      RULES.find((r) => r.file === 'src/styles/base.css' && r.selector === '.field' && !r.at.length)
+        ?.decls,
+    );
+    expect(own.get('border-radius')).toBe('var(--r-xs)');
+    expect(own.get('line-height')).toBe('21px');
+  });
+
   it('defines the tokens and classes the components build on', () => {
     const tokens = readFileSync(join(ROOT, 'src/styles/tokens.css'), 'utf8');
     const names = [

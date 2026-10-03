@@ -21,7 +21,11 @@ export function initVerifyChecks(root: ParentNode = document) {
     boxes.forEach(apply);
     if (!counter) return;
     const done = boxes.filter((b) => b.checked).length;
-    counter.textContent = `${done} of ${boxes.length} verified`;
+    // The shared progress line (Progress.svelte): the count on its chip and the bar.
+    const chip = counter.querySelector('.dmd');
+    const bar = counter.querySelector('progress');
+    if (chip) chip.textContent = `${done} of ${boxes.length}`;
+    if (bar) bar.value = done;
   };
   for (const el of boxes)
     el.addEventListener('change', () => setTick(el.dataset.id ?? '', el.checked));

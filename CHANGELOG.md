@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- **Setup, Care and Verify look like one checklist.** Each row has its tick box
+  at the top left, the text beside it and its links underneath, and each page
+  shows its progress the same way: a count, a word and a bar. Text fields have
+  the same corners and line height everywhere.
 - **Reading on a phone is easier.** A table cut off at the edge of the screen
   now fades out on the side that has more to show, so you can see it scrolls.
   The manual search field reads "Search" instead of a cut-off word. The end of

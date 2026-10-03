@@ -2,6 +2,7 @@
   import type { SetupItem, SetupStep } from '~/data/setup';
   import { doneCount, getSetup, saveValue, setDone, setValue } from '~/lib/model/setup.svelte';
   import { shortDate } from '~/lib/status-io';
+  import Progress from './Progress.svelte';
 
   let {
     steps,
@@ -32,11 +33,7 @@
 </script>
 
 <p class="muted intro">{intro}</p>
-<p class="progress" role="status">
-  <span class="dmd small">{done} of {ids.length}</span>
-  <span class="muted">{noun} done</span>
-  <progress max={ids.length} value={done} aria-label="Progress"></progress>
-</p>
+<Progress {done} total={ids.length} what="{noun} done" />
 <p class="prov warn">{warning}</p>
 
 <ol class="steps">
@@ -48,7 +45,7 @@
         <span class="muted small">{stepDone(s)} of {s.items.length}</span>
       </header>
       <p class="muted small">{s.intro}</p>
-      <ul class="items">
+      <ul class="items checklist">
         {#each s.items as i (i.id)}
           {@const cur = getSetup(i.id)}
           {@const ref = refOf(i)}
@@ -65,12 +62,7 @@
             <div class="body">
               <div class="head">
                 {#if isCode(i.id)}<span class="mono code">{i.id}</span>{/if}
-                <span class="name">{i.name}</span>
-                {#if links[i.id]}<a
-                    class="small"
-                    href={links[i.id]}
-                    aria-label="{ref} in the handbook">handbook</a
-                  >{/if}
+                <span class="name title">{i.name}</span>
               </div>
               {#if !isTask(i)}
                 <div class="vals">
@@ -100,10 +92,16 @@
               {/if}
               {#if i.why}<p class="why small">{i.why}</p>{/if}
               {#if i.alt}<p class="why small muted">{i.alt}</p>{/if}
-              {#if cur?.at}<p class="small muted when">
-                  {cur.done ? 'done' : 'set'}
-                  {shortDate(cur.at)}
-                </p>{/if}
+              {#if links[i.id] || cur?.at}
+                <p class="links small">
+                  {#if links[i.id]}<a href={links[i.id]} aria-label="{ref} in the handbook"
+                      >handbook</a
+                    >{/if}
+                  {#if cur?.at}<span class="when muted"
+                      >{cur.done ? 'done' : 'set'} {shortDate(cur.at)}</span
+                    >{/if}
+                </p>
+              {/if}
             </div>
           </li>
         {/each}
@@ -114,18 +112,6 @@
 </ol>
 
 <style>
-  .progress {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-  /* 140, not 160: "47 of 47 settings done" and the bar share one line at 412 (spec §13). */
-  progress {
-    flex: 1 1 140px;
-    height: 8px;
-    accent-color: var(--ok);
-  }
   /* The prose measure (spec §3.1) on the intro, the warning, the reasons and each step's own
      paragraphs (its intro and its closing note). */
   .intro,
@@ -168,45 +154,11 @@
   .menu {
     color: var(--violet);
   }
-  .items {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-  /* Rows are at least 44px tall with a 44px tick target (spec §8.3). */
-  .item {
-    display: grid;
-    grid-template-columns: var(--touch) 1fr;
-    gap: 4px;
-    min-height: 44px;
-    padding: 6px 0;
-    border-top: 1px solid var(--line);
-  }
-  .tick {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 44px;
-    align-self: start;
-    cursor: pointer;
-  }
-  .tick input {
-    width: 22px;
-    height: 22px;
-    accent-color: var(--ok);
-  }
   .head {
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
     gap: 4px 10px;
-  }
-  /* Spec §12: the "handbook" link sits beside the name, not in running text, so it is a real 44
-     target; the head grows round it and the suggestion button below keeps its own area. */
-  .head a {
-    display: inline-flex;
-    align-items: center;
-    min-height: var(--touch);
   }
   .code {
     color: var(--amber-ink);
@@ -216,11 +168,6 @@
   .name {
     font-weight: 500;
     max-width: var(--measure);
-  }
-  .done .name {
-    color: var(--muted);
-    text-decoration: line-through;
-    text-decoration-color: var(--ok);
   }
   .vals {
     display: flex;
@@ -253,8 +200,5 @@
   }
   .why {
     margin: 6px 0 0;
-  }
-  .when {
-    margin: 2px 0 0;
   }
 </style>

@@ -1,5 +1,6 @@
 ---
 import Codes from '~/components/Codes.astro';
+import Progress from '~/components/Progress.svelte';
 import Base from '~/layouts/Base.astro';
 import { VERIFY_ITEMS as ITEMS } from '~/data/verify';
 const groups = [...new Set(ITEMS.map((i) => i.group))];
@@ -15,28 +16,30 @@ const groups = [...new Set(ITEMS.map((i) => i.group))];
   <h1>Verify</h1>
   <p class="muted">
     Places where the manual's pages and its parts list disagree, or where the data was placed by
-    hand. Tick an item when you have checked it on the machine. Ticks stay on this device.{' '}
-    <span class="mono" data-verify-count></span>
+    hand. Tick an item when you have checked it on the machine. Ticks stay on this device.
   </p>
+  <Progress done={0} total={ITEMS.length} what="verified" data-verify-count="" />
   {
     groups.map((g) => (
       <section class="card">
         <h2>{g}</h2>
-        <ul class="checks">
+        <ul class="checklist">
           {ITEMS.filter((i) => i.group === g).map((i) => (
             <li>
-              <label>
-                <input type="checkbox" class="verify-check" data-id={i.id} />
-                <span class="text">
-                  <Codes text={i.text} />
-                </span>
+              <label class="tick">
+                <input type="checkbox" class="verify-check" id={`verify-${i.id}`} data-id={i.id} />
               </label>
-              <p class="links small">
-                {i.links.map(([label, url]) => (
-                  <a href={url}>{label}</a>
-                ))}
-                <span class="when muted" />
-              </p>
+              <div class="body">
+                <label class="text title" for={`verify-${i.id}`}>
+                  <Codes text={i.text} />
+                </label>
+                <p class="links small">
+                  {i.links.map(([label, url]) => (
+                    <a href={url}>{label}</a>
+                  ))}
+                  <span class="when muted" />
+                </p>
+              </div>
             </li>
           ))}
         </ul>
@@ -49,58 +52,11 @@ const groups = [...new Set(ITEMS.map((i) => i.group))];
   .card {
     margin-top: var(--gap);
   }
-  .checks {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-  .checks li {
-    padding: 4px 0;
-    border-top: 1px solid var(--line);
-  }
-  .checks li:first-child {
-    border-top: 0;
-  }
-  /* Rows are at least 44px tall with a 44px tick target (spec §8.3). */
-  .checks label {
-    display: grid;
-    grid-template-columns: var(--touch) 1fr;
-    align-items: center;
-    min-height: 44px;
-    gap: 4px;
+  /* The row is the shared checklist row (base.css, VP2-05); the statement is its title, a click on
+     it ticks the box. */
+  .text {
+    display: block;
     cursor: pointer;
-  }
-  .checks input {
-    width: 22px;
-    height: 22px;
-    margin: 0 auto;
-    accent-color: var(--ok);
-  }
-  .checks label:active {
-    background: var(--press);
-  }
-  .checks li.done .text {
-    color: var(--muted);
-    text-decoration: line-through;
-    text-decoration-color: var(--ok);
-  }
-  /* Spec §12: the source links are a list under the label, so each is a real 44 × 44 target; a tap
-     beside one never reaches the tick above. */
-  .links {
-    margin: 0 0 0 var(--touch);
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0 14px;
-  }
-  .links a {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: var(--touch);
-    min-width: var(--touch);
-    /* A source label ('Manual p. 2-16') wraps as a whole to the next row (VP2-18). */
-    white-space: nowrap;
   }
 </style>
 

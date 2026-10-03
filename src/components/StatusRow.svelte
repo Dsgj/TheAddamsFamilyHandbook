@@ -66,12 +66,11 @@
     padding: 0;
     list-style: none;
   }
-  /* 44 tall, the field's target (audit AY-12). */
+  /* 44 tall, the field's target (audit AY-12); the field's own radius (DS2-09). */
   .note {
     flex: 1 1 160px;
     min-height: 44px;
     padding: 4px 10px;
-    border-radius: var(--r-sm);
   }
   .seg {
     flex: 1 1 100%;

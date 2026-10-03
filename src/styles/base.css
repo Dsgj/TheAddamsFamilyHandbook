@@ -1084,6 +1084,62 @@ table.t td.key > a::after {
   color: var(--muted);
 }
 
+/* ---- Checklist (spec §8.3, §12): Setup, Care and Verify share one row (VP2-05) ----
+   The tick at the top of a 44 column, then the row's title and text, then a row of links with the
+   date of the tick. Rows are at least 44 tall with a 44 tick target. */
+.checklist {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.checklist > li {
+  display: grid;
+  grid-template-columns: var(--touch) 1fr;
+  gap: 4px;
+  min-height: 44px;
+  padding: 6px 0;
+  border-top: 1px solid var(--line);
+}
+.checklist .tick {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  align-self: start;
+  cursor: pointer;
+}
+.checklist .tick input {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--ok);
+}
+/* The body's first line centres on the tick: (44 - 21) / 2. */
+.checklist .body {
+  min-width: 0;
+  padding-top: 11px;
+}
+.checklist .done .title {
+  color: var(--muted);
+  text-decoration: line-through;
+  text-decoration-color: var(--ok);
+}
+/* The links are a row under the text, not in it, so each is a real 44 target and a tap beside one
+   never reaches the tick. A source label ('Manual p. 2-16') wraps as a whole (VP2-18). */
+.checklist .links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 14px;
+  margin: 0;
+}
+.checklist .links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch);
+  min-width: var(--touch);
+  white-space: nowrap;
+}
+
 /* ---- Segmented control (spec §8.3) ---- */
 .seg {
   display: inline-grid;

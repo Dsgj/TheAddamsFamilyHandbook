@@ -977,6 +977,40 @@ test('at 412 the /setup progress row stays one line with every setting done', as
   expect((await row.boundingBox())!.height).toBeLessThanOrEqual(40);
 });
 
+/* P2 item 5 of the app audit, round 2 (VP2-05): Setup, Care and Verify draw one checklist row, a
+ * 44 tick at the top left, the title beside it, the links row under the text, and one progress line. */
+test('Setup, Care and Verify share one checklist row and one progress line (VP2-05)', async ({
+  page,
+}) => {
+  const looks: string[] = [];
+  for (const url of ['setup', 'care', 'verify']) {
+    await gotoHydrated(page, url);
+    await expect(page.locator('p.progress progress'), url).toHaveCount(1);
+    const row = await page
+      .locator('.checklist > li')
+      .first()
+      .evaluate((li) => {
+        const box = (e: Element | null) => e!.getBoundingClientRect();
+        const r = box(li);
+        const tick = box(li.querySelector('.tick'));
+        const title = box(li.querySelector('.title'));
+        const links = li.querySelector('.links');
+        return {
+          columns: getComputedStyle(li).gridTemplateColumns.split(' ').length,
+          tick: [Math.round(tick.top - r.top), Math.round(tick.width)],
+          beside: title.left >= tick.right && title.top < tick.bottom,
+          under: !links || box(links).top >= title.bottom - 1,
+        };
+      });
+    looks.push(JSON.stringify([row.columns, row.tick]));
+    expect(row.beside, url).toBe(true);
+    expect(row.under, url).toBe(true);
+  }
+  // The same two columns and the same tick, 44 wide at the row's top, on all three.
+  expect(new Set(looks).size, looks.join(' ')).toBe(1);
+  expect(JSON.parse(looks[0]!)[0]).toBe(2);
+});
+
 /* P2 item 4 of the app audit, round 2: the reading surfaces on a phone. Each test names the finding
  * it holds (VP2-01, 04, 08 to 13, 15, 16, 18); VP2-14 (the dark bar's alpha) is held by contrast.spec
  * and VP2-17 (the handbook ranges) by handbook.spec. */
@@ -1109,7 +1143,7 @@ test.describe('reading surfaces on a phone (P2 item 4 of the app audit, round 2)
 
   test('codes in the /verify checks never break at a hyphen (VP2-18)', async ({ page }) => {
     await gotoHydrated(page, 'verify');
-    const loose = await page.locator('.checks .text').evaluateAll((texts) =>
+    const loose = await page.locator('.checklist .text').evaluateAll((texts) =>
       texts.flatMap((t) => {
         const bare = t.cloneNode(true) as HTMLElement;
         bare.querySelectorAll('.tok').forEach((k) => k.remove());
@@ -1117,7 +1151,7 @@ test.describe('reading surfaces on a phone (P2 item 4 of the app audit, round 2)
       }),
     );
     expect(loose).toEqual([]);
-    const toks = page.locator('.checks .text .tok');
+    const toks = page.locator('.checklist .text .tok');
     expect(await toks.count()).toBeGreaterThan(0);
     expect(await toks.first().evaluate((k) => getComputedStyle(k).whiteSpace)).toBe('nowrap');
   });
