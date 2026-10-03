@@ -262,6 +262,37 @@ test.describe('search', () => {
   });
 });
 
+test.describe('what the app prints, looked up (CO2-04, CO2-05, CO2-07)', () => {
+  test('a fuse or connector is searched under Not recognised', async ({ page }) => {
+    await gotoHydrated(page, '/');
+    await field(page).fill('F105');
+    await expect(page.locator('.prov')).toContainText('Not recognised: F105');
+    const hits = page.locator('.qs .lst a');
+    await expect(hits.first()).toBeVisible();
+    await expect(page.locator('.qs .lst a .code', { hasText: 'F105' })).toHaveCount(1);
+    await field(page).fill('J206');
+    await expect(page.locator('.qs .lst-h').first()).toBeVisible();
+    // The look-up lists hits; the chips belong to the search state.
+    await expect(page.getByRole('group', { name: 'Search in' })).toHaveCount(0);
+  });
+
+  test('punctuation, # and a dash between two codes still diagnose', async ({ page }) => {
+    await gotoHydrated(page, '/');
+    await field(page).fill('Check Switch 32.');
+    await expect(page.locator('article.comp[data-id="32"]')).toBeVisible();
+    await field(page).fill('#32 32-68');
+    await expect(page.locator('.cards article.comp')).toHaveCount(2);
+    await expect(page.locator('.prov')).toHaveCount(0);
+  });
+
+  test('a paste with no codes explains itself and offers nothing to share', async ({ page }) => {
+    await gotoHydrated(page, '/');
+    await field(page).fill('...');
+    await expect(page.locator('.prov')).toContainText('Nothing here reads as a code');
+    await expect(page.getByRole('button', { name: 'Share results' })).toHaveCount(0);
+  });
+});
+
 test.describe('the old home links live in their hubs', () => {
   for (const [hub, targets] of [
     ['/handbook', ['handbook/tests', 'handbook/errors']],

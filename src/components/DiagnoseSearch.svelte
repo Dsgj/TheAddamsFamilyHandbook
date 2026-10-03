@@ -11,12 +11,19 @@
    * are fetched the first time they are needed (Q20 default: parts and the manuals are in).
    * `oncount` reports the result count to Diagnose, which owns the search's announcer (spec §12);
    * `onfilter` tells it a chip changed the results, which is announced even for a pre-filled query.
+   * `filters={false}` drops the chips, for the look-up under Diagnose's Not recognised line.
    */
   let {
     q,
     oncount,
     onfilter,
-  }: { q: string; oncount?: (n: number) => void; onfilter?: () => void } = $props();
+    filters = true,
+  }: {
+    q: string;
+    oncount?: (n: number) => void;
+    onfilter?: () => void;
+    filters?: boolean;
+  } = $props();
 
   type Group = 'components' | 'handbook' | 'manuals' | 'parts';
   interface Hit {
@@ -228,24 +235,26 @@
 </script>
 
 <div class="qs">
-  <div class="chips" role="group" aria-label="Search in">
-    {#each GROUPS as g (g.key)}
-      <button
-        type="button"
-        class="chip"
-        class:on={group === g.key}
-        aria-pressed={group === g.key}
-        onclick={() => {
-          onfilter?.();
-          group = g.key;
-          expanded = null;
-        }}
-        onfocus={(e) => e.currentTarget.scrollIntoView({ block: 'nearest', inline: 'nearest' })}
-      >
-        {g.label}
-      </button>
-    {/each}
-  </div>
+  {#if filters}
+    <div class="chips" role="group" aria-label="Search in">
+      {#each GROUPS as g (g.key)}
+        <button
+          type="button"
+          class="chip"
+          class:on={group === g.key}
+          aria-pressed={group === g.key}
+          onclick={() => {
+            onfilter?.();
+            group = g.key;
+            expanded = null;
+          }}
+          onfocus={(e) => e.currentTarget.scrollIntoView({ block: 'nearest', inline: 'nearest' })}
+        >
+          {g.label}
+        </button>
+      {/each}
+    </div>
+  {/if}
 
   {#if words.length}
     {#each results as g (g.group)}

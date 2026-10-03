@@ -183,9 +183,18 @@
     ...lampSharedCauses(lamps, DATA.lCols, DATA.lRows),
   ]);
   const shownMissing = $derived(missing.slice(0, 6));
+  /** Tokens with a digit that are no code (F105, J206, A-15200) go to the search (CO2-04). */
+  const lookup = $derived(
+    missing
+      .filter((m) => m.kind === 'unknown' && /\d/.test(m.raw) && m.raw.length > 2)
+      .map((m) => m.raw)
+      .join(' '),
+  );
   const recent = $derived(hydrated ? recentEntries() : []);
 
   const EXAMPLES = ['32 68 F1 F3', 'Check Switch 32', 'L11 L12 L13', 'SOL 7'];
+  const RANGES =
+    'Matrix switches are 11–88, dedicated D1–D8, flipper F1–F8, lamps L11–L88, solenoids SOL 01–28.';
   const label = (p: ParsedCode) => (p.kind === 'unknown' ? p.raw : componentName(p.kind, p.id));
   const codeText = (p: ParsedCode) => (p.kind === 'unknown' ? p.raw : componentCode(p.kind, p.id));
 
@@ -449,9 +458,11 @@
       <h2 class="rh" bind:this={resultsHead} tabindex="-1">
         {plural(parsed.length, 'code')}
       </h2>
-      <button type="button" class="tlink" onclick={share}>
-        {shared === 'copied' ? 'Copied' : shared === 'shared' ? 'Shared' : 'Share results'}
-      </button>
+      {#if parsed.length}
+        <button type="button" class="tlink" onclick={share}>
+          {shared === 'copied' ? 'Copied' : shared === 'shared' ? 'Shared' : 'Share results'}
+        </button>
+      {/if}
     </div>
     <ul class="codes" aria-label="Codes">
       {#each parsed as p, i (p.raw + i)}
@@ -461,14 +472,20 @@
       {/each}
     </ul>
 
-    {#if missing.length}
+    {#if !parsed.length}
+      <p class="prov">
+        Nothing here reads as a code. Type the numbers from the display or the Test Report: {RANGES}
+      </p>
+    {:else if missing.length}
       <p class="prov">
         Not recognised: {shownMissing.map((m) => label(m)).join(', ')}{missing.length >
         shownMissing.length
           ? ` and ${missing.length - shownMissing.length} more`
-          : ''}. Matrix switches are 11–88, dedicated D1–D8, flipper F1–F8, lamps L11–L88, solenoids
-        SOL 01–28.
+          : ''}. {RANGES}{lookup ? ' The search below looks for the rest.' : ''}
       </p>
+      {#if lookup}
+        <DiagnoseSearch q={lookup} filters={false} />
+      {/if}
     {/if}
 
     {#if causes.length}

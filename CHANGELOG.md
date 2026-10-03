@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- **Diagnose takes codes the way they are printed.** "Check Switch 32.",
+  "#32" and "32-68" now read as codes. A part number such as a fuse (F105) or
+  a connector (J206) is searched in the components, handbook, manuals and
+  parts right under the Not recognised line. Text with no code in it says
+  what to type and no longer offers Share results.
 - **Your records survive every round trip.** Recent keeps a pasted
   multi-line report as it was, so replaying it finds the same codes. A
   service log or a backup with two entries at the same moment opens and

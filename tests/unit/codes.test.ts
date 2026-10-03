@@ -35,6 +35,19 @@ describe('parseCodes', () => {
       LAMP 55`;
     expect(keys(report)).toEqual(['switch:32', 'switch:68', 'switch:45', 'lamp:55']);
   });
+  it('drops punctuation and splits on #, / and a dash between two codes (CO2-07)', () => {
+    expect(parseCodes('Check Switch 32.')).toEqual([{ kind: 'switch', id: '32', raw: '32' }]);
+    expect(keys('#32 (L55), sol 7!')).toEqual(['switch:32', 'lamp:55', 'coil:07']);
+    expect(keys('32/68 32-68 sw32-sw68 L11-L12')).toEqual([
+      'switch:32',
+      'switch:68',
+      'lamp:11',
+      'lamp:12',
+    ]);
+    // A part number keeps its dash, and a token that is only punctuation is no token.
+    expect(keys('A-15200 - ...')).toEqual(['unknown:A-15200']);
+    expect(keys('F105 J206')).toEqual(['unknown:F105', 'unknown:J206']);
+  });
   it('de-duplicates and flags unknown tokens', () => {
     const r = parseCodes('32, 32; D5 hello');
     expect(r).toHaveLength(3);
