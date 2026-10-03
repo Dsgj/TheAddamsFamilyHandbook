@@ -604,23 +604,46 @@ test.describe('P2-4: the map from 1000 (spec §7.4, §7.7)', () => {
       }
     });
   }
-  for (const width of [1280, 1440]) {
-    test(`${width}: the handbook embed keeps its glass off the drawing`, async ({ page }) => {
-      await at(page, width, '/handbook/rules');
+  // The embed (spec §7.9) has no panel: its glass floats where the gutter holds it, otherwise it
+  // keeps the phone's control column. It hydrates on `client:visible`, after gotoHydrated returns,
+  // so the test waits for its own island and first fit; measured before them, it passed on nothing.
+  for (const [width, height] of [
+    [1000, 900],
+    [1280, 800],
+    [1280, 900],
+    [1440, 900],
+    [1600, 1000],
+    [1920, 1080],
+    [2560, 1440],
+  ] as const) {
+    test(`${width}×${height}: the handbook embed keeps its controls off the drawing`, async ({
+      page,
+    }) => {
+      await at(page, width, '/handbook/rules', height);
       const embed = page.locator('#pg-9 .shot-map');
       await embed.scrollIntoViewIfNeeded();
-      await expect(embed.locator('.canvas img')).toBeVisible();
-      const r = await embed.evaluate((e) => {
-        const img = e.querySelector('.canvas img')!.getBoundingClientRect();
-        return ['.layers-list', '.legend'].map((s) => {
-          const b = e.querySelector(s)?.getBoundingClientRect();
-          if (!b) return 0;
-          const x = Math.max(0, Math.min(b.right, img.right) - Math.max(b.left, img.left));
-          const y = Math.max(0, Math.min(b.bottom, img.bottom) - Math.max(b.top, img.top));
-          return x * y;
+      await expect(embed.locator('astro-island[ssr]')).toHaveCount(0);
+      await expect(embed.locator('.canvas.ready img')).toBeVisible();
+      const controls = () =>
+        embed.evaluate((e) => {
+          const img = e.querySelector('.canvas img')!.getBoundingClientRect();
+          const shown = ['.layers-list', '.readout', '.legend', '.corner', '.column'].filter((s) =>
+            e.querySelector(s),
+          );
+          const over = shown.filter((s) => {
+            const b = e.querySelector(s)!.getBoundingClientRect();
+            const x = Math.min(b.right, img.right) - Math.max(b.left, img.left);
+            const y = Math.min(b.bottom, img.bottom) - Math.max(b.top, img.top);
+            return x > 0 && y > 0;
+          });
+          return { layers: shown.includes('.layers-list') || shown.includes('.column'), over };
         });
-      });
-      expect(r).toEqual([0, 0]);
+      await expect.poll(controls).toEqual({ layers: true, over: [] });
+      await expect(embed.getByRole('group', { name: 'Layers' })).toHaveCount(1);
+      // The key legend floats in the gutter or sits under the drawing, once, from 1280.
+      await expect(embed.getByRole('note', { name: 'Keyboard shortcuts' })).toHaveCount(
+        width >= 1280 ? 1 : 0,
+      );
     });
   }
 });

@@ -432,7 +432,10 @@ dragMove keeps working
   - On /map the fit itself clears that column (audit P2 item 4 review): of the fit beside it (the stage width less 64 a side: 16 + 44 + 4) and the fit above it (the stage height less 188: 156 + 28 + 4), the larger, and never more than the whole-drawing fit. A short stage (1000–1440 × 900) narrows the drawing beside the column; a tall or portrait one (1000 × 1080, 1024 × 1366) shortens it above the readout. The e2e checks the layers list, readout, legend and capsule (`.corner`) against the drawing at both.
     - From 1280 the key legend is a one-line `t-cap` hint (`role=note`, "Keyboard shortcuts") under the toggles.
   - Each control renders once at a time, so the strict `group 'Layers'` locator finds one.
-  - The handbook embed has no panel and keeps its glass floating (§7.9).
+  - The handbook embed has no panel (§7.9). Its glass floats by the same gutter rule, and the legend floats stacked by the same rule (2026-10-03, CI run 37108543689: the legend strip and a narrow gutter put glass on the drawing at 1000–2560).
+    - Gutter under 184: the phone's control column (the layers capsule over the zoom capsule, right 10, bottom 12) and no readout.
+    - From 1000 its fit clears that column: the container width less 58 a side (10 + 44 + 4).
+    - A legend that doesn't float is, from 1280, the one-line hint at the top of the list under the drawing.
 
 ### 7.5 Markers (MapFitSpec, Map, MapZoom, kit)
 
@@ -534,7 +537,8 @@ dragMove keeps working
 
 - The embed is `<PlayfieldMap client:visible layer="shot" />` in `src/pages/handbook/[section].astro:74`, inside `#pg-9 .shot-map`.
 - It must keep its 17 shot markers (smoke :94-98).
-- Its stage height isn't drawn **[confirm on board MapFitSpec]**. Until then it fits to the container width with the height capped at the page stage height, so it is never cropped.
+- Its stage height isn't drawn **[confirm on board MapFitSpec]**. Until then it fits to the container width (from 1000 less the control column's gutters, §7.4) with the height capped at the page stage height, so it is never cropped.
+- Its controls never cover the drawing (§7.4, last bullet). It hydrates on `client:visible`, so an e2e that measures it waits for its own island and `.canvas.ready`: `gotoHydrated` waits for `client:load` islands only.
 - An `embed` prop turns off the page-level behaviour, which today leaks into the reader:
   - no `syncUrl()` (PlayfieldMap.svelte:137-143 calls `history.replaceState`, so a tap in the embed rewrites the reader's URL to `?layer=…&id=…`);
   - no selection sheet, parts sheet or side panel: the selected card and the list stay under the drawing, as today;

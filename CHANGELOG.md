@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- **The Rules map keeps its controls off the drawing.** On a tablet or desktop,
+  the shot map in the handbook's Rules section no longer lays its layer list,
+  zoom readout or keyboard legend over the playfield. Where the margin beside the
+  drawing holds them they float there, the legend stacked under the layer list;
+  where it does not, the map keeps the phone's control column beside the drawing
+  and the keyboard legend sits under the map. This also makes the deploy pipeline
+  green again: its e2e jobs failed on this, and on a toast test that the real
+  service worker's own "Ready to work offline" toast kept alive.
 - **Lighter pages.** Installing the app stores about 16.5 MB instead of
   about 21.5 MB, and every page weighs less on a first visit. Phones no longer
   download the logo (it shows only in the desktop sidebar, now a 480×243 file

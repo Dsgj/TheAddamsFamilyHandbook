@@ -50,6 +50,9 @@
    *  156 + 28 + 4 under it. */
   const CTRL_SIDE = 16 + 44 + 4;
   const CTRL_FOOT = 156 + 28 + 4;
+  /** Spec §7.9: where its gutter can't hold the glass, the embed keeps the phone's control column
+   *  (44 wide at right 10); from 1000 its fit keeps a side gutter of 10 + 44 + 4 clear of it. */
+  const COLUMN_SIDE = 10 + 44 + 4;
 
   let {
     layer: initialLayer = '',
@@ -112,7 +115,8 @@
   const fit = $derived.by(() => {
     if (!stageW || !stageH) return 0;
     const whole = Math.min(stageW / PLAYFIELD.w, (stageH - inset) / PLAYFIELD.h);
-    if (!wide || embed) return whole;
+    if (!wide) return whole;
+    if (embed) return Math.min(whole, (stageW - 2 * COLUMN_SIDE) / PLAYFIELD.w);
     // From 1000 on /map: the larger of the fits that clear the controls (VL-04). A tall or
     // portrait stage shortens the drawing above them; a short one narrows it beside them.
     const beside = Math.min((stageW - 2 * CTRL_SIDE) / PLAYFIELD.w, stageH / PLAYFIELD.h);
@@ -135,16 +139,19 @@
       if (hit) pick(hit);
     },
   });
-  /** The embed fits the container width; CSS caps the height at the stage height (Q13). */
-  const embedH = $derived(Math.round((stageW / PLAYFIELD.w) * PLAYFIELD.h));
+  /** The embed fits the container width, from 1000 less the column's gutters; CSS caps the
+   *  height at the stage height (Q13). */
+  const embedW = $derived(wide ? stageW - 2 * COLUMN_SIDE : stageW);
+  const embedH = $derived(Math.round((embedW / PLAYFIELD.w) * PLAYFIELD.h));
   /** The drawing's side gutter at the fit: the width the glass can float in without covering it. */
   const gutter = $derived(fit ? (stageW - Math.floor(PLAYFIELD.w * fit)) / 2 : 0);
-  /** Spec §7.4: on /map from 1000 the layers list and the key legend float beside the drawing
-   *  where the gutter holds them; otherwise they sit at the top of the side panel. The embed has no
-   *  panel and keeps them floating. */
-  const floatGlass = $derived(wide && !embed && gutter >= GLASS_GUTTER);
+  /** Spec §7.4: from 1000 the layers list and the key legend float beside the drawing where the
+   *  gutter holds them. Otherwise /map puts them at the top of its side panel; the embed has no
+   *  panel, so it keeps the phone's control column and the legend sits under the drawing (§7.9). */
+  const floatGlass = $derived(wide && gutter >= GLASS_GUTTER);
   const glassInPanel = $derived(wide && !embed && !floatGlass);
   const floatLegend = $derived(floatGlass && stageH >= LEGEND_STAGE_H);
+  const compact = $derived(!wide || (embed && !floatGlass));
   let panel: HTMLElement | undefined = $state();
   // Spec §7.7: every selection (marker, search, list row) shows its card at the panel's top.
   $effect(() => {
@@ -645,7 +652,7 @@
         class:sheet={sheetOpen}
         class:gone={sheetOpen && expanded}
       >
-        {#if wide}
+        {#if !compact}
           {#if !glassInPanel}
             <div class="glass layers-list" role="group" aria-label="Layers">
               {#each LAYERS as l (l)}
@@ -674,13 +681,8 @@
           <div class="corner">
             {@render zoomCapsule()}
           </div>
-          {#if desktop && (embed || floatLegend)}
-            <div
-              class="glass legend"
-              class:stack={!embed}
-              role="note"
-              aria-label="Keyboard shortcuts"
-            >
+          {#if desktop && floatLegend}
+            <div class="glass legend" role="note" aria-label="Keyboard shortcuts">
               {@render keyHints()}
             </div>
           {/if}
@@ -788,6 +790,9 @@
     {#if embed}
       <aside class="side">
         {@render srcLink(only)}
+        {#if desktop && !floatLegend}
+          <p class="keys" role="note" aria-label="Keyboard shortcuts">{@render keyHints()}</p>
+        {/if}
         {#if current?.comp && current.kind !== 'shot'}
           <ComponentCard kind={current.kind} item={current.comp} mapMeta={mapOf(current.kind)} />
         {:else if currentShot}
@@ -1325,6 +1330,7 @@
     font-weight: 500;
     color: var(--ink);
   }
+  /* The legend floats in the gutter only, so its entries stack in the list's 164. */
   .legend {
     position: absolute;
     left: 16px;
@@ -1332,16 +1338,12 @@
     padding: 10px 12px;
     border-radius: var(--r-btn);
     display: flex;
-    gap: 14px;
-    font: var(--t-cap);
-    color: var(--muted);
-  }
-  /* On /map the legend floats in the gutter, so its entries stack in the list's 164. */
-  .legend.stack {
     flex-direction: column;
     align-items: flex-start;
     gap: 6px;
     width: 164px;
+    font: var(--t-cap);
+    color: var(--muted);
   }
   .legend span,
   .keys span {

@@ -12,6 +12,11 @@ const raise = (page: Page, kind: string, text: string) =>
   );
 
 test.describe('toasts', () => {
+  // The real service worker raises its own "Ready to work offline" toast about 3 s after the first
+  // load, which restarts the 4 s dwell under a raised one (CI run 37108543689). Blocked, the only
+  // toasts are the ones a test raises.
+  test.use({ serviceWorkers: 'block' });
+
   test('one at a time, Update wins, offline leaves after 4 s, update stays', async ({ page }) => {
     await page.clock.install();
     await gotoHydrated(page, '/tables');
