@@ -145,7 +145,7 @@ describe('owner appendices', () => {
         (m) => m[1]!,
       ),
     );
-    expect(linked.sort()).toEqual(['magnet-fuse', 'magnet-supply']);
+    expect(linked.sort()).toEqual(['magnet-fuse', 'magnet-supply', 'no-old-cells']);
     for (const id of linked) expect(ids.has(id), id).toBe(true);
     const { page, label, body } = parseHeader(readFileSync(`${dir}/app105.md`, 'utf8'));
     const p = renderPage(page!, body, label);

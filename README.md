@@ -40,17 +40,17 @@ that followed it in two rounds (fixes P0–P4, see the [changelog](CHANGELOG.md)
 ![Desktop light theme: playfield map on the clean drawing, all three component layers on, with the card for switch 32 Upper Right Jet](docs/readme/desktop-map.png)
 
 _Dark on the phone in the workshop, light on the desk. Workshop › Appearance
-switches between System, Light and Dark._
+switches between System, Dark and Light._
 
 ## Features
 
-- **Diagnose.** Paste a Test Report line, a whole report or a display message.
+- **Diagnose.** Paste a Test report line, a whole report or a display message.
   One card per component with wiring chips, a mini-map on the playfield
   drawing, callout link, status + note, and a shared-cause check across switch and lamp columns and rows,
   connectors and EOS mechanics.
 - **Playfield map.** One clean line drawing of the playfield with switch,
   lamp, solenoid and shot layers (the manual's lettered shots A–S), any
-  combination, at three zoom levels. The selected part pulses and the rest
+  combination, at three zoom levels. The selected component pulses and the rest
   dims; markers take the colour of their status. Positions were remapped from
   the manual's three location maps and two shot maps, then placed by hand by
   the owner against the manual pages. `?layer=sw,shot&id=K` in the URL, so a
@@ -76,9 +76,9 @@ switches between System, Light and Dark._
 - **Status.** OK / Fault / Not tested and a note per component, stored on the
   device, with a dated service log of the last changes. A Fault tick in the
   lamp, switch and solenoid tables sets Fault in one tap.
-- **Shopping list.** Every part marked Fault, grouped by bulb type or part
+- **Shopping list.** Every component marked Fault, grouped by bulb type or part
   number with counts and assembly, linked to the cards. Copy as text, and a
-  Fixed button per part so it doubles as a work list.
+  Fixed button per component so it doubles as a work list.
 - **Verify.** The open questions from the data (flasher count, EOS switch type,
   hand-placed callouts, unchecked pages) as a checklist with links, ticked on
   the device.
@@ -184,7 +184,7 @@ Handbook pages are rendered by a custom content loader
 ([`src/lib/handbook/loader.ts`](src/lib/handbook/loader.ts)) that turns
 `#find:CODE` and `#goto:ops:N` links into real anchors. The kit's component
 data is Swedish-authored: a Vite plugin
-([`src/lib/kit/plugin.ts`](src/lib/kit/plugin.ts)) translates it to the
+([`src/build/kit-plugin.ts`](src/build/kit-plugin.ts)) translates it to the
 English model once at build time, with the dictionaries in
 [`src/lib/data/en.ts`](src/lib/data/en.ts) and the owner's notes, printed
 fuses and wire colours from `ownerNotes.ts`, and fails the build on a value it
@@ -208,17 +208,23 @@ Three things are this repo's own and not synced from the kit:
 
 ```text
 src/
+├── build/        kit-plugin.ts, the Vite plugin that translates the kit's data
 ├── components/   Svelte islands: Diagnose, PlayfieldMap, Matrix, PageViewer, …
+├── layouts/      Base.astro (the shell) and ComponentPage.astro
 ├── data/         kit/ (synced), positions.json, shots.ts, overlays.json, owner data
-├── lib/          codes, shared cause, handbook loader, data mapping, positions, status
+├── lib/          codes, shared cause, handbook loader, kit translation, data mapping,
+│                 positions, status
 ├── pages/        22 routes: index (Diagnose), map, tables, switches, lamps,
 │                 coils, fuses, switch/[id], lamp/[id], coil/[id], flipper/[id],
 │                 handbook/index, handbook/[section], manual/index,
 │                 manual/[doc]/[page], parts, workshop, shopping, verify, care,
-│                 setup, 404; plus
-│                 data/handbook.json.ts (a JSON endpoint, not a page)
-├── styles/       tokens.css (palette, type, spacing), base.css
-└── content/      handbook pages (synced from the kit)
+│                 setup, 404; plus data/handbook.json.ts and
+│                 data/ocr-text.json.ts (JSON endpoints, not pages)
+├── styles/       tokens.css (palette, type, spacing), base.css and one sheet per
+│                 pattern: buttons, controls, layout, lists, nav, surfaces, content,
+│                 motion, print
+└── content/      handbook/: the manual's pages (ops*.md, synced from the kit) and
+                  the handbook appendix (app*.md, written here)
 public/           data, assets, fonts, icons (synced or generated), brand/logo.webp
 scripts/          sync-kit, copy-fonts, icons, thumbnails
 tests/            vitest + Playwright e2e
@@ -242,7 +248,7 @@ for headings.
 
 Fonts are self-hosted from `public/fonts` so they load under any base path. Dark
 is the default; the light theme follows `prefers-color-scheme` or the choice in
-Workshop › Appearance (System, Light, Dark). Tokens live in [`src/styles/tokens.css`](src/styles/tokens.css).
+Workshop › Appearance (System, Dark, Light). Tokens live in [`src/styles/tokens.css`](src/styles/tokens.css).
 
 ## Decisions
 

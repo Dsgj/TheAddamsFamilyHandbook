@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- Handbook appendix: the notes read in the app's own words. A solenoid is
+  "SOL 25 Thing Motor", a switch "switch 65, Right Ramp Top"; a page is
+  "Operations Manual p. 2-30", never "Manual page 58"; a wire colour is
+  "Grey-Yellow"; the other pages are named by their titles ("Machine setup
+  step 7, Upgrades and upkeep", "Solenoids and flashers", a component page);
+  the "Owner's notes." lead-ins are gone, since the appendix page already
+  says what these pages are. The copy lint now reads the appendix too.
+- README: the kit plugin's real path, the full source tree (build, layouts,
+  every style sheet, both JSON endpoints, the appendix), the theme order as
+  the app lists it, and "component" for a switch, lamp or solenoid. A test
+  checks that every repo path the README names exists.
 - Wording: the previous/next buttons on a component page carry the code (L12,
   SOL 07); Verify's links and the Lamps intro name the pages by their titles;
   fuse circuits, coil groups and the manual index read in sentence case; the

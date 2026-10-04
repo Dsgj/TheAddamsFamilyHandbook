@@ -13,7 +13,8 @@ import { DATA } from '~/lib/data/components';
    Each rule reads the source as text. Copy is the markup's text nodes, the values of the title,
    aria-label, placeholder, alt, description and label attributes, and the string and template
    literals of the scripts that read as words (a space, or a capitalised word). Comments, <style>
-   blocks, the CSS files, the kit's JSON and src/content (the manual's own words) are not copy. */
+   blocks, the CSS files, the kit's JSON and the manual's pages under src/content (ops*.md, the
+   manual's own words) are not copy; the handbook appendix (app*.md) is written here and is. */
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 
@@ -23,11 +24,15 @@ function walk(dir: string): string[] {
   );
 }
 
-/** Every source with copy in it: .ts, .svelte and .astro under src, outside src/content. */
+/** Every source with copy in it: .ts, .svelte and .astro under src outside src/content, and the appendix. */
 function sources(): string[] {
   return walk(join(ROOT, 'src'))
     .map((p) => relative(ROOT, p).split('\\').join('/'))
-    .filter((p) => /\.(ts|svelte|astro)$/.test(p) && !p.startsWith('src/content/'))
+    .filter(
+      (p) =>
+        (/\.(ts|svelte|astro)$/.test(p) && !p.startsWith('src/content/')) ||
+        /^src\/content\/handbook\/app\d+\.md$/.test(p),
+    )
     .sort();
 }
 
@@ -75,6 +80,24 @@ export function extract(file: string, raw: string): Extract {
     if (t) out.pieces.push({ file, line: lineAt(at), text: t, from });
   };
   const astro = file.endsWith('.astro');
+
+  if (file.endsWith('.md')) {
+    // The appendix is prose: each line's text, without the page comment, the code spans, the link
+    // targets, the bare URLs and the table rules.
+    let at = 0;
+    for (const line of src.split('\n')) {
+      const text = line
+        .replace(/<!--[\s\S]*?-->/g, '')
+        .replace(/`[^`]*`/g, '')
+        .replace(/\]\([^)]*\)/g, ']')
+        .replace(/<https?:[^>]*>/g, '')
+        .replace(/^[\s|:-]+$/, '')
+        .replace(/\|/g, ' ');
+      push(text, at, 'text');
+      at += line.length + 1;
+    }
+    return out;
+  }
 
   /** Reads a quoted string from `i` (at the quote); returns [value, index after]. */
   function quoted(i: number): [string, number] {
@@ -454,6 +477,7 @@ describe('copy rules (spec §13)', () => {
     expect(has('src/components/StatusRow.svelte', 'Note', 'attr')).toBe(true);
     expect(has('src/pwa.ts', 'Ready to work offline', 'string')).toBe(true);
     expect(has('src/pages/switches.astro', 'Fault: ', 'string')).toBe(true);
+    expect(has('src/content/handbook/app101.md', 'Multimeter basics', 'text')).toBe(true);
   });
 
   for (const [k, [name, rule]] of Object.entries(RULES)) {
@@ -505,6 +529,8 @@ describe('copy rules: self-test', () => {
     ['q', 'x.astro', '<p>Blink codes are on <a href="/x">the error code page</a>.</p>'],
     ['r', 'x.ts', "const s = 'Fuse F113 feeds G.I. string 2.';"],
     ['r', 'x.svelte', '<p>The G.I. strings dim.</p>'],
+    ['g', 'x.md', '| 470 Ω | as far as the scan is legible |'],
+    ['n', 'x.md', 'The coin door parts list (page 2-30) has it.'],
   ];
   const PASS: [string, string, string][] = [
     ['a', 'x.ts', "el.scrollIntoView({ behavior: 'smooth', block: 'center' });"],
@@ -537,6 +563,8 @@ describe('copy rules: self-test', () => {
     ['q', 'x.ts', "const s = 'The right values are on the Fuses, LEDs and jumpers page.';"],
     ['r', 'x.ts', "const s = 'GI 2, White-Violet';"],
     ['r', 'src/lib/data/en.ts', "const m = { 'G.I. #2 Wht-Vio': 'GI 2, White-Violet' };"],
+    ['a', 'x.md', '[Wire colours](https://example.com/color-chart) <https://x.y/gray>'],
+    ['i', 'x.md', 'The schema is `kit-docs/SCHEMA.md`.'],
   ];
 
   for (const [k, file, src] of FAIL) {
@@ -583,6 +611,12 @@ describe('README copy (spec §13)', () => {
     expect(prose.match(/\b(color|colors|gray|center|centered|labeled|behavior)\b/gi) ?? []).toEqual(
       [],
     );
+  });
+
+  it('says component for a switch, lamp or solenoid; part is a catalogue entry', () => {
+    expect(
+      prose.match(/.{0,30}\b(selected part|per part|part marked|part pulses)\b.{0,30}/gi) ?? [],
+    ).toEqual([]);
   });
 
   it('names the flipper switches by the connectors the data wires them to', () => {

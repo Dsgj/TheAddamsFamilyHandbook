@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { TABLE_LABEL } from '~/lib/copy';
@@ -323,6 +323,15 @@ describe('structure lint', () => {
         ),
       ),
     );
+  });
+
+  it('(u) every repo path the README names exists (AR3-15)', () => {
+    const readme = readFileSync('README.md', 'utf8');
+    const paths = [...readme.matchAll(/\b(?:src|tests|scripts|public|docs|kit-docs)\/[\w./[\]-]*/g)]
+      .map((m) => m[0].replace(/[.,]$/, ''))
+      .filter((p) => !p.includes('*'));
+    expect(paths.length).toBeGreaterThan(20);
+    expect(paths.filter((p) => !existsSync(p))).toEqual([]);
   });
 
   it('(control) every rule above still matches inside its home, so none passes vacuously', () => {
