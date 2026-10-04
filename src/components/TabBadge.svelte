@@ -9,28 +9,22 @@
    */
   import { onMount } from 'svelte';
   import { agree } from '~/lib/copy';
-  import { componentKey } from '~/lib/model/key';
   import { allStatuses } from '~/lib/model/status.svelte';
+  import { shopKeys } from '~/lib/shop-keys';
 
   let { pill = false }: { pill?: boolean } = $props();
 
   let hydrated = $state(false);
   let host = $state<HTMLElement | null>(null);
 
-  /** `kind:id` of every orderable component, from the shell's JSON script (Base.astro). */
+  /** `kind:id` of every component the list can show, from the shell's JSON script (shop-keys.ts). */
   let known = $state(new Set<string>());
   const count = $derived(
     hydrated ? allStatuses().filter((s) => s.status === 'fault' && known.has(s.id)).length : 0,
   );
 
   onMount(() => {
-    const ids = JSON.parse(document.getElementById('tafh-shop')?.textContent ?? '{}') as Record<
-      string,
-      string[]
-    >;
-    known = new Set(
-      Object.entries(ids).flatMap(([kind, list]) => list.map((id) => componentKey(kind, id))),
-    );
+    known = shopKeys();
     hydrated = true;
   });
 

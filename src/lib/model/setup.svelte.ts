@@ -1,6 +1,6 @@
 import { untrack } from 'svelte';
 import type { SetupEntry } from './types';
-import { nextSetup, nowIso } from '~/lib/status-io';
+import { cleanSetup, nextSetup, nowIso } from '~/lib/status-io';
 import {
   BACKUP_KEYS,
   deferEntry,
@@ -19,7 +19,7 @@ import {
  */
 const KEY = BACKUP_KEYS.setup;
 
-const read = () => readEntries<SetupEntry>(KEY);
+const read = () => readEntries<SetupEntry>(KEY, undefined, cleanSetup);
 const state = $state<{ items: Record<string, SetupEntry> }>({ items: read() });
 
 if (typeof window !== 'undefined')

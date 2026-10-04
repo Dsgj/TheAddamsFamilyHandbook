@@ -141,13 +141,46 @@ export function readJson<T>(
   }
 }
 
-/** A map-shaped key (status, setup, verify): a plain object, never an array. */
-export const readEntries = <V>(key: string, legacyKey?: string): Entries<V> =>
-  readJson<Entries<V>>(key, {}, { legacyKey, isShape: (v): v is Entries<V> => isRecord(v) });
+/** The default cleaner: keeps everything but `null`, which JSON can hold and no store writes. */
+const keepValue = <V>(v: unknown): V | undefined =>
+  v === null || v === undefined ? undefined : (v as V);
 
-/** A list key (recent, viewed), cut to `max`. */
-export const readList = <T>(key: string, max: number): T[] =>
-  readJson<T[]>(key, [], { isShape: (v): v is T[] => Array.isArray(v) }).slice(0, max);
+/**
+ * A map-shaped key (status, setup, verify): a plain object, never an array. Each entry goes through
+ * `clean`, which returns the entry to keep or undefined to drop it (by default only `null` is
+ * dropped; the stores pass status-io's cleaners, which also tidy the shape). A damaged or hand-edited
+ * entry is dropped rather than thrown on, so it breaks no island that reads the key (CO3-01); the
+ * key's next write leaves it out.
+ */
+export function readEntries<V>(
+  key: string,
+  legacyKey?: string,
+  clean: (key: string, v: unknown) => V | undefined = (_k, v) => keepValue<V>(v),
+): Entries<V> {
+  const raw = readJson<Entries<unknown>>(key, {}, { legacyKey, isShape: isRecord });
+  const out: Entries<V> = {};
+  for (const [k, v] of Object.entries(raw)) {
+    const c = clean(k, v);
+    if (c !== undefined) out[k] = c;
+  }
+  return out;
+}
+
+/** A list key (recent, viewed), cut to `max`. Items `clean` drops (by default `null`) are left out. */
+export function readList<T>(
+  key: string,
+  max: number,
+  clean: (v: unknown) => T | undefined = keepValue,
+): T[] {
+  const out: T[] = [];
+  for (const v of readJson<unknown[]>(key, [], {
+    isShape: (x): x is unknown[] => Array.isArray(x),
+  })) {
+    const c = clean(v);
+    if (c !== undefined) out.push(c);
+  }
+  return out.slice(0, max);
+}
 
 // Watchers ------------------------------------------------------------------------------------
 

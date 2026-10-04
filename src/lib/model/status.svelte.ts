@@ -1,7 +1,7 @@
 import { untrack } from 'svelte';
 import { componentKey } from '~/lib/model/key';
 import type { ComponentStatus, Kind, StatusValue } from './types';
-import { nextStatus, nowIso } from '~/lib/status-io';
+import { cleanStatus, nextStatus, nowIso } from '~/lib/status-io';
 import {
   BACKUP_KEYS,
   deferEntry,
@@ -25,7 +25,7 @@ import {
 const KEY = BACKUP_KEYS.status;
 const LEGACY_KEY = LEGACY_KEYS.status;
 
-const read = () => readEntries<ComponentStatus>(KEY, LEGACY_KEY);
+const read = () => readEntries<ComponentStatus>(KEY, LEGACY_KEY, cleanStatus);
 const state = $state<{ items: Record<string, ComponentStatus> }>({ items: read() });
 
 // Own writes and outside changes (another tab, a bfcache restore). Watchers run inside whatever

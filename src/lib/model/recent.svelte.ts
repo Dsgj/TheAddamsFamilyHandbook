@@ -32,22 +32,35 @@ const KEY = KEYS.recent;
 const VIEWED_KEY = KEYS.viewed;
 const RECENT_MAX = 8;
 
-const load = <T>(key: string) => readList<T>(key, RECENT_MAX);
 const isList = <T>(v: unknown): v is T[] => Array.isArray(v);
+const isRecord = (v: unknown): v is Record<string, unknown> =>
+  typeof v === 'object' && v !== null && !Array.isArray(v);
+const str = (v: unknown): v is string => typeof v === 'string';
+/** An entry as this device wrote it. Anything else in a list (a null, a hand-edited line) is dropped (CO3-01). */
+const asRecent = (v: unknown): RecentEntry | undefined =>
+  isRecord(v) && str(v.input) && str(v.summary) && str(v.at)
+    ? (v as unknown as RecentEntry)
+    : undefined;
+const asViewed = (v: unknown): ViewedEntry | undefined =>
+  isRecord(v) && str(v.kind) && str(v.id) && str(v.code) && str(v.name) && str(v.at)
+    ? (v as unknown as ViewedEntry)
+    : undefined;
+type Clean<T> = (v: unknown) => T | undefined;
+const load = <T>(key: string, clean: Clean<T>) => readList<T>(key, RECENT_MAX, clean);
 
-const state = $state<{ items: RecentEntry[] }>({ items: load<RecentEntry>(KEY) });
-const viewed = $state<{ items: ViewedEntry[] }>({ items: load<ViewedEntry>(VIEWED_KEY) });
+const state = $state<{ items: RecentEntry[] }>({ items: load(KEY, asRecent) });
+const viewed = $state<{ items: ViewedEntry[] }>({ items: load(VIEWED_KEY, asViewed) });
 
 /** Replaces the list only when storage holds something else, so a resync fires nothing new. */
-function follow<T>(list: { items: T[] }, key: string) {
+function follow<T>(list: { items: T[] }, key: string, clean: Clean<T>) {
   untrack(() => {
-    const fresh = load<T>(key);
+    const fresh = load(key, clean);
     if (JSON.stringify(list.items) !== JSON.stringify(fresh)) list.items = fresh;
   });
 }
 if (typeof window !== 'undefined') {
-  watch(KEY, () => follow(state, KEY));
-  watch(VIEWED_KEY, () => follow(viewed, VIEWED_KEY));
+  watch(KEY, () => follow(state, KEY, asRecent));
+  watch(VIEWED_KEY, () => follow(viewed, VIEWED_KEY, asViewed));
 }
 
 /** Whitespace collapsed, upper-cased: "check switch 32" and "CHECK  SWITCH 32" are one entry. */
@@ -78,7 +91,7 @@ export function recordRecent(input: string, summary: string, at = nowIso()) {
     (fresh) =>
       [
         { input: text, summary, at },
-        ...fresh.filter((e) => normalizeInput(e.input) !== norm),
+        ...fresh.filter((e) => asRecent(e) && normalizeInput(e.input) !== norm),
       ].slice(0, RECENT_MAX),
     { isShape: isList },
   );
@@ -100,7 +113,7 @@ export function recordViewed(entry: Omit<ViewedEntry, 'at'>, at = nowIso()) {
     (fresh) =>
       [
         { ...entry, at },
-        ...fresh.filter((v) => !(v.kind === entry.kind && v.id === entry.id)),
+        ...fresh.filter((v) => asViewed(v) && !(v.kind === entry.kind && v.id === entry.id)),
       ].slice(0, RECENT_MAX),
     { isShape: isList },
   );

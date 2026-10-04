@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- Device data that has been damaged or hand-edited no longer breaks the app:
+  a `null` or malformed entry under a saved status, setting, Verify tick,
+  recent search or viewed component is dropped on read, so every page still
+  opens and Clear all still clears. A restored file's keys are spelt the way
+  the app spells them (`coil:7` is `coil:07`), entries for components the app
+  has no row for are skipped and the restore message says how many, and the
+  home's open-faults count only counts components the Shopping list shows.
+  Merging a backup keeps the status that was set last by the service logs, so
+  a note typed later on one device no longer undoes a Fault marked on the
+  other. A picked file the browser cannot read says so instead of failing
+  silently.
 - The Workshop tab's shopping-list count shows on a page that keeps the
   browser busy too: it waits at most 200 ms for an idle moment, as it
   already did in Safari.

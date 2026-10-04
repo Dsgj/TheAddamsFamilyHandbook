@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onDestroy, tick } from 'svelte';
+  import { onDestroy, onMount, tick } from 'svelte';
   import { clearReading, READING_KEY, readReading } from '~/lib/model/reading';
   import {
     clearRecent,
@@ -13,6 +13,7 @@
   import { clearVerify, verifyTicks } from '~/lib/model/verify.svelte';
   import { agree, plural } from '~/lib/copy';
   import { later } from '~/lib/later';
+  import { shopKeys } from '~/lib/shop-keys';
   import { BackupError, localIsoDate } from '~/lib/status-io';
   import { watch } from '~/lib/storage';
 
@@ -46,6 +47,9 @@
    * hearing the warning); then it lapses when focus moves on, so focus never drops to the page.
    */
   let lapsed = false;
+  /** Every component the app has a row for: a hand-made file's other keys are skipped, and said so (CO3-02). */
+  let known = new Set<string>();
+  onMount(() => (known = shopKeys()));
 
   // One handle each, so a message said 3 s after another still gets its full 4 s.
   const msgTimer = later();
@@ -76,11 +80,12 @@
 
   function restore(text: string, name: string, how: 'merge' | 'replace') {
     try {
-      const n = importBackup(text, how);
+      const n = importBackup(text, how, known);
       const parts = [plural(n.components, 'component')];
       if (n.settings) parts.push(plural(n.settings, 'setting'));
       if (n.verified) parts.push(plural(n.verified, 'check'));
-      say(`${parts.join(' and ')} restored from ${name}`);
+      const skipped = n.skipped ? `, ${plural(n.skipped, 'unknown component')} skipped` : '';
+      say(`${parts.join(' and ')} restored from ${name}${skipped}`);
     } catch (e) {
       const reason = e instanceof BackupError ? e.reason : '';
       say(
@@ -99,12 +104,19 @@
   async function onFile() {
     const f = file?.files?.[0];
     if (!f) return;
-    const text = await f.text();
     if (file) file.value = '';
+    let text: string;
+    try {
+      text = await f.text();
+    } catch {
+      // The browser could not read the picked file (gone, or a cloud file that is offline) (CO3-08).
+      say('Could not read that file.', true);
+      return;
+    }
     pending = null;
     let lost = 0;
     try {
-      lost = mode === 'replace' ? replaceLoss(text) : 0;
+      lost = mode === 'replace' ? replaceLoss(text, known) : 0;
     } catch {
       /* not a usable backup: restore() below says why */
     }

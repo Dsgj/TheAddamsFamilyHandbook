@@ -1,3 +1,4 @@
+import { componentKey, parseComponentKey } from './model/key';
 import type { ComponentStatus, SetupEntry, StatusEvent, StatusValue } from './model/types';
 
 export const HISTORY_MAX = 10;
@@ -17,6 +18,18 @@ interface StatusExport {
 
 const VALUES: ReadonlySet<string> = new Set<StatusValue | ''>(['ok', 'fault', 'untested', '']);
 const KEY_RE = /^(switch|lamp|coil):[A-Z0-9]{1,3}$/;
+
+/**
+ * The key as the app spells it, from one a hand-made file may spell loosely: `coil:7` is `coil:07`
+ * and `switch:d1` is `switch:D1` (CO3-02). Anything that is no key comes back as it was.
+ */
+export function canonicalKey(key: string): string {
+  const p = parseComponentKey(key);
+  if (!p) return key;
+  let id = p.id.toUpperCase();
+  if (p.kind === 'coil' && /^\d$/.test(id)) id = `0${id}`;
+  return componentKey(p.kind, id);
+}
 
 /** Appends a status change to the log, dropping repeats of the same status and the oldest entries. */
 export function appendHistory(
@@ -91,8 +104,15 @@ function tidyHistory(events: StatusEvent[]): StatusEvent[] {
   return [...seen.values()].sort((a, b) => a.at.localeCompare(b.at)).slice(-HISTORY_MAX);
 }
 
-function clean(key: string, v: unknown): ComponentStatus | undefined {
-  if (typeof v !== 'object' || v === null || !KEY_RE.test(key)) return undefined;
+/**
+ * One status entry as the app keeps it, from a stored or imported value, or undefined when the
+ * value is no status entry. The stores read through it, so a damaged entry is dropped rather than
+ * thrown on (CO3-01). The key may be spelt loosely; the entry's id is the canonical one.
+ */
+export function cleanStatus(key: string, v: unknown): ComponentStatus | undefined {
+  if (typeof v !== 'object' || v === null) return undefined;
+  const id = canonicalKey(key);
+  if (!KEY_RE.test(id)) return undefined;
   const o = v as Partial<ComponentStatus>;
   if (!VALUES.has(o.status ?? '')) return undefined;
   const status = (o.status ?? '') as StatusValue | '';
@@ -101,7 +121,7 @@ function clean(key: string, v: unknown): ComponentStatus | undefined {
   // An entry with only a log is what "Fixed" leaves behind (nextStatus keeps it), so keep it too.
   if (!status && !note && !history.length) return undefined;
   const out: ComponentStatus = {
-    id: key,
+    id,
     status,
     note,
     at: typeof o.at === 'string' ? o.at : new Date(0).toISOString(),
@@ -110,7 +130,8 @@ function clean(key: string, v: unknown): ComponentStatus | undefined {
   return out;
 }
 
-function cleanSetup(key: string, v: unknown): SetupEntry | undefined {
+/** One setup entry as the app keeps it, or undefined when the value is none (the store reads through it too). */
+export function cleanSetup(key: string, v: unknown): SetupEntry | undefined {
   if (typeof v !== 'object' || v === null || !key || key.length > 40) return undefined;
   const o = v as Partial<SetupEntry>;
   const value = typeof o.value === 'string' ? o.value : '';
@@ -119,7 +140,8 @@ function cleanSetup(key: string, v: unknown): SetupEntry | undefined {
   return { value, done, at: typeof o.at === 'string' ? o.at : new Date(0).toISOString() };
 }
 
-function cleanVerify(key: string, v: unknown): string | undefined {
+/** One Verify tick (an ISO date) or undefined when the value is none (the store reads through it too). */
+export function cleanVerify(key: string, v: unknown): string | undefined {
   if (!key || key.length > 40 || typeof v !== 'string') return undefined;
   return Number.isFinite(Date.parse(v)) ? v : undefined;
 }
@@ -130,6 +152,8 @@ interface Backup {
   setup?: Record<string, SetupEntry>;
   /** Undefined when the file predates version 2, so an import leaves the Verify ticks alone. */
   verify?: Record<string, string>;
+  /** Keys of the file's status entries the catalogue has no row for, left out of `items` (CO3-02). */
+  skipped?: string[];
 }
 
 /** Why a file cannot be read as a backup. Nothing on the device has been touched. */
@@ -164,12 +188,37 @@ function section<V>(
 }
 
 /**
+ * The status entries of a file, each under its canonical key. Values that are no status entry are
+ * skipped, and a section with entries but no valid one is refused, as for the other sections. Given
+ * the catalogue `known`, entries for components the app has no row for go to `skipped` instead of
+ * `items`, so the restore can say so (CO3-02); without it every well-formed key is taken.
+ */
+function statusSection(
+  raw: Record<string, unknown>,
+  known?: ReadonlySet<string>,
+): { items: Record<string, ComponentStatus>; skipped: string[] } {
+  const items: Record<string, ComponentStatus> = {};
+  const skipped: string[] = [];
+  let valid = 0;
+  for (const [k, v] of Object.entries(raw)) {
+    const c = cleanStatus(k, v);
+    if (!c) continue;
+    valid++;
+    if (known && !known.has(c.id)) skipped.push(c.id);
+    else items[c.id] = c;
+  }
+  if (Object.keys(raw).length && !valid) throw new BackupError('malformed');
+  return { items, skipped };
+}
+
+/**
  * Parses an export, checking everything before anything is written. Accepts the wrapped format
  * (`app` must be 'tafh' when present, `version` at most EXPORT_VERSION, 1 when absent) and, for
  * hand-made files, a bare items object whose every key is a component key. Malformed entries are
- * skipped. Throws a BackupError for anything else, so a wrong file never replaces the device data.
+ * skipped, and so are entries for components `known` (the catalogue's keys) lacks, which are listed
+ * in `skipped`. Throws a BackupError for anything else, so a wrong file never replaces the device data.
  */
-export function deserializeAll(json: string): Backup {
+export function deserializeAll(json: string, known?: ReadonlySet<string>): Backup {
   let raw: unknown;
   try {
     raw = JSON.parse(json);
@@ -179,8 +228,12 @@ export function deserializeAll(json: string): Backup {
   if (!isRecord(raw)) throw new BackupError('not-backup');
   if (!('app' in raw || 'version' in raw || 'items' in raw)) {
     const keys = Object.keys(raw);
-    if (!keys.length || !keys.every((k) => KEY_RE.test(k))) throw new BackupError('not-backup');
-    return { items: section(raw, clean) };
+    if (!keys.length || !keys.every((k) => KEY_RE.test(canonicalKey(k))))
+      throw new BackupError('not-backup');
+    const bare = statusSection(raw, known);
+    return bare.skipped.length
+      ? { items: bare.items, skipped: bare.skipped }
+      : { items: bare.items };
   }
   if ('app' in raw && raw.app !== 'tafh') throw new BackupError('foreign');
   const version = raw.version ?? 1;
@@ -191,7 +244,9 @@ export function deserializeAll(json: string): Backup {
   if (!isRecord(items)) throw new BackupError('malformed');
   if (setup !== undefined && !isRecord(setup)) throw new BackupError('malformed');
   if (verify !== undefined && !isRecord(verify)) throw new BackupError('malformed');
-  const out: Backup = { items: section(items, clean) };
+  const st = statusSection(items, known);
+  const out: Backup = { items: st.items };
+  if (st.skipped.length) out.skipped = st.skipped;
   if (setup) out.setup = section(setup, cleanSetup);
   if (verify) out.verify = section(verify, cleanVerify);
   return out;
@@ -264,7 +319,24 @@ export function lostEntries(cur: Snapshot, next: Snapshot): number {
   return lost(cur.items, next.items) + lost(cur.setup, next.setup) + lost(cur.verify, next.verify);
 }
 
-/** Merge: the newer `at` wins per component; histories are unioned by timestamp. */
+/** When an entry's status was last set: its last log event, else its time when it holds a status, else never. */
+function statusAt(s: ComponentStatus): string | undefined {
+  const last = s.history?.[s.history.length - 1];
+  if (last) return last.at;
+  return s.status ? s.at : undefined;
+}
+
+/** An entry's log, or the one event its status and time imply when it has none (a hand-made or pre-log entry). */
+function events(s: ComponentStatus): StatusEvent[] {
+  if (s.history?.length) return s.history;
+  return s.status ? [{ status: s.status, at: s.at }] : [];
+}
+
+/**
+ * Merge, per component: the status set last wins, by the logs, so a note typed later on one device
+ * cannot undo a Fault marked on the other (CO3-03; `at` moves on a note edit too); the note and `at`
+ * come from the entry edited last; the logs are unioned by timestamp.
+ */
 export function merge(
   current: Record<string, ComponentStatus>,
   incoming: Record<string, ComponentStatus>,
@@ -273,10 +345,16 @@ export function merge(
   for (const [k, inc] of Object.entries(incoming)) {
     const cur = out[k];
     const newer = !cur || inc.at > cur.at ? inc : cur;
-    const history = tidyHistory([...(cur?.history ?? []), ...(inc.history ?? [])]);
-    const next: ComponentStatus = { ...newer };
+    let status = newer.status;
+    if (cur) {
+      const ia = statusAt(inc);
+      const ca = statusAt(cur);
+      if (ia !== ca)
+        status = ca === undefined || (ia !== undefined && ia > ca) ? inc.status : cur.status;
+    }
+    const history = tidyHistory([...(cur ? events(cur) : []), ...events(inc)]);
+    const next: ComponentStatus = { id: newer.id, status, note: newer.note, at: newer.at };
     if (history.length) next.history = history;
-    else delete next.history;
     out[k] = next;
   }
   return out;

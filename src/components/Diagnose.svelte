@@ -14,6 +14,7 @@
   import { liveText } from '~/lib/live.svelte';
   import { media } from '~/lib/media';
   import { shareText } from '~/lib/share';
+  import { shopKeys } from '~/lib/shop-keys';
   import { whenLabel } from '~/lib/status-io';
   import { allStatuses, getStatus } from '~/lib/model/status.svelte';
   import { lampSharedCauses, sharedCauses } from '~/lib/shared-cause';
@@ -45,6 +46,8 @@
     },
   );
   let hydrated = $state(false);
+  /** `kind:id` of every component the Shopping list can show, read on mount (shop-keys.ts). */
+  let known = $state(new Set<string>());
   let canPaste = $state(false);
   let field: HTMLTextAreaElement | undefined = $state();
   let resultsHead: HTMLHeadingElement | undefined = $state();
@@ -107,6 +110,7 @@
     // to the one form either way.
     committed = !!q && !!input.trim();
     writeUrl();
+    known = shopKeys();
     hydrated = true;
     // Once the results are in the page, motion.ts can put back the scroll offset this entry had:
     // its first try, before the cards existed, could not reach it (UX2-01).
@@ -190,9 +194,13 @@
       .join(' '),
   );
   const recent = $derived(hydrated ? recentEntries() : []);
-  /** Faults marked on this device: the home leads to them (UX2-10). */
+  /**
+   * Faults marked on this device: the home leads to them (UX2-10), counted as the Shopping list
+   * counts them, so a key the catalogue lacks (a hand-made backup) is not a row the list will not
+   * show (CO3-02).
+   */
   const openFaults = $derived(
-    hydrated ? allStatuses().filter((s) => s.status === 'fault').length : 0,
+    hydrated ? allStatuses().filter((s) => s.status === 'fault' && known.has(s.id)).length : 0,
   );
 
   const EXAMPLES = ['32 68 F1 F3', 'Check Switch 32', 'L11 L12 L13', 'SOL 7'];

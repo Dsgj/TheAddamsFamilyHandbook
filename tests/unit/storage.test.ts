@@ -90,6 +90,30 @@ describe('read-modify-write', () => {
     expect(s.readList('d', 2)).toEqual([1, 2]);
   });
 
+  it('drops a null entry or item, and runs the cleaner it is given (CO3-01)', async () => {
+    const s = await load();
+    store.setItem(
+      'tafh:status',
+      JSON.stringify({ 'switch:32': null, 'lamp:11': { status: 'fault' } }),
+    );
+    expect(s.readEntries('tafh:status')).toEqual({ 'lamp:11': { status: 'fault' } });
+    expect(
+      s.readEntries<string>('tafh:status', undefined, (k, v) =>
+        k === 'lamp:11' && typeof v === 'object' ? k : undefined,
+      ),
+    ).toEqual({ 'lamp:11': 'lamp:11' });
+    store.setItem('tafh:recent', JSON.stringify([null, { input: 'A' }, 'junk']));
+    expect(s.readList('tafh:recent', 8)).toEqual([{ input: 'A' }, 'junk']);
+    const strings = (v: unknown) => (typeof v === 'string' ? v : undefined);
+    expect(s.readList<string>('tafh:recent', 8, strings)).toEqual(['junk']);
+    // The key's next write leaves the dropped entry out.
+    s.updateEntry<unknown>('tafh:status', 'coil:07', () => ({ status: 'ok' }));
+    expect(parse('tafh:status')).toEqual({
+      'lamp:11': { status: 'fault' },
+      'coil:07': { status: 'ok' },
+    });
+  });
+
   it('updateJson rewrites a list from its fresh value', async () => {
     const s = await load();
     store.setItem('tafh:recent', JSON.stringify(['theirs']));

@@ -3,6 +3,8 @@ import {
   appendHistory,
   applyBackup,
   BackupError,
+  canonicalKey,
+  cleanStatus,
   deserialize,
   deserializeAll,
   HISTORY_MAX,
@@ -85,6 +87,90 @@ describe('merge', () => {
     expect(Object.keys(m).sort()).toEqual(['coil:07', 'lamp:11', 'switch:32']);
     expect(m['switch:32']?.status).toBe('ok');
     expect(m['switch:32']?.history?.map((e) => e.status)).toEqual(['fault', 'ok']);
+  });
+
+  it('keeps a Fault marked on one device over a note typed later on the other (CO3-03)', () => {
+    const t = ['2026-09-20T10:00:00.000Z', '2026-09-21T10:00:00.000Z', '2026-09-22T10:00:00.000Z'];
+    const marked: ComponentStatus = {
+      ...st('switch:32', 'fault', t[1]!),
+      history: [{ status: 'fault', at: t[1]! }],
+    };
+    // The other device never marked it, and typed a note later.
+    const noted: ComponentStatus = { ...st('switch:32', '', t[2]!), note: 'sticky' };
+    for (const [cur, inc] of [
+      [marked, noted],
+      [noted, marked],
+    ]) {
+      const m = merge({ 'switch:32': cur! }, { 'switch:32': inc! })['switch:32']!;
+      expect(m.status).toBe('fault');
+      expect(m.note).toBe('sticky');
+      expect(m.at).toBe(t[2]);
+      expect(m.history).toEqual([{ status: 'fault', at: t[1] }]);
+    }
+    // The other device had marked it OK before the Fault: the later mark wins, the log has both.
+    const okThenNote: ComponentStatus = {
+      ...st('switch:32', 'ok', t[2]!),
+      note: 'sticky',
+      history: [{ status: 'ok', at: t[0]! }],
+    };
+    const m = merge({ 'switch:32': marked }, { 'switch:32': okThenNote })['switch:32']!;
+    expect(m.status).toBe('fault');
+    expect(m.note).toBe('sticky');
+    expect(m.history?.map((e) => e.status)).toEqual(['ok', 'fault']);
+    // A later mark wins whatever the note's time on the other device.
+    const okLater: ComponentStatus = {
+      ...st('switch:32', 'ok', t[2]!),
+      history: [{ status: 'ok', at: t[2]! }],
+    };
+    const noted2 = { ...marked, at: t[2]!, note: 'x' };
+    expect(merge({ 'switch:32': noted2 }, { 'switch:32': okLater })['switch:32']?.status).toBe(
+      'ok',
+    );
+  });
+
+  it('gives an entry without a log the one event its status implies', () => {
+    const m = merge({}, { 'coil:07': st('coil:07', 'fault', '2026-09-22') })['coil:07']!;
+    expect(m.history).toEqual([{ status: 'fault', at: '2026-09-22' }]);
+    const noteOnly = merge({}, { 'coil:07': { ...st('coil:07', '', '2026-09-22'), note: 'x' } });
+    expect(noteOnly['coil:07']?.history).toBeUndefined();
+  });
+});
+
+describe('damaged and hand-made entries (CO3-01, CO3-02)', () => {
+  const fault = { status: 'fault', at: '2026-01-01' };
+  it('cleanStatus drops a null or junk entry and keeps a real one', () => {
+    expect(cleanStatus('switch:32', null)).toBeUndefined();
+    expect(cleanStatus('switch:32', 5)).toBeUndefined();
+    expect(cleanStatus('switch:32', { status: 'nope' })).toBeUndefined();
+    expect(cleanStatus('x:1', fault)).toBeUndefined();
+    expect(cleanStatus('switch:32', fault)?.status).toBe('fault');
+  });
+  it('spells a loose key the way the app does', () => {
+    expect(canonicalKey('coil:7')).toBe('coil:07');
+    expect(canonicalKey('switch:d1')).toBe('switch:D1');
+    expect(canonicalKey('lamp:11')).toBe('lamp:11');
+    expect(canonicalKey('junk')).toBe('junk');
+    const read = deserialize(JSON.stringify({ 'coil:7': fault }));
+    expect(Object.keys(read)).toEqual(['coil:07']);
+    expect(read['coil:07']?.id).toBe('coil:07');
+  });
+  it('skips the keys the catalogue has no row for, and says which', () => {
+    const known = new Set(['switch:32', 'coil:07']);
+    const file = JSON.stringify({ 'switch:32': fault, 'switch:99': fault, 'coil:7': fault });
+    const b = deserializeAll(file, known);
+    expect(Object.keys(b.items).sort()).toEqual(['coil:07', 'switch:32']);
+    expect(b.skipped).toEqual(['switch:99']);
+    // Without the catalogue every well-formed key is taken, as before.
+    expect(deserializeAll(file).skipped).toBeUndefined();
+    expect(Object.keys(deserializeAll(file).items)).toHaveLength(3);
+    // A file of only unknown components is not malformed: nothing to restore, all of it skipped.
+    const wrapped = JSON.stringify({ app: 'tafh', version: 1, items: { 'switch:99': fault } });
+    const none = deserializeAll(wrapped, known);
+    expect(none.items).toEqual({});
+    expect(none.skipped).toEqual(['switch:99']);
+    expect(() => applyBackup({ items: {}, setup: {}, verify: {} }, none, 'replace')).toThrow(
+      'empty',
+    );
   });
 });
 

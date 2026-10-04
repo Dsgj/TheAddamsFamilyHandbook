@@ -416,10 +416,11 @@ test('a log that repeats a moment still opens, and an import keeps one of each (
       { status: 'fault', at },
     ],
   };
-  // Straight into storage, as a hand-edited copy would land: the page must still draw it.
+  // Straight into storage, as a hand-edited copy would land: the page must still draw it. The store
+  // reads through the import's cleaner (CO3-01), so the repeat is folded away on the way in.
   await seed(page, { 'switch:32': twice });
   await gotoHydrated(page, '/switch/32');
-  await expect(page.getByRole('list', { name: 'Service log' }).locator('li')).toHaveCount(2);
+  await expect(page.getByRole('list', { name: 'Service log' }).locator('li')).toHaveCount(1);
   // Through "Restore from backup", the same log comes back with the repeat folded away.
   await seed(page, {});
   await gotoHydrated(page, '/shopping', ['DeviceData']);
@@ -480,4 +481,50 @@ test('the service log and Verify date in local time, with the year', async ({ pa
   await expect(
     page.locator('input.verify-check[data-id="flasher-count"]').locator('xpath=ancestor::li'),
   ).toContainText('verified 21 Sep 2026');
+});
+
+test('a damaged entry on the device breaks no page, and Clear all still clears (CO3-01)', async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(String(e)));
+  await seed(page, { 'switch:32': null, 'lamp:11': fault('lamp:11') });
+  await page.evaluate(() => {
+    const at = '2026-09-23T00:00:00Z';
+    localStorage.setItem(
+      'tafh:recent',
+      JSON.stringify([null, { input: 'SWITCH 32', summary: '1 switch', at }]),
+    );
+    localStorage.setItem('tafh:viewed', JSON.stringify([null, 5]));
+  });
+  await gotoHydrated(page, '/');
+  await expect(page.locator('#main')).toContainText('SWITCH 32');
+  await gotoHydrated(page, '/switch/32');
+  await expect(page.locator('h1')).toBeVisible();
+  await gotoHydrated(page, '/shopping', ['DeviceData']);
+  await expect(page.locator('.device')).toContainText('1 component recorded');
+  await page.getByRole('button', { name: 'Clear all' }).click();
+  await page.getByRole('button', { name: 'Really clear all?' }).click();
+  await expect(page.locator('.device')).toContainText('Nothing saved on this device yet.');
+  expect(errors).toEqual([]);
+});
+
+test('a restore skips the components the app has no row for, and spells loose keys (CO3-02)', async ({
+  page,
+}) => {
+  await seed(page, {});
+  await gotoHydrated(page, '/shopping', ['DeviceData']);
+  const entry = { status: 'fault', at: '2026-09-23T00:00:00Z' };
+  await page.getByLabel('Restore from backup').setInputFiles({
+    name: 'hand-made.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(
+      JSON.stringify({ 'switch:32': entry, 'switch:99': entry, 'coil:7': entry }),
+    ),
+  });
+  await expect(page.getByRole('status')).toHaveText(
+    '2 components restored from hand-made.json, 1 unknown component skipped',
+  );
+  expect(Object.keys((await stored(page)) as Stored).sort()).toEqual(['coil:07', 'switch:32']);
+  await expect(page.locator('.device')).toContainText('2 components recorded');
 });

@@ -1,5 +1,5 @@
 import { untrack } from 'svelte';
-import { nowIso } from '~/lib/status-io';
+import { cleanVerify, nowIso } from '~/lib/status-io';
 import {
   BACKUP_KEYS,
   readEntries,
@@ -18,7 +18,7 @@ const KEY = BACKUP_KEYS.verify;
 
 type VerifyTicks = Record<string, string>;
 
-const read = () => readEntries<string>(KEY);
+const read = () => readEntries<string>(KEY, undefined, cleanVerify);
 const state = $state<{ items: VerifyTicks }>({ items: read() });
 
 if (typeof window !== 'undefined')
