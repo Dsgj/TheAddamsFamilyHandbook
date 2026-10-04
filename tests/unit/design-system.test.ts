@@ -137,7 +137,6 @@ const EM_ALLOWED: [string, string][] = [
   ['src/styles/print.css', "a[href^='http']::after"],
   ['src/components/ShoppingList.svelte', '.total .dmd'],
   ['src/components/ShoppingList.svelte', '.sw.armed .pane'],
-  ['src/components/SetupGuide.svelte', '.n'],
 ];
 /* The two 2px marker details on the map are shapes, not steps of the scale (spec §4). */
 const RADIUS_ALLOWED: [string, string][] = [

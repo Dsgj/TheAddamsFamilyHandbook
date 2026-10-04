@@ -16,7 +16,7 @@ const groups = [...new Set(ITEMS.map((i) => i.group))];
   <h1>Verify</h1>
   <p class="muted">
     Places where the manual's pages and its parts list disagree, or where the data was placed by
-    hand. Tick an item when you have checked it on the machine. Ticks stay on this device.
+    hand. Tick an item once you have checked it on the machine; ticks stay on this device.
   </p>
   <Progress done={0} total={ITEMS.length} what="verified" data-verify-count="" />
   {

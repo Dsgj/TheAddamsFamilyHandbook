@@ -451,6 +451,34 @@ test.describe('P2-4: matrices (spec §9.6)', () => {
       }
     });
   }
+  for (const width of [1000, 1024, 1280, 1440]) {
+    test(`at ${width} every column header has one height, with a body-face index`, async ({
+      page,
+      isMobile,
+    }) => {
+      test.skip(isMobile, 'a desktop width');
+      for (const url of MATRICES) {
+        await at(page, width, url);
+        // Audit P2 item 10, VL3-06: at 1000, 1024 and 1280 'Yellow-Orange' wrapped to a second
+        // line where 'Yellow-Red' did not, so some headers were 108 tall and others 90. A two-word
+        // colour name now breaks after its hyphen in every column header.
+        const heights = await page
+          .locator('table.matrix thead .hd')
+          .evaluateAll((hs) => hs.map((h) => Math.round(h.getBoundingClientRect().height)));
+        expect(new Set(heights).size, `${url} ${heights.join(' ')}`).toBe(1);
+        const labels = await page
+          .locator('table.matrix thead .hd .wire > span')
+          .evaluateAll((ss) => ss.map((s) => Math.round(s.getBoundingClientRect().height)));
+        expect(new Set(labels).size, `${url} ${labels.join(' ')}`).toBe(1);
+        // VP3-04: the display face drew the index 1 as a small-caps I.
+        const face = await page
+          .locator('table.matrix .hd .n')
+          .first()
+          .evaluate((n) => getComputedStyle(n).fontFamily);
+        expect(face, url).not.toMatch(/Fell/);
+      }
+    });
+  }
   for (const width of [320, 360, 412]) {
     test.describe(`${width}px`, () => {
       onWidth(width);

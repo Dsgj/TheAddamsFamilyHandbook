@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Tables: the matrix index and the setup step numbers are plain numerals (the
+  display face drew a 1 like an I), the Fault heading stays in view over the
+  ticks on a phone, matrix column headers share one height at every desktop
+  width, and Solenoids and flashers opens with one line, its sources folded
+  under "Source and notes".
 - Top bar: from 1280 px the back link and the title keep a 16 px gap, a page
   with its own heading shows the bar title only once that heading has
   scrolled under the bar, and Manuals and Parts are laid out like the

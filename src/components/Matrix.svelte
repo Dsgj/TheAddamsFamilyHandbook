@@ -252,10 +252,11 @@
     flex-direction: column;
     gap: 2px;
   }
+  /* The index in the body face with tabular figures: in the display face a lone 1 reads as a
+     small-caps I (audit P2 item 10, VP3-04). */
   .hd .n {
     font: var(--t-head);
-    font-family: var(--font-display);
-    font-weight: 500;
+    font-variant-numeric: tabular-nums;
     color: var(--ink);
   }
   /* Size only: the pin is .mono, and each of its codes a nowrap .tok. */
@@ -405,6 +406,13 @@
       align-items: flex-start;
       gap: 4px;
       white-space: normal;
+    }
+    /* A column header's colour name is as wide as its longer word, so a two-word name breaks
+       after its hyphen at every desktop width, not only where the cell is too narrow for it: at
+       1000, 1024 and 1280 'Yellow-Orange' wrapped to 108 while 'Yellow-Red' stayed 90 (audit P2
+       item 10, VL3-06). The 112 row header never wraps a name. */
+    .colh .hd :global(.wire > span) {
+      width: min-content;
     }
     .rowh .pin .tok {
       display: block;

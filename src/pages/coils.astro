@@ -25,16 +25,24 @@ const GROUP_HEADING: Record<(typeof groups)[number], string> = {
 >
   <h1>Solenoids and flashers</h1>
   <p class="muted">
-    Source: <a href={manualHref('ops', 108)}>Solenoid/Flasher Table {pageTitleText('ops', 108)}</a> and{
-      ' '
-    }
-    <a href={manualHref('ops', 2)}>{pageRefText('ops', 2)}</a>. The fuse column is derived from the
-    fuse list on {pageTitleText('ops', 57)}, not printed per coil, except the magnets 16, 23 and 24,
-    whose 5A S.B. fuse is printed in a footnote on {pageTitleText('ops', 2)}. The table lists{' '}
-    {FLASHERS.table} flasher bulbs; the parts list sums to {FLASHERS.parts}. The manual does not say
-    which count is right, so{' '}
-    <a href={href('verify#verify-flasher-count')}>Verify</a> asks you to count them in the machine.
+    Every solenoid, flasher and flipper coil with its wire colours, pins, driver, coil and fuse.
+    Tick Fault to put a coil or flasher on the <a href={href('shopping')}>shopping list</a>.
   </p>
+  <!-- The provenance folds under one line (audit P2 item 10, VP3-18): it opened the page with
+       eight lines on a phone. -->
+  <details class="source">
+    <summary>Source and notes</summary>
+    <p class="prov">
+      Source: <a href={manualHref('ops', 108)}>Solenoid/Flasher Table {pageTitleText('ops', 108)}</a
+      > and{' '}
+      <a href={manualHref('ops', 2)}>{pageRefText('ops', 2)}</a>. The fuse column is derived from
+      the fuse list on {pageTitleText('ops', 57)}, not printed per coil, except the magnets 16, 23
+      and 24, whose 5A S.B. fuse is printed in a footnote on {pageTitleText('ops', 2)}. The table
+      lists {FLASHERS.table} flasher bulbs; the parts list sums to {FLASHERS.parts}. The manual does
+      not say which count is right, so{' '}
+      <a href={href('verify#verify-flasher-count')}>Verify</a> asks you to count them in the machine.
+    </p>
+  </details>
 
   {
     groups.map((g) => (

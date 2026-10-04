@@ -12,7 +12,7 @@ import type { SetupStep } from './setup';
 import { setupStepLabel } from '~/data/setup';
 
 export const CARE_INTRO =
-  'Clean, dry, and look while you are in there. Tick a task when done; the date stays on this device so the next person sees when it was last done. Untick and tick again next time.';
+  'Clean, dry, and look while you are in there. Tick a task when done; the date stays on this device for the next person. Untick and tick again next time.';
 
 export const CARE_WARNING =
   'Never oil or grease a coil plunger, coil sleeve or flipper. No WD-40 or 5-56 anywhere in the machine; the film attracts dust and gums up. The only grease is a dab on the slingshot arm pivots and the ball shooter lane feeder pivots, see Twice a year. Power off before touching connectors or boards. Contact cleaner is for intact contacts that are dirty; a browned, loose or melted connector is replaced, never sprayed. Look and measure first, clean second: handbook appendix A7.';

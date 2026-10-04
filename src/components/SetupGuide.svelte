@@ -144,6 +144,8 @@
   .step h2 {
     margin: 0;
   }
+  /* The step number in the body face with tabular figures: the heading's display face drew a
+     lone 1 as a small-caps I (audit P2 item 10, VP3-04; round-1 VP-18). */
   .n {
     display: inline-block;
     min-width: 1.6em;
@@ -151,7 +153,8 @@
     border: 1px solid var(--brass);
     border-radius: var(--r-xs);
     color: var(--brass-ink);
-    font-size: 0.8em;
+    font: var(--t-head);
+    font-variant-numeric: tabular-nums;
     margin-right: 4px;
   }
   .menu {

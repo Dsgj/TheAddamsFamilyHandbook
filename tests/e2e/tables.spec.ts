@@ -286,11 +286,32 @@ test.describe('one name per thing', () => {
     ['/lamps', 'Thing Multiball'],
     ['/coils', 'Chair Kickout'],
   ] as const) {
-    test(`${path}: the tick column is Fault`, async ({ page }) => {
+    test(`${path}: the tick column is Fault, and its head shows on a phone`, async ({ page }) => {
       await gotoHydrated(page, path);
-      await expect(page.locator('main table th', { hasText: /^Fault$/ }).first()).toBeAttached();
+      const fault = page.locator('main table th', { hasText: /^Fault$/ }).first();
+      await expect(fault).toBeAttached();
       await expect(page.locator('main table th', { hasText: /Broken/ })).toHaveCount(0);
-      await expect(page.getByLabel(`Fault: ${name}`, { exact: true })).toHaveCount(1);
+      const tick = page.getByLabel(`Fault: ${name}`, { exact: true });
+      await expect(tick).toHaveCount(1);
+      // Audit P2 item 10, VP3-05: under 600 the other column heads are for screen readers (1 px
+      // boxes), but Fault stays in view over the ticks, its last letter on the boxes' right edge,
+      // so a row's bare tick at its end has a visible name. From 600 the whole head row shows.
+      if (path === '/switches') await page.getByRole('tab', { name: 'Dedicated' }).click();
+      await expect(fault).toBeVisible();
+      expect((await fault.boundingBox())!.width).toBeGreaterThan(20);
+      if ((page.viewportSize()?.width ?? 1440) < 600) {
+        const textRight = await fault.evaluate((th) => {
+          const r = document.createRange();
+          r.selectNodeContents(th);
+          return r.getBoundingClientRect().right;
+        });
+        // A tick of the head's own table: on /switches the named tick is in the Flippers panel.
+        const own = fault.locator('xpath=ancestor::table[1]').locator('input.fault-check').first();
+        const box = (await own.boundingBox())!;
+        expect(Math.abs(textRight - (box.x + box.width))).toBeLessThanOrEqual(2);
+        const prev = (await fault.locator('xpath=preceding-sibling::th[1]').boundingBox())!;
+        expect(prev.width).toBeLessThanOrEqual(1);
+      }
     });
   }
 
@@ -324,4 +345,20 @@ test.describe('one name per thing', () => {
     await gotoHydrated(page, '/switch/32');
     await expect(page).toHaveTitle('Switch 32, Upper Right Jet · The Addams Family Handbook');
   });
+});
+
+/* P2 item 10 of the app audit, round 3 (VP3-18): /coils opens with one short paragraph and folds
+   its provenance under "Source and notes", a 44 line that opens to the note. */
+test('/coils folds its provenance under Source and notes', async ({ page, browserName }) => {
+  await gotoHydrated(page, '/coils');
+  await expect(page.locator('main > h1 + p')).toContainText('Tick Fault');
+  const details = page.locator('main > details.source');
+  const summary = details.locator('summary');
+  await expect(summary).toHaveText('Source and notes');
+  const note = details.locator('.prov');
+  await expect(note).toBeHidden();
+  expect((await summary.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  await activate(summary, browserName);
+  await expect(note).toBeVisible();
+  await expect(note).toContainText('Solenoid/Flasher Table');
 });

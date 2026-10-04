@@ -7,6 +7,11 @@ test('care ticks keep their date and share the battery tick with setup', async (
   await expect(page.getByRole('status')).toContainText('tasks done');
   // The intro and the counter share one noun (CP3-12).
   await expect(page.locator('.intro')).toContainText('Tick a task');
+  // The step numbers are body-face tabular numerals, not the heading's display face, whose lone 1
+  // read as a small-caps I (audit P2 item 10, VP3-04).
+  const badge = page.locator('.step h2 .n').first();
+  await expect(badge).toHaveText('1');
+  expect(await badge.evaluate((n) => getComputedStyle(n).fontFamily)).not.toMatch(/Fell/);
 
   const balls = page.locator('.item', { hasText: 'Wipe the balls' });
   await expect(balls.getByRole('textbox')).toHaveCount(0);
