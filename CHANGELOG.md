@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- A component page, the Shopping list and the Device data summary no longer
+  show a server default ("Not tested", the pressed Not tested segment, "No
+  status changes yet.", "Nothing marked Fault yet", "Nothing saved on this
+  device yet.") for the moment before the page has read this device's storage.
+  They stay blank until then and show the saved state straight away.
 - A Fault on a component the kit records no part number for (the flipper
   switches F1 to F8) no longer shows as "no part number ()" on the Shopping
   list: the group is labelled "no part number recorded" with nothing in

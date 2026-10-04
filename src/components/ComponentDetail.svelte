@@ -65,7 +65,9 @@
   const kindLine = $derived(capitalise(locationLine(kind, item)));
   const current = $derived(getStatus(kind, item.id));
   const status = $derived<StatusValue | ''>(current?.status ?? '');
-  const statusLabel = $derived(status ? STATUS_LABEL[status] : 'Not tested');
+  /** Blank until mounted: the server cannot know this device's status (SV3-01). */
+  let hydrated = $state(false);
+  const statusLabel = $derived(!hydrated ? '\u00a0' : status ? STATUS_LABEL[status] : 'Not tested');
   const history = $derived((current?.history ?? []).slice().reverse());
   const eventLabel = (st: StatusValue | '') => (st ? STATUS_LABEL[st] : 'Cleared');
 
@@ -83,6 +85,7 @@
   }
 
   onMount(() => {
+    hydrated = true;
     const sub = kindLineOf(kind, item);
     recordViewed({ kind, id: item.id, code, name: item.name, sub });
   });
@@ -226,7 +229,7 @@
         {/each}
       </ol>
     {:else}
-      <p class="gf">No status changes yet.</p>
+      <p class="gf">{hydrated ? 'No status changes yet.' : '\u00a0'}</p>
     {/if}
     <p class="gf">Everything you record stays on this device.</p>
   </section>

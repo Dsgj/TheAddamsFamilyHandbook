@@ -49,7 +49,12 @@
   let lapsed = false;
   /** Every component the app has a row for: a hand-made file's other keys are skipped, and said so (CO3-02). */
   let known = new Set<string>();
-  onMount(() => (known = shopKeys()));
+  /** The summary line is blank until mounted: the server cannot know this device (SV3-01). */
+  let hydrated = $state(false);
+  onMount(() => {
+    known = shopKeys();
+    hydrated = true;
+  });
 
   // One handle each, so a message said 3 s after another still gets its full 4 s.
   const msgTimer = later();
@@ -177,7 +182,7 @@
             {agree(settings, 'setting')} recorded.{/if}
           {#if checks}<span class="mono">{checks}</span>
             {agree(checks, 'check')} verified.{/if}
-          {#if empty}Nothing saved on this device yet.{/if}
+          {#if !hydrated}&nbsp;{:else if empty}Nothing saved on this device yet.{/if}
         </span>
         <span class="sub">
           Download a backup before clearing site data or switching phones, then restore it here.

@@ -30,10 +30,13 @@
 
   let show = $state(false);
   let fallback = $state(false);
-  // Read after mount: navigator is not there at build time.
+  // Read after mount: navigator is not there at build time, and neither is this device's storage,
+  // so the list says nothing until it has mounted (SV3-01).
   let shareable = $state(false);
+  let hydrated = $state(false);
   onMount(() => {
     shareable = canShare();
+    hydrated = true;
   });
 
   /** Shows the text to select and copy by hand when nothing left the page. */
@@ -86,7 +89,9 @@
   }
 </script>
 
-{#if total === 0}
+{#if !hydrated}
+  <div class="bar" aria-busy="true"><p class="total"><span class="dmd">&nbsp;</span></p></div>
+{:else if total === 0}
   <section class="empty card">
     <p>
       Nothing marked Fault yet. Tick Fault on the Switch matrix, Lamp matrix or Solenoids and

@@ -528,3 +528,56 @@ test('a restore skips the components the app has no row for, and spells loose ke
   expect(Object.keys((await stored(page)) as Stored).sort()).toEqual(['coil:07', 'switch:32']);
   await expect(page.locator('.device')).toContainText('2 components recorded');
 });
+
+test.describe('what this device stores never shows a server default first (SV3-01, UX3-08)', () => {
+  /**
+   * The server knows nothing of the device, so until an island has mounted the page says nothing
+   * rather than "Not tested" or "Nothing saved". An observer installed before the page's own
+   * scripts records every text the watched elements show, from the parsed HTML on; in Chromium the
+   * CPU runs four times slower, so hydration comes late enough to catch a flash.
+   */
+  const WATCHED = '.cur, .status .seg [aria-pressed="true"], .total, .empty, .recorded .ttl';
+  const seen = (page: Page) =>
+    page.evaluate(() => (window as unknown as { __seen: string[] }).__seen);
+
+  test.beforeEach(async ({ page, browserName }) => {
+    await seed(page, { 'switch:32': fault('switch:32') });
+    await page.addInitScript((sel) => {
+      const texts: string[] = [];
+      (window as unknown as { __seen: string[] }).__seen = texts;
+      const look = () => {
+        for (const el of document.querySelectorAll(sel)) {
+          const t = (el.textContent ?? '').replace(/\s+/g, ' ').trim();
+          if (t && !texts.includes(t)) texts.push(t);
+        }
+      };
+      new MutationObserver(look).observe(document, {
+        subtree: true,
+        childList: true,
+        characterData: true,
+        attributes: true,
+      });
+    }, WATCHED);
+    if (browserName === 'chromium') {
+      const cdp = await page.context().newCDPSession(page);
+      await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
+    }
+  });
+
+  test('a component page with a saved Fault never reads Not tested', async ({ page }) => {
+    await gotoHydrated(page, '/switch/32');
+    await expect(page.locator('.cur')).toHaveText('Fault');
+    await expect(page.locator('.status .seg [aria-pressed="true"]')).toHaveText('Fault');
+    const texts = await seen(page);
+    expect(texts).toContain('Fault');
+    expect(texts).not.toContain('Not tested');
+  });
+
+  test('the Shopping list and Device data never read empty', async ({ page }) => {
+    await gotoHydrated(page, '/shopping', ['DeviceData']);
+    await expect(page.locator('.total')).toContainText('1 part to order');
+    await expect(page.locator('.recorded .ttl')).toContainText('1 component recorded');
+    const texts = await seen(page);
+    expect(texts.filter((t) => t.startsWith('Nothing'))).toEqual([]);
+  });
+});

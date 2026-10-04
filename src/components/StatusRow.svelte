@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { STATUS_LABEL } from '~/lib/copy';
   import { getStatus, saveNote, setNote, setStatus } from '~/lib/model/status.svelte';
   import { shortDate } from '~/lib/status-io';
@@ -13,8 +14,13 @@
   const eventLabel = (st: StatusValue | '') => (st ? STATUS_LABEL[st] : 'Cleared');
   /** No status reads as Not tested, as the subtitle says, so that segment shows pressed (VP2-01).
    *  Pressing it records the choice, with its history line and matrix mark; pressing a recorded
-   *  choice clears it (§8.3). */
-  const shown = $derived<StatusValue>(current?.status || 'untested');
+   *  choice clears it (§8.3). The server knows nothing of this device, so no segment is pressed
+   *  until the row has mounted and read storage (SV3-01). */
+  let hydrated = $state(false);
+  onMount(() => {
+    hydrated = true;
+  });
+  const shown = $derived<StatusValue | ''>(hydrated ? current?.status || 'untested' : '');
   const press = (o: StatusValue) => setStatus(kind, id, current?.status === o ? '' : o);
 </script>
 
