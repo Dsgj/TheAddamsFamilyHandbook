@@ -106,6 +106,10 @@
   .home :global(.srch) {
     margin-bottom: 0;
   }
+  /* On the Handbook root, a hub (VL3-09): 16 in, on the lists' edge. */
+  .home {
+    margin-inline: 16px;
+  }
   ul {
     list-style: none;
     margin: 0;

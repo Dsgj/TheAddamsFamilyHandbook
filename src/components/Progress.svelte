@@ -24,11 +24,14 @@
 </p>
 
 <style>
+  /* The measure, as on /verify where the line is a .wrap > p: Setup and Care render it inside an
+     island, and it ran the full column there (VL3-10). */
   .progress {
     display: flex;
     align-items: center;
     gap: 10px;
     flex-wrap: wrap;
+    max-width: var(--measure);
   }
   /* 140, not 160: "47 of 47 settings done" and the bar share one line at 412 (spec §13). */
   progress {

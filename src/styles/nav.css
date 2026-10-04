@@ -21,6 +21,11 @@
 .hub .lst-h:first-of-type {
   margin-top: 10px;
 }
+/* The Handbook root is a hub too (VL3-09): its Handbook / Manuals / Parts switch sits 16 in, on the
+   lists' edge. nav.seg beats DocSeg's own scoped margin. */
+.hub > nav.seg {
+  margin-inline: 16px;
+}
 
 /* The navigation shell (spec §6.2–§6.4): one `nav aria-label="Sections"` in three forms. Global so
    the TabBadge island's spans get their styles too. */

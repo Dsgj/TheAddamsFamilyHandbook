@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- On a tablet or desktop, a control that ends a row ("Add to list" on a part
+  row) now sits at the row's end, where every chevron sits, instead of mid-row
+  after the text. Checklist statements and the progress line stop at the
+  measure, the status control stops at 480 px, and the Handbook home is a hub
+  of the Workshop hub's width, so the three hubs share one width rule.
 - A component page, the Shopping list and the Device data summary no longer
   show a server default ("Not tested", the pressed Not tested segment, "No
   status changes yet.", "Nothing marked Fault yet", "Nothing saved on this

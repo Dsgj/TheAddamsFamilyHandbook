@@ -901,7 +901,7 @@ test.describe('P2-4: widths and measure (spec §3.1)', () => {
       onWidth(width);
 
       test('hub lists and the search pill start at the content edge', async ({ page }) => {
-        for (const url of ['/tables', '/workshop']) {
+        for (const url of ['/tables', '/workshop', '/handbook']) {
           await at(page, width, url);
           const r = await page.evaluate(() => {
             const main = document.querySelector('main')!;
@@ -1280,4 +1280,68 @@ test.describe('reading surfaces on a phone (P2 item 4 of the app audit, round 2)
     expect(await toks.count()).toBeGreaterThan(0);
     expect(await toks.first().evaluate((k) => getComputedStyle(k).whiteSpace)).toBe('nowrap');
   });
+});
+
+/* P1 item 2 of the app audit, round 3: one width rule on a tablet and a desktop (DS3-01, VL3-05,
+ * VL3-08 to VL3-11). The page column stays --content-w (the matrices and tables need it); inside
+ * it, text blocks set the measure, a control after a static row's text sits at the row's end, the
+ * three checklists share one meter width, the status control stops at 480 and the Handbook root is a
+ * hub like Workshop. */
+test.describe('tablet and desktop share one width rule', () => {
+  test.skip(({ isMobile }) => isMobile, 'desktop widths');
+
+  for (const width of [1024, 1280, 1440]) {
+    test(`${width}: row controls at the edge, text at the measure, one meter, a capped status control`, async ({
+      page,
+    }) => {
+      // DS3-01: every control that ends a row sits where the chevrons do, 16 from the row's edge.
+      await at(page, width, '/switch/32');
+      const trailing = await page.locator('.lrow').evaluateAll((rows) =>
+        rows.flatMap((row) => {
+          const last = row.lastElementChild;
+          if (!last || !last.matches('.btn, .chev, a, button')) return [];
+          if ((row as HTMLElement).offsetParent === null) return [];
+          const gap = row.getBoundingClientRect().right - last.getBoundingClientRect().right;
+          return [{ what: last.className, gap: Math.round(gap) }];
+        }),
+      );
+      expect(trailing.length).toBeGreaterThan(1);
+      expect(trailing.some((t) => /\bbtn\b/.test(t.what))).toBe(true);
+      for (const t of trailing) expect(t.gap, t.what).toBeLessThanOrEqual(16);
+      // VL3-11: the status control and its note stop at 480.
+      const seg = await page.locator('.status .seg').first().boundingBox();
+      expect(seg!.width).toBeLessThanOrEqual(480);
+      expect(seg!.width).toBeGreaterThan(400);
+
+      // VL3-08: every checklist statement sets the measure, never the column.
+      await at(page, width, '/verify');
+      const titles = await page.locator('.checklist .title').evaluateAll((els) =>
+        els.map((el) => ({
+          width: el.getBoundingClientRect().width,
+          max: parseFloat(getComputedStyle(el).maxWidth),
+        })),
+      );
+      expect(titles.length).toBeGreaterThan(5);
+      for (const t of titles) {
+        expect(t.max).toBeLessThan(600);
+        expect(t.width).toBeLessThanOrEqual(t.max + 0.5);
+      }
+
+      // VL3-10: one meter width on the three checklists.
+      const meters: number[] = [];
+      for (const url of ['/verify', '/care', '/setup']) {
+        await at(page, width, url);
+        meters.push((await page.locator('p.progress').boundingBox())!.width);
+      }
+      expect(Math.max(...meters) - Math.min(...meters), meters.join(' ')).toBeLessThanOrEqual(1);
+
+      // VL3-09: the Handbook root is a hub of the Workshop hub's width.
+      const hubs: number[] = [];
+      for (const url of ['/handbook', '/workshop']) {
+        await at(page, width, url);
+        hubs.push((await page.locator('.hub').boundingBox())!.width);
+      }
+      expect(Math.abs(hubs[0]! - hubs[1]!), hubs.join(' ')).toBeLessThanOrEqual(1);
+    });
+  }
 });

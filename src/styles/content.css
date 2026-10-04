@@ -85,6 +85,11 @@ table.t th {
 .lrow.static .txt {
   max-width: var(--measure);
 }
+/* The measure stops the text growing, so a control after it ("Add to list" on a part row) would sit
+   mid-row on a tablet or desktop: it goes to the row's end, where every chevron sits (DS3-01). */
+.lrow.static > .txt ~ * {
+  margin-left: auto;
+}
 /* The handbook's own headings (render.ts: h2 for a level-2 heading, h3 below it, spec §9.11,
    audit AY-14) keep the name and section-head sizes. Scoped to the rendered sections, so an
    embed's card heading inside .prose keeps its own. */

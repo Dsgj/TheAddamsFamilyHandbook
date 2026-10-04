@@ -52,11 +52,14 @@
 </div>
 
 <style>
+  /* 480 at most (round-1 VL-13, VL3-11): three segments and a one-line note need no more, and on
+     a 1088 column they read as a form, not a toolbar. A phone column is narrower anyway. */
   .status {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
     align-items: center;
+    max-width: 480px;
   }
   .log {
     flex: 1 1 100%;

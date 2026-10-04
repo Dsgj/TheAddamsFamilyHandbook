@@ -158,6 +158,10 @@
   min-width: 0;
   padding-top: 11px;
 }
+/* The statement sets 60-80 characters a line on a wide page, like every text block (VL3-08). */
+.checklist .title {
+  max-width: var(--measure);
+}
 .checklist .done .title {
   color: var(--muted);
   text-decoration: line-through;
