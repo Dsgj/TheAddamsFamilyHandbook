@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { activate, barCovered, gotoHydrated, twoFrames } from './helpers';
+import { activate, barCovered, gotoHydrated, touchDrag, twoFrames } from './helpers';
 
 /** Playfield map, Phases 1–2 of the app redesign: fit, zoom, keys, markers, the sheets, the panel. */
 
@@ -511,6 +511,89 @@ test.describe('phone selection sheet', () => {
         .filter((n) => n !== 'opacity' && n !== 'visibility' && !/fade/.test(n)),
     );
     expect(moving).toEqual([]);
+  });
+
+  /* The phone gestures the zoom module reads from pointer events (spec §7.5; audit TT3-02): on
+     both phone engines, through helpers' touchDrag. */
+  test.describe('touch gestures', () => {
+    test.skip(({ isMobile }) => !isMobile, 'a touch gesture');
+
+    /** The screen point a canvas fraction is at. */
+    const at = (g: Geometry, fx: number, fy: number) => ({
+      x: g.canvas.left + fx * g.canvas.width,
+      y: g.canvas.top + fy * g.canvas.height,
+    });
+
+    test('a pinch zooms about its midpoint, which stays put; the URL follows', async ({ page }) => {
+      await gotoHydrated(page, '/map?layer=sw');
+      await expect.poll(() => fitted(page)).toBe(true);
+      const g0 = await geometry(page);
+      const mid = at(g0, 0.5, 0.5);
+      // Two fingers 60 px apart at the drawing's centre spread to 120, 2 px a step: twice the zoom.
+      const frames = Array.from({ length: 16 }, (_, i) => {
+        const half = 30 + i * 2;
+        return [
+          { x: mid.x - half, y: mid.y },
+          { x: mid.x + half, y: mid.y },
+        ];
+      });
+      await touchDrag(page, frames, { pause: 20 });
+      await expect.poll(async () => near(await canvasWidth(page), g0.canvas.width * 2)).toBe(true);
+      await expect(page.locator('.scroller')).toHaveClass(/zoomed/);
+      const p = at(await geometry(page), 0.5, 0.5);
+      expect(Math.abs(p.x - mid.x)).toBeLessThanOrEqual(2);
+      expect(Math.abs(p.y - mid.y)).toBeLessThanOrEqual(2);
+      // Once the pinch settles (150 ms) the URL carries the zoom, to two decimals; nothing was
+      // selected, so no id.
+      await expect(page).toHaveURL(/[?&]z=2(&|$)/);
+      await expect(page).not.toHaveURL(/[?&]id=/);
+    });
+
+    test('a double tap on open drawing steps the zoom up about the tap, which stays put', async ({
+      page,
+    }) => {
+      await gotoHydrated(page, '/map?layer=sw');
+      await expect.poll(() => fitted(page)).toBe(true);
+      const g0 = await geometry(page);
+      // A spot clear of every marker by more than the 22 px hit radius, as near the middle as the
+      // markers allow: a tap there selects nothing, and the zoom can keep it still (at an edge the
+      // scroller runs out of room).
+      const spot = await page.evaluate((clear) => {
+        const c = document.querySelector('.canvas')!.getBoundingClientRect();
+        const marks = [...document.querySelectorAll('.marker')].map((m) => {
+          const r = m.getBoundingClientRect();
+          return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+        });
+        const cx = c.left + c.width / 2;
+        const cy = c.top + c.height / 2;
+        let best: { x: number; y: number; d: number } | undefined;
+        for (let fy = 0.3; fy <= 0.7; fy += 0.02) {
+          for (let fx = 0.3; fx <= 0.7; fx += 0.02) {
+            const p = { x: c.left + fx * c.width, y: c.top + fy * c.height };
+            if (marks.some((m) => Math.hypot(m.x - p.x, m.y - p.y) < clear)) continue;
+            const d = Math.hypot(p.x - cx, p.y - cy);
+            if (!best || d < best.d) best = { ...p, d };
+          }
+        }
+        if (!best) throw new Error('no spot clear of the markers near the middle');
+        return { x: best.x, y: best.y };
+      }, 22 + 16);
+      const fx = (spot.x - g0.canvas.left) / g0.canvas.width;
+      const fy = (spot.y - g0.canvas.top) / g0.canvas.height;
+      // Two taps on the spot, well inside the double tap's 300 ms and 24 px.
+      await touchDrag(page, [[spot]], { pause: 20 });
+      await touchDrag(page, [[spot]], { pause: 20 });
+      // The first step up is 1.6; the canvas lands there once the 250 ms scale has eased out.
+      await expect
+        .poll(async () => near(await canvasWidth(page), g0.canvas.width * 1.6))
+        .toBe(true);
+      await expect(page.locator('.scroller')).toHaveClass(/zoomed/);
+      const p = at(await geometry(page), fx, fy);
+      expect(Math.abs(p.x - spot.x)).toBeLessThanOrEqual(2);
+      expect(Math.abs(p.y - spot.y)).toBeLessThanOrEqual(2);
+      await expect(page).toHaveURL(/[?&]z=1\.6(&|$)/);
+      await expect(page).not.toHaveURL(/[?&]id=/);
+    });
   });
 });
 

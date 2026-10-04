@@ -6,6 +6,7 @@ import {
   motion,
   settle,
   swReady,
+  touchDrag,
   transition,
 } from './helpers';
 
@@ -658,29 +659,16 @@ test.describe('without the Navigation API', () => {
   });
 });
 
+/* On both phone engines: WebKit is the engine of the owner's installed iPhone app (TT3-03). */
 test.describe('swipe back', () => {
   test.skip(({ isMobile }) => !isMobile, 'a touch gesture');
-  test.skip(({ browserName }) => browserName !== 'chromium', 'the touch events go through CDP');
 
-  async function drag(page: Page, xs: number[], y: number, end: 'touchEnd' | 'touchCancel') {
-    const cdp = await page.context().newCDPSession(page);
-    await cdp.send('Input.dispatchTouchEvent', {
-      type: 'touchStart',
-      touchPoints: [{ x: xs[0]!, y }],
-    });
-    for (const x of xs.slice(1)) {
-      // eslint-disable-next-line playwright/no-wait-for-timeout -- gesture pacing: the spacing of the touch events is the input
-      await page.waitForTimeout(30);
-      await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y }] });
-    }
-    // eslint-disable-next-line playwright/no-wait-for-timeout -- gesture pacing: the spacing of the touch events is the input
-    await page.waitForTimeout(30);
-    await cdp.send('Input.dispatchTouchEvent', { type: end, touchPoints: [] });
-    await cdp.detach();
-  }
+  /** A finger from the left edge to 45% of the width at y = 400, in twelve steps. */
   const far = (page: Page) => {
     const w = page.viewportSize()!.width;
-    return Array.from({ length: 12 }, (_, i) => 8 + Math.round((i * w * 0.45) / 11));
+    return Array.from({ length: 12 }, (_, i) => [
+      { x: 8 + Math.round((i * w * 0.45) / 11), y: 400 },
+    ]);
   };
   /* A running view transition takes the touches (they reach the document, not #main), so a
      swipe waits for the push that brought the page to finish, as a finger would. */
@@ -699,7 +687,7 @@ test.describe('swipe back', () => {
       .toBe(0);
   const swipe = async (page: Page) => {
     await still(page);
-    await drag(page, far(page), 400, 'touchEnd');
+    await touchDrag(page, far(page));
   };
 
   test('traverses to the entry before, and only fades', async ({ page }) => {
@@ -749,7 +737,7 @@ test.describe('swipe back', () => {
     const s = await where(page);
     await still(page);
     const navs = await countNavigations(page);
-    await drag(page, far(page), 400, 'touchCancel');
+    await touchDrag(page, far(page), { end: 'touchCancel' });
     await expect(page.locator('#main')).toHaveCSS('transform', 'none');
     // Past the 300 ms swipe timer, on the fake clock: no navigation was started.
     await page.clock.runFor(350);

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Map: a pinch holds the point under the fingers from its first frame; it used
+  to drift sideways by up to a finger's width over a spread from the fitted
+  drawing.
+- e2e: the map's pinch and double tap have tests, and swipe back now runs in
+  WebKit too, the engine of the installed iPhone app; one shared touch helper
+  drives Chromium through CDP and WebKit through the events a finger produces.
 - The four flipper coils are components of their own: each has a page with
   its wiring, fuse, status row, note and service log, a Fault tick on the
   Solenoids page and a place on the shopping list, and the search opens the

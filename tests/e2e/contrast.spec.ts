@@ -33,7 +33,7 @@ async function forceTheme(page: Page, mode: Mode) {
 
 /** Waits for the page's finite animations and transitions (a pressed segment, the marker's pulse,
     a sheet rising), at most 2 s. */
-async function settle(page: Page) {
+async function animationsDone(page: Page) {
   await page.evaluate(async () => {
     const finite = document.getAnimations().filter((a) => {
       const end = a.effect?.getComputedTiming().endTime;
@@ -309,7 +309,7 @@ for (const route of ROUTES) {
       if (route.before) await route.before(page);
       await gotoHydrated(page, route.path);
       if (route.prep) await route.prep(page);
-      await settle(page);
+      await animationsDone(page);
       const m = await page.evaluate(measure, themeOf(mode) === 'light');
       // The theme under test is the one painted.
       expect(m.paper > 0.5, 'light paper').toBe(themeOf(mode) === 'light');
@@ -504,7 +504,7 @@ for (const route of PRINT) {
       if (route.before) await route.before(page);
       await gotoHydrated(page, path);
       if (route.prep) await route.prep(page);
-      await settle(page);
+      await animationsDone(page);
       const screen = await page.evaluate(printed, HIDDEN);
       const phone = test.info().project.use.isMobile === true;
       expect(screen.visible).toEqual(

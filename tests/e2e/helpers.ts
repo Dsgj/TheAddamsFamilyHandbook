@@ -89,15 +89,150 @@ export function barCovered(page: Page) {
 
 /**
  * Counts the navigations the page starts from now on: the Navigation API's `navigate` event fires
- * as `history.back()` or `location.replace()` is called, before anything loads (Chromium).
+ * as `history.back()` or `location.replace()` is called, before anything loads (Chromium). Without
+ * the API (WebKit) the count stays 0 while this document is still here, and the document a
+ * navigation replaced it with reads -1, the "no count" value.
  */
 export async function countNavigations(page: Page) {
   await page.evaluate(() => {
-    const w = window as unknown as { navs: number; navigation: EventTarget };
+    const w = window as unknown as { navs: number; navigation?: EventTarget };
     w.navs = 0;
-    w.navigation.addEventListener('navigate', () => w.navs++);
+    w.navigation?.addEventListener('navigate', () => w.navs++);
   });
   return () => page.evaluate(() => (window as unknown as { navs?: number }).navs ?? -1);
+}
+
+/** One finger's point on the screen, in CSS pixels. */
+export interface Finger {
+  x: number;
+  y: number;
+}
+type Phase = 'start' | 'move' | 'end' | 'cancel';
+
+/**
+ * A touch gesture, step by step (audit TT3-02, TT3-03, TT3-10): `frames[i]` holds every finger's
+ * point at step i, one per finger in a fixed order; the first frame puts them down, the last is
+ * where they lift. `pause` ms pass between steps and before the lift, since the spacing of the
+ * events is the input (a swipe's velocity, a double tap's window). Chromium gets real touches
+ * through CDP, so its own gesture handling (touch-action, scrolling, the pointer events a touch
+ * produces) is in the loop. WebKit has no multi-touch input in Playwright, so it gets what a finger
+ * produces, dispatched in the page: a PointerEvent per finger (pointerType touch, the first finger
+ * primary) on the element under it, and one duck-typed touch event per step whose `touches`,
+ * `targetTouches` and `changedTouches` carry clientX/clientY, on the element the first finger
+ * landed on; that is all the app reads (motion.ts's swipe, zoom.svelte.ts's pinch and taps).
+ * `end` is the lift, or the system taking the touch; `beforeEnd` runs between the last move and
+ * the lift, for a look at the page mid-gesture.
+ */
+export async function touchDrag(
+  page: Page,
+  frames: Finger[][],
+  {
+    pause = 30,
+    end = 'touchEnd',
+    beforeEnd,
+  }: { pause?: number; end?: 'touchEnd' | 'touchCancel'; beforeEnd?: () => Promise<void> } = {},
+) {
+  const [first, ...moves] = frames;
+  if (!first) throw new Error('touchDrag: no frames');
+  const wait = async () => {
+    // eslint-disable-next-line playwright/no-wait-for-timeout -- gesture pacing: the spacing of the touch events is the input
+    if (pause) await page.waitForTimeout(pause);
+  };
+  const CDP = {
+    start: 'touchStart',
+    move: 'touchMove',
+    end: 'touchEnd',
+    cancel: 'touchCancel',
+  } as const;
+  const chromium = page.context().browser()?.browserType().name() === 'chromium';
+  const cdp = chromium ? await page.context().newCDPSession(page) : undefined;
+  const step = (phase: Phase, points: Finger[]) =>
+    cdp
+      ? cdp.send('Input.dispatchTouchEvent', {
+          type: CDP[phase],
+          touchPoints: phase === 'start' || phase === 'move' ? points : [],
+        })
+      : page.evaluate(synthetic, { phase, points });
+  await step('start', first);
+  for (const f of moves) {
+    await wait();
+    await step('move', f);
+  }
+  await wait();
+  await beforeEnd?.();
+  await step(end === 'touchCancel' ? 'cancel' : 'end', frames[frames.length - 1]!);
+  await cdp?.detach();
+}
+
+/** In the page: what one step of a touch gesture produces, for an engine Playwright cannot touch. */
+function synthetic({ phase, points }: { phase: Phase; points: Finger[] }) {
+  interface Held {
+    el: Element;
+    x: number;
+    y: number;
+  }
+  const w = window as unknown as { __fingers?: Held[] | undefined };
+  const under = (p: Finger) => document.elementFromPoint(p.x, p.y) ?? document.documentElement;
+  const held =
+    phase === 'start' ? points.map((p) => ({ el: under(p), x: p.x, y: p.y })) : (w.__fingers ?? []);
+  for (const [i, h] of held.entries()) {
+    const p = points[i];
+    if (p && phase !== 'start') Object.assign(h, { x: p.x, y: p.y });
+  }
+  const down = phase === 'start' || phase === 'move';
+  w.__fingers = down ? held : undefined;
+  const pointer = {
+    start: 'pointerdown',
+    move: 'pointermove',
+    end: 'pointerup',
+    cancel: 'pointercancel',
+  };
+  const touch = { start: 'touchstart', move: 'touchmove', end: 'touchend', cancel: 'touchcancel' };
+  // Pointer events go to the element under each finger: a tap's target is read from pointerup.
+  for (const [i, h] of held.entries()) {
+    (phase === 'start' ? h.el : under(h)).dispatchEvent(
+      new PointerEvent(pointer[phase], {
+        bubbles: true,
+        cancelable: phase !== 'cancel',
+        composed: true,
+        pointerId: i + 1,
+        pointerType: 'touch',
+        isPrimary: i === 0,
+        clientX: h.x,
+        clientY: h.y,
+        screenX: h.x,
+        screenY: h.y,
+        button: phase === 'move' ? -1 : 0,
+        buttons: down ? 1 : 0,
+        width: 1,
+        height: 1,
+        pressure: down ? 0.5 : 0,
+      }),
+    );
+  }
+  // The touch event keeps the target a touch started on, as the Touch Events spec has it.
+  const target = held[0]?.el ?? document.documentElement;
+  const touches = held.map((h, i) => ({
+    identifier: i,
+    target: h.el,
+    clientX: h.x,
+    clientY: h.y,
+    pageX: h.x + scrollX,
+    pageY: h.y + scrollY,
+    screenX: h.x,
+    screenY: h.y,
+  }));
+  const e = new Event(touch[phase], {
+    bubbles: true,
+    cancelable: phase !== 'cancel',
+    composed: true,
+  });
+  Object.defineProperties(e, {
+    touches: { value: down ? touches : [] },
+    targetTouches: { value: down ? touches.filter((t) => t.target === target) : [] },
+    changedTouches: { value: touches },
+  });
+  target.dispatchEvent(e);
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];

@@ -143,14 +143,23 @@ export function createMapZoom(ctx: ZoomContext) {
   const pointers: Record<number, Pt> = {};
   const pointerList = () => Object.values(pointers);
   const pointerCount = () => Object.keys(pointers).length;
-  let pinch: { d0: number; z0: number } | undefined;
+  /* A pinch holds the canvas fraction under the fingers' midpoint from its first frame: read anew
+     every move, the fraction would drift with each rounded scroll position and with the frames
+     where the canvas is still narrower than the scroller and cannot scroll at all (TT3-02). */
+  let pinch: { d0: number; z0: number; fx: number; fy: number } | undefined;
   let tap: { id: number; x: number; y: number; moved: boolean } | undefined;
   let lastTap: { x: number; y: number; t: number } | undefined;
+  /** The two fingers' midpoint, scroller-relative. */
+  function midpoint(a: Pt, b: Pt) {
+    const r = ctx.scroller()!.getBoundingClientRect();
+    return { sx: (a.x + b.x) / 2 - r.left, sy: (a.y + b.y) / 2 - r.top };
+  }
   function pointerDown(e: PointerEvent) {
     pointers[e.pointerId] = { x: e.clientX, y: e.clientY };
-    if (pointerCount() === 2) {
+    if (pointerCount() === 2 && ctx.scroller() && ctx.canvas()) {
       const [a, b] = pointerList() as [Pt, Pt];
-      pinch = { d0: dist(a, b) || 1, z0: zoom };
+      const m = midpoint(a, b);
+      pinch = { d0: dist(a, b) || 1, z0: zoom, ...fractionAt(m.sx, m.sy) };
       tap = undefined;
     } else if (pointerCount() === 1 && e.isPrimary) {
       tap = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: false };
@@ -162,10 +171,8 @@ export function createMapZoom(ctx: ZoomContext) {
     const scroller = ctx.scroller();
     if (pinch && pointerCount() === 2 && scroller) {
       const [a, b] = pointerList() as [Pt, Pt];
-      const r = scroller.getBoundingClientRect();
-      const sx = (a.x + b.x) / 2 - r.left;
-      const sy = (a.y + b.y) / 2 - r.top;
-      zoomTo(pinch.z0 * (dist(a, b) / pinch.d0), { ...fractionAt(sx, sy), sx, sy }, 0);
+      const { fx, fy } = pinch;
+      zoomTo(pinch.z0 * (dist(a, b) / pinch.d0), { fx, fy, ...midpoint(a, b) }, 0);
     } else if (tap && !tap.moved && isDrag(tap, { x: e.clientX, y: e.clientY })) {
       tap.moved = true;
     }

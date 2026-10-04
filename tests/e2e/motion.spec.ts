@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { countNavigations, gotoHydrated, settle, swReady, transition } from './helpers';
+import { countNavigations, gotoHydrated, settle, swReady, touchDrag, transition } from './helpers';
 
 /* Phase 12 of the app redesign: view transitions between pages, swipe back, and the per-tab
    stack, scroll and Map state. */
@@ -112,32 +112,18 @@ test('a view pushed from Diagnose results goes back to Results', async ({ page }
   await expect(back).toHaveAttribute('href', /\?q=32$/);
 });
 
+/* On both phone engines (TT3-03); the touches come from helpers' touchDrag (TT3-10). */
 test.describe('swipe back', () => {
   test.skip(({ isMobile }) => !isMobile, 'a touch gesture');
-  test.skip(({ browserName }) => browserName !== 'chromium', 'the touch events go through CDP');
 
-  async function drag(page: Page, xs: number[], y: number, pause = 0) {
-    const cdp = await page.context().newCDPSession(page);
-    await cdp.send('Input.dispatchTouchEvent', {
-      type: 'touchStart',
-      touchPoints: [{ x: xs[0]!, y }],
-    });
-    for (const x of xs.slice(1)) {
-      // eslint-disable-next-line playwright/no-wait-for-timeout -- gesture pacing: the spacing of the touch events is the input
-      if (pause) await page.waitForTimeout(pause);
-      await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y }] });
-    }
-    // eslint-disable-next-line playwright/no-wait-for-timeout -- gesture pacing: the spacing of the touch events is the input
-    if (pause) await page.waitForTimeout(pause);
-    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-    await cdp.detach();
-  }
+  /** One finger along `xs` at `y`. */
+  const along = (xs: number[], y: number) => xs.map((x) => [{ x, y }]);
 
   test('a left-edge drag past 35% returns to the parent', async ({ page }) => {
     await gotoHydrated(page, '/switch/32');
     const w = page.viewportSize()!.width;
     const xs = Array.from({ length: 12 }, (_, i) => 8 + Math.round((i * w * 0.45) / 11));
-    await drag(page, xs, 400, 30);
+    await touchDrag(page, along(xs, 400));
     await expect(page).toHaveURL(/\/switches$/);
   });
 
@@ -145,7 +131,7 @@ test.describe('swipe back', () => {
     await page.clock.install();
     await gotoHydrated(page, '/switch/32');
     const navs = await countNavigations(page);
-    await drag(page, [8, 20, 32, 44, 56], 400, 60);
+    await touchDrag(page, along([8, 20, 32, 44, 56], 400), { pause: 60 });
     await expect(page.locator('#main')).toHaveCSS('transform', 'none');
     // Past the 300 ms swipe timer, on the fake clock: no navigation was started.
     await page.clock.runFor(350);
@@ -158,21 +144,14 @@ test.describe('swipe back', () => {
    * the finger. A page's content starts at the 16 px gutter, so a drag that starts on it uses 20.
    */
   async function follows(page: Page, y: number, x = 8) {
-    const cdp = await page.context().newCDPSession(page);
     const w = page.viewportSize()!.width;
-    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
-    for (let i = 1; i <= 6; i++) {
-      // eslint-disable-next-line playwright/no-wait-for-timeout -- gesture pacing: the spacing of the touch events is the input
-      await page.waitForTimeout(30);
-      const at = x + Math.round((i * w * 0.45) / 6);
-      await cdp.send('Input.dispatchTouchEvent', {
-        type: 'touchMove',
-        touchPoints: [{ x: at, y }],
-      });
-    }
-    const swiping = await page.locator('#main').evaluate((el) => el.classList.contains('swiping'));
-    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-    await cdp.detach();
+    const xs = Array.from({ length: 7 }, (_, i) => x + Math.round((i * w * 0.45) / 6));
+    let swiping = false;
+    await touchDrag(page, along(xs, y), {
+      beforeEnd: async () => {
+        swiping = await page.locator('#main').evaluate((el) => el.classList.contains('swiping'));
+      },
+    });
     return swiping;
   }
 
