@@ -12,3 +12,6 @@ playwright-report/
 # Python (tools/ pipeline)
 .venv/
 __pycache__/
+
+# Claude Code task notes and local worktrees (kept out of the repo)
+.claude/
