@@ -104,17 +104,34 @@ describe('groupFaults', () => {
       ['555 Orange Super', '#555 · 24-8768', ['12']],
     ]);
   });
-  it('lists switches and coils by part number after the lamps', () => {
-    const g = groupFaults(items, [
-      st('coil:01', 'fault'),
-      st('switch:32', 'fault'),
-      st('lamp:11', 'fault'),
-    ]);
+  it('lists switches, coils and flipper coils by part number after the lamps', () => {
+    const flipper: ShoppingItem = {
+      kind: 'flipper',
+      id: 'ULF',
+      name: 'Upper Left Flipper',
+      part: 'FL-11753',
+      assy: 'A-15205-L-1',
+      bulb: '',
+      led: '',
+    };
+    const g = groupFaults(
+      [...items, flipper],
+      [
+        st('flipper:ULF', 'fault'),
+        st('coil:01', 'fault'),
+        st('switch:32', 'fault'),
+        st('lamp:11', 'fault'),
+      ],
+    );
     expect(g.map((x) => `${x.kind}:${x.label}`)).toEqual([
       'lamp:#555',
       'switch:SW-1A-120',
       'coil:AE-26-1200',
+      'flipper:FL-11753',
     ]);
+    expect(formatShopping(g)).toContain(
+      'Flipper coils\n1 × FL-11753 (A-15205-L-1): ULF Upper Left Flipper',
+    );
   });
   it('keeps a faulty part without a part number, labelled as such, with nothing in brackets', () => {
     const g = groupFaults(items, [st('switch:F1', 'fault')]);

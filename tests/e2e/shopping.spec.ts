@@ -31,20 +31,30 @@ test('Fault tick on Lamps feeds the shopping list until Fixed', async ({ page })
   await expect(page.getByText('Nothing marked Fault yet')).toBeVisible();
 });
 
-test('Fault tick on Switches and Solenoids lands on the shopping list', async ({ page }) => {
+test('Fault tick on Switches, Solenoids and Flipper coils lands on the shopping list', async ({
+  page,
+}) => {
   await gotoHydrated(page, '/switches');
   // The flipper table sits in its own tab since Phase 7 of the redesign.
   await page.getByRole('tab', { name: 'Flippers' }).click();
   await page.getByLabel('Fault: Left Flipper Button').check();
   await gotoHydrated(page, '/coils');
   await page.getByLabel('Fault: Chair Kickout').check();
+  // The flipper coil table carries a Fault column too (CR3-02).
+  await page.getByLabel('Fault: Upper Left Flipper').check();
   await gotoHydrated(page, '/shopping');
   await expect(page.getByRole('heading', { name: 'Switches' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Solenoids' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Flipper coils' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'SOL 01 Chair Kickout' })).toHaveAttribute(
     'href',
     /coil\/01$/,
   );
+  await expect(page.getByRole('link', { name: 'ULF Upper Left Flipper' })).toHaveAttribute(
+    'href',
+    /flipper\/ULF$/,
+  );
+  await expect(page.getByText('FL-11753')).toBeVisible();
 });
 
 test('a note typed on a Fault rides along to the list and its text (CR2-03)', async ({ page }) => {

@@ -144,11 +144,13 @@ describe('damaged and hand-made entries (CO3-01, CO3-02)', () => {
     expect(cleanStatus('switch:32', { status: 'nope' })).toBeUndefined();
     expect(cleanStatus('x:1', fault)).toBeUndefined();
     expect(cleanStatus('switch:32', fault)?.status).toBe('fault');
+    expect(cleanStatus('flipper:ULF', fault)?.status).toBe('fault');
   });
   it('spells a loose key the way the app does', () => {
     expect(canonicalKey('coil:7')).toBe('coil:07');
     expect(canonicalKey('switch:d1')).toBe('switch:D1');
     expect(canonicalKey('lamp:11')).toBe('lamp:11');
+    expect(canonicalKey('flipper:ulf')).toBe('flipper:ULF');
     expect(canonicalKey('junk')).toBe('junk');
     const read = deserialize(JSON.stringify({ 'coil:7': fault }));
     expect(Object.keys(read)).toEqual(['coil:07']);

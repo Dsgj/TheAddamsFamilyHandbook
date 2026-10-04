@@ -101,12 +101,13 @@ describe('copy helpers', () => {
   });
 });
 
-const KINDS: Kind[] = ['switch', 'lamp', 'coil'];
+const KINDS: Kind[] = ['switch', 'lamp', 'coil', 'flipper'];
 const LAYERS: Layer[] = ['sw', 'lamp', 'coil'];
 const ALL = [
   ...DATA.switches.map((c) => ['switch', c] as const),
   ...DATA.lamps.map((c) => ['lamp', c] as const),
   ...DATA.coils.map((c) => ['coil', c] as const),
+  ...DATA.flippers.map((c) => ['flipper', c] as const),
 ];
 
 // The presentation helpers of audit P4 item 1. Each one is also checked against the inline
@@ -167,11 +168,17 @@ describe('presentation helpers', () => {
   });
 
   it('keeps one word per kind and per map layer', () => {
-    expect(KIND_PLURAL).toEqual({ switch: 'Switches', lamp: 'Lamps', coil: 'Solenoids' });
+    expect(KIND_PLURAL).toEqual({
+      switch: 'Switches',
+      lamp: 'Lamps',
+      coil: 'Solenoids',
+      flipper: 'Flipper coils',
+    });
     expect(TABLE_LABEL).toEqual({
       switch: 'Switch matrix',
       lamp: 'Lamp matrix',
       coil: 'Solenoids and flashers',
+      flipper: 'Solenoids and flashers',
     });
     expect(LAYER_LABEL).toEqual({ sw: 'Switches', lamp: 'Lamps', coil: 'Solenoids and flashers' });
     expect(MAP_TITLE).toEqual({
@@ -179,8 +186,21 @@ describe('presentation helpers', () => {
       lamp: 'Lamp Locations',
       coil: 'Solenoid/Flasher Locations',
     });
-    for (const k of KINDS) expect(LAYER_KIND[MAP_LAYER[k]]).toBe(k);
+    // A flipper coil is listed on the solenoid layer, so its round trip lands on 'coil' (CR3-02).
+    for (const k of KINDS) expect(LAYER_KIND[MAP_LAYER[k]]).toBe(k === 'flipper' ? 'coil' : k);
     for (const l of LAYERS) expect(MAP_LAYER[LAYER_KIND[l]]).toBe(l);
+  });
+
+  it('names the flipper coil kind and places it under the playfield (CR3-02)', () => {
+    expect(KIND_LABEL.flipper).toBe('Flipper coil');
+    expect(KIND_PLURAL.flipper).toBe('Flipper coils');
+    expect(TABLE_LABEL.flipper).toBe(TABLE_LABEL.coil);
+    expect(componentCode('flipper', 'ULF')).toBe('ULF');
+    expect(componentName('flipper', 'ULF')).toBe('Flipper coil ULF');
+    for (const f of DATA.flippers) {
+      expect(locationLine('flipper', f)).toBe('under the playfield');
+      expect(kindLine('flipper', f)).toBe('Flipper coil · under the playfield');
+    }
   });
 
   it("cites each layer's location page as the old fixed strings did", () => {

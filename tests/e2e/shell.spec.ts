@@ -302,6 +302,7 @@ test.describe('top bar on phones', () => {
     ['/switch/32', '/switches', 'Switches'],
     ['/lamp/11', '/lamps', 'Lamps'],
     ['/coil/01', '/coils', 'Solenoids'],
+    ['/flipper/ULF', '/coils', 'Solenoids'],
     ['/switches', '/tables', 'Tables'],
     ['/lamps', '/tables', 'Tables'],
     ['/coils', '/tables', 'Tables'],

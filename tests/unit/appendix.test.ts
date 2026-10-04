@@ -23,6 +23,7 @@ const allComponents = () => [
   ...DATA.switches.map((i) => ['switch', i] as const),
   ...DATA.lamps.map((i) => ['lamp', i] as const),
   ...DATA.coils.map((i) => ['coil', i] as const),
+  ...DATA.flippers.map((i) => ['flipper', i] as const),
 ];
 
 describe('owner appendices', () => {
@@ -99,6 +100,8 @@ describe('owner appendices', () => {
         DATA.coils.find((c) => /Bookcase Motor/.test(c.name))!,
       )[0],
     ).toBe('A2');
+    // A flipper coil: the flipper appendix first, then the solenoid one (CR3-02).
+    expect(appendixFor('flipper', DATA.flippers[0]!)).toEqual(['A6', 'A2', 'A5', 'A1']);
   });
 
   it('gives every component a plain-text service note from its first appendix', () => {
@@ -112,6 +115,9 @@ describe('owner appendices', () => {
       }
       expect(notes[0]!.code).toBe(appendixFor(kind, item)[0]);
     }
+    const ulf = DATA.flippers.find((f) => f.id === 'ULF')!;
+    expect(serviceNotes(ulf)[0]!.text).toContain('9.8 / 165 Ω');
+    expect(serviceNotes(ulf)[0]!.text).toContain('F901 (3A S.B.)');
     const swamp = DATA.coils.find((c) => /Swamp Release/.test(c.name))!;
     expect(serviceNotes(swamp)[0]!.text).toContain('41 Ω');
     expect(serviceNotes(swamp)[0]!.text).toContain('J122');

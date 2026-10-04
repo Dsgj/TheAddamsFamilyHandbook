@@ -1,7 +1,10 @@
 import { DATA } from '~/lib/data/components';
 import type { ShoppingItem } from '~/lib/shopping';
 
-/** Every lamp, switch and solenoid as a shopping candidate; the status store says which are faults. */
+/**
+ * Every lamp, switch, solenoid and flipper coil as a shopping candidate; the status store says
+ * which are faults.
+ */
 export function allShoppingItems(): ShoppingItem[] {
   return [
     ...DATA.lamps.map((l) => ({
@@ -30,6 +33,15 @@ export function allShoppingItems(): ShoppingItem[] {
       bulb: '',
       led: '',
       assy: c.assy,
+    })),
+    ...DATA.flippers.map((f) => ({
+      kind: 'flipper' as const,
+      id: f.id,
+      name: f.name,
+      part: f.coil,
+      bulb: '',
+      led: '',
+      assy: f.assy,
     })),
   ];
 }

@@ -41,11 +41,16 @@ test('component card keeps a service log of status changes', async ({ page }) =>
   await expect(page.getByLabel('Service log').locator('li')).toHaveCount(2);
 });
 
-test('lamp and solenoid cards carry the status row', async ({ page }) => {
+test('lamp, solenoid and flipper coil cards carry the status row', async ({ page }) => {
   await gotoHydrated(page, '/lamp/11');
   await expect(page.getByRole('button', { name: 'Fault' })).toBeVisible();
   await gotoHydrated(page, '/coil/07');
   await expect(page.getByRole('button', { name: 'Fault' })).toBeVisible();
+  // A flipper coil is a component of its own since CR3-02: its page, its status row, its fuse.
+  await gotoHydrated(page, '/flipper/ULF');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Flipper coil ULF');
+  await expect(page.getByRole('button', { name: 'Fault' })).toBeVisible();
+  await expect(page.getByRole('link', { name: /F901/ }).first()).toHaveAttribute('href', /fuses#/);
 });
 
 test('device data downloads a backup and restores it', async ({ page }) => {

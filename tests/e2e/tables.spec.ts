@@ -105,6 +105,12 @@ test.describe('the switch matrix tabs', () => {
       'aria-selected',
       'true',
     );
+    // A flipper coil row has its own anchor and links its page (CR3-02).
+    await gotoHydrated(page, '/coils#flipper-ULF');
+    const ulf = page.locator('#flipper-ULF');
+    await expect(ulf).toBeInViewport();
+    await expect(ulf.getByRole('link', { name: 'ULF' })).toHaveAttribute('href', /flipper\/ULF$/);
+    await expect(ulf.getByLabel('Fault: Upper Left Flipper')).toBeVisible();
   });
 });
 

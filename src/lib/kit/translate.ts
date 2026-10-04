@@ -263,6 +263,7 @@ function toFlipper(x: unknown, at: string, ref: FuseRef): Flipper {
   const r = record(x, at);
   only(r, at, ['id', 'name', 'wire', 'pin', 'coil', 'assy', 'fuse']);
   return {
+    kind: 'flipper',
     id: oneOf(r, 'id', ['ULF', 'URF', 'LLF', 'LRF'] as const, at),
     name: text(r, 'name', at),
     wire: wire(text(r, 'wire', at), `${at}.wire`),
@@ -270,6 +271,7 @@ function toFlipper(x: unknown, at: string, ref: FuseRef): Flipper {
     coil: text(r, 'coil', at),
     assy: text(r, 'assy', at),
     ...ref(text(r, 'fuse', at), `${at}.fuse`),
+    loc: [],
   };
 }
 

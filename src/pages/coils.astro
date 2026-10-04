@@ -130,14 +130,17 @@ const groups = ['High Power', 'Low Power', 'Flasher'] as const;
               <th role="columnheader">Coil</th>
               <th role="columnheader">Assembly</th>
               <th role="columnheader">Fuse</th>
+              <th role="columnheader" class="chk"> Fault </th>
             </tr>
           </thead>
           <tbody role="rowgroup">
             {
               DATA.flippers.map((f) => (
-                <tr role="row">
-                  <td role="cell" class="key mono">
-                    {f.id}
+                <tr role="row" id={`flipper-${f.id}`}>
+                  <td role="cell" class="key">
+                    <a class="mono" href={componentHref('flipper', f.id)}>
+                      {f.id}
+                    </a>
                   </td>
                   <td role="cell" class="nm">
                     {f.name}
@@ -156,6 +159,17 @@ const groups = ['High Power', 'Low Power', 'Flasher'] as const;
                   </td>
                   <td role="cell" class="small fuse" data-h="Fuse">
                     <a href={href(`fuses#${f.fuseKey}`)}>{f.fuse}</a>
+                  </td>
+                  <td role="cell" class="chk">
+                    <label class="chk-hit">
+                      <input
+                        type="checkbox"
+                        class="fault-check"
+                        data-kind="flipper"
+                        data-id={f.id}
+                        aria-label={`Fault: ${f.name}`}
+                      />
+                    </label>
                   </td>
                 </tr>
               ))

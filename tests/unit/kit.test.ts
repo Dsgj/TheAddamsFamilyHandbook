@@ -96,6 +96,9 @@ describe('kit data boundary', () => {
     expect(find('coil', '17')?.fuse).toBe('F111 (5A S.B.)');
     expect(find('coil', '16')?.fuse).toBe('5A S.B. (under the playfield)');
     expect(DATA.flippers.find((f) => f.id === 'ULF')?.fuse).toBe('F901 (3A S.B.)');
+    // A flipper coil is a kind of its own with no callout (CR3-02).
+    for (const f of DATA.flippers) expect([f.kind, f.loc], f.id).toEqual(['flipper', []]);
+    expect(find('flipper', 'ULF')?.coil).toBe('FL-11753');
     const bad = JSON.parse(read(KIT)) as { coils: { fuse: string }[] };
     bad.coils[0]!.fuse = 'F199 (3A S.B.)';
     expect(() => translateKit(bad, {}, {}, {}, {})).toThrow(/names no fuse on the fuse list/);

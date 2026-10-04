@@ -57,9 +57,17 @@ describe('parseCodes', () => {
 
 describe('codesSummary (AR2-07)', () => {
   const none = () => false;
-  it('counts each kind, switches first and solenoids last', () => {
+  it('counts each kind, switches first and flipper coils last', () => {
     expect(codesSummary(parseCodes('L55 32 C07 68'), none)).toBe('2 switches, 1 lamp, 1 solenoid');
     expect(codesSummary(parseCodes('C07 C12'), none)).toBe('2 solenoids');
+    // The display prints no flipper coil code, so the kind reaches the summary from a list, not
+    // from parseCodes (CR3-02).
+    const flippers = [
+      { kind: 'flipper', id: 'ULF' },
+      { kind: 'coil', id: '01' },
+    ] as const;
+    expect(codesSummary(flippers, none)).toBe('1 solenoid, 1 flipper coil');
+    expect(parseCodes('ULF')).toEqual([{ kind: 'unknown', id: 'ULF', raw: 'ULF' }]);
   });
   it('says how many are marked Fault', () => {
     const two = parseCodes('32 68');

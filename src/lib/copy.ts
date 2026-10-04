@@ -9,6 +9,7 @@ export const KIND_LABEL: Record<Kind, string> = {
   switch: 'Switch',
   lamp: 'Lamp',
   coil: 'Solenoid',
+  flipper: 'Flipper coil',
 };
 
 /** A kind's list, in the plural: the short page names and the Shopping list group headings. */
@@ -16,6 +17,7 @@ export const KIND_PLURAL: Record<Kind, string> = {
   switch: 'Switches',
   lamp: 'Lamps',
   coil: 'Solenoids',
+  flipper: 'Flipper coils',
 };
 
 /** The title of the table page a kind lives on (url.ts tablePath is its path). */
@@ -23,10 +25,17 @@ export const TABLE_LABEL: Record<Kind, string> = {
   switch: 'Switch matrix',
   lamp: 'Lamp matrix',
   coil: 'Solenoids and flashers',
+  // The flipper coils are a table on the solenoid page, so they share its label and path.
+  flipper: 'Solenoids and flashers',
 };
 
 /** The map layer of a kind, and back. */
-export const MAP_LAYER: Record<Kind, Layer> = { switch: 'sw', lamp: 'lamp', coil: 'coil' };
+export const MAP_LAYER: Record<Kind, Layer> = {
+  switch: 'sw',
+  lamp: 'lamp',
+  coil: 'coil',
+  flipper: 'coil',
+};
 export const LAYER_KIND: Record<Layer, Kind> = { sw: 'switch', lamp: 'lamp', coil: 'coil' };
 
 /** A map layer's name: the list headings and the layer buttons' accessible names. */
@@ -170,6 +179,8 @@ export function locationLine(kind: Kind, item: Located, opts: LocationOpts = {})
     parts.push(`flipper (${conn ?? 'Fliptronics'})`);
   if (kind === 'lamp' && item.speaker) parts.push('speaker panel');
   if (kind === 'coil' && item.type) parts.push(item.type);
+  // A flipper coil sits on its assembly under the playfield; the kit records no flag for it.
+  if (kind === 'flipper') parts.push('under the playfield');
   if (item.unused) parts.push('not used');
   if (item.under) parts.push('under the playfield');
   if (kind === 'coil' && item.cabinet) parts.push('cabinet');

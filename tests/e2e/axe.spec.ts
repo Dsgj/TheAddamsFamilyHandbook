@@ -17,6 +17,7 @@ const ROUTES = [
   '/switches',
   '/switch/12',
   '/coil/01',
+  '/flipper/ULF',
   '/lamp/11',
   '/lamps',
   '/coils',

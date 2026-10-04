@@ -24,14 +24,14 @@ const prev = list[i - 1];
 const next = list[i + 1];
 /** The list page: a path, for the nav key and the back link (Base adds the base path). */
 const listPath = tablePath(kind);
-/** The back link's label: the list page's name. */
-const listLabel = KIND_PLURAL[kind];
+/** The back link's label: the list page's name (a flipper coil's list is the Solenoids page). */
+const listLabel = KIND_PLURAL[kind === 'flipper' ? 'coil' : kind];
 /** "Switch 32": the page's heading, and the start of its title and description. */
 const compName = componentName(kind, item.id);
 
 /** Related components: the same name (the lamp and coil of a jet bumper) or the same assembly. */
 const name = item.name.trim().toLowerCase();
-const pool: AnyComponent[] = [...DATA.switches, ...DATA.lamps, ...DATA.coils];
+const pool: AnyComponent[] = [...DATA.switches, ...DATA.lamps, ...DATA.coils, ...DATA.flippers];
 const sameName = (c: AnyComponent) => c.name.trim().toLowerCase() === name;
 const related: Related[] = pool
   .filter(

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- The four flipper coils are components of their own: each has a page with
+  its wiring, fuse, status row, note and service log, a Fault tick on the
+  Solenoids page and a place on the shopping list, and the search opens the
+  page instead of the table.
 - "Not tested" is one state: pressing it while it is already chosen changes
   nothing, so the matrix, the map and the service log never change under a
   button that still says chosen. On the map a selected Fault keeps its red

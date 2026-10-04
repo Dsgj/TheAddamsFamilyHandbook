@@ -16,7 +16,12 @@ import { SETUP_STEPS } from '~/data/setup';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const components = JSON.parse(
   readFileSync(path.resolve(here, '../../src/data/kit/components.json'), 'utf-8'),
-) as { switches: { id: string }[]; lamps: { id: string }[]; coils: { id: string }[] };
+) as {
+  switches: { id: string }[];
+  lamps: { id: string }[];
+  coils: { id: string }[];
+  flippers: { id: string }[];
+};
 
 // `~/lib/pages` imports `pages.json` as a module, which the plain Node ESM loader Playwright runs
 // under (unlike Vite/Astro) can't do without an import attribute; read the JSON directly instead,
@@ -36,12 +41,13 @@ function topLevelRoutes(): string[] {
 
 const handbookSectionRoutes = SECTIONS.map((s) => `/handbook/${s.key}`);
 
-// One page per component detail template (src/pages/{switch,lamp,coil}/[id].astro); the ids come
-// from the kit data, not a hand-typed list.
+// One page per component detail template (src/pages/{switch,lamp,coil,flipper}/[id].astro); the
+// ids come from the kit data, not a hand-typed list.
 const componentKindRoutes = [
   `/switch/${components.switches[0]!.id}`,
   `/lamp/${components.lamps[0]!.id}`,
   `/coil/${components.coils[0]!.id}`,
+  `/flipper/${components.flippers[0]!.id}`,
 ];
 
 // One manual page (src/pages/manual/[doc]/[page].astro), doc and page number from the same kit

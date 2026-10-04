@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DATA, find } from '~/lib/data/components';
 import type { WiringRow } from '~/lib/present';
-import { callouts, wiring, wiringRows } from '~/lib/present';
+import { callouts, offMap, wiring, wiringRows } from '~/lib/present';
 
 // The oracle: the old inline Svelte text. `{a} · {b}` renders a nullish piece as nothing.
 const text = (v: string | undefined | null) => v ?? '';
@@ -86,6 +86,26 @@ describe('wiring', () => {
         led: lamp.led,
         assy: lamp.assy,
       });
+    }
+    for (const f of DATA.flippers) {
+      // A flipper coil (CR3-02): the kit's pin is its wire text, the coil's part number its part,
+      // and the fuse is printed on its own row, never derived. It has no callout, so it is off the
+      // map and says where it sits.
+      expect(wiring(f), f.id).toEqual({
+        kind: 'flipper',
+        wire: { colour: f.wire, text: f.pin },
+        part: f.coil,
+        assy: f.assy,
+        fuse: f.fuse,
+        fuseKey: f.fuseKey,
+      });
+      const rows = wiringRows(wiring(f), { parts: true, assembly: true });
+      expect(rows.map((r) => r.label)).toEqual(['Wire', 'Coil', 'Assembly', 'Fuse']);
+      expect(rows.at(-1)).toMatchObject({ kind: 'fuse', key: f.fuseKey, derived: false });
+      expect(callouts(f)).toBe('');
+      expect(offMap(f)).toBe(
+        'Not on the playfield map: on the flipper assembly under the playfield.',
+      );
     }
     for (const coil of DATA.coils) {
       // The same for the coil chip.

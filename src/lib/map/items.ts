@@ -80,7 +80,8 @@ export function kindLine(item: Item) {
 export function subtitle(item: Item) {
   const c = item.comp;
   if (!c || item.kind === 'shot') return '';
-  if (c.kind !== 'coil' && !inMatrix(c)) return '';
+  // A flipper coil never reaches a map list (no callout), so the matrix check is for the others.
+  if (c.kind !== 'coil' && c.kind !== 'flipper' && !inMatrix(c)) return '';
   // The row's name already says "Not Used" and the row says "not on map": no third "not used".
   return capitalise(locationLine(item.kind, { ...c, unused: false }));
 }

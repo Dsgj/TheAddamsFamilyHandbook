@@ -108,6 +108,7 @@ export interface Gi {
 }
 
 export interface Flipper {
+  kind: 'flipper';
   id: 'ULF' | 'URF' | 'LLF' | 'LRF';
   name: string;
   /** English (en.ts wireEn of the kit's Swedish). */
@@ -117,6 +118,8 @@ export interface Flipper {
   assy: string;
   fuse: string;
   fuseKey: string;
+  /** Always empty: the location maps print no callout for a flipper coil (present.ts offMap). */
+  loc: Loc[];
 }
 
 export interface Fuse {
@@ -168,9 +171,10 @@ export type DocId = 'ops' | 'hb' | 'wpc';
 export type PageMeta = [number, number, number, boolean];
 export type Pages = Record<DocId, PageMeta[]>;
 
-export type Kind = 'switch' | 'lamp' | 'coil';
+/** The kinds the owner can mark, note and shop for; a flipper coil is listed on the solenoid pages (CR3-02). */
+export type Kind = 'switch' | 'lamp' | 'coil' | 'flipper';
 /** Any component, told apart by its `kind`. */
-export type AnyComponent = Switch | Lamp | Coil;
+export type AnyComponent = Switch | Lamp | Coil | Flipper;
 /** A component layer of the map and its location page: `sw`, `lamp`, `coil` (copy.ts MAP_LAYER). */
 export type Layer = 'sw' | 'lamp' | 'coil';
 /** A marker kind on the map: the component kinds plus the manual's lettered shots. */

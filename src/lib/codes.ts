@@ -72,6 +72,9 @@ const SUMMARY_NOUN: Record<Kind, [string, string]> = {
   switch: ['switch', 'switches'],
   lamp: ['lamp', 'lamps'],
   coil: ['solenoid', 'solenoids'],
+  // The display never prints a flipper coil code, so parseCodes does not read one; the summary
+  // still names the kind for a list built elsewhere.
+  flipper: ['flipper coil', 'flipper coils'],
 };
 
 /**
@@ -83,7 +86,7 @@ export function codesSummary(
   codes: readonly { kind: Kind | 'unknown'; id: string }[],
   faulty: (kind: Kind, id: string) => boolean,
 ): string {
-  const n: Record<Kind, number> = { switch: 0, lamp: 0, coil: 0 };
+  const n: Record<Kind, number> = { switch: 0, lamp: 0, coil: 0, flipper: 0 };
   let total = 0;
   let faults = 0;
   for (const c of codes) {
@@ -92,7 +95,7 @@ export function codesSummary(
     total++;
     if (faulty(c.kind, c.id)) faults++;
   }
-  const kinds = (['switch', 'lamp', 'coil'] as const)
+  const kinds = (['switch', 'lamp', 'coil', 'flipper'] as const)
     .filter((k) => n[k])
     .map((k) => plural(n[k], ...SUMMARY_NOUN[k]))
     .join(', ');

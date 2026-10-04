@@ -109,7 +109,13 @@
         c.driver,
       );
     for (const f of DATA.flippers)
-      hit(f.id, f.name, `Flipper coil ${f.coil}`, tableHref('coil', 'flippers'));
+      hit(
+        componentCode('flipper', f.id),
+        f.name,
+        kindLine('flipper', f),
+        componentHref('flipper', f.id),
+        f.coil,
+      );
     for (const g of DATA.gi)
       hit(g.id, g.name, `General illumination · ${g.driver}`, tableHref('coil', 'gi'));
     for (const f of DATA.fuses) hit(f.id, f.circuit, `Fuse · ${f.rating}`, href(`fuses#${f.key}`));

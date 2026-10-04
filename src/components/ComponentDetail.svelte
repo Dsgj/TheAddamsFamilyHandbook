@@ -51,6 +51,7 @@
   const sw = $derived(item.kind === 'switch' ? item : undefined);
   const lamp = $derived(item.kind === 'lamp' ? item : undefined);
   const coil = $derived(item.kind === 'coil' ? item : undefined);
+  const flip = $derived(item.kind === 'flipper' ? item : undefined);
   const w = $derived(wiring(item));
   const layer = $derived(MAP_LAYER[kind]);
   const callouts = $derived(calloutsOf(item));
@@ -71,8 +72,10 @@
   const history = $derived((current?.history ?? []).slice().reverse());
   const eventLabel = (st: StatusValue | '') => (st ? STATUS_LABEL[st] : 'Cleared');
 
-  const part = $derived(sw?.part || lamp?.bulbPart || coil?.part || '');
-  const partLabel = $derived(sw ? 'Switch' : lamp ? `Bulb ${lamp.bulb}` : coil ? 'Coil' : 'Part');
+  const part = $derived(sw?.part || lamp?.bulbPart || coil?.part || flip?.coil || '');
+  const partLabel = $derived(
+    sw ? 'Switch' : lamp ? `Bulb ${lamp.bulb}` : coil || flip ? 'Coil' : 'Part',
+  );
   /** The LED fitted in this machine (what to order when a lamp dies); '' for non-lamps. */
   const led = $derived(w.kind === 'lamp' ? w.led : '');
 

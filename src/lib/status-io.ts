@@ -17,7 +17,7 @@ interface StatusExport {
 }
 
 const VALUES: ReadonlySet<string> = new Set<StatusValue | ''>(['ok', 'fault', 'untested', '']);
-const KEY_RE = /^(switch|lamp|coil):[A-Z0-9]{1,3}$/;
+const KEY_RE = /^(switch|lamp|coil|flipper):[A-Z0-9]{1,3}$/;
 
 /**
  * The key as the app spells it, from one a hand-made file may spell loosely: `coil:7` is `coil:07`

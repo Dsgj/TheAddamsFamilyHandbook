@@ -49,6 +49,8 @@ describe('link helpers', () => {
     expect(tablePath('switch')).toBe('switches');
     expect(tablePath('lamp')).toBe('lamps');
     expect(tablePath('coil')).toBe('coils');
+    // The flipper coils are a table on the solenoid page (CR3-02).
+    expect(tablePath('flipper')).toBe('coils');
     expect(tableHref('switch')).toBe(href('switches'));
     expect(tableHref('coil', 'flippers')).toBe(href('coils#flippers'));
     expect(tableHref('coil', 'gi')).toBe(href('coils#gi'));
@@ -59,6 +61,7 @@ describe('link helpers', () => {
     expect(tableSpotHref('switch', { id: 'D1', circuit: 'ded' })).toBe(href('switches#j205'));
     expect(tableSpotHref('switch', { id: 'F1', circuit: 'flip' })).toBe(href('switches#j806'));
     expect(tableSpotHref('coil', { id: '01' })).toBe(href('coils#coil-01'));
+    expect(tableSpotHref('flipper', { id: 'ULF' })).toBe(href('coils#flipper-ULF'));
   });
 
   it('links a manual page with its callouts to ring, and reads them back (UX2-07)', () => {

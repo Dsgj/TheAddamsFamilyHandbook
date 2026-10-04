@@ -211,10 +211,11 @@ src/
 ├── components/   Svelte islands: Diagnose, PlayfieldMap, Matrix, PageViewer, …
 ├── data/         kit/ (synced), positions.json, shots.ts, overlays.json, owner data
 ├── lib/          codes, shared cause, handbook loader, data mapping, positions, status
-├── pages/        21 routes: index (Diagnose), map, tables, switches, lamps,
-│                 coils, fuses, switch/[id], lamp/[id], coil/[id], handbook/index,
-│                 handbook/[section], manual/index, manual/[doc]/[page], parts,
-│                 workshop, shopping, verify, care, setup, 404; plus
+├── pages/        22 routes: index (Diagnose), map, tables, switches, lamps,
+│                 coils, fuses, switch/[id], lamp/[id], coil/[id], flipper/[id],
+│                 handbook/index, handbook/[section], manual/index,
+│                 manual/[doc]/[page], parts, workshop, shopping, verify, care,
+│                 setup, 404; plus
 │                 data/handbook.json.ts (a JSON endpoint, not a page)
 ├── styles/       tokens.css (palette, type, spacing), base.css
 └── content/      handbook pages (synced from the kit)

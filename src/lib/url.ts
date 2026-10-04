@@ -11,7 +11,7 @@ export function href(path: string): string {
   return `${base}/${path.replace(/^\//, '')}`;
 }
 
-export function componentHref(kind: 'switch' | 'lamp' | 'coil', id: string): string {
+export function componentHref(kind: Kind, id: string): string {
   return href(`${kind}/${id}`);
 }
 
@@ -45,7 +45,12 @@ export function handbookHref(section: string, anchor?: string): string {
   return href(`handbook/${section}${anchor === undefined ? '' : '#' + anchor}`);
 }
 
-const TABLE_PATH: Record<Kind, string> = { switch: 'switches', lamp: 'lamps', coil: 'coils' };
+const TABLE_PATH: Record<Kind, string> = {
+  switch: 'switches',
+  lamp: 'lamps',
+  coil: 'coils',
+  flipper: 'coils',
+};
 
 /** The path of a kind's table page, for `href()` and for a Base `nav` key or back link. */
 export function tablePath(kind: Kind): string {
@@ -63,6 +68,7 @@ export function tableHref(kind: Kind, anchor?: string): string {
  */
 export function tableSpotHref(kind: Kind, part: { id: string; circuit?: 'ded' | 'flip' }): string {
   if (kind === 'coil') return tableHref('coil', `coil-${part.id}`);
+  if (kind === 'flipper') return tableHref(kind, `flipper-${part.id}`);
   if (part.circuit === 'ded') return tableHref(kind, 'j205');
   if (part.circuit === 'flip') return tableHref(kind, 'j806');
   return tableHref(kind, `c${part.id}`);

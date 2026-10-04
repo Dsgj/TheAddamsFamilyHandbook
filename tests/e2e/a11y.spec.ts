@@ -926,6 +926,7 @@ test.describe('targets are 44 or carved out (AY-12, spec §12)', () => {
     '/switches',
     '/switch/12',
     '/coil/01',
+    '/flipper/ULF',
     '/lamp/11',
     '/lamps',
     '/coils',

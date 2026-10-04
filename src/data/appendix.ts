@@ -5,7 +5,7 @@
  * `findHeading`, the same way Setup and Care links are; `appendixAnchor` is the same id for
  * client islands, checked against the rendered headings by the unit test.
  */
-import type { AnyComponent, Coil, Kind, Lamp, Switch } from '~/lib/model/types';
+import type { AnyComponent, Coil, Flipper, Kind, Lamp, Switch } from '~/lib/model/types';
 import { pageRefText } from '~/lib/pages';
 import { handbookHref } from '~/lib/url';
 
@@ -59,6 +59,8 @@ export function appendixFor(kind: Kind, item: AnyComponent): string[] {
     out.push('A3');
   } else if (kind === 'lamp') {
     out.push('A4');
+  } else if (kind === 'flipper') {
+    out.push('A6', 'A2');
   } else {
     const type = 'type' in item ? item.type : '';
     if (type === 'Flasher' && !has(item, /motor|eject|release/i)) out.push('A4');
@@ -116,6 +118,19 @@ function coilNote(c: Coil): ServiceNote {
   };
 }
 
+function flipperNote(f: Flipper): ServiceNote {
+  const o = coilOhms(f.coil);
+  const ohms = o
+    ? `about ${o.ohms} Ω, power winding / hold winding (${o.mark})`
+    : 'a few ohms across the power winding and well over 100 across the hold winding';
+  return {
+    code: 'A6',
+    text:
+      `Flipper coil ${f.coil} on assembly ${f.assy}, fed through ${f.pin}, fuse ${f.fuse}. Two windings share the lugs: the heavy power winding that throws the flipper and the fine hold winding that keeps it up once it has reached the end of its stroke. Measure between the lugs, game off: ${ohms}. ` +
+      `A hold winding that reads open gives a flipper that fires and drops back; a shorted power winding blows fuse ${f.fuse} and can take its driver transistor on the Fliptronics board with it. A weak or lazy flipper is the end-of-stroke switch first, then a worn sleeve, a bent plunger or a loose coil stop. Never oil the plunger or the sleeve.`,
+  };
+}
+
 function switchNote(s: Switch): ServiceNote {
   if (/end of stroke/i.test(s.name)) {
     return {
@@ -159,5 +174,6 @@ function lampNote(l: Lamp): ServiceNote {
 export function serviceNotes(item: AnyComponent): ServiceNote[] {
   if (item.kind === 'switch') return [switchNote(item)];
   if (item.kind === 'lamp') return [lampNote(item)];
+  if (item.kind === 'flipper') return [flipperNote(item)];
   return [coilNote(item)];
 }

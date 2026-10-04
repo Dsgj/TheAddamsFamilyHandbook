@@ -1,6 +1,15 @@
 import { COMPONENTS } from '~/lib/kit/components';
 import { MAP_LAYER } from '~/lib/copy';
-import type { AnyComponent, Coil, Kind, Lamp, Layer, MapMeta, Switch } from '~/lib/model/types';
+import type {
+  AnyComponent,
+  Coil,
+  Flipper,
+  Kind,
+  Lamp,
+  Layer,
+  MapMeta,
+  Switch,
+} from '~/lib/model/types';
 
 export const DATA = COMPONENTS;
 
@@ -8,14 +17,17 @@ const byId = <T extends { id: string }>(list: T[]) => new Map(list.map((x) => [x
 export const SWITCHES = byId(DATA.switches);
 export const LAMPS = byId(DATA.lamps);
 const COILS = byId(DATA.coils);
+const FLIPPERS = byId(DATA.flippers);
 
 export function find(kind: 'switch', id: string): Switch | undefined;
 export function find(kind: 'lamp', id: string): Lamp | undefined;
 export function find(kind: 'coil', id: string): Coil | undefined;
+export function find(kind: 'flipper', id: string): Flipper | undefined;
 export function find(kind: Kind, id: string): AnyComponent | undefined;
 export function find(kind: Kind, id: string): AnyComponent | undefined {
   if (kind === 'switch') return SWITCHES.get(id);
   if (kind === 'lamp') return LAMPS.get(id);
+  if (kind === 'flipper') return FLIPPERS.get(id);
   return COILS.get(id);
 }
 

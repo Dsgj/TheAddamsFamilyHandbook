@@ -32,7 +32,7 @@ interface ShoppingGroup {
 
 /** The group label for a component the kit records no bulb type or part number for (F1 to F8). */
 const NO_PART = 'no part number recorded';
-export const KIND_ORDER: Kind[] = ['lamp', 'switch', 'coil'];
+export const KIND_ORDER: Kind[] = ['lamp', 'switch', 'coil', 'flipper'];
 /** The component's code as the tables print it: "32", "L55", "SOL 01" (spec §13). */
 export const itemRef = (i: ShoppingItem) => componentCode(i.kind, i.id);
 

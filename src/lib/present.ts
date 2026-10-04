@@ -35,6 +35,16 @@ export type Wiring =
       fuseKey: string;
       /** The fuse comes from the fuse list, not from the coil's own row in the manual. */
       fuseDerived: boolean;
+    }
+  | {
+      kind: 'flipper';
+      /** The kit's wire colour and connector pin; the Fliptronics board drives it, not a numbered transistor. */
+      wire: Wire;
+      /** The coil's part number ("FL-11753"). */
+      part: string;
+      assy: string;
+      fuse: string;
+      fuseKey: string;
     };
 
 /** "J206-3 · U20-16": a connector pin and the IC pin, transistor or driver behind it. */
@@ -66,6 +76,17 @@ export function wiring(item: AnyComponent): Wiring {
       bulb: { code: lamp.bulb ?? '', part: lamp.bulbPart ?? '' },
       led: lamp.led ?? '',
       assy: lamp.assy,
+    };
+  }
+  if (item.kind === 'flipper') {
+    const f = item;
+    return {
+      kind: 'flipper',
+      wire: { colour: f.wire, text: f.pin },
+      part: f.coil,
+      assy: f.assy,
+      fuse: f.fuse,
+      fuseKey: f.fuseKey,
     };
   }
   const coil = item;
@@ -118,17 +139,19 @@ export function wiringRows(w: Wiring, show: { parts: boolean; assembly: boolean 
       if (w.led) rows.push({ kind: 'led', label: 'Installed LED', text: w.led });
     }
   } else {
+    // A solenoid or a flipper coil: one wire and the coil's part number.
     rows.push(wire('Wire', w.wire));
     if (show.parts) rows.push(part('Coil', w.part));
   }
   if (show.assembly && w.assy) rows.push(part('Assembly', w.assy));
-  if (w.kind === 'coil')
+  if (w.kind === 'coil' || w.kind === 'flipper')
     rows.push({
       kind: 'fuse',
       label: 'Fuse',
       text: w.fuse,
       key: w.fuseKey,
-      derived: w.fuseDerived,
+      // The kit prints each flipper coil's fuse on its own row, so none is derived.
+      derived: w.kind === 'coil' && w.fuseDerived,
     });
   return rows;
 }
@@ -153,6 +176,7 @@ export function offMap(item: AnyComponent): string {
   return where ? `Not on the playfield map: ${where}.` : 'Not on the playfield map.';
 }
 function offMapWhere(item: AnyComponent): string {
+  if (item.kind === 'flipper') return 'on the flipper assembly under the playfield';
   if (item.kind === 'coil') return item.cabinet ? 'in the cabinet' : '';
   if (item.unused) return 'not used in this machine';
   if (item.kind === 'lamp') return '';
