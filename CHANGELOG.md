@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Handbook tables no longer break a hyphenated code ("Blu-Org", "FL-11753")
+  across two lines on a phone, and each table's scroller is a named region
+  the keyboard can reach, so it scrolls with the arrow keys in every browser.
 - On a tablet or desktop, a control that ends a row ("Add to list" on a part
   row) now sits at the row's end, where every chevron sits, instead of mid-row
   after the text. Checklist statements and the progress line stop at the

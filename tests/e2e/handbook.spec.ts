@@ -420,3 +420,54 @@ test('a non-part hash such as #main leaves Parts search alone', async ({ page })
   await expect(page.getByLabel('Search parts')).toHaveValue('');
   await expect(page.locator('.count')).toContainText('Top-level assemblies');
 });
+
+/* P1 item 3 of the app audit, round 3: a handbook table's codes never break at a hyphen, and its
+   scroller is a region the keyboard can reach, named after the heading it sits under (VP3-01,
+   AY3-02). */
+test.describe('handbook tables', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.setViewportSize({ width: 412, height: 900 });
+    await gotoHydrated(page, '/handbook/quick');
+  });
+
+  test('codes stay whole on a phone and every scroller is a named region', async ({ page }) => {
+    const toks = page.locator('.prose td .tok');
+    expect(await toks.count()).toBeGreaterThan(50);
+    const broken = await toks.evaluateAll((els) =>
+      els.filter((el) => el.getClientRects().length > 1).map((el) => el.textContent),
+    );
+    expect(broken).toEqual([]);
+    const regions = await page.locator('.prose .scroll-x').evaluateAll((els) =>
+      els.map((el) => ({
+        tabindex: el.getAttribute('tabindex'),
+        role: el.getAttribute('role'),
+        name: el.getAttribute('aria-label') ?? '',
+      })),
+    );
+    expect(regions.length).toBeGreaterThan(5);
+    for (const r of regions) {
+      expect(r.tabindex).toBe('0');
+      expect(r.role).toBe('region');
+      expect(r.name.length).toBeGreaterThan(0);
+    }
+    expect(regions.map((r) => r.name)).toEqual(
+      expect.arrayContaining(['Jumper Charts, table 1', 'Jumper Charts, table 2', 'Flippers']),
+    );
+  });
+
+  test('the arrow keys scroll a focused table', async ({ page, browserName }) => {
+    test.skip(browserName === 'webkit', 'axe.spec proves the focusable region on WebKit');
+    const name = await page
+      .locator('.prose .scroll-x')
+      .evaluateAll(
+        (els) =>
+          els.find((el) => el.scrollWidth > el.clientWidth + 8)?.getAttribute('aria-label') ?? '',
+      );
+    expect(name).not.toBe('');
+    const region = page.getByRole('region', { name, exact: true });
+    await region.focus();
+    await expect(region).toBeFocused();
+    await page.keyboard.press('ArrowRight');
+    await expect.poll(() => region.evaluate((el) => el.scrollLeft)).toBeGreaterThan(0);
+  });
+});

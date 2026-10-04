@@ -27,6 +27,9 @@ const ROUTES = [
   '/handbook/menus',
   '/handbook/rules',
   '/handbook/appendix',
+  '/handbook/setup',
+  '/handbook/adjustments',
+  '/handbook/presets',
   '/manual',
   '/manual/ops/5',
   '/parts',
@@ -45,12 +48,10 @@ type NodeResult = Result['nodes'][number];
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best-practice'];
 
 /** Known, not changed (app audit P4 item 4): the rules a route trips today, keyed `project route`.
- * scrollable-region-focusable: the two `#pg-2 > .scroll-x` tables. desktop-light is clean on every
- * route. (target-size on /?q=12 13 went with the map link of a part the map does not draw.) */
-const KNOWN: Record<string, string[]> = {
-  'phone-dark /handbook/quick': ['scrollable-region-focusable'],
-  'phone-webkit /handbook/quick': ['scrollable-region-focusable'],
-};
+ * Empty since P1 item 3 of round 3 made every handbook table scroller a focusable, named region
+ * (AY3-02: scrollable-region-focusable fired on /handbook/quick's `#pg-2 > .scroll-x` tables on the
+ * phones). (target-size on /?q=12 13 went with the map link of a part the map does not draw.) */
+const KNOWN: Record<string, string[]> = {};
 
 /** A row the sticky Diagnose field passes over (P2 item 3 of the app audit, round 2): axe counts the
  * strip of it left between the field's buttons and the tab bar as the whole target, so a hit fails

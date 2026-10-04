@@ -209,3 +209,65 @@ describe('handbook index (links.ts)', () => {
     expect(missing).toEqual([]);
   });
 });
+
+describe('renderPage tables (P1 item 3 of the app audit, round 3)', () => {
+  const md = [
+    '## Fuses & "fuses"',
+    '',
+    '| Fuse | Wire |',
+    '| --- | --- |',
+    '| F101 | Blu-Org |',
+    '',
+    '| Pin | Note |',
+    '| --- | --- |',
+    '| J126-7 | an end-of-stroke switch |',
+    '',
+    '## Notes',
+    '',
+    '| Part |',
+    '| --- |',
+    '| AE-23-800 |',
+  ].join('\n');
+  const OPEN = /<div class="scroll-x" tabindex="0" role="region" aria-label="([^"]*)">/g;
+
+  it('names each scroller after its heading and numbers a heading with several tables (AY3-02)', () => {
+    const { html } = renderPage(7, md, '');
+    expect([...html.matchAll(OPEN)].map((m) => m[1])).toEqual([
+      'Fuses &amp; &quot;fuses&quot;, table 1',
+      'Fuses &amp; &quot;fuses&quot;, table 2',
+      'Notes',
+    ]);
+    expect(html.match(/<\/table><\/div>/g)).toHaveLength(3);
+  });
+
+  it('falls back to the page when no heading precedes the table', () => {
+    const table = '| A |\n| --- |\n| 1 |\n';
+    expect(renderPage(7, table, '2-3').html).toContain('aria-label="Table, page 2-3"');
+    expect(renderPage(7, table, '').html).toContain('aria-label="Table, page 7"');
+  });
+
+  it('wraps each hyphenated code in a cell in a nowrap token, text only (VP3-01)', () => {
+    const { html } = renderPage(7, md, '');
+    expect(html).toContain('<td><span class="tok">Blu-Org</span></td>');
+    expect(html).toContain('<td><span class="tok">J126-7</span></td>');
+    expect(html).toContain('<td>an <span class="tok">end-of-stroke</span> switch</td>');
+    expect(html).toContain('<td><span class="tok">AE-23-800</span></td>');
+    expect(html).toContain('<td>F101</td>');
+    expect(html).toContain('<th>Fuse</th>');
+  });
+
+  it('leaves no hyphenated code outside a token in any handbook table', async () => {
+    const pages = await loadAll();
+    let toks = 0;
+    for (const p of pages) {
+      for (const [, inner] of p.html.matchAll(/<t[dh](?:\s[^>]*)?>([\s\S]*?)<\/t[dh]>/g)) {
+        toks += (inner!.match(/<span class="tok">/g) ?? []).length;
+        const bare = inner!
+          .replace(/<span class="tok">[^<]*<\/span>/g, '')
+          .replace(/<[^>]+>/g, ' ');
+        expect(bare, `${p.page}: ${inner}`).not.toMatch(/[A-Za-z0-9]-[A-Za-z0-9]/);
+      }
+    }
+    expect(toks, 'tokens across the ops pages').toBeGreaterThan(200);
+  });
+});

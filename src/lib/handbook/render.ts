@@ -39,6 +39,29 @@ const stripTags = (h: string) =>
     .replace(/\s+/g, ' ')
     .trim();
 
+/** The text of the last h2 or h3 before `at` in rendered HTML, or '' when none precedes it. */
+function headingBefore(html: string, at: number): string {
+  const before = html.slice(0, at).match(/<h[23] id="[^"]+">[\s\S]*?<\/h[23]>/g);
+  const last = before?.[before.length - 1];
+  return last ? stripTags(last) : '';
+}
+
+/** Text as an attribute value: stripTags decoded the entities, so the ones HTML needs go back. */
+function attr(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
+
+/** A hyphenated code ('Blu-Org', 'J126-7', 'AE-23-800'): letters and digits joined by hyphens. */
+const CODE_RE = /\b[A-Za-z0-9]+(?:-[A-Za-z0-9]+)+\b/g;
+
+/** Every hyphenated code in a cell's text (never inside a tag) wrapped in a nowrap .tok. */
+function nowrapCodes(inner: string): string {
+  return inner
+    .split(/(<[^>]+>)/)
+    .map((part, i) => (i % 2 ? part : part.replace(CODE_RE, '<span class="tok">$&</span>')))
+    .join('');
+}
+
 /**
  * First pass: markdown → HTML with stable heading ids (`p25-1`), collecting headings.
  * Links and figures are rewritten in `finish` once every page's headings are known.
@@ -60,9 +83,34 @@ export function renderPage(page: number, body: string, label: string): RenderedP
       return `<${tag} id="${id}">${inner}</${tag}>`;
     },
   );
+  // Tables (P1 item 3 of the app audit, round 3). The scroller is a region the keyboard can reach,
+  // named after the heading it sits under ("Jumper Charts, table 2"), so WebKit scrolls it with the
+  // arrow keys and axe knows why it takes focus (AY3-02). A hyphenated code in a cell ('Blu-Org',
+  // 'J126-7', 'AE-23-800') is a nowrap .tok, as in the app's own tables, so it never breaks at the
+  // hyphen (VP3-01).
+  const under = [...html.matchAll(/<table>/g)].map((m) => headingBefore(html, m.index ?? 0));
+  const perHeading = new Map<string, number>();
+  for (const h of under) perHeading.set(h, (perHeading.get(h) ?? 0) + 1);
+  const seen = new Map<string, number>();
+  let t = 0;
   html = html
-    .replace(/<table>/g, '<div class="scroll-x"><table class="t">')
-    .replace(/<\/table>/g, '</table></div>');
+    .replace(/<table>/g, () => {
+      const h = under[t++] ?? '';
+      const n = (seen.get(h) ?? 0) + 1;
+      seen.set(h, n);
+      const name = !h
+        ? `Table, page ${label || page}`
+        : (perHeading.get(h) ?? 1) > 1
+          ? `${h}, table ${n}`
+          : h;
+      return `<div class="scroll-x" tabindex="0" role="region" aria-label="${attr(name)}"><table class="t">`;
+    })
+    .replace(/<\/table>/g, '</table></div>')
+    .replace(
+      /<(td|th)(\s[^>]*)?>([\s\S]*?)<\/\1>/g,
+      (_m, tag: string, attrs: string | undefined, inner: string) =>
+        `<${tag}${attrs ?? ''}>${nowrapCodes(inner)}</${tag}>`,
+    );
   // Figures: marked renders <p><img alt=".." src="fig/ops9.png"></p>
   html = html.replace(
     /<p><img\s+src="fig\/([^"]+)"\s+alt="([^"]*)"\s*\/?>\s*<\/p>/g,
