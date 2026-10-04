@@ -290,12 +290,33 @@ test.describe('top bar on phones', () => {
     await expect(skip).toHaveAttribute('href', '#main');
   });
 
-  test('a page with its own h1 keeps it; the bar title is decoration', async ({ page }) => {
+  test('a page with its own h1 keeps it; the bar title is decoration and waits for it to go', async ({
+    page,
+  }) => {
     await gotoHydrated(page, '/switches');
     await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
     await expect(page.locator(`${BAR} .ct`)).toHaveAttribute('aria-hidden', 'true');
     await expect(page.locator(`${BAR} h1`)).toHaveCount(0);
     await expect(page.locator('main > .lt')).toHaveCount(0);
+    // P2 item 9 of the app audit, round 3: the compact title fades in over the h1's last 12 px
+    // under the bar, as a tab root's does between 40 and 52, so a title is never on screen twice.
+    expect(await opacity(page, `${BAR} .ct`)).toBe(0);
+    await makeTall(page);
+    const gone = await page.evaluate(
+      () =>
+        document.querySelector('main h1')!.getBoundingClientRect().bottom -
+        document.querySelector('header.top')!.getBoundingClientRect().bottom,
+    );
+    await scrollTo(page, gone - 14);
+    await expect.poll(() => opacity(page, `${BAR} .ct`)).toBe(0);
+    await scrollTo(page, gone - 6);
+    await expect.poll(() => opacity(page, `${BAR} .ct`)).toBeCloseTo(0.5, 1);
+    await scrollTo(page, gone + 2);
+    await expect.poll(() => opacity(page, `${BAR} .ct`)).toBe(1);
+    await expect(page.locator(BAR)).toHaveAttribute('data-collapsed', '');
+    await scrollTo(page, 0);
+    await expect.poll(() => opacity(page, `${BAR} .ct`)).toBe(0);
+    await expect(page.locator(BAR)).not.toHaveAttribute('data-collapsed', /.*/);
   });
 
   for (const [path, parent, label] of [
@@ -308,8 +329,6 @@ test.describe('top bar on phones', () => {
     ['/coils', '/tables', 'Tables'],
     ['/fuses', '/tables', 'Tables'],
     ['/handbook/menus', '/handbook', 'Handbook'],
-    ['/manual', '/handbook', 'Handbook'],
-    ['/parts', '/handbook', 'Handbook'],
     ['/manual/ops/25', '/manual', 'Manuals'],
     ['/shopping', '/workshop', 'Workshop'],
     ['/verify', '/workshop', 'Workshop'],
@@ -326,7 +345,10 @@ test.describe('top bar on phones', () => {
     });
   }
 
-  for (const path of ['/', '/map', '/tables', '/handbook', '/workshop']) {
+  // /manual and /parts are the Handbook tab's siblings: the segmented links move between the
+  // three, so they share the root's large title and have no back link (P2 item 9 of the app
+  // audit, round 3).
+  for (const path of ['/', '/map', '/tables', '/handbook', '/workshop', '/manual', '/parts']) {
     test(`${path} has no back link`, async ({ page }) => {
       await gotoHydrated(page, path);
       await expect(page.locator(`${BAR} a.back`)).toHaveCount(0);

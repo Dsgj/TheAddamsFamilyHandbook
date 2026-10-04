@@ -35,8 +35,9 @@ interface Props {
   /** Active nav key. */
   nav?: string;
   /**
-   * Which element is the page's one h1 (spec §6.5). 'large': a tab root; the large title under
-   * the bar is the h1. 'page': the page renders its own h1; the bar's title is decoration.
+   * Which element is the page's one h1 (spec §6.5). 'large': a tab root or one of the Handbook
+   * tab's sibling index pages; the large title under the bar is the h1. 'page': the page renders
+   * its own h1; the bar's title is decoration and shows once that h1 has scrolled under the bar.
    * 'bar': the compact title is the h1.
    */
   h1?: 'large' | 'page' | 'bar';
@@ -316,20 +317,29 @@ const hasActions = Astro.slots.has('actions');
       (function () {
         // The large title collapses over the first 52 px of scroll (spec §6.5): the compact
         // title fades in between 40 and 52 and the hairline appears at 52. Under reduced motion
-        // the titles swap at 52.
+        // the titles swap at 52. A page with its own h1 (data-h1="page") runs the same fade off
+        // that h1 instead, over its last 12 px under the bar, so the bar never repeats a title
+        // that is still on screen (audit P2 item 9); with no h1 to wait for, the title just shows.
         const top = document.querySelector('header.top');
         const lt = document.querySelector('main > .lt');
-        if (top && lt) {
+        const own = top && top.dataset.h1 === 'page' ? document.querySelector('main h1') : null;
+        if (top && top.dataset.h1 === 'page' && !own) top.style.setProperty('--ct', '1');
+        if (top && (lt || own)) {
           const reduce = matchMedia('(prefers-reduced-motion: reduce)');
           let queued = false;
           const apply = function () {
             queued = false;
-            const y = Math.max(0, window.scrollY);
+            // For an own h1, y is how far its bottom edge has come up the bar's last 52 px.
+            const y = lt
+              ? Math.max(0, window.scrollY)
+              : 52 - (own.getBoundingClientRect().bottom - top.getBoundingClientRect().bottom);
             const done = y >= 52;
             const ct = reduce.matches ? (done ? 1 : 0) : Math.min(1, Math.max(0, (y - 40) / 12));
-            const large = reduce.matches ? (done ? 0 : 1) : Math.max(0, 1 - y / 52);
             top.style.setProperty('--ct', String(ct));
-            lt.style.setProperty('--lt', String(large));
+            if (lt) {
+              const large = reduce.matches ? (done ? 0 : 1) : Math.max(0, 1 - y / 52);
+              lt.style.setProperty('--lt', String(large));
+            }
             top.toggleAttribute('data-collapsed', done);
           };
           const onScroll = function () {
@@ -339,6 +349,7 @@ const hasActions = Astro.slots.has('actions');
           };
           apply();
           addEventListener('scroll', onScroll, { passive: true });
+          addEventListener('resize', onScroll);
           reduce.addEventListener('change', apply);
         }
         // Under 1280 a back label too long for its side wraps out of the link and only the

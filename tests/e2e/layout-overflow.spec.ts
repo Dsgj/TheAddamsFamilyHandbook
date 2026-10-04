@@ -1397,3 +1397,37 @@ test.describe('the reader bar sits on the article column', () => {
     });
   }
 });
+
+/* P2 item 9 of the app audit, round 3: from 1280 the bar keeps a 16 gap between the back link and
+   the title (VL3-02), a page with its own h1 shows the bar title only once that h1 has scrolled
+   under the bar (VP3-02), and /manual and /parts are the Handbook tab's siblings: a large title and
+   the segmented links in the same slot as on /handbook, with no back link (VL3-15, VP3-14). */
+test.describe('the top bar and the Handbook siblings', () => {
+  test.skip(({ isMobile }) => isMobile, 'desktop widths');
+
+  for (const width of [1280, 1440]) {
+    test(`${width}: back link and title 16 apart, one title on screen, siblings alike`, async ({
+      page,
+    }) => {
+      for (const route of ['/switch/32', '/handbook/menus']) {
+        await at(page, width, route);
+        const back = (await page.locator('header.top a.back').boundingBox())!;
+        const title = (await page.locator('header.top .ct').boundingBox())!;
+        expect(title.x - (back.x + back.width), route).toBeGreaterThanOrEqual(16);
+      }
+      // /switch/32 takes the bar title as its h1; /handbook/menus has its own, so its bar title
+      // waits until that h1 has scrolled under the bar.
+      await expect(page.locator('header.top .ct')).toHaveCSS('opacity', '0');
+      await page.evaluate(() => window.scrollTo(0, 400));
+      await expect(page.locator('header.top .ct')).toHaveCSS('opacity', '1');
+      const segY: number[] = [];
+      for (const route of ['/handbook', '/manual', '/parts']) {
+        await at(page, width, route);
+        await expect(page.locator('header.top a.back')).toHaveCount(0);
+        await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
+        segY.push((await page.locator('nav.seg').boundingBox())!.y);
+      }
+      expect(new Set(segY).size, `DocSeg y: ${segY.join(', ')}`).toBe(1);
+    });
+  }
+});

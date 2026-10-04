@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Top bar: from 1280 px the back link and the title keep a 16 px gap, a page
+  with its own heading shows the bar title only once that heading has
+  scrolled under the bar, and Manuals and Parts are laid out like the
+  Handbook page: a large title and the Handbook / Manuals / Parts links in
+  the same place, with no back link.
 - Map and cards, for assistive tech: the playfield drawing explains its arrow
   keys, the image under the markers is decorative so its name is not read
   twice, the handbook's map embed names its side panel and the desktop list

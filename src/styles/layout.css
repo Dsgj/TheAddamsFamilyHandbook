@@ -70,8 +70,12 @@ main.fullbleed {
 .top .ct .short {
   display: none;
 }
-/* On tab roots the compact title and the hairline appear only once the large title has gone. */
-.top[data-h1='large'] .ct {
+/* On tab roots the compact title and the hairline appear only once the large title has gone. On a
+   page with its own h1 the compact title waits the same way, until that h1 has scrolled under the
+   bar, so a title is never on screen twice (audit P2 item 9, VL3-02/VP3-02). Base's script
+   drives --ct for both. */
+.top[data-h1='large'] .ct,
+.top[data-h1='page'] .ct {
   opacity: var(--ct, 0);
 }
 .top[data-h1='large']:not([data-collapsed])::after {
@@ -225,8 +229,10 @@ main.fullbleed {
   }
 }
 @media (min-width: 1280px) {
+  /* The 16 gap keeps the back link off the title (VL3-02). */
   .top .tb {
     grid-template-columns: auto minmax(0, 1fr) auto;
+    column-gap: 16px;
     padding: 0 8px 0 24px;
   }
   .top .ct {
