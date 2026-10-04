@@ -12,10 +12,35 @@
     color: var(--ink);
     font-size: 12px;
   }
-  /* Paper does not scroll: no edge fade on a cut table. */
+  /* Paper does not scroll (CR3-05): the scroller shows its whole table, and the table shrinks to
+     the page: the body's 12px instead of --t-sub's 15, tighter cells, so the coil tables' Location
+     and Fault columns fit an A4 page. A code still never breaks (.tok and .mono stay nowrap). */
   .scroll-x {
     mask-image: none;
+    overflow: visible;
   }
+  table.t {
+    font-size: 12px;
+    line-height: 16px;
+  }
+  table.t th,
+  table.t td {
+    padding: 4px 6px;
+  }
+  /* .small is 13px on its own cell, so it beat the table's 12: the step under the body on paper
+     (--t-tab's 11/13). */
+  table.t .small {
+    font-size: 11px;
+    line-height: 13px;
+  }
+  /* The text a hidden control holds prints in its place (CR3-01, CR3-04): the suggested and the
+     set value on /setup, a component's note. revert, so a span is inline and a p a block. */
+  .print-only {
+    display: revert;
+  }
+  /* .no-print: a panel for the screen only, like /shopping's Device data backup controls
+     (CR3-07). */
+  .no-print,
   .shell,
   .btn,
   .field,
@@ -121,6 +146,8 @@
     break-inside: avoid;
     box-shadow: none;
     border: 1px solid var(--line);
+    /* 8, not 16: the widest coil table needs the width (CR3-05), and paper has its own margins. */
+    padding: 8px;
   }
   a,
   :is(a:not([class]), a.small, .prose a, .owner-note a):not(.btn, .seg > a) {

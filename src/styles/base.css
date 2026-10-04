@@ -95,6 +95,12 @@ textarea {
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+/* The text a screen control holds (a setup value, a note), for paper only: print.css shows it and
+   hides the control (audit CR3-01, CR3-04). Out of the accessibility tree on screen, like the
+   control's own value is not read twice. */
+.print-only {
+  display: none;
+}
 /* The skip link (spec §12, audit AY-05): sr-only until it has focus, then a 44-tall amber pill
    centred in the top bar, right of the rail or sidebar. :focus, not :focus-visible, so a
    programmatic focus shows it too. Its ring is drawn inside it in --on-amber: on the phone the

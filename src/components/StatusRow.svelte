@@ -41,6 +41,8 @@
     oninput={(e) => setNote(kind, id, e.currentTarget.value, { defer: true })}
     onchange={() => saveNote()}
   />
+  <!-- On paper the field is gone and the note prints as text, the card's point (CR3-04). -->
+  {#if note}<p class="print-only note-text">Note: {note}</p>{/if}
   {#if showLog && log.length}
     <ol class="log muted small" aria-label="Service log">
       <!-- Keyed by place: a hand-edited backup can repeat a time (SV2-01). -->
@@ -69,6 +71,10 @@
     margin: 2px 0 0;
     padding: 0;
     list-style: none;
+  }
+  .note-text {
+    flex: 1 1 100%;
+    margin: 0;
   }
   /* 44 tall, the field's target (audit AY-12); the field's own radius (DS2-09). */
   .note {

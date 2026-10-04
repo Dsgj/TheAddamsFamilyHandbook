@@ -170,7 +170,8 @@
   }
 </script>
 
-<section class="device" id="device-data">
+<!-- no-print: a backup and restore panel is for the device, never for paper (CR3-07). -->
+<section class="device no-print" id="device-data">
   <h2 class="lst-h">Device data</h2>
   <ul class="lst">
     <li class="lrow static recorded">

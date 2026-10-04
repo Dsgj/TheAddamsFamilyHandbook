@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Printing keeps what the screen's controls hold: /setup prints each row's
+  suggested and set values as text, a component page prints its note, a table
+  shrinks to fit an A4 page whole (the coil tables kept their Location and
+  Fault columns off the paper), and /shopping prints without the Device data
+  backup controls.
 - On a desktop the handbook's contents sidebar now follows the article in
   reading order, so "Skip to content" and the first Tab reach the text instead
   of some 280 contents links; the current section is marked for assistive

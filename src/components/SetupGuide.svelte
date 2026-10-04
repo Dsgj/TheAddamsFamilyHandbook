@@ -74,6 +74,7 @@
                     aria-label="{i.suggested}, suggested for {ref}"
                     onclick={() => setValue(i.id, i.suggested)}>{i.suggested}</button
                   >
+                  <span class="print-only mono">{i.suggested}</span>
                   <!-- The name keeps the visible "Set to" first (WCAG 2.5.3) and adds the item. -->
                   <label class="small muted set">
                     <span id="sg-set-{key}">Set to</span>
@@ -87,6 +88,8 @@
                       oninput={(e) => setValue(i.id, e.currentTarget.value, { defer: true })}
                       onchange={() => saveValue()}
                     />
+                    <!-- On paper the field is gone and its value prints here (CR3-01). -->
+                    <span class="print-only mono">{cur?.value ?? ''}</span>
                   </label>
                 </div>
               {/if}
@@ -192,6 +195,12 @@
     gap: 6px;
     flex: 1 1 180px;
     min-height: 44px;
+  }
+  /* Paper has no target: the row is a line of text. */
+  @media print {
+    .set {
+      min-height: 0;
+    }
   }
   .set .field {
     flex: 1;

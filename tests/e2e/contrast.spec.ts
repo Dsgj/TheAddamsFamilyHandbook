@@ -361,6 +361,7 @@ const HIDDEN = [
   '.sheet.dialog',
   'button.lrow',
   '.pgno',
+  '.no-print',
 ];
 
 function printed(hidden: string[]) {
@@ -459,7 +460,7 @@ const PRINT: PrintRoute[] = [
   {
     path: '/shopping',
     h1: 'page',
-    present: ['nav.shell', '.back', '.top .lead', '.acts', 'button.lrow'],
+    present: ['nav.shell', '.back', '.top .lead', '.acts', 'button.lrow', '.no-print'],
     before: tickFaultLamp,
   },
   { path: '/switch/32', h1: 'bar', present: ['.seg', '.back', 'nav.pn', 'button.lrow'] },
@@ -604,3 +605,72 @@ for (const path of ['/switches', '/lamps']) {
     expect(m.name).toBeGreaterThanOrEqual(9);
   });
 }
+
+/* P1 item 5 of the app audit, round 3: paper keeps what the screen's controls hold and shows a
+   table whole (CR3-01, CR3-04, CR3-05). A4 inside Chrome's default margins is 718 CSS px. */
+test.describe('print keeps the values, the note and the whole table', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.setViewportSize({ width: 718, height: 1000 });
+  });
+
+  test('/setup prints the suggested and the set values as text, no controls', async ({ page }) => {
+    await gotoHydrated(page, '/setup');
+    const field = page.locator('.vals input.field').first();
+    await field.fill('17');
+    await field.press('Tab');
+    await page.emulateMedia({ media: 'print' });
+    const rows = await page.locator('.vals').evaluateAll((els) =>
+      els.map((el) => ({
+        text: (el as HTMLElement).innerText.replace(/\s+/g, ' ').trim(),
+        controls: [...el.querySelectorAll('button, input')].filter((c) => c.checkVisibility())
+          .length,
+      })),
+    );
+    expect(rows.length).toBeGreaterThan(30);
+    for (const r of rows) {
+      expect(r.controls, r.text).toBe(0);
+      expect(r.text).toMatch(/^Suggested \S.* Set to/);
+    }
+    expect(rows[0]!.text).toMatch(/ Set to 17$/);
+  });
+
+  test('a component page prints its note as text, no controls', async ({ page }) => {
+    await gotoHydrated(page, '/switch/32');
+    const note = page.locator('.status input.note');
+    await note.fill('Cleaned the contacts');
+    await note.press('Tab');
+    await page.emulateMedia({ media: 'print' });
+    const status = page.locator('.status');
+    await expect(status).toContainText('Note: Cleaned the contacts');
+    const controls = await status
+      .locator('button, input')
+      .evaluateAll((els) => els.filter((c) => c.checkVisibility()).length);
+    expect(controls).toBe(0);
+  });
+
+  for (const path of ['/coils', '/fuses', '/lamps', '/parts']) {
+    test(`${path}: every table prints whole on an A4 page`, async ({ page }) => {
+      await gotoHydrated(page, path);
+      await page.emulateMedia({ media: 'print' });
+      // Measured in the real faces: a fallback face is narrower.
+      await page.evaluate(() => document.fonts.ready);
+      const tables = await page.locator('.scroll-x').evaluateAll((els) =>
+        els.map((el) => ({
+          overflow: getComputedStyle(el).overflowX,
+          right: Math.round(el.querySelector('table')?.getBoundingClientRect().right ?? 0),
+          // A header cell past the page edge is a column the paper cuts (Location, Fault).
+          cut: [...el.querySelectorAll('th')]
+            .filter((th) => th.getBoundingClientRect().right > 718.5)
+            .map((th) => th.textContent?.trim()),
+        })),
+      );
+      expect(tables.length).toBeGreaterThan(0);
+      for (const t of tables) {
+        expect(t.overflow).toBe('visible');
+        expect(t.right).toBeLessThanOrEqual(718);
+        expect(t.cut).toEqual([]);
+      }
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(718);
+    });
+  }
+});
