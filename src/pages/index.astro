@@ -6,7 +6,7 @@ import Diagnose from '~/components/Diagnose.svelte';
 /**
  * The Diagnose home (spec §9.1). The old quick links live in their hubs: Test menu and Error
  * messages on /handbook, Fuses on /tables, Verify, Setup and Care on /workshop, the map layers on
- * the Map tab. The bar's "Recent reports" button talks to the island through the `diag` app event.
+ * the Map tab. The bar's "Recent" button talks to the island through the `diag` app event.
  */
 ---
 
@@ -17,7 +17,7 @@ import Diagnose from '~/components/Diagnose.svelte';
   description="Type a switch, lamp, solenoid or error code and get the component, its manual page and what to check."
 >
   <Fragment slot="actions">
-    <button class="ibtn" type="button" aria-label="Recent reports" data-diag="recent">
+    <button class="ibtn" type="button" aria-label="Recent" data-diag="recent">
       <Icon name="clock" />
     </button>
   </Fragment>

@@ -28,7 +28,7 @@ const CODE_DASH =
   /\b((?:SW)?(?:[1-8][1-8]|[DF][1-8])|L\d\d|C\d{1,2})-(?=(?:SW)?(?:[1-8][1-8]|[DF][1-8])\b|L\d\d\b|C\d{1,2}\b)/g;
 
 /**
- * Parses what the owner types from the Test Report or sees on the display:
+ * Parses what the owner types from the Test report or sees on the display:
  * `32 68 F1 F3`, `Check Switch 32 and 68`, `sw32`, `switch 32`, `L55` / `lamp 55`, `C07` /
  * `sol 7` / `solenoid 7`, `D5`. A bare digit is never a solenoid; write `SOL 7` or `C07`.
  *

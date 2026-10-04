@@ -107,13 +107,11 @@ test.describe('home on a phone', () => {
     await expect(page.getByRole('heading', { level: 2, name: 'Try' })).toBeFocused();
   });
 
-  test('the bar button "Recent reports" returns to the home and focuses the list', async ({
-    page,
-  }) => {
+  test('the bar button "Recent" returns to the home and focuses the list', async ({ page }) => {
     await gotoHydrated(page, '/');
     await field(page).fill('32');
     await expect(page.locator('article.comp')).toHaveCount(1);
-    await page.getByRole('button', { name: 'Recent reports' }).click();
+    await page.getByRole('button', { name: 'Recent' }).click();
     // The tap blurred the field, so "32" was recorded and the list is now Recent.
     await expect(page.getByRole('heading', { level: 2, name: 'Recent' })).toBeFocused();
     await expect(field(page)).toHaveValue('');
@@ -200,9 +198,9 @@ test.describe('the Diagnose home stays reachable after a ?q= URL', () => {
     await expect(page).toHaveURL(/\?q=32$/);
   });
 
-  test('the Recent reports button reaches the home even from a ?q= URL', async ({ page }) => {
+  test('the Recent button reaches the home even from a ?q= URL', async ({ page }) => {
     await gotoHydrated(page, '/?q=32');
-    await page.getByRole('button', { name: 'Recent reports' }).click();
+    await page.getByRole('button', { name: 'Recent' }).click();
     await home(page);
   });
 });

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Wording: the previous/next buttons on a component page carry the code (L12,
+  SOL 07); Verify's links and the Lamps intro name the pages by their titles;
+  fuse circuits, coil groups and the manual index read in sentence case; the
+  shot copy says solenoids; the map's empty card says "Choose a marker"; the
+  Care intro says task like its counter; the top bar's Recent button is named
+  like the heading it opens.
 - Icons: every chevron, row tile and bar icon is drawn from one list. On a
   component page both Location rows carry a tile, so their text starts at one
   x; the previous/next buttons use the lists' chevron; the viewer's rotate

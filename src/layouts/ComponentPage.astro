@@ -97,7 +97,7 @@ const svc = serviceNotes(item)
       prev ? (
         <a class="btn sm" href={componentHref(kind, prev.id)}>
           <Icon name="chevronLeft" class="chev" />
-          {prev.id} {prev.name}
+          {componentCode(kind, prev.id)} {prev.name}
         </a>
       ) : (
         <span />
@@ -106,7 +106,7 @@ const svc = serviceNotes(item)
     {
       next ? (
         <a class="btn sm" href={componentHref(kind, next.id)}>
-          {next.id} {next.name}
+          {componentCode(kind, next.id)} {next.name}
           <Icon name="chevron" class="chev" />
         </a>
       ) : (

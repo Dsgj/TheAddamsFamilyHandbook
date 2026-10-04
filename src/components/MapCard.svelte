@@ -56,7 +56,7 @@
     <p class="small">
       Shot {shot.id} on the manual's shot map,
       <a href={manualHref('ops', shot.page)}>{pageTitleText('ops', shot.page)}</a>. Turn on the
-      other layers to see the switches, lamps and coils under it.
+      other layers to see the switches, lamps and solenoids under it.
     </p>
   </article>
 {/snippet}
@@ -64,7 +64,7 @@
 {#snippet emptyCard()}
   <div class="card">
     <h2>Playfield</h2>
-    <p class="muted">Tap a marker on the drawing, or pick from the list.</p>
+    <p class="muted">Choose a marker on the drawing, or pick from the list.</p>
     {@render prov()}
   </div>
 {/snippet}

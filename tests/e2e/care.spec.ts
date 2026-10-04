@@ -5,6 +5,8 @@ test('care ticks keep their date and share the battery tick with setup', async (
   await gotoHydrated(page, '/care');
   await expect(page.getByRole('status')).toContainText('0 of 23');
   await expect(page.getByRole('status')).toContainText('tasks done');
+  // The intro and the counter share one noun (CP3-12).
+  await expect(page.locator('.intro')).toContainText('Tick a task');
 
   const balls = page.locator('.item', { hasText: 'Wipe the balls' });
   await expect(balls.getByRole('textbox')).toHaveCount(0);

@@ -9,6 +9,12 @@ import { pageRefText, pageTitleText } from '~/lib/pages';
 import { componentHref, href, manualHref } from '~/lib/url';
 
 const groups = ['High Power', 'Low Power', 'Flasher'] as const;
+/** The group headings in sentence case, like the page's other headings (CP3-08). */
+const GROUP_HEADING: Record<(typeof groups)[number], string> = {
+  'High Power': 'High power',
+  'Low Power': 'Low power',
+  Flasher: 'Flashers',
+};
 ---
 
 <Base
@@ -33,7 +39,7 @@ const groups = ['High Power', 'Low Power', 'Flasher'] as const;
   {
     groups.map((g) => (
       <section class="card grp">
-        <h2>{g}</h2>
+        <h2>{GROUP_HEADING[g]}</h2>
         <div class="scroll-x">
           <table class="t two" role="table">
             <thead role="rowgroup">

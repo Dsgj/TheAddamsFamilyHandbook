@@ -66,6 +66,12 @@ test('the Location rows start their text at one x (VP3-06)', async ({ page }) =>
   expect(a?.x).toBe(b?.x);
 });
 
+test('the pager names the neighbours by their codes (CP3-05)', async ({ page }) => {
+  await gotoHydrated(page, '/lamp/11');
+  const pager = page.getByRole('navigation', { name: 'Previous and next' });
+  await expect(pager.getByRole('link').last()).toContainText(/^L12 /);
+});
+
 test('device data downloads a backup and restores it', async ({ page }) => {
   await gotoHydrated(page, '/switch/32');
   await page.getByRole('button', { name: 'Fault' }).click();

@@ -5,9 +5,10 @@
  * fix the data and remove it here (and in KNOWN-ISSUES.md when it is listed there).
  */
 import { APPENDICES, appendixHref } from '~/data/appendix';
-import { componentCode, KIND_PLURAL, MAP_LAYER } from '~/lib/copy';
+import { componentCode, MAP_LAYER, TABLE_LABEL } from '~/lib/copy';
 import { pageRefText } from '~/lib/pages';
 import { componentHref, handbookHref, href, manualHref, mapHref, tableHref } from '~/lib/url';
+import { SECTIONS } from '~/lib/handbook/sections';
 
 type Link = [label: string, href: string];
 
@@ -34,13 +35,16 @@ interface VerifyItem {
   links: Link[];
 }
 
+/** A handbook section's title, as its page heads it (CP3-07). */
+const sectionTitle = (key: string) => SECTIONS.find((x) => x.key === key)?.title ?? key;
+
 export const VERIFY_ITEMS: VerifyItem[] = [
   {
     id: 'flasher-count',
     group: 'Component data',
     text: `Count the flashers in the machine. The solenoid table on ${pageRefText('ops', 108)} gives ${FLASHERS.circuits} flasher circuits with ${FLASHERS.table} bulbs; the parts list sums to ${FLASHERS.parts} × #906, three of them on top of the backbox.`,
     links: [
-      [KIND_PLURAL.coil, tableHref('coil')],
+      [TABLE_LABEL.coil, tableHref('coil')],
       [pageRefText('ops', 108), manualHref('ops', 108)],
     ],
   },
@@ -53,16 +57,16 @@ export const VERIFY_ITEMS: VerifyItem[] = [
   {
     id: 'coil-fuses',
     group: 'Component data',
-    text: `The fuse on solenoids 01–28 is derived from the fuse list (F105 = solenoids 1–8 and so on), not printed per coil, except the magnets 16, 23 and 24, whose 5A S.B. fuse is printed in a footnote on ${pageRefText('ops', 2)}. Spot-check one coil per fuse against the wiring.`,
+    text: `The fuse on solenoids 01–28 is derived from the fuse list (F105 = solenoids 01–08 and so on), not printed per coil, except the magnets 16, 23 and 24, whose 5A S.B. fuse is printed in a footnote on ${pageRefText('ops', 2)}. Spot-check one coil per fuse against the wiring.`,
     links: [
-      ['Fuses', href('fuses')],
-      [KIND_PLURAL.coil, tableHref('coil')],
+      ['Fuses, LEDs and jumpers', href('fuses')],
+      [TABLE_LABEL.coil, tableHref('coil')],
     ],
   },
   {
     id: 'lamp-13-71',
     group: 'Maps',
-    text: 'Lamp 13 and lamp 71 are placed by hand on the map, not snapped to a callout on the manual page. Compare their markers with the machine.',
+    text: 'Lamps L13 and L71 are placed by hand on the map, not snapped to a callout on the manual page. Compare their markers with the machine.',
     links: [onMap('lamp', '13'), onMap('lamp', '71')],
   },
   {
@@ -85,7 +89,7 @@ export const VERIFY_ITEMS: VerifyItem[] = [
     group: 'Transcription',
     text: 'Spot-check the figures in the difficulty and pricing tables (Operations Manual p. 1-22 to 1-26 and 1-40); single digits in dense tables are the most likely transcription slips.',
     links: [
-      ['Presets', handbookHref('presets')],
+      [sectionTitle('presets'), handbookHref('presets')],
       [pageRefText('ops', 32), manualHref('ops', 32)],
       [pageRefText('ops', 50), manualHref('ops', 50)],
     ],
@@ -123,7 +127,7 @@ export const VERIFY_ITEMS: VerifyItem[] = [
     text: 'H-4 adjustments beyond A.2 26 (A-MODE SOUND, A-MODE MUSIC, GAMEOVER KICKOUT, SPOT GREED/BALL, FREEPLAY MESSAGE, SPOT T-H-I-N-G) come from the ROM string table. Verify number, order and options in the machine menu.',
     links: [
       ['Machine setup step 5', href('setup#step-h4')],
-      ['Adjustments', handbookHref('adjustments')],
+      [sectionTitle('adjustments'), handbookHref('adjustments')],
     ],
   },
   {
@@ -132,15 +136,15 @@ export const VERIFY_ITEMS: VerifyItem[] = [
     text: "The custom message format (2 rows × 16 characters per frame) comes from the owner's machine, not the manual. Count how many frames the menu accepts.",
     links: [
       ['Machine setup step 6', href('setup#step-utilities')],
-      ['Adjustments', handbookHref('adjustments')],
+      [sectionTitle('adjustments'), handbookHref('adjustments')],
     ],
   },
   {
     id: 'gi-colours',
     group: 'Component data',
-    text: `The manual gives two wire colours for GI strings 2, 4, 5: the GI table on ${pageRefText('ops', 2)} has Orange, Green and Violet, the fuse list on ${pageRefText('ops', 57)} has White-Violet, White-Orange and White-Green. The app shows the table's colours. Read the wire at J120-2, J121-5 and J121-6 on the power driver board and note which source is right for each string.`,
+    text: `The manual gives two wire colours for GI strings 2, 4, 5: the GI table on ${pageRefText('ops', 2)} has Orange, Green and Violet, the fuse list on ${pageRefText('ops', 57)} has White-Violet, White-Orange and White-Green. The GI table in the app shows the GI table's colours and the fuse rows the fuse list's. Read the wire at J120-2, J121-5 and J121-6 on the power driver board and note which source is right for each string.`,
     links: [
-      ['Fuses', href('fuses')],
+      ['Fuses, LEDs and jumpers', href('fuses')],
       [pageRefText('ops', 2), manualHref('ops', 2)],
       [pageRefText('ops', 57), manualHref('ops', 57)],
     ],

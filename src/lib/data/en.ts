@@ -42,7 +42,10 @@ export function wireEn(sv: string): string {
 export const BOARD: Record<string, string> = {
   Linjefilter: 'Line filter',
   'Undersidan spelplan': 'Under the playfield',
-  ...same('Power Driver', 'Audio', 'Dot Matrix Controller', 'Extra Flipper Supply'),
+  'Power Driver': 'Power driver',
+  'Dot Matrix Controller': 'Dot matrix controller',
+  'Extra Flipper Supply': 'Extra flipper supply',
+  ...same('Audio'),
 };
 
 export const FUSE_CIRCUIT: Record<string, string> = {
@@ -53,27 +56,22 @@ export const FUSE_CIRCUIT: Record<string, string> = {
   'G.I. #3 Wht-Yel': 'GI 3, White-Yellow',
   'G.I. #4 Wht-Orn': 'GI 4, White-Orange',
   'G.I. #5 Wht-Grn': 'GI 5, White-Green',
-  ...same(
-    'Lower Left Flipper',
-    'Lower Right Flipper',
-    'Solenoids 25–28',
-    'Solenoids 9–16',
-    'Solenoids 1–8',
-    'Flasher Secondary',
-    'Solenoid Secondary',
-    '+5V Logic',
-    '+18V Lamp Matrix',
-    '+12V Switch Matrix',
-    '+12V Secondary',
-    '−25V Circuit',
-    '+25V Circuit',
-    '+80V A.C.',
-    '+100V A.C.',
-    'Upper Left Flipper',
-    'Upper Right Flipper',
-    'Domestic Game',
-    'Foreign Game',
-  ),
+  // The fuse list's circuit names, in sentence case like every other heading (CP3-08).
+  ...same('Solenoids 25–28', 'Solenoids 9–16', 'Solenoids 1–8', '+80V A.C.', '+100V A.C.'),
+  'Lower Left Flipper': 'Lower left flipper',
+  'Lower Right Flipper': 'Lower right flipper',
+  'Flasher Secondary': 'Flasher secondary',
+  'Solenoid Secondary': 'Solenoid secondary',
+  '+5V Logic': '+5V logic',
+  '+18V Lamp Matrix': '+18V lamp matrix',
+  '+12V Switch Matrix': '+12V switch matrix',
+  '+12V Secondary': '+12V secondary',
+  '−25V Circuit': '−25V circuit',
+  '+25V Circuit': '+25V circuit',
+  'Upper Left Flipper': 'Upper left flipper',
+  'Upper Right Flipper': 'Upper right flipper',
+  'Domestic Game': 'Domestic game',
+  'Foreign Game': 'Foreign game',
 };
 
 export const LED_NORMAL: Record<string, string> = {

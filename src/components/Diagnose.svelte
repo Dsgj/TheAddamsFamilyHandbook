@@ -515,7 +515,7 @@
 
     {#if !parsed.length}
       <p class="prov">
-        Nothing here reads as a code. Type the numbers from the display or the Test Report: {RANGES}
+        Nothing here reads as a code. Type the numbers from the display or the Test report: {RANGES}
       </p>
     {:else if missing.length}
       <p class="prov">{provText}</p>

@@ -428,7 +428,7 @@ export const RULES: Record<string, [string, Rule]> = {
   ],
   q: [
     'a page is named by its title, not a nickname',
-    inCopy(/\b(Setup|Fuses|Switches|Lamps|Solenoids|error code) page\b/),
+    inCopy(/\b(Setup|Fuses|Switches|Lamps|Solenoids|error code) page\b/i),
   ],
   r: [
     'one spelling of GI; en.ts keys are the kit’s words (audit CP2-15)',
