@@ -6,6 +6,8 @@
 interface OwnerNote {
   code: string;
   text: string;
+  /** A Verify item that still questions the note, linked after it (audit DA3-04). */
+  verify?: string;
 }
 
 export const OWNER_NOTES: Record<number, OwnerNote[]> = {
@@ -16,7 +18,8 @@ export const OWNER_NOTES: Record<number, OwnerNote[]> = {
     },
     {
       code: 'A6',
-      text: 'The upper flippers and the three Power magnets get their 50 V from the Extra Flipper Supply board A-15416 in the backbox, fitted only to this game; the coil resistances are in the flipper appendix.',
+      text: 'The upper flippers and the three Power magnets get their 50 V from the Extra Flipper Supply board A-15416 in the backbox, fitted only to this game; the coil resistances are in the flipper appendix. The 50 V is still to be measured.',
+      verify: 'magnet-supply',
     },
   ],
   14: [

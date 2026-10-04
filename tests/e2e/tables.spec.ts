@@ -104,7 +104,9 @@ test.describe('the switch matrix tabs', () => {
     await page.locator('[data-cell="14"]').focus();
     const tilt = page.locator('[data-cell-card="14"]');
     await expect(tilt.getByRole('link', { name: 'Show on map' })).toHaveCount(0);
-    await expect(tilt).toContainText('Not on the playfield map.');
+    await expect(tilt).toContainText(
+      'Not on the playfield map: on the coin door or in the cabinet.',
+    );
     await gotoHydrated(page, '/coils#coil-01');
     await expect(page.locator('#coil-01')).toBeInViewport();
     await expect(page.locator('#coil-01')).toContainText('Chair Kickout');

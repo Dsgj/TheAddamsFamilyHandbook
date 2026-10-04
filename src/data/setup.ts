@@ -373,3 +373,17 @@ export const SETUP_STEPS: SetupStep[] = [
 ];
 
 export const SETUP_ITEM_COUNT = SETUP_STEPS.reduce((n, s) => n + s.items.length, 0);
+
+/**
+ * A step named as the glossary does, "Machine setup step 7, Upgrades and upkeep", from the step's
+ * place in SETUP_STEPS so a reordered guide renumbers every mention (audit DA3-05). The appendix
+ * markdown types the same words; appendix.test holds them to this.
+ */
+export function setupStepLabel(id: string): string {
+  const n = SETUP_STEPS.findIndex((s) => s.id === id);
+  if (n < 0) throw new Error(`setupStepLabel: no step ${id}`);
+  return `Machine setup step ${n + 1}, ${SETUP_STEPS[n]!.title}`;
+}
+
+/** The step's anchor on the Machine setup page, as SetupGuide ids it. */
+export const setupStepPath = (id: string) => `setup#step-${id}`;

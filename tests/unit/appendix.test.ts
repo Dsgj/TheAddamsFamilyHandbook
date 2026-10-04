@@ -9,7 +9,9 @@ import {
   coilOhms,
   serviceNotes,
 } from '~/data/appendix';
-import { OWNER_NOTES } from '~/data/ownerNotes';
+import { COMPONENT_NOTES, OWNER_NOTES } from '~/data/ownerNotes';
+import { CARE_STEPS } from '~/data/care';
+import { SETUP_STEPS, setupStepLabel } from '~/data/setup';
 import { DATA } from '~/lib/data/components';
 import { VERIFY_ITEMS } from '~/data/verify';
 import { findHeading, finish, indexHeadings, parseHeader, renderPage } from '~/lib/handbook/render';
@@ -145,13 +147,70 @@ describe('owner appendices', () => {
         (m) => m[1]!,
       ),
     );
-    expect(linked.sort()).toEqual(['magnet-fuse', 'magnet-supply', 'no-old-cells']);
+    expect(linked.sort()).toEqual([
+      'eos-type',
+      'magnet-fuse',
+      'magnet-supply',
+      'magnet-supply',
+      'magnet-supply',
+      'no-old-cells',
+    ]);
     for (const id of linked) expect(ids.has(id), id).toBe(true);
     const { page, label, body } = parseHeader(readFileSync(`${dir}/app105.md`, 'utf8'));
     const p = renderPage(page!, body, label);
     const html = finish(p, indexHeadings([p]), '/base');
     expect(html).toContain('href="/base/verify#verify-magnet-supply"');
     expect(html).not.toContain('#verify:');
+  });
+
+  it('names Verify as a link, never as "the Verify page" in plain text (DA3-09)', () => {
+    for (const f of appFiles) {
+      const raw = readFileSync(`${dir}/${f}`, 'utf8');
+      expect(raw, f).not.toMatch(/\bVerify (page|list)\b/);
+      for (const line of raw.split('\n'))
+        if (/\bVerify\b/.test(line) && !/^\|/.test(line))
+          expect(line, `${f}: ${line}`).toMatch(/\[Verify\]\(#verify:/);
+    }
+  });
+
+  it('keeps the Verify pointer next to every statement of the magnet supply (DA3-04)', () => {
+    // Every line of the appendix that names A-15416 links the question, the figure's alt aside.
+    for (const f of appFiles) {
+      for (const line of readFileSync(`${dir}/${f}`, 'utf8').split('\n')) {
+        if (!line.includes('A-15416') || line.startsWith('![')) continue;
+        expect(line, `${f}: ${line}`).toContain('(#verify:magnet-supply)');
+      }
+    }
+    const note = OWNER_NOTES[2]!.find((n) => n.text.includes('A-15416'))!;
+    expect(note.verify).toBe('magnet-supply');
+    const power = DATA.coils.find((c) => /20-9247/.test(c.part))!;
+    const svc = serviceNotes(power).find((n) => n.text.includes('A-15416'))!;
+    expect(svc.verify).toBe('magnet-supply');
+    const thing = DATA.coils.find((c) => /Thing Magnet/.test(c.name))!;
+    expect(serviceNotes(thing).some((n) => n.verify)).toBe(false);
+    expect(VERIFY_ITEMS.some((v) => v.id === 'magnet-supply')).toBe(true);
+  });
+
+  it('names every setup step as SETUP_STEPS numbers and titles it (DA3-05)', () => {
+    expect(setupStepLabel('upkeep')).toBe('Machine setup step 7, Upgrades and upkeep');
+    expect(() => setupStepLabel('nope')).toThrow(/no step/);
+    const texts = [
+      ...appFiles.map((f) => [f, readFileSync(`${dir}/${f}`, 'utf8')] as const),
+      ...Object.entries(COMPONENT_NOTES),
+      ...CARE_STEPS.flatMap((s) => s.items.map((i) => [`care ${i.id}`, i.why] as const)),
+      ...VERIFY_ITEMS.flatMap((v) => v.links.map(([label]) => [`verify ${v.id}`, label] as const)),
+    ];
+    const mentions = texts.flatMap(([at, text]) =>
+      [...text.matchAll(/Machine setup step (\d+)(?:, ([^.,;:)]+))?/g)].map(
+        (m) => [at, m] as const,
+      ),
+    );
+    expect(mentions.length).toBeGreaterThan(6);
+    for (const [at, m] of mentions) {
+      const step = SETUP_STEPS[Number(m[1]) - 1];
+      expect(step, `${at}: ${m[0]}`).toBeDefined();
+      expect(m[2], `${at}: ${m[0]} lacks the step's title`).toBe(step!.title);
+    }
   });
 
   it('keeps COIL_OHMS equal to the A2 and A6 tables (audit AR2-05)', () => {

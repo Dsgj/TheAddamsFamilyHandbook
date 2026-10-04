@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- Provenance: every statement that the Extra Flipper Supply board feeds the
+  magnets 50 V (the owner's note on the solenoid table, the Power magnets'
+  service note, A1 and A6) links the Verify question that still measures it;
+  A6's EOS question and A2's wiring diagram page are links too. The Verify
+  list, Care and the appendix name a setup step from the guide itself
+  ("Machine setup step 7, Upgrades and upkeep"), so a reordered guide
+  renumbers them. The flasher circuit count is counted from the solenoid
+  data and the parts count checked against the LEDs fitted. The tilt and
+  coin door switches say where they are ("on the coin door or in the
+  cabinet", from the kit's hint) instead of a bare "Not on the playfield
+  map".
 - Handbook appendix: the notes read in the app's own words. A solenoid is
   "SOL 25 Thing Motor", a switch "switch 65, Right Ramp Top"; a page is
   "Operations Manual p. 2-30", never "Manual page 58"; a wire colour is

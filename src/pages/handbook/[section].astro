@@ -11,7 +11,7 @@ import { jsonScript } from '~/lib/json-script';
 import { PREF_KEYS } from '~/lib/storage';
 import HandbookTocList from '~/components/HandbookTocList.svelte';
 import { pageLabel, pageTitleText, printedPageText } from '~/lib/pages';
-import { handbookHref, manualHref } from '~/lib/url';
+import { handbookHref, href, manualHref } from '~/lib/url';
 import { WIDE } from '~/lib/bp';
 import { APPENDICES, appendixHref } from '~/data/appendix';
 import { OWNER_NOTES } from '~/data/ownerNotes';
@@ -136,6 +136,8 @@ const description =
                 OWNER_NOTES[e.data.page]?.map((n) => (
                   <aside class="owner-note small" role="note" aria-label="Owner's note">
                     <span class="muted">Owner's note:</span> {n.text}{' '}
+                    {n.verify && <a href={href(`verify#verify-${n.verify}`)}>Verify</a>}
+                    {n.verify && ' · '}
                     <a href={appendixHref(n.code)}>
                       {n.code} {APPENDICES[n.code]}
                     </a>

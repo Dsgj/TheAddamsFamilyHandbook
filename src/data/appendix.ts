@@ -74,6 +74,8 @@ export function appendixFor(kind: Kind, item: AnyComponent): string[] {
 interface ServiceNote {
   code: string;
   text: string;
+  /** A Verify item that still questions the note, linked after it (audit DA3-04). */
+  verify?: string;
 }
 
 const conn = (pin: string | undefined) => (pin ? pin.split('-')[0] : undefined);
@@ -91,12 +93,14 @@ function coilNote(c: Coil): ServiceNote {
   if (/magnet/i.test(c.name)) {
     const o = coilOhms(c.part);
     const ohms = o ? `${o.ohms} Ω (${o.mark})` : 'a few ohms';
-    const supply = /20-9247/.test(c.part)
-      ? ` The three Power magnets and the upper flippers get their 50 V from the Extra Flipper Supply board A-15416 in the backbox; ${pageRefText('ops', 111)} shows the wrong connector for the magnet transistors.`
+    const power = /20-9247/.test(c.part);
+    const supply = power
+      ? ` The three Power magnets and the upper flippers get their 50 V from the Extra Flipper Supply board A-15416 in the backbox, still to be measured; ${pageRefText('ops', 111)} shows the wrong connector for the magnet transistors.`
       : " Measure at the coil's own connector, unplugged.";
     return {
       code: 'A2',
       text: `Magnet coil: ${ohms} across the coil, game off. A magnet that never pulls is the driver transistor ${c.driver} and${fuse} first, then the coil; one that stays on is the transistor.${supply}`,
+      ...(power ? { verify: 'magnet-supply' } : {}),
     };
   }
   if (c.type === 'Flasher' && !/eject|release/i.test(c.name)) {

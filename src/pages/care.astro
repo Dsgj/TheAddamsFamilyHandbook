@@ -2,6 +2,7 @@
 import Base from '~/layouts/Base.astro';
 import SetupGuide from '~/components/SetupGuide.svelte';
 import { CARE_INTRO, CARE_STEPS, CARE_WARNING } from '~/data/care';
+import { setupStepLabel, setupStepPath } from '~/data/setup';
 import { headingHref } from '~/lib/handbook/links';
 import { itemHeading } from '~/lib/handbook/render';
 import { handbookIndex } from '~/lib/handbook/toc';
@@ -39,7 +40,9 @@ for (const s of CARE_STEPS) {
   <p class="muted small">
     Ticks and dates stay on this device and go into the backup on the{' '}
     <a href={href('shopping')}>Shopping list</a> page. The battery tick is the same one as in{' '}
-    <a href={href('setup#step-upkeep')}>Machine setup step 7</a>. The manual's own page is{' '}
+    <a href={href(setupStepPath('upkeep'))}>{setupStepLabel('upkeep')}</a>. The manual's own page is{
+      ' '
+    }
     <a href={handbookHref('maintenance')}>Maintenance Information</a>.
   </p>
 </Base>

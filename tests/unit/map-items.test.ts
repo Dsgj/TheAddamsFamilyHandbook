@@ -40,8 +40,18 @@ describe('offMap', () => {
     expect(sw('F2')).toMatch(/: a flipper button on the side of the cabinet\.$/);
     expect(sw('F1')).toMatch(/: on the flipper assembly under the playfield\.$/);
     expect(sw('11')).toBe('Not on the playfield map: not used in this machine.');
+    expect(sw('14')).toBe('Not on the playfield map: on the coin door or in the cabinet.');
     expect(offMap(find('coil', '02')!)).toBe('Not on the playfield map: in the cabinet.');
+    // The Thing lamps: no source says where they sit, so the line stays bare.
     expect(offMap(find('lamp', '77')!)).toBe('Not on the playfield map.');
+  });
+
+  it('gives every off-map switch with a kit hint a place (DA3-07)', () => {
+    const off = DATA.switches.filter((c) => !positions('switch', c.id).length && c.hint);
+    expect(off.map((c) => c.id)).toEqual(
+      expect.arrayContaining(['14', '21', '22', '24', 'D1', 'F1', 'F2']),
+    );
+    for (const c of off) expect(offMap(c), c.id).toMatch(/^Not on the playfield map: .+\.$/);
   });
 
   it('has a line for every component the map does not draw (UX2-05, DA2-06)', () => {

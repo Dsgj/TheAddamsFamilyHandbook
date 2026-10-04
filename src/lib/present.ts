@@ -185,5 +185,20 @@ function offMapWhere(item: AnyComponent): string {
     return /button/i.test(item.name)
       ? 'a flipper button on the side of the cabinet'
       : 'on the flipper assembly under the playfield';
-  return item.under ? 'under the playfield' : '';
+  if (item.under) return 'under the playfield';
+  return hintPlace(item.hint);
+}
+
+/**
+ * The place a kit hint names for a switch the map does not draw: the tilt and coin door switches
+ * whose hint reads "Coin door / cabinet switch" (audit DA3-07). Nothing when the hint names none.
+ */
+function hintPlace(hint: string): string {
+  const first = hint.split('.')[0] ?? '';
+  const door = /coin door/i.test(first);
+  const cabinet = /cabinet/i.test(first);
+  if (door && cabinet) return 'on the coin door or in the cabinet';
+  if (door) return 'on the coin door';
+  if (cabinet) return 'in the cabinet';
+  return '';
 }

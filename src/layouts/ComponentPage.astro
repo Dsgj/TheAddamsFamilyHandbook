@@ -5,7 +5,7 @@ import ComponentDetail, { type Related } from '~/components/ComponentDetail.svel
 import { DATA, mapOf } from '~/lib/data/components';
 import type { AnyComponent, Kind } from '~/lib/model/types';
 import { componentCode, componentLabel, componentName, KIND_PLURAL, kindLine } from '~/lib/copy';
-import { componentHref, handbookHref, tablePath } from '~/lib/url';
+import { componentHref, handbookHref, href, tablePath } from '~/lib/url';
 import { appendixFor, APPENDICES, serviceNotes } from '~/data/appendix';
 import { findHeading } from '~/lib/handbook/render';
 import { handbookIndex } from '~/lib/handbook/toc';
@@ -76,6 +76,8 @@ const svc = serviceNotes(item)
         {svc.map((n) => (
           <p class="svc">
             <span class="muted">Service notes:</span> {n.text}{' '}
+            {n.verify && <a href={href(`verify#verify-${n.verify}`)}>Verify</a>}
+            {n.verify && ' · '}
             <a href={handbookHref('appendix', n.h!.id)}>
               {n.code} {APPENDICES[n.code]}
             </a>

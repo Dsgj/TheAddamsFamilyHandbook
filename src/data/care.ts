@@ -9,6 +9,7 @@
  * practice for a Diamond Plate playfield. Edit this file when the advice changes.
  */
 import type { SetupStep } from './setup';
+import { setupStepLabel } from '~/data/setup';
 
 export const CARE_INTRO =
   'Clean, dry, and look while you are in there. Tick a task when done; the date stays on this device so the next person sees when it was last done. Untick and tick again next time.';
@@ -27,7 +28,7 @@ export const CARE_STEPS: SetupStep[] = [
         id: 'care-balls',
         name: 'Wipe the balls and look for pits, nicks or rust',
         suggested: '',
-        why: 'The four magnets magnetise the balls and they carry grit across the playfield. A damaged ball sands the playfield; replace it, never polish it. Pinballs come in six-packs, see Machine setup step 7.',
+        why: `The four magnets magnetise the balls and they carry grit across the playfield. A damaged ball sands the playfield; replace it, never polish it. Pinballs come in six-packs, see ${setupStepLabel('upkeep')}.`,
         find: '',
       },
       {
@@ -190,7 +191,7 @@ export const CARE_STEPS: SetupStep[] = [
         id: 'batteries',
         name: 'NVRAM module at U8 seated, no batteries fitted',
         suggested: '',
-        why: 'Same tick as Machine setup step 7. This machine has no batteries to replace (observed 2026-09-24, photo); check that the NVRAM module sits square in U8 and that no old cells have found their way into the holder.',
+        why: `Same tick as ${setupStepLabel('upkeep')}. This machine has no batteries to replace (observed 2026-09-24, photo); check that the NVRAM module sits square in U8 and that no old cells have found their way into the holder.`,
         find: '',
       },
       {

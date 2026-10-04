@@ -9,6 +9,8 @@ import { componentCode, MAP_LAYER, TABLE_LABEL } from '~/lib/copy';
 import { pageRefText } from '~/lib/pages';
 import { componentHref, handbookHref, href, manualHref, mapHref, tableHref } from '~/lib/url';
 import { SECTIONS } from '~/lib/handbook/sections';
+import { setupStepLabel, setupStepPath } from '~/data/setup';
+import { DATA } from '~/lib/data/components';
 
 type Link = [label: string, href: string];
 
@@ -22,11 +24,21 @@ const onMap = (kind: 'switch' | 'lamp', id: string): Link => [
   mapHref(MAP_LAYER[kind], id),
 ];
 
+/** A setup step as a link: its glossary label and its anchor on the Machine setup page (DA3-05). */
+const setupStep = (id: string): Link => [setupStepLabel(id), href(setupStepPath(id))];
+
 /**
  * The flasher count, one source for Verify and the Coils lead (audit DA2-07): the solenoid table's
- * circuits and bulbs against the parts list's #906 bulbs.
+ * circuits and bulbs against the parts list's #906 bulbs. The circuits are counted from the coils,
+ * the Flasher-type outputs that drive a #906 bulb (solenoids 25 to 28 share the type but drive the
+ * motors and kickers); the two bulb counts are read from the manual, and installed-leds.test holds
+ * the parts count to the flasher LEDs fitted (DA3-06).
  */
-export const FLASHERS = { circuits: 6, table: 14, parts: 15 } as const;
+export const FLASHERS = {
+  circuits: DATA.coils.filter((c) => c.type === 'Flasher' && c.part === '#906').length,
+  table: 14,
+  parts: 15,
+} as const;
 
 interface VerifyItem {
   id: string;
@@ -98,10 +110,7 @@ export const VERIFY_ITEMS: VerifyItem[] = [
     id: 'no-old-cells',
     group: 'This machine',
     text: 'The backbox photos of 2026-09-24 show an anyPin NVRAM module at U8 and a black block below it that looks like the battery holder, covered or removed. Confirm that no old cells remain in or under it.',
-    links: [
-      ['Machine setup step 7', href('setup#step-upkeep')],
-      ['A5 Power driver board', appendixHref('A5')],
-    ],
+    links: [setupStep('upkeep'), ['A5 Power driver board', appendixHref('A5')]],
   },
   {
     id: 'w16',
@@ -119,25 +128,19 @@ export const VERIFY_ITEMS: VerifyItem[] = [
     id: 'a1-24',
     group: 'This machine',
     text: 'Set A.1 24 Show Date and Time to NO: with NVRAM at U8 and no battery the clock only runs while the game is on, so the displayed time is wrong after every power-off.',
-    links: [['Machine setup step 3', href('setup#step-standard')]],
+    links: [setupStep('standard')],
   },
   {
     id: 'h4-adjustments',
     group: 'Adjustments',
     text: 'H-4 adjustments beyond A.2 26 (A-MODE SOUND, A-MODE MUSIC, GAMEOVER KICKOUT, SPOT GREED/BALL, FREEPLAY MESSAGE, SPOT T-H-I-N-G) come from the ROM string table. Verify number, order and options in the machine menu.',
-    links: [
-      ['Machine setup step 5', href('setup#step-h4')],
-      [sectionTitle('adjustments'), handbookHref('adjustments')],
-    ],
+    links: [setupStep('h4'), [sectionTitle('adjustments'), handbookHref('adjustments')]],
   },
   {
     id: 'custom-message',
     group: 'Adjustments',
     text: "The custom message format (2 rows × 16 characters per frame) comes from the owner's machine, not the manual. Count how many frames the menu accepts.",
-    links: [
-      ['Machine setup step 6', href('setup#step-utilities')],
-      [sectionTitle('adjustments'), handbookHref('adjustments')],
-    ],
+    links: [setupStep('utilities'), [sectionTitle('adjustments'), handbookHref('adjustments')]],
   },
   {
     id: 'gi-colours',
