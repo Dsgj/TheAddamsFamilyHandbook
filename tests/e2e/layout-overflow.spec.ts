@@ -1217,10 +1217,26 @@ test.describe('reading surfaces on a phone (P2 item 4 of the app audit, round 2)
     await expect.poll(pressed).toEqual(['Not tested']);
     await row.getByRole('button', { name: 'Not tested' }).click();
     await expect.poll(pressed).toEqual(['Not tested']);
+    // One state, recorded or not (CR3-03): that press changed nothing, so there is no log yet.
+    const log = page.locator('ol[aria-label="Service log"]');
+    await expect(log).toHaveCount(0);
+    await row.getByRole('button', { name: 'OK' }).click();
+    await expect.poll(pressed).toEqual(['OK']);
+    // From OK, Not tested is a change and is logged; pressing it again changes nothing, so no
+    // Cleared line appears under a button that still says pressed.
+    await row.getByRole('button', { name: 'Not tested' }).click();
+    await expect.poll(pressed).toEqual(['Not tested']);
+    await expect(log.locator('li')).toHaveCount(2);
+    await row.getByRole('button', { name: 'Not tested' }).click();
+    await expect.poll(pressed).toEqual(['Not tested']);
+    await expect(log.locator('li')).toHaveCount(2);
+    await expect(log).not.toContainText('Cleared');
     await row.getByRole('button', { name: 'OK' }).click();
     await expect.poll(pressed).toEqual(['OK']);
     await row.getByRole('button', { name: 'OK' }).click();
     await expect.poll(pressed).toEqual(['Not tested']);
+    await expect(log.locator('li')).toHaveCount(4);
+    await expect(log).toContainText('Cleared');
   });
 
   test('the Text size sheet fits its control and keeps the page bright (VP2-10)', async ({

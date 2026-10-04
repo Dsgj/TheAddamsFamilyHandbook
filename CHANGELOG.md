@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- "Not tested" is one state: pressing it while it is already chosen changes
+  nothing, so the matrix, the map and the service log never change under a
+  button that still says chosen. On the map a selected Fault keeps its red
+  fill and halo; selection is an amber ring around the marker, not a fill.
 - Printing keeps what the screen's controls hold: /setup prints each row's
   suggested and set values as text, a component page prints its note, a table
   shrinks to fit an A4 page whole (the coil tables kept their Location and

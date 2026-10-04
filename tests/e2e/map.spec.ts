@@ -630,6 +630,47 @@ test.describe('wide panel', () => {
     ).toHaveCount(1);
   });
 
+  test('a selected Fault keeps its red fill and halo: selection is the amber ring (CR3-09)', async ({
+    page,
+  }) => {
+    await gotoHydrated(page, '/map?layer=sw&id=32');
+    const fault = page
+      .getByRole('group', { name: 'Test status' })
+      .getByRole('button', { name: 'Fault' });
+    const sel = page.locator('.marker.sel');
+    const paint = () =>
+      sel.evaluate((el) => {
+        const probe = document.createElement('i');
+        document.body.append(probe);
+        const of = (v: string) => {
+          probe.style.color = v;
+          return getComputedStyle(probe).color;
+        };
+        const bad = of('var(--bad)');
+        const out = {
+          fill: getComputedStyle(el).backgroundColor,
+          redFill: getComputedStyle(el).backgroundColor === bad,
+          redHalo: getComputedStyle(el).boxShadow.includes(bad),
+          ring: getComputedStyle(el, '::before').borderTopColor === of('var(--amber)'),
+          ringWidth: getComputedStyle(el, '::before').borderTopWidth,
+        };
+        probe.remove();
+        return out;
+      });
+    await expect(sel).not.toHaveClass(/st-fault/);
+    await expect
+      .poll(paint)
+      .toMatchObject({ redFill: false, redHalo: false, ring: true, ringWidth: '3px' });
+    const plain = await paint();
+    await fault.click();
+    await expect(sel).toHaveClass(/st-fault/);
+    // The fill transitions over --dur-1, so the paint is polled until it has landed.
+    await expect
+      .poll(paint)
+      .toMatchObject({ redFill: true, redHalo: true, ring: true, ringWidth: '3px' });
+    expect((await paint()).fill).not.toBe(plain.fill);
+  });
+
   test('nothing selected shows the Playfield card and the provenance', async ({ page }) => {
     await gotoHydrated(page, '/map');
     const panel = page.getByRole('complementary', {

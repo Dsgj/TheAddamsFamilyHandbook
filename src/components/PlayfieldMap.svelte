@@ -850,14 +850,20 @@
   .canvas.labels .marker span {
     display: block;
   }
+  /* Selection is a ring and a glow around the marker, never its fill (CR3-09): the status keeps
+     its colour, so a selected Fault stays red with its halo, and an OK stays green. */
   .marker.sel {
     --m: 24px;
     z-index: var(--z-lift-4);
-    background: var(--amber-fill);
-    color: var(--on-amber);
-    box-shadow:
-      0 0 0 3px var(--ground),
-      0 0 18px var(--amber-glow);
+  }
+  .marker.sel::before {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border-radius: inherit;
+    border: 3px solid var(--amber);
+    box-shadow: 0 0 18px var(--amber-glow);
+    pointer-events: none;
   }
   .marker.sel::after {
     content: '';

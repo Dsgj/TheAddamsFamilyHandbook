@@ -13,15 +13,20 @@
   const log = $derived((current?.history ?? []).slice().reverse());
   const eventLabel = (st: StatusValue | '') => (st ? STATUS_LABEL[st] : 'Cleared');
   /** No status reads as Not tested, as the subtitle says, so that segment shows pressed (VP2-01).
-   *  Pressing it records the choice, with its history line and matrix mark; pressing a recorded
-   *  choice clears it (§8.3). The server knows nothing of this device, so no segment is pressed
-   *  until the row has mounted and read storage (SV3-01). */
+   *  Pressing OK or Fault records the choice, with its history line and matrix mark; pressing a
+   *  recorded choice clears it (§8.3). Not tested shown pressed is one state, recorded or not
+   *  (CR3-03): a press on it changes nothing, so the button never stays pressed while the matrix,
+   *  the map and the log change under it. The server knows nothing of this device, so no segment
+   *  is pressed until the row has mounted and read storage (SV3-01). */
   let hydrated = $state(false);
   onMount(() => {
     hydrated = true;
   });
   const shown = $derived<StatusValue | ''>(hydrated ? current?.status || 'untested' : '');
-  const press = (o: StatusValue) => setStatus(kind, id, current?.status === o ? '' : o);
+  const press = (o: StatusValue) => {
+    if (o === 'untested' && shown === 'untested') return;
+    setStatus(kind, id, current?.status === o ? '' : o);
+  };
 </script>
 
 <div class="status" role="group" aria-label="Test status">

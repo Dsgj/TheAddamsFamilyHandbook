@@ -570,6 +570,9 @@ test('a matrix cell names its status and shows a mark (AY-07)', async ({ page })
     ['15', 'OK'],
   ] as const) {
     await gotoHydrated(page, `/switch/${id}`);
+    // A fresh row already shows Not tested pressed and a press there changes nothing (CR3-03), so
+    // Not tested is recorded the way the owner would record it: by way of OK.
+    if (st === 'Not tested') await page.getByRole('button', { name: 'OK', exact: true }).click();
     await page.getByRole('button', { name: st, exact: true }).click();
     await expect(page.getByRole('button', { name: st, exact: true })).toHaveAttribute(
       'aria-pressed',
