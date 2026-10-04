@@ -139,8 +139,8 @@ export function lampSharedCauses(
     const q = h?.[2] ?? '';
     const pin = h?.[1] ?? '';
     return axis === 'column'
-      ? `${list} share lamp column ${key} (${wireName(h?.[0] ?? '')}, ${pin}, driver ${q}). A whole column out points at ${q} on the CPU board or the ${pin.split('-')[0] ?? 'J137'} connector, not at the bulbs. A column driver that shorts leaves the column on all the time, one that opens leaves it dark. Check with the lamp column test before replacing anything.`
-      : `${list} share lamp row ${key} (${wireName(h?.[0] ?? '')}, ${pin}, driver ${q}). A whole row out points at ${q} on the CPU board or the ${pin.split('-')[0] ?? 'J133'} connector, not at the bulbs. With LEDs a row that glows faintly when it should be off is matrix ghosting, not a fault. Check with the lamp row test before replacing anything.`;
+      ? `${list} share lamp column ${key} (${wireName(h?.[0] ?? '')}, ${pin}, driver ${q}). A whole column out points at ${q} on the power driver board or its ${pin.split('-')[0] ?? 'J137'} connector, not at the bulbs. A column driver that shorts leaves the column on all the time, one that opens leaves it dark. Check with the lamp column test before replacing anything.`
+      : `${list} share lamp row ${key} (${wireName(h?.[0] ?? '')}, ${pin}, driver ${q}). A whole row out points at ${q} on the power driver board or its ${pin.split('-')[0] ?? 'J133'} connector, not at the bulbs. With LEDs a row that glows faintly when it should be off is matrix ghosting, not a fault. Check with the lamp row test before replacing anything.`;
   });
   if (lamps.length > 1 && out.length === 0) {
     out.push({

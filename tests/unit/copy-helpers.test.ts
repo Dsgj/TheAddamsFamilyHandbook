@@ -11,6 +11,7 @@ import {
   LAYER_KIND,
   LAYER_LABEL,
   locationLine,
+  matrixSpan,
   MAP_LAYER,
   MAP_TITLE,
   plural,
@@ -109,6 +110,18 @@ const ALL = [
 
 // The presentation helpers of audit P4 item 1. Each one is also checked against the inline
 // expression it replaced, over the real data.
+describe('matrixSpan (DA3-02)', () => {
+  it('reads the connectors and the driver span of each lamp matrix side from the data', () => {
+    expect(matrixSpan(DATA.lCols)).toEqual({ connectors: 'J137/J138', drivers: 'Q98–Q91' });
+    expect(matrixSpan(DATA.lRows)).toEqual({ connectors: 'J133', drivers: 'Q90–Q83' });
+    expect(matrixSpan({ '2': ['w', 'J1-2', 'Q2'], '1': ['w', 'J1-1', 'Q1'] })).toEqual({
+      connectors: 'J1',
+      drivers: 'Q1–Q2',
+    });
+    expect(matrixSpan({ '1': ['w', 'J1-1', 'Q1'] })).toEqual({ connectors: 'J1', drivers: 'Q1' });
+  });
+});
+
 describe('presentation helpers', () => {
   it('names a component by its kind word and id', () => {
     expect(componentName('switch', '32')).toBe('Switch 32');

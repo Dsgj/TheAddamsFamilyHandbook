@@ -3,7 +3,7 @@ import Base from '~/layouts/Base.astro';
 import Matrix from '~/components/Matrix.svelte';
 import { DATA } from '~/lib/data/components';
 import { INSTALLED_FLASHERS, LED_KIT_SOURCE } from '~/data/installedLeds';
-import { KIND_PLURAL, TABLE_LABEL } from '~/lib/copy';
+import { KIND_PLURAL, TABLE_LABEL, matrixSpan } from '~/lib/copy';
 import { pageTitleText } from '~/lib/pages';
 import { componentHref, href, manualHref } from '~/lib/url';
 import { positions } from '~/lib/data/positions';
@@ -17,6 +17,8 @@ const cells = DATA.lamps.map((l) => ({
   unused: l.unused,
   off: positions('lamp', l.id).length ? undefined : offMap(l),
 }));
+const cols = matrixSpan(DATA.lCols);
+const rows = matrixSpan(DATA.lRows);
 ---
 
 <Base
@@ -27,7 +29,8 @@ const cells = DATA.lamps.map((l) => ({
 >
   <h1>Lamp matrix</h1>
   <p class="muted">
-    Columns from J137/J138 (Q90–Q98), rows from J133/J134 (Q80–Q88). Source:{' '}
+    Columns from {cols.connectors} ({cols.drivers}), rows from {rows.connectors} ({rows.drivers}),
+    all on the power driver board. Source:{' '}
     <a href={manualHref('ops', 104)}>Lamp Matrix {pageTitleText('ops', 104)}</a>. Lamps marked
     speaker sit in the speaker panel, not on the playfield.
   </p>

@@ -3,7 +3,7 @@
  * location line or a count reads the same everywhere. Kept free of the kit's data files, so an
  * island can import it without pulling components.json into its bundle.
  */
-import type { Kind, Layer, StatusValue } from '~/lib/model/types';
+import type { Kind, Layer, MatrixHeaders, StatusValue } from '~/lib/model/types';
 
 export const KIND_LABEL: Record<Kind, string> = {
   switch: 'Switch',
@@ -104,6 +104,20 @@ export function tileCode(kind: string, id: string): string {
 }
 
 /** A switch or lamp in the matrix: it has a column. Dedicated and flipper switches have none. */
+/**
+ * The connectors ("J137/J138") and the driver span ("Q98–Q91") of one side of a matrix, from its
+ * headers in matrix order, so a page lead reads what the data says (DA3-02).
+ */
+export function matrixSpan(headers: MatrixHeaders): { connectors: string; drivers: string } {
+  const sides = Object.keys(headers)
+    .sort((a, b) => Number(a) - Number(b))
+    .map((k) => headers[k]!);
+  const connectors = [...new Set(sides.map((h) => h[1].split('-')[0] ?? h[1]))].join('/');
+  const first = sides[0]?.[2] ?? '';
+  const last = sides[sides.length - 1]?.[2] ?? '';
+  return { connectors, drivers: sides.length > 1 ? `${first}–${last}` : first };
+}
+
 export function inMatrix(item: { col?: number | null }): boolean {
   return item.col != null;
 }

@@ -52,6 +52,9 @@ describe('lampSharedCauses', () => {
     expect(c[0]).toMatchObject({ key: '1', pin: 'J137-1', driver: 'Q98', matrix: 'lamp' });
     expect(c[0]?.text).toContain('Q98');
     expect(c[0]?.text).toContain(`(${wireName(DATA.lCols['1']![0])}, J137-1, driver Q98)`);
+    // The lamp drivers sit on the power driver board (ops/117), not on the CPU board (DA3-01).
+    expect(c[0]?.text).toContain('on the power driver board');
+    expect(c[0]?.text).not.toContain('CPU board');
     expect(DATA.lCols['1']![0]).not.toMatch(/^J\d/);
   });
   it('finds a shared lamp row', () => {
@@ -60,6 +63,8 @@ describe('lampSharedCauses', () => {
     expect(c[0]).toMatchObject({ key: '1', driver: 'Q90' });
     expect(c[0]?.text).toContain('driver Q90');
     expect(c[0]?.text).toContain('share lamp row 1 (Red-Brown, J133-1, driver Q90)');
+    expect(c[0]?.text).toContain('on the power driver board');
+    expect(c[0]?.text).not.toContain('CPU board');
   });
   it('reports independent lamp faults', () => {
     const c = lampSharedCauses([lamp('11'), lamp('22')], DATA.lCols, DATA.lRows);

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- The lamp matrix drivers are on the power driver board, as the manual has
+  them, not on the CPU board: both lamp shared-cause hints and the lamps'
+  owner note now say so. The Lamp matrix page's lead reads its connectors
+  and driver ranges from the data (J137/J138, Q98–Q91; J133, Q90–Q83).
+  Appendix A3 no longer calls the flipper buttons opto boards: they are
+  leaf-switch pairs read on J805, as A6 and the kit data say.
 - Device data that has been damaged or hand-edited no longer breaks the app:
   a `null` or malformed entry under a saved status, setting, Verify tick,
   recent search or viewed component is dropped on read, so every page still

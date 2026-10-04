@@ -119,6 +119,19 @@ describe('owner appendices', () => {
     expect(coilOhms('AE-26-1200')?.mark).toBe('vendor');
   });
 
+  it('never calls the flipper buttons optos: a line naming both says they are not (audit DA3-03)', () => {
+    for (const f of appFiles) {
+      const lines = readFileSync(`${dir}/${f}`, 'utf8').split('\n');
+      for (const line of lines) {
+        if (/button/i.test(line) && /opto/i.test(line))
+          expect(line, `${f}: ${line}`).toMatch(/leaf/);
+      }
+    }
+    const a3 = readFileSync(`${dir}/app103.md`, 'utf8');
+    expect(a3).toContain('the buttons on J805');
+    expect(a3).not.toMatch(/buttons are opto/);
+  });
+
   it('links the open questions to Verify items that exist (audit DA2-01, DA2-03)', () => {
     const ids = new Set(VERIFY_ITEMS.map((v) => v.id));
     const linked = appFiles.flatMap((f) =>

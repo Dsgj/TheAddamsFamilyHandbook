@@ -40,7 +40,7 @@ export const OWNER_NOTES: Record<number, OwnerNote[]> = {
   28: [
     {
       code: 'A4',
-      text: 'One dark lamp is the bulb or the socket. A whole column or row dark is the driver transistor on the CPU board or the J133–J138 connector, not the bulbs.',
+      text: 'One dark lamp is the bulb or the socket. A whole column or row dark is the driver transistor on the power driver board or its J133–J138 connector, not the bulbs.',
     },
   ],
   54: [
