@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Offline and updates: "Ready to work offline" follows you to the next page
+  when the first install finishes after you moved on; a check for updates
+  while offline says so instead of "The app is up to date"; a manual page
+  that was not on the device comes back by itself when the connection
+  returns, and its Rotate button hides until then; the installed icon's
+  long-press menu offers Switch matrix, Playfield map and Handbook; the "not
+  saving changes" warning is no longer spent on opening a component page, and
+  it shows even while the update toast is up (the update comes back after).
 - Provenance: every statement that the Extra Flipper Supply board feeds the
   magnets 50 V (the owner's note on the solenoid table, the Power magnets'
   service note, A1 and A6) links the Verify question that still measures it;

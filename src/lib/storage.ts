@@ -53,8 +53,36 @@ export const KEYS = {
   reading: 'tafh:reading',
 } as const;
 
-/** The per-tab records in sessionStorage, which motion.ts writes and nav-state.ts reads. */
-export const SESSION_KEYS = { prev: 'tafh:prev', nav: 'tafh:nav' } as const;
+/**
+ * The per-tab records in sessionStorage: motion.ts writes `prev` and `nav`, nav-state.ts reads
+ * them; pwa.ts sets `install` while the first worker installs, so the toast it ends in follows
+ * the user to the next page (PF3-01).
+ */
+export const SESSION_KEYS = {
+  prev: 'tafh:prev',
+  nav: 'tafh:nav',
+  install: 'tafh:install',
+} as const;
+
+/** A per-tab flag in sessionStorage. False, and a write dropped, when the storage is blocked. */
+export function sessionFlag(key: (typeof SESSION_KEYS)[keyof typeof SESSION_KEYS]): boolean {
+  try {
+    return sessionStorage.getItem(key) === '1';
+  } catch {
+    return false;
+  }
+}
+export function setSessionFlag(
+  key: (typeof SESSION_KEYS)[keyof typeof SESSION_KEYS],
+  on: boolean,
+): void {
+  try {
+    if (on) sessionStorage.setItem(key, '1');
+    else sessionStorage.removeItem(key);
+  } catch {
+    /* blocked storage: the flag is not kept */
+  }
+}
 
 /** How many times each key was cleared or replaced whole, by any tab. Not backed up. */
 const RESET_KEY = 'tafh:reset';
@@ -89,7 +117,9 @@ function getRaw(key: string): string | null {
 let warned = false;
 /**
  * The first write storage refuses on a page says so, through Toast.svelte: it is kept in memory
- * and lost when the page is left (CO2-01). Once per page, not per write.
+ * and lost when the page is left (CO2-01). Once per page, not per write, and only for a write the
+ * user made: the app's own bookkeeping (the Viewed and Recent lists, Continue reading) passes
+ * `quiet`, so a page view never spends the one warning on a toast nobody asked for (CO3-04).
  */
 function warnUnsaved() {
   if (warned) return;
@@ -98,7 +128,7 @@ function warnUnsaved() {
 }
 
 /** Writes unless the same text is already stored. `memory` when storage refused it. */
-function put(key: string, value: unknown): 'same' | 'written' | 'memory' {
+function put(key: string, value: unknown, quiet = false): 'same' | 'written' | 'memory' {
   if (!browser()) return 'memory';
   const raw = JSON.stringify(value);
   if (getRaw(key) === raw) return 'same';
@@ -113,7 +143,7 @@ function put(key: string, value: unknown): 'same' | 'written' | 'memory' {
     }
   }
   mem.set(key, raw);
-  warnUnsaved();
+  if (!quiet) warnUnsaved();
   return 'memory';
 }
 
@@ -361,16 +391,23 @@ export function updateEntry<V>(
   return map;
 }
 
-/** Read-modify-write of a whole key (a list): flush, fresh read, `fn`, write, notify. */
+/**
+ * Read-modify-write of a whole key (a list): flush, fresh read, `fn`, write, notify. `quiet` for
+ * the app's own bookkeeping, which does not warn when storage refuses it (CO3-04).
+ */
 export function updateJson<T>(
   key: string,
   fallback: T,
   fn: (cur: T) => T,
-  opts: { legacyKey?: string | undefined; isShape?: (v: unknown) => v is T } = {},
+  opts: {
+    legacyKey?: string | undefined;
+    isShape?: (v: unknown) => v is T;
+    quiet?: boolean;
+  } = {},
 ): T {
   flush(key);
   const next = fn(readJson(key, fallback, opts));
-  if (put(key, next) === 'written') keep(key);
+  if (put(key, next, opts.quiet) === 'written') keep(key);
   notify(key);
   return next;
 }
@@ -380,10 +417,14 @@ export function updateJson<T>(
  * cannot bring back a cleared entry. With `reset` (Clear, import-replace) it also stamps the key,
  * so another tab drops the writes it queued before now. False when the value is kept in memory only.
  */
-export function writeJson(key: string, value: unknown, opts: { reset?: boolean } = {}): boolean {
+export function writeJson(
+  key: string,
+  value: unknown,
+  opts: { reset?: boolean; quiet?: boolean } = {},
+): boolean {
   take(key);
   if (opts.reset) stampReset(key);
-  const r = put(key, value);
+  const r = put(key, value, opts.quiet);
   if (r === 'written') keep(key);
   notify(key);
   return r !== 'memory';

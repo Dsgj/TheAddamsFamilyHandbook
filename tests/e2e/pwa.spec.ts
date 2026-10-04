@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { activate, gotoHydrated } from './helpers';
+import { activate, gotoHydrated, swReady } from './helpers';
 
 /* Phase 11 of the app redesign: the toasts, the Install sheet, the scan-not-cached state and the
    Workshop's pull-to-refresh. The tests raise toasts with the same `tafh:toast` event pwa.ts uses. */
@@ -17,17 +17,31 @@ test.describe('toasts', () => {
   // toasts are the ones a test raises.
   test.use({ serviceWorkers: 'block' });
 
-  test('one at a time, Update wins and stays past the 4 s dwell', async ({ page }) => {
+  test('one at a time; Update outlasts the others and is back after their 4 s dwell', async ({
+    page,
+  }) => {
     await page.clock.install();
     await gotoHydrated(page, '/tables');
     await raise(page, 'offline', 'Ready to work offline. Manual pages are saved as you open them.');
     await raise(page, 'update', 'A new version of the app is ready.');
-    await raise(page, 'offline', 'Ready to work offline. Manual pages are saved as you open them.');
     const toast = page.locator('.toast');
     await expect(toast).toHaveCount(1);
     await expect(toast).toContainText('A new version of the app is ready.');
     await expect(toast.getByRole('button', { name: 'Reload' })).toBeVisible();
+    // A shorter toast raised under Update is not dropped: it takes its 4 s, so "not saving" is
+    // never lost to an update (CO3-04); then Update is back, with Reload, and stays.
+    await raise(
+      page,
+      'info',
+      'This device is not saving changes. They last until you leave this page.',
+    );
+    await expect(toast).toHaveCount(1);
+    await expect(toast).toContainText('This device is not saving changes.');
+    await expect(toast.getByRole('button', { name: 'Reload' })).toHaveCount(0);
     // Past the 4 s dwell of a non-update toast (Toast.svelte), on the fake clock.
+    await page.clock.runFor(4500);
+    await expect(toast).toContainText('A new version of the app is ready.');
+    await expect(toast.getByRole('button', { name: 'Reload' })).toBeVisible();
     await page.clock.runFor(4500);
     await expect(toast).toContainText('A new version of the app is ready.');
     // The host is a live region, never a status role.
@@ -69,6 +83,82 @@ test.describe('toasts', () => {
     await page.getByRole('link', { name: 'Workshop' }).first().click();
     await expect(page).toHaveURL(/\/workshop$/);
   });
+});
+
+test.describe('the update check offline (PF3-03)', () => {
+  // No worker, so no "Ready to work offline" toast lands on top of this one.
+  test.use({ serviceWorkers: 'block' });
+
+  test('a check for updates while offline says so, not "up to date"', async ({ page, context }) => {
+    await gotoHydrated(page, '/workshop');
+    await context.setOffline(true);
+    await page.evaluate(() => window.dispatchEvent(new CustomEvent('tafh:check-update')));
+    await expect(page.locator('.toast')).toContainText(
+      'You are offline, so the app could not check for an update.',
+    );
+    await context.setOffline(false);
+  });
+});
+
+test('a first install that ends on the next page still says "Ready to work offline" (PF3-01)', async ({
+  page,
+}) => {
+  await gotoHydrated(page, '/tables');
+  await swReady(page);
+  // As pwa.ts leaves it on the page where the install began and the user moved on.
+  await page.evaluate(() => sessionStorage.setItem('tafh:install', '1'));
+  await gotoHydrated(page, '/workshop');
+  await expect(page.locator('.toast[data-kind="offline"]')).toContainText('Ready to work offline.');
+  expect(await page.evaluate(() => sessionStorage.getItem('tafh:install'))).toBeNull();
+  // Said once: the page after it is quiet.
+  await gotoHydrated(page, '/tables');
+  await expect(page.locator('.toast')).toHaveCount(0);
+});
+
+test('a passive component view with storage blocked raises no toast; a note still does (CO3-04)', async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => {
+    if (!/^Transition was aborted/.test(e.message)) errors.push(e.message);
+  });
+  await page.addInitScript(() => {
+    Object.defineProperty(window, 'localStorage', {
+      get() {
+        throw new DOMException('blocked', 'SecurityError');
+      },
+    });
+  });
+  // Opening the page writes the Viewed list: the app's bookkeeping, so no warning.
+  await gotoHydrated(page, '/switch/32');
+  await expect(page.locator('.toast')).toHaveCount(0);
+  // The user's own note is the first write that warns, and the page's one warning was unspent.
+  await page.getByRole('textbox', { name: 'Note' }).fill('wire loose at the lug');
+  await expect(page.locator('.toast')).toContainText('This device is not saving changes.');
+  expect(errors).toEqual([]);
+});
+
+test('the uncached-page card goes when the connection returns; Rotate hides meanwhile (PF3-07)', async ({
+  page,
+  context,
+  browserName,
+}) => {
+  let offline = true;
+  await page.route('**/assets/pages/**', (r) => (offline ? r.abort() : r.fallback()));
+  await gotoHydrated(page, '/manual/ops/40');
+  const card = page.getByText("This manual page isn't on the device yet.");
+  await expect(card).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Rotate page' })).toHaveCount(0);
+  // The connection returns: the browser's `online` event asks for the scan again.
+  offline = false;
+  await context.setOffline(true);
+  await context.setOffline(false);
+  // Playwright's WebKit emulates `navigator.onLine` without the window's `online` event; raise it.
+  if (browserName === 'webkit')
+    await page.evaluate(() => window.dispatchEvent(new Event('online')));
+  await expect(card).toBeHidden();
+  await expect(page.locator('.stage')).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Rotate page' })).toBeVisible();
 });
 
 test('an uncached manual page says so offline; "Show the text" reveals its text', async ({

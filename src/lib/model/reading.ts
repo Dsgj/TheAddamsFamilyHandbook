@@ -33,7 +33,8 @@ export function readReading(): Reading | null {
 
 /** Private mode or full storage keeps it for this page only: Continue reading stays empty. */
 export function saveReading(r: Reading): void {
-  writeJson(READING_KEY, r);
+  // The app's bookkeeping: refused, it stays in memory without the "not saving" toast (CO3-04).
+  writeJson(READING_KEY, r, { quiet: true });
 }
 
 /** Stored as null, like the emptied Recent lists, so the watchers of the key hear it. */

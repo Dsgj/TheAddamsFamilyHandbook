@@ -5,7 +5,9 @@
   /**
    * The toast host (spec §8.8), mounted once in Base.astro. pwa.ts, the app's actions (`toast`
    * in events.ts) and the tests raise the `toast` event with `{ kind, text }`. One toast at a
-   * time: Update ready wins over everything and stays until Reload; the others leave after 4 s.
+   * time: Update ready outlasts everything and stays until Reload; the others leave after 4 s.
+   * A shorter toast raised while Update shows is not dropped: it takes the 4 s and Update comes
+   * back after it, so "not saving changes" is never lost to an update (CO3-04).
    * The host is a plain aria-live region (never `role=status`: /care, /setup and /shopping run a
    * strict `getByRole('status')`) and passes pointer events through; only Reload takes them.
    * It sits 10 above the tab bar, lifted by --toast-lift over a reader toolbar (ReaderBar), the
@@ -14,13 +16,23 @@
    */
   const DWELL = 4000;
   let toast = $state<ToastDetail | null>(null);
+  /** The Update toast, waiting behind a shorter one. */
+  let held: ToastDetail | null = null;
   let timer: ReturnType<typeof setTimeout> | undefined;
 
   function show(t: ToastDetail) {
-    if (toast?.kind === 'update' && t.kind !== 'update') return;
     clearTimeout(timer);
+    if (t.kind === 'update') {
+      held = null;
+      toast = t;
+      return;
+    }
+    if (toast?.kind === 'update') held = toast;
     toast = t;
-    if (t.kind !== 'update') timer = setTimeout(() => (toast = null), DWELL);
+    timer = setTimeout(() => {
+      toast = held;
+      held = null;
+    }, DWELL);
   }
   function reload() {
     emit('reload');

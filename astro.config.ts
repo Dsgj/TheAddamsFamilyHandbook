@@ -25,6 +25,8 @@ export default defineConfig({
       scope,
       includeAssets: ['fonts/*.woff2', 'icons/*.svg'],
       manifest: {
+        // The id keeps the installed app the same app if start_url ever changes (CR3-10).
+        id: scope,
         name: 'The Addams Family Handbook',
         short_name: 'TAF Handbook',
         description: 'Offline service companion for a Bally The Addams Family pinball machine.',
@@ -45,6 +47,16 @@ export default defineConfig({
             purpose: 'maskable',
           },
         ],
+        // The long-press menu of the installed icon: the three pages a visit at the machine
+        // starts on besides Diagnose, named as the tab bar names them (CR3-10).
+        shortcuts: [
+          { name: 'Switch matrix', url: `${scope}switches` },
+          { name: 'Playfield map', url: `${scope}map` },
+          { name: 'Handbook', url: `${scope}handbook` },
+        ].map((s) => ({
+          ...s,
+          icons: [{ src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' }],
+        })),
       },
       workbox: {
         // Every route here is a static page that reads its state (?q=, ?layer=&id=, …) client-side,

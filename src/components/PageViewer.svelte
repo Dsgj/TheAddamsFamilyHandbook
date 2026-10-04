@@ -44,6 +44,35 @@
   let mode = $state<'image' | 'text'>('image');
   /** A page image failed to load: offline and not yet cached (spec §11). */
   let missing = $state(false);
+  /** The page images that failed, by URL: `recover` asks for exactly these. Not rendered. */
+  let failed: string[] = [];
+  function lost(e: Event) {
+    const url = (e.currentTarget as HTMLImageElement).src;
+    if (!failed.includes(url)) failed.push(url);
+    missing = true;
+  }
+  /**
+   * The connection is back (the window's `online` event): fetch the failed images once more and
+   * show the stage again when they all load (PF3-07). `reload` skips the HTTP cache, and with it
+   * the failed load WebKit keeps in its memory cache, which would fail a new <img> at once without
+   * a request; the worker caches the response, so the <img> that follows is a cache hit.
+   */
+  async function recover() {
+    if (!missing) return;
+    const urls = failed;
+    try {
+      await Promise.all(
+        urls.map(async (u) => {
+          const r = await fetch(u, { cache: 'reload' });
+          if (!r.ok) throw new Error(String(r.status));
+        }),
+      );
+    } catch {
+      return; // still not there: the card stays
+    }
+    failed = failed.filter((u) => !urls.includes(u));
+    missing = false;
+  }
   let rot = $state(0);
   let scale = $state(0); // 0 = the fit (fitMode)
   let stage: HTMLDivElement | undefined = $state();
@@ -127,6 +156,8 @@
   onMount(() => {
     if (!tiled || !navigator.serviceWorker?.controller) return;
     const warm = () => {
+      // Offline, or with the page itself missing, every tile would only fail (PF3-07).
+      if (missing || !navigator.onLine) return;
       for (const q of ['00', '01', '10', '11']) {
         const img = new Image();
         img.fetchPriority = 'low';
@@ -231,7 +262,7 @@
     else if (zoom === 'fit') scale = 0;
     else if (letter === 'w') chooseFit('width');
     else if (letter === 'p') chooseFit('page');
-    else if (letter === 'r') rotate();
+    else if (letter === 'r' && !missing) rotate();
     else if (letter === 't') mode = mode === 'text' ? 'image' : 'text';
   }
 
@@ -265,7 +296,7 @@
   }
 </script>
 
-<svelte:window onkeydown={onKey} />
+<svelte:window onkeydown={onKey} ononline={recover} />
 
 <div class="viewer">
   <div class="tb" role="toolbar" aria-label="Page" bind:this={bar}>
@@ -304,15 +335,18 @@
     >
       <Icon name="forward" />
     </a>
-    <button
-      class="ibtn"
-      type="button"
-      onclick={rotate}
-      aria-label="Rotate page"
-      title="Rotate page (R)"
-    >
-      <Icon name="rotate" />
-    </button>
+    <!-- Nothing to rotate while the scan is missing (PF3-07). -->
+    {#if !missing}
+      <button
+        class="ibtn"
+        type="button"
+        onclick={rotate}
+        aria-label="Rotate page"
+        title="Rotate page (R)"
+      >
+        <Icon name="rotate" />
+      </button>
+    {/if}
     <span class="grow"></span>
     <button
       class="btn sm"
@@ -389,7 +423,7 @@
                   class="tile t{q}"
                   loading="eager"
                   decoding="async"
-                  onerror={() => (missing = true)}
+                  onerror={lost}
                 />
               {/each}
             {:else if tiled}
@@ -398,7 +432,7 @@
                 alt={pageRefText(doc, page)}
                 draggable="false"
                 class="full"
-                onerror={() => (missing = true)}
+                onerror={lost}
               />
             {:else}
               <img
@@ -406,7 +440,7 @@
                 alt={pageRefText(doc, page)}
                 draggable="false"
                 class="full"
-                onerror={() => (missing = true)}
+                onerror={lost}
               />
             {/if}
           </div>

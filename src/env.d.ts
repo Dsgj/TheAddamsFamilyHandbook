@@ -3,6 +3,9 @@
 /// <reference types="vite-plugin-pwa/info" />
 
 interface Window {
-  /** The Update toast, kept for a Toast host that mounts after the worker said so (PF2-03). */
-  tafhToast?: { kind: 'update'; text: string };
+  /**
+   * A toast raised before the Toast host mounted (PF2-03): the Update toast, or the "Ready to work
+   * offline" one when a first install ended on the page before this one (PF3-01).
+   */
+  tafhToast?: { kind: 'update' | 'offline'; text: string };
 }

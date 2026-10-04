@@ -81,6 +81,8 @@ export const tidyInput = (input: string) =>
     .filter(Boolean)
     .join('\n');
 
+// A search, a component view and a handbook position are the app's bookkeeping, not the user's
+// writes: refused, they stay in memory without the "not saving" toast (CO3-04).
 export function recordRecent(input: string, summary: string, at = nowIso()) {
   const text = tidyInput(input);
   if (!text) return;
@@ -93,7 +95,7 @@ export function recordRecent(input: string, summary: string, at = nowIso()) {
         { input: text, summary, at },
         ...fresh.filter((e) => asRecent(e) && normalizeInput(e.input) !== norm),
       ].slice(0, RECENT_MAX),
-    { isShape: isList },
+    { isShape: isList, quiet: true },
   );
 }
 
@@ -115,7 +117,7 @@ export function recordViewed(entry: Omit<ViewedEntry, 'at'>, at = nowIso()) {
         { ...entry, at },
         ...fresh.filter((v) => asViewed(v) && !(v.kind === entry.kind && v.id === entry.id)),
       ].slice(0, RECENT_MAX),
-    { isShape: isList },
+    { isShape: isList, quiet: true },
   );
 }
 

@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 /** A Map-backed Storage with switchable failures. */
@@ -367,6 +368,31 @@ describe('when storage fails', () => {
     expect(s.writeJson('k', { a: 1 })).toBe(false);
     s.updateEntry<number>('k', 'b', () => 2);
     expect(toasts).toEqual([{ kind: 'info', text: expect.stringMatching(/not saving changes/) }]);
+  });
+
+  it("a quiet write (the app's own lists) keeps its memory copy without the toast (CO3-04)", async () => {
+    const s = await load();
+    const toasts: unknown[] = [];
+    win.addEventListener('tafh:toast', (e) => toasts.push((e as CustomEvent).detail));
+    store.failSet = true;
+    expect(s.updateJson<number[]>('k', [], () => [1], { quiet: true })).toEqual([1]);
+    expect(s.writeJson('r', { p: 3 }, { quiet: true })).toBe(false);
+    expect(s.readJson('k', [])).toEqual([1]);
+    expect(s.readJson('r', null)).toEqual({ p: 3 });
+    expect(toasts).toEqual([]);
+    // the one warning per page is still unspent for the user's own write
+    s.updateEntry<number>('k2', 'b', () => 2);
+    expect(toasts).toEqual([{ kind: 'info', text: expect.stringMatching(/not saving changes/) }]);
+  });
+
+  it('the recent lists and the reading position write quietly (CO3-04)', () => {
+    // Read from the source: the rune module's import takes the transform, which a full run
+    // under the fake clock holds past the test's timeout.
+    const recent = readFileSync('src/lib/model/recent.svelte.ts', 'utf8');
+    const quiet = recent.match(/\{ isShape: isList, quiet: true \}/g) ?? [];
+    expect(quiet, 'recordRecent and recordViewed').toHaveLength(2);
+    const reading = readFileSync('src/lib/model/reading.ts', 'utf8');
+    expect(reading).toMatch(/writeJson\(READING_KEY, r, \{ quiet: true \}\)/);
   });
 
   it('an import that storage refuses fails, and says why (CO2-01)', async () => {

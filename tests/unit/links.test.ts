@@ -43,9 +43,11 @@ function site() {
   const files = walk(DIST);
   const have = new Set(files.map(rel));
   const manifest = JSON.parse(readFileSync(join(DIST, 'manifest.webmanifest'), 'utf8')) as {
+    id?: string;
     scope: string;
     start_url: string;
     icons: { src: string }[];
+    shortcuts?: { name: string; url: string; icons?: { src: string }[] }[];
   };
   const scope = manifest.scope.endsWith('/') ? manifest.scope : `${manifest.scope}/`;
 
@@ -109,6 +111,16 @@ function site() {
     raw: manifest.start_url,
     target: manifest.start_url,
   });
+  for (const s of manifest.shortcuts ?? []) {
+    extra.push({ page: 'manifest.webmanifest', attr: 'shortcut', raw: s.url, target: s.url });
+    for (const i of s.icons ?? [])
+      extra.push({
+        page: 'manifest.webmanifest',
+        attr: 'shortcut icon',
+        raw: i.src,
+        target: i.src.startsWith('/') ? i.src : posix.join(scope, i.src),
+      });
+  }
   const sw = readFileSync(join(DIST, 'sw.js'), 'utf8');
   for (const m of sw.matchAll(/\{(?:revision:(?:"[^"]*"|null),)?url:"([^"]+)"/g)) {
     const url = m[1]!;
@@ -120,7 +132,7 @@ function site() {
   const broken = (list: Ref[]) => [
     ...new Set(list.filter((r) => !resolve(r.target)).map((r) => `${r.target} <- ${r.page}`)),
   ];
-  return { pages: html.length, refs, extra, broken };
+  return { pages: html.length, refs, extra, broken, manifest, scope };
 }
 
 describe('built links (dist/)', () => {
@@ -138,7 +150,21 @@ describe('built links (dist/)', () => {
     expect(s.broken(s.refs)).toEqual([]);
   });
 
-  it('the manifest icons, start_url and every precached url resolve to a file', () => {
+  it('the manifest has an id and three in-scope shortcuts to pages (CR3-10)', () => {
+    const { manifest, scope } = site();
+    expect(manifest.id).toBe(scope);
+    expect(manifest.shortcuts?.map((s) => s.name)).toEqual([
+      'Switch matrix',
+      'Playfield map',
+      'Handbook',
+    ]);
+    for (const s of manifest.shortcuts ?? []) {
+      expect(s.url.startsWith(scope)).toBe(true);
+      expect(s.icons?.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('the manifest icons, start_url, shortcuts and every precached url resolve to a file', () => {
     const s = site();
     expect(s.extra.filter((r) => r.attr === 'precache').length).toBeGreaterThan(100);
     expect(s.broken(s.extra)).toEqual([]);
