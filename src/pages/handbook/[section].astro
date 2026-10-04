@@ -35,7 +35,7 @@ const end = (s: typeof section | undefined, page: number | undefined) =>
   s && page !== undefined
     ? {
         href: handbookHref(s.key),
-        label: isAppendixPage(page) ? 'Appendix' : pageLabel('ops', page) || s.title,
+        label: isAppendixPage(page) ? 'Appendix' : pageLabel('ops', page) || s.short || s.title,
         title: s.title,
       }
     : undefined;
@@ -82,6 +82,73 @@ const description =
   </script>
   <script is:inline type="application/json" id="tafh-toc" set:html={jsonScript(toc)} />
   <div class="hb">
+    {
+      /* The article first in source order (AY3-01): the sidebar's 280-odd contents links follow it, so
+         Skip to content and the first Tab reach the text, and the grid still shows the sidebar on the
+         left. The column also holds the reader bar, which sticks to its foot from 1000 (VL3-01). */
+    }
+    <div class="col">
+      <article class="prose" data-section={section.key} data-title={section.title}>
+        <h1>{section.title}</h1>
+        {
+          section.key === 'appendix' && (
+            <p class="prov warn">
+              These pages are notes written for this machine, not manual text. Each one names its
+              sources. Values marked forum come from one thread and are not verified; measure before
+              you trust them.
+            </p>
+          )
+        }
+        {
+          entries.map((e) => (
+            <section id={`pg-${e.data.page}`}>
+              <div class="pg-bar">
+                {/* The marker says the page once; the Manual button carries it in its name only. */}
+                <span class="mono" aria-hidden={isAppendixPage(e.data.page) ? undefined : 'true'}>
+                  {isAppendixPage(e.data.page)
+                    ? `Appendix ${e.data.label}`
+                    : printedPageText(e.data.label, e.data.page)}
+                </span>
+                {UNVERIFIED.has(e.data.page) && (
+                  <span class="st-untested">transcription not verified</span>
+                )}
+                {isAppendixPage(e.data.page) ? (
+                  <span class="small muted">owner's note</span>
+                ) : (
+                  <a
+                    class="btn sm"
+                    href={manualHref('ops', e.data.page)}
+                    aria-label={`Manual ${pageTitleText('ops', e.data.page)}`}
+                  >
+                    Manual
+                  </a>
+                )}
+              </div>
+              <Fragment set:html={e.rendered?.html ?? ''} />
+              {e.data.page === 9 && (
+                <div class="shot-map">
+                  <p class="small muted">
+                    Both shot maps (p. E–F) on one drawing. Tap a letter; switch on the other layers
+                    to see the switches, lamps and coils under each shot.
+                  </p>
+                  <PlayfieldMap client:visible layer="shot" embed />
+                </div>
+              )}
+              {!isAppendixPage(e.data.page) &&
+                OWNER_NOTES[e.data.page]?.map((n) => (
+                  <aside class="owner-note small" role="note" aria-label="Owner's note">
+                    <span class="muted">Owner's note:</span> {n.text}{' '}
+                    <a href={appendixHref(n.code)}>
+                      {n.code} {APPENDICES[n.code]}
+                    </a>
+                  </aside>
+                ))}
+            </section>
+          ))
+        }
+      </article>
+      <ReaderBar client:idle prev={prevEnd} next={nextEnd} current={section.key} />
+    </div>
     <aside class="side">
       <details class="card" open>
         <summary>Contents</summary>
@@ -90,67 +157,7 @@ const description =
         </HandbookToc>
       </details>
     </aside>
-    <article class="prose" data-section={section.key} data-title={section.title}>
-      <h1>{section.title}</h1>
-      {
-        section.key === 'appendix' && (
-          <p class="prov warn">
-            These pages are notes written for this machine, not manual text. Each one names its
-            sources. Values marked forum come from one thread and are not verified; measure before
-            you trust them.
-          </p>
-        )
-      }
-      {
-        entries.map((e) => (
-          <section id={`pg-${e.data.page}`}>
-            <div class="pg-bar">
-              {/* The marker says the page once; the Manual button carries it in its name only. */}
-              <span class="mono" aria-hidden={isAppendixPage(e.data.page) ? undefined : 'true'}>
-                {isAppendixPage(e.data.page)
-                  ? `Appendix ${e.data.label}`
-                  : printedPageText(e.data.label, e.data.page)}
-              </span>
-              {UNVERIFIED.has(e.data.page) && (
-                <span class="st-untested">transcription not verified</span>
-              )}
-              {isAppendixPage(e.data.page) ? (
-                <span class="small muted">owner's note</span>
-              ) : (
-                <a
-                  class="btn sm"
-                  href={manualHref('ops', e.data.page)}
-                  aria-label={`Manual ${pageTitleText('ops', e.data.page)}`}
-                >
-                  Manual
-                </a>
-              )}
-            </div>
-            <Fragment set:html={e.rendered?.html ?? ''} />
-            {e.data.page === 9 && (
-              <div class="shot-map">
-                <p class="small muted">
-                  Both shot maps (p. E–F) on one drawing. Tap a letter; switch on the other layers
-                  to see the switches, lamps and coils under each shot.
-                </p>
-                <PlayfieldMap client:visible layer="shot" embed />
-              </div>
-            )}
-            {!isAppendixPage(e.data.page) &&
-              OWNER_NOTES[e.data.page]?.map((n) => (
-                <aside class="owner-note small" role="note" aria-label="Owner's note">
-                  <span class="muted">Owner's note:</span> {n.text}{' '}
-                  <a href={appendixHref(n.code)}>
-                    {n.code} {APPENDICES[n.code]}
-                  </a>
-                </aside>
-              ))}
-          </section>
-        ))
-      }
-    </article>
   </div>
-  <ReaderBar client:idle prev={prevEnd} next={nextEnd} current={section.key} />
 </Base>
 
 <script>
@@ -197,15 +204,25 @@ const description =
   .side {
     display: none;
   }
+  .col {
+    min-width: 0;
+  }
   @media (min-width: 1000px) {
     .hb {
       grid-template-columns: 300px minmax(0, 1fr);
     }
+    /* Second in source order (AY3-01), first on screen. */
     .side {
       display: block;
+      grid-column: 1;
+      grid-row: 1;
       position: sticky;
       top: calc(var(--safe-top) + var(--topbar-h) + 40px);
       align-self: start;
+    }
+    .col {
+      grid-column: 2;
+      grid-row: 1;
     }
   }
   /* The Contents heading keeps its display face, like the manual card heads (.mhead). It is a 44

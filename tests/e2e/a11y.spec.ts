@@ -1133,3 +1133,55 @@ test.describe('inline-link spacing', () => {
     });
   }
 });
+
+/* P1 item 4 of the app audit, round 3: on a desktop the handbook's contents sidebar (about 280
+   links) follows the article in source order, so Skip to content and the first Tab reach the text,
+   and the current section is marked with aria-current, not only by colour (AY3-01, AY3-05). */
+test.describe('the handbook sidebar follows the article', () => {
+  test.skip(({ isMobile }) => isMobile, 'the sidebar shows from 1000');
+
+  test('Skip to content, then Tab, lands in the article and not in the contents', async ({
+    page,
+  }) => {
+    await gotoHydrated(page, '/handbook/rules');
+    await page.locator('a.skip').focus();
+    await page.keyboard.press('Enter');
+    await page.keyboard.press('Tab');
+    const where = await page.evaluate(() => {
+      const el = document.activeElement!;
+      return {
+        inArticle: !!el.closest('article.prose'),
+        inSide: !!el.closest('.hb > aside.side'),
+        tag: el.tagName,
+      };
+    });
+    expect(where).toEqual({ inArticle: true, inSide: false, tag: 'A' });
+    const order = await page.evaluate(() => {
+      const a = document.querySelector('article.prose')!;
+      const s = document.querySelector('.hb > aside.side')!;
+      return {
+        follows: !!(a.compareDocumentPosition(s) & Node.DOCUMENT_POSITION_FOLLOWING),
+        left: s.getBoundingClientRect().right <= a.getBoundingClientRect().left,
+      };
+    });
+    expect(order).toEqual({ follows: true, left: true });
+  });
+
+  test('the contents mark the current section with aria-current', async ({ page }) => {
+    await gotoHydrated(page, '/handbook/rules');
+    const cur = page.locator('.hb > aside.side a[aria-current="page"]');
+    await expect(cur).toHaveCount(1);
+    await expect(cur).toContainText('Rules and shot maps');
+    await expect(cur).toHaveCSS(
+      'color',
+      await page.evaluate(() => {
+        const probe = document.createElement('span');
+        probe.style.color = 'var(--amber-ink)';
+        document.body.append(probe);
+        const c = getComputedStyle(probe).color;
+        probe.remove();
+        return c;
+      }),
+    );
+  });
+});

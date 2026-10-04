@@ -1345,3 +1345,33 @@ test.describe('tablet and desktop share one width rule', () => {
     });
   }
 });
+
+/* P1 item 4 of the app audit, round 3: from 1000 the reader bar is the article column's own, sticky
+   at its foot, so it never covers the Contents card beside it, and an end shows a section's short
+   title whole (VL3-01). */
+test.describe('the reader bar sits on the article column', () => {
+  test.skip(({ isMobile }) => isMobile, 'desktop widths');
+
+  for (const width of [1024, 1280, 1440]) {
+    test(`${width}: clear of the Contents card, inside the article, whole end labels`, async ({
+      page,
+    }) => {
+      await at(page, width, '/handbook/rules');
+      const bar = (await page.locator('nav.rbar').boundingBox())!;
+      const card = (await page.locator('.hb > aside.side > details').boundingBox())!;
+      const art = (await page.locator('article.prose').boundingBox())!;
+      expect(bar.x).toBeGreaterThanOrEqual(card.x + card.width - 0.5);
+      expect(bar.x).toBeGreaterThanOrEqual(art.x - 0.5);
+      expect(bar.x + bar.width).toBeLessThanOrEqual(art.x + art.width + 0.5);
+      // Sticky, not fixed: it stays above the fold while the article scrolls.
+      expect(bar.y + bar.height).toBeLessThanOrEqual(900);
+      const labels = await page
+        .locator('.rb.end .lbl')
+        .evaluateAll((els) =>
+          els.map((el) => ({ text: el.textContent, clipped: el.scrollWidth > el.clientWidth + 1 })),
+        );
+      expect(labels.map((l) => l.text)).toContain('Quick reference');
+      expect(labels.filter((l) => l.clipped)).toEqual([]);
+    });
+  }
+});

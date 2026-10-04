@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- On a desktop the handbook's contents sidebar now follows the article in
+  reading order, so "Skip to content" and the first Tab reach the text instead
+  of some 280 contents links; the current section is marked for assistive
+  tech, not only by colour; and the reader bar sits at the foot of the article
+  column, clear of the sidebar, with the next section's short title whole.
 - Handbook tables no longer break a hyphenated code ("Blu-Org", "FL-11753")
   across two lines on a phone, and each table's scroller is a named region
   the keyboard can reach, so it scrolls with the arrow keys in every browser.

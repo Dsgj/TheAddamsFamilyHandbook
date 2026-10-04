@@ -83,8 +83,11 @@
 {#snippet list(rows: TocItem[], current: string, home: boolean, query: string, scans: string)}
   <ul>
     {#each rows as i (i.id)}
-      <li class="lv{i.level}" class:cur={i.section === current && i.level === 1}>
-        <a href={link(i)}>
+      <li class="lv{i.level}">
+        <a
+          href={link(i)}
+          aria-current={i.section === current && i.level === 1 ? 'page' : undefined}
+        >
           <span>{i.text}</span>
           {#if i.label}<span class="mono muted small">{i.label}</span>{/if}
         </a>
@@ -161,7 +164,8 @@
     margin-top: 8px;
     color: var(--violet);
   }
-  li.cur a {
+  /* The current section, marked for assistive tech too (AY3-05); the colour follows the mark. */
+  li a[aria-current='page'] {
     color: var(--amber-ink);
   }
   li.lv2 a {

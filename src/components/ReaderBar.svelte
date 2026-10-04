@@ -131,6 +131,20 @@
     max-width: 520px;
     margin: 0 auto;
   }
+  /* From 1000 the bar belongs to the article column (VL3-01): sticky at the column's foot, so it never
+     covers the Contents card beside it, and wide enough for a section's short title at either end. */
+  @media (min-width: 1000px) {
+    .rbar {
+      position: sticky;
+      left: auto;
+      right: auto;
+      max-width: 640px;
+      margin-top: 16px;
+    }
+    .rb.end .lbl {
+      max-width: 12em;
+    }
+  }
   .rb {
     display: flex;
     align-items: center;

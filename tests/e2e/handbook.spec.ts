@@ -110,6 +110,9 @@ test.describe('the reader', () => {
     const dialog = page.getByRole('dialog', { name: 'Contents' });
     await expect(dialog).toBeVisible();
     await expect(dialog.getByLabel('Search the handbook')).toBeVisible();
+    // The current section is marked for assistive tech, not only by colour (AY3-05).
+    await expect(dialog.locator('a[aria-current="page"]')).toHaveCount(1);
+    await expect(dialog.locator('a[aria-current="page"]')).toContainText('Test menu');
     await expect(dialog.getByRole('link', { name: 'Utilities' }).first()).toHaveAttribute(
       'href',
       /handbook\/utilities$/,
