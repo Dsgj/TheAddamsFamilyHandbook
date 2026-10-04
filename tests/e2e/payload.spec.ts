@@ -16,11 +16,19 @@ import { hydrated } from './helpers';
 const TILES = ['10_00.png', '10_01.png', '10_10.png', '10_11.png'];
 const MISSING = "isn't on the device yet";
 
-/** Zoom in (x1.2 a click) until the viewer swaps the overview for the tiles (scale >= 0.3). */
+/**
+ * Zoom in (x1.2 a click) until the viewer swaps the overview for the tiles (scale >= 0.3). Each
+ * click waits for the sheet to take its new width, not for a fixed time (audit TT2-06).
+ */
 async function zoomToTiles(page: Page) {
+  const sheet = page.locator('.sheet.scan');
+  const width = () => sheet.evaluate((el) => (el as HTMLElement).style.width);
+  // the sheet carries a width once fit() has measured the viewport
+  await expect(sheet).toHaveAttribute('style', /width/);
   for (let i = 0; i < 16 && !(await page.locator('img.tile').count()); i++) {
+    const before = await width();
     await page.getByRole('button', { name: 'Zoom in' }).click();
-    await page.waitForTimeout(120);
+    await expect.poll(width).not.toBe(before);
   }
 }
 
@@ -41,8 +49,9 @@ test.describe('payload on an uncontrolled page', () => {
   for (const route of ['/', '/handbook/rules', '/manual/wpc/10', '/verify']) {
     test(`no island hydrates inside a display:none box on ${route}`, async ({ page }) => {
       await page.goto(route);
+      // hydrated() waits out every load, idle and matching media island; a visible island in a
+      // display:none box never intersects, so nothing is left to hydrate late
       await hydrated(page);
-      await page.waitForTimeout(300);
       const hidden = await page.evaluate(() =>
         [...document.querySelectorAll('astro-island')]
           .filter((el) => {
@@ -72,15 +81,13 @@ test.describe('payload on an uncontrolled page', () => {
     });
     await page.goto('/manual/wpc/10');
     await hydrated(page);
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(500);
-    // the overview stands in for the four tiles until the zoom
-    expect(overview).toBeGreaterThan(0);
+    // the overview stands in for the four tiles until the zoom; an uncontrolled page warms none
+    await expect.poll(() => overview).toBeGreaterThan(0);
+    await expect(page.locator('img.tile')).toHaveCount(0);
     expect(tiles).toEqual([]);
     await zoomToTiles(page);
     await expect(page.locator('img.tile')).toHaveCount(4);
-    await page.waitForLoadState('networkidle');
-    expect(tiles.sort()).toEqual(TILES);
+    await expect.poll(() => [...tiles].sort()).toEqual(TILES);
   });
 
   test('the shell logo is requested only where its box shows', async ({ page }) => {
@@ -94,17 +101,18 @@ test.describe('payload on an uncontrolled page', () => {
     });
     await page.goto('/');
     await hydrated(page);
+    // Negative evidence needs a window: on a phone the lazy logo is never asked for, and only a
+    // quiet network says so.
+    // eslint-disable-next-line playwright/no-networkidle -- the absence of a request is the claim
     await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(500);
     const shown = await page.locator('a.shell-logo img').evaluate((el) => {
       const r = el.getBoundingClientRect();
       return r.width > 0 && r.height > 0;
     });
     expect(logo).toBe(shown ? 1 : 0);
     // phones: no response at all; desktop: the 480x243 asset (47,390 B), not the 800x406 one
-    const sizes = await Promise.all(bodies);
-    expect(sizes).toHaveLength(shown ? 1 : 0);
-    for (const n of sizes) expect(n).toBeLessThan(49_152);
+    expect(bodies).toHaveLength(shown ? 1 : 0);
+    for (const body of bodies) expect(await body).toBeLessThan(49_152);
   });
 
   test('the Contents list opens offline', async ({ page, context }) => {
@@ -114,6 +122,8 @@ test.describe('payload on an uncontrolled page', () => {
     });
     await page.goto('/handbook/rules');
     await hydrated(page);
+    // online, the page loads everything it loads by itself before the network goes
+    // eslint-disable-next-line playwright/no-networkidle -- the offline step must not cut a load short
     await page.waitForLoadState('networkidle');
     await context.setOffline(true);
     // under 1000 the list is the Contents sheet, from 1000 the sidebar

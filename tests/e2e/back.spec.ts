@@ -1,5 +1,13 @@
 import { expect, test, type Page } from '@playwright/test';
-import { countNavigations, gotoHydrated, hydrated } from './helpers';
+import {
+  countNavigations,
+  gotoHydrated,
+  hydrated,
+  motion,
+  settle,
+  swReady,
+  transition,
+} from './helpers';
 
 /* Audit P1 item 7, back behaviour. The header back link and swipe back step back through history
    when the previous entry is where they lead, and otherwise replace the page they leave; each
@@ -30,13 +38,6 @@ const where = (page: Page): Promise<Where> =>
     };
   });
 
-/** A navigation the page started (a click, history) has landed and the new page is live. */
-async function settle(page: Page, url: RegExp) {
-  await expect(page).toHaveURL(url);
-  await page.waitForLoadState('load');
-  await hydrated(page);
-}
-
 const backLink = (page: Page) => page.locator('header.top a.back');
 const field = (page: Page) => page.getByLabel('Test report or display message');
 const diag = (page: Page) => page.locator('section.diag');
@@ -45,41 +46,7 @@ const tabLink = (page: Page, name: string) =>
   page.getByRole('navigation', { name: 'Sections' }).locator('a.tab', { hasText: name });
 const CARD = /\/(switch|lamp|coil)\/[^/?]+$/;
 
-interface Motion {
-  type: string;
-  animations: { name: string; duration: number; props: string[] }[];
-  pending?: boolean;
-  skipped?: boolean;
-}
-const swReady = (page: Page) =>
-  page.evaluate(() => navigator.serviceWorker.ready.then(() => undefined));
-const motion = (page: Page) =>
-  page.evaluate(() => (window as unknown as { tafhMotion?: Motion }).tafhMotion ?? null);
-
-/* The transition, once it has run. Chrome now and then skips a cross-document transition under
-   parallel load (motion.spec.ts); the test then undoes the step and makes it again. */
-async function transition(
-  page: Page,
-  go: () => Promise<unknown>,
-  to: RegExp,
-  undo: () => Promise<unknown>,
-  from: RegExp,
-) {
-  for (let attempt = 0; attempt < 6; attempt++) {
-    await go();
-    await settle(page, to);
-    await expect.poll(async () => (await motion(page))?.type).toBeTruthy();
-    await expect.poll(async () => (await motion(page))?.pending).toBeFalsy();
-    const m = (await motion(page))!;
-    if (m.type !== 'none' && !m.skipped) return m;
-    await undo();
-    await settle(page, from);
-    await expect.poll(async () => (await motion(page))?.type).toBeTruthy();
-  }
-  throw new Error('Chrome skipped the transition six times over');
-}
-
-test.describe('the header back link', () => {
+test.describe('the header back link', { tag: '@subpath' }, () => {
   test('steps back through history, so Forward still leads on (UX-02)', async ({ page }) => {
     await gotoHydrated(page, 'switches');
     const s = await where(page);
@@ -206,7 +173,6 @@ test.describe('the header back link', () => {
           .first()
           .click(),
       /\/manual\/ops\/\d+$/,
-      () => page.goBack(),
       /\/handbook\/tests$/,
     );
     expect(push.type).toBe('push');
@@ -504,7 +470,6 @@ test('a sidebar row keeps the static parent and cross-fades (VL-03)', async ({
     page,
     () => page.locator('nav.shell a.sub', { hasText: 'Shopping list' }).click(),
     /\/shopping$/,
-    () => page.goBack(),
     /\/handbook$/,
   );
   expect(m.type).toBe('tab');
@@ -527,8 +492,8 @@ test.describe('transitions', () => {
       page,
       () => backLink(page).click(),
       /\/tables$/,
-      () => page.goForward(),
       /\/switches$/,
+      () => page.goForward(),
     );
     expect(pop.type).toBe('pop');
     expect(await where(page)).toEqual({ url: '/tables', len: s.len, idx: s.idx - 1 });
@@ -539,8 +504,8 @@ test.describe('transitions', () => {
       page,
       () => backLink(page).click(),
       /\/switches$/,
-      () => page.evaluate(() => void setTimeout(() => location.replace('switch/32'))),
       /\/switch\/32$/,
+      () => page.evaluate(() => void setTimeout(() => location.replace('switch/32'))),
     );
     expect(up.type).toBe('pop');
     expect(await where(page)).toEqual({ url: '/switches', len: c.len, idx: c.idx });
@@ -559,8 +524,8 @@ test.describe('transitions', () => {
       page,
       () => backLink(page).click(),
       /\/tables$/,
-      () => page.goForward(),
       /\/switches$/,
+      () => page.goForward(),
     );
     expect(pop.type).toBe('pop');
     expect(pop.animations.length).toBeGreaterThan(0);
@@ -702,11 +667,12 @@ test.describe('swipe back', () => {
       touchPoints: [{ x: xs[0]!, y }],
     });
     for (const x of xs.slice(1)) {
-      // Gesture pacing, not a wait: the spacing of the touch events is the input.
+      // eslint-disable-next-line playwright/no-wait-for-timeout -- gesture pacing: the spacing of the touch events is the input
       await page.waitForTimeout(30);
       await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y }] });
     }
-    await page.waitForTimeout(30); // gesture pacing, not a wait
+    // eslint-disable-next-line playwright/no-wait-for-timeout -- gesture pacing: the spacing of the touch events is the input
+    await page.waitForTimeout(30);
     await cdp.send('Input.dispatchTouchEvent', { type: end, touchPoints: [] });
     await cdp.detach();
   }

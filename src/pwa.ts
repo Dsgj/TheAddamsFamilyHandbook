@@ -50,7 +50,8 @@ listen('check-update', () => {
   }
   // A worker that is still installing can hold `update()` open; settle within 3 s regardless.
   const capped = new Promise<void>((done) => setTimeout(done, 3000));
-  Promise.race([registration.update().catch(() => {}), capped]).then(() =>
+  // neither side rejects: the update's failure is caught, the cap only resolves
+  void Promise.race([registration.update().catch(() => {}), capped]).then(() =>
     setTimeout(settle, needsRefresh ? 0 : 1200),
   );
 });

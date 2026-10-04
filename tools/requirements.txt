@@ -1,7 +1,8 @@
-# Python deps for the offline data pipeline in tools/ (not part of the app runtime).
+# Python deps for the offline data pipeline in tools/ (not part of the app runtime), pinned to the
+# versions the committed data was made with (audit TT2-11), so a rerun reads the scans the same way.
 # python -m venv .venv && .venv/Scripts/pip install -r tools/requirements.txt
-opencv-python
-numpy
-pillow
-pytesseract
-markdown
+opencv-python==5.0.0.93
+numpy==2.5.3
+pillow==12.3.0
+pytesseract==0.3.13
+markdown==3.10.3

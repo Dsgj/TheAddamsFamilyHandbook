@@ -783,12 +783,12 @@ test('setup controls have unique names (AY-10)', async ({ page }) => {
 
   const fields = names('textbox');
   expect(fields).toHaveLength(await page.locator('.set input.field').count());
-  expect(fields.length).toBe(38);
+  expect(fields).toHaveLength(38);
   for (const n of fields) expect(n).toMatch(/^Set to .+/);
   unique(fields);
 
   const suggest = names('button').filter((n) => n.includes(', suggested for '));
-  expect(suggest.length).toBe(await page.locator('.vals > button').count());
+  expect(suggest).toHaveLength(await page.locator('.vals > button').count());
   for (const n of suggest) expect(n).toMatch(/^.+, suggested for .+$/);
   unique(suggest);
 
@@ -803,7 +803,7 @@ test('setup controls have unique names (AY-10)', async ({ page }) => {
   unique(done);
 
   const custom = fields.filter((n) => /Custom Message/i.test(n));
-  expect(custom.length).toBe(2);
+  expect(custom).toHaveLength(2);
   unique(custom);
 });
 

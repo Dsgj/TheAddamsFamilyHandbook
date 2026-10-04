@@ -112,6 +112,7 @@ test.describe('no route overflows a narrow phone', () => {
       }
     });
   }
+
   // Once the card fits, each status button is about 83px wide at 320: the label has to stay on
   // one line inside it, not spill over its neighbour (the global 12px padding pushed it out).
   test('the status labels fit their buttons at 320px', async ({ page }) => {
@@ -136,6 +137,7 @@ test.describe('no route overflows a narrow phone', () => {
       { label: 'Not tested', spill: false, lines: 1 },
     ]);
   });
+
   for (const [state, ready] of resultStates) {
     test(`${state} fits 320 and 360px`, async ({ page }) => {
       for (const width of [320, 360]) {
@@ -164,9 +166,11 @@ test.describe('wide handbook tables scroll in their own wrapper instead of being
   test('/handbook/presets has a table wider than its .scroll-x wrapper', async ({ page }) => {
     await page.setViewportSize({ width: 412, height: 839 }); // phone-dark's viewport (Pixel 7)
     await gotoHydrated(page, '/handbook/presets');
-    const wrappers = await page.$$eval('.prose .scroll-x', (els) =>
-      els.map((el) => ({ scrollWidth: el.scrollWidth, clientWidth: el.clientWidth })),
-    );
+    const wrappers = await page
+      .locator('.prose .scroll-x')
+      .evaluateAll((els) =>
+        els.map((el) => ({ scrollWidth: el.scrollWidth, clientWidth: el.clientWidth })),
+      );
     expect(wrappers.some((w) => w.scrollWidth > w.clientWidth)).toBe(true);
   });
 });
@@ -232,6 +236,7 @@ test.describe('P2-4: no horizontal page scroll at any width', () => {
   for (const width of [320, 360, 412, 600, 1000, 1280, 1366, 1440]) {
     test.describe(`${width}px`, () => {
       onWidth(width);
+
       test('tables, matrices, hubs, map, manual, handbook, care and Diagnose fit', async ({
         page,
       }) => {
@@ -268,6 +273,7 @@ test.describe('P2-4: tables (spec §8.9)', () => {
   for (const width of [320, 360, 412]) {
     test.describe(`${width}px`, () => {
       onWidth(width);
+
       test('rows fit: no scroll, no broken code, 44 ticks in view', async ({
         page,
         browserName,
@@ -442,6 +448,7 @@ test.describe('P2-4: matrices (spec §9.6)', () => {
   for (const width of [320, 360, 412]) {
     test.describe(`${width}px`, () => {
       onWidth(width);
+
       test('fit the phone with 24 × 44 cells, the wire swatches and the row/col hint', async ({
         page,
       }) => {
@@ -490,6 +497,7 @@ test.describe('P2-4: matrices (spec §9.6)', () => {
   ] as const) {
     test.describe(`${width}×${height}`, () => {
       onWidth(width);
+
       test('a keyboard selection brings the card into view, the cell too', async ({ page }) => {
         for (const url of MATRICES) {
           await at(page, width, url, height);
@@ -508,6 +516,7 @@ test.describe('P2-4: matrices (spec §9.6)', () => {
       });
     });
   }
+
   test('at 768 the row headers stay pinned while focus moves right', async ({ page, isMobile }) => {
     test.skip(isMobile, 'a desktop width');
     for (const url of MATRICES) {
@@ -660,9 +669,11 @@ test.describe('P2-4: the manual viewer (spec §9.12)', () => {
       }
     });
   });
+
   for (const width of [412, 1000, 1440]) {
     test.describe(`${width}px`, () => {
       onWidth(width);
+
       test('at the fit the page scrolls, not the stage, and the capsule is in view', async ({
         page,
         browserName,
@@ -700,11 +711,12 @@ test.describe('P2-4: the manual viewer (spec §9.12)', () => {
   ] as const) {
     test.describe(`${width}×${height}`, () => {
       onWidth(width);
+
       test('fit page shows the whole scan as the page opens', async ({ page }) => {
         await at(page, width, '/manual/ops/106', height);
-        const fitPage = page.getByRole('button', { name: 'Fit page', exact: true });
-        if ((await fitPage.getAttribute('aria-pressed')) !== 'true') await fitPage.click();
-        await expect(fitPage).toHaveAttribute('aria-pressed', 'true');
+        const fit = page.getByRole('button', { name: 'Fit page', exact: true });
+        if ((await fit.getAttribute('aria-pressed')) !== 'true') await fit.click();
+        await expect(fit).toHaveAttribute('aria-pressed', 'true');
         const stage = page.locator('.viewer .stage');
         await expect(stage.locator('img').first()).toBeVisible();
         const foot = height - (await rootPx(page, '--tabbar-h'));
@@ -715,6 +727,7 @@ test.describe('P2-4: the manual viewer (spec §9.12)', () => {
       });
     });
   }
+
   test('the chosen fit is kept across a page turn', async ({ page, isMobile }) => {
     test.skip(isMobile, 'a desktop width');
     await at(page, 1440, '/manual/ops/106');
@@ -759,6 +772,7 @@ test.describe('P2-4: the Diagnose field (spec §9.1)', () => {
       expect(res.top).toBeLessThan(res.card);
       expect(res.width).toBeLessThanOrEqual(720);
     });
+
     test(`${width}: Enter keeps the field in view for the next code`, async ({
       page,
       isMobile,
@@ -777,6 +791,7 @@ test.describe('P2-4: the Diagnose field (spec §9.1)', () => {
       expect(box.y + box.height).toBeLessThanOrEqual(page.viewportSize()!.height);
     });
   }
+
   test('412: the phone keeps the docked hero and the sticky bar', async ({ page, isMobile }) => {
     test.skip(!isMobile, 'a phone width');
     await at(page, 412, '/', 839);
@@ -884,6 +899,7 @@ test.describe('P2-4: widths and measure (spec §3.1)', () => {
   for (const width of [320, 412, 600, 1000, 1440]) {
     test.describe(`${width}px`, () => {
       onWidth(width);
+
       test('hub lists and the search pill start at the content edge', async ({ page }) => {
         for (const url of ['/tables', '/workshop']) {
           await at(page, width, url);
@@ -912,6 +928,7 @@ test.describe('P2-4: widths and measure (spec §3.1)', () => {
   for (const width of [320, 412, 419, 420, 430, 444, 445, 460, 599]) {
     test.describe(`${width}px`, () => {
       onWidth(width);
+
       test('the Appearance label stays whole and clear of its control', async ({ page }) => {
         await at(page, width, '/workshop');
         const r = await page.evaluate(() => {
@@ -938,6 +955,7 @@ test.describe('P2-4: widths and measure (spec §3.1)', () => {
       });
     });
   }
+
   test('320: the code badge stays on one line', async ({ page, isMobile }) => {
     test.skip(!isMobile, 'a phone width');
     await at(page, 320, '/coil/01', 800);
@@ -1024,7 +1042,7 @@ test.describe('large screens (P2 item 6 of the app audit, round 2)', () => {
       await at(page, width, '/map');
       const toggles = page.locator('.layers-row .ibtn');
       await expect(toggles).toHaveCount(4);
-      expect(await toggles.locator('.lname').allInnerTexts()).toEqual([
+      await expect(toggles.locator('.lname')).toHaveText([
         'Switches',
         'Lamps',
         'Solenoids',

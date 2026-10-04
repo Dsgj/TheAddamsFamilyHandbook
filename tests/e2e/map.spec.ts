@@ -162,9 +162,9 @@ test('the calibration tool is not loaded without ?calib=1 (SV-08)', async ({ pag
   await expect.poll(() => fitted(page)).toBe(true);
   expect(urls.filter((u) => /MapCalibration/.test(u))).toEqual([]);
   const island = page.locator('astro-island[component-url*="PlayfieldMap"]').first();
-  const chunk = await island.getAttribute('component-url');
-  expect(chunk).toBeTruthy();
-  const text = await (await page.request.get(new URL(chunk!, page.url()).href)).text();
+  await expect(island).toHaveAttribute('component-url', /PlayfieldMap/);
+  const chunk = (await island.getAttribute('component-url'))!;
+  const text = await (await page.request.get(new URL(chunk, page.url()).href)).text();
   expect(text).not.toContain('Copy JSON');
   expect(text).not.toContain('taf.positions.draft');
 });

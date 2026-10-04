@@ -71,10 +71,10 @@ test.describe('the Handbook home', () => {
   test('tapping a page-text hit opens the tapped page, not a neighboring one', async ({ page }) => {
     await gotoHydrated(page, '/manual?q=flipper');
     const hit = page.locator('.msearch a[href*="/manual/"]').first();
-    const href = await hit.getAttribute('href');
-    expect(href).toBeTruthy();
+    await expect(hit).toHaveAttribute('href', /\/manual\//);
+    const href = (await hit.getAttribute('href'))!;
     await hit.click();
-    await expect(page).toHaveURL(new RegExp(`${href!.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`));
+    await expect(page).toHaveURL(new RegExp(`${href.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`));
   });
 });
 

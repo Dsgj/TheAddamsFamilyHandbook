@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Zoom in on the map no longer zooms out: pinched past 2.4x, it used to drop
+  back to 2.4x, and now it keeps the zoom.
+- The Docker image caches the scans, brand images and fonts for a day rather
+  than for a year as immutable, so a changed image reaches the browser after a
+  release; only Astro's hashed bundle stays immutable.
 - The manual viewer's shortcuts ignore Shift and Caps Lock (R and T as well
   as W and P), and `_` zooms out as `-` does, the same keys as on the map.
 - Copying or sharing Diagnose results, the shopping list or the map's

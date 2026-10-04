@@ -112,18 +112,22 @@ pnpm preview
 
 ### Gates
 
-| Command             | Checks                                                                                                                                      |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm check`        | `astro check` + `tsc --noEmit`                                                                                                              |
-| `pnpm svelte-check` | svelte-check after astro sync                                                                                                               |
-| `pnpm lint`         | ESLint (Astro + Svelte)                                                                                                                     |
-| `pnpm format:check` | Prettier, LF everywhere                                                                                                                     |
-| `pnpm test`         | Vitest: codes, shared cause, handbook build, copy rules, built links, workflow shape (run `pnpm build` first: the link check reads `dist/`) |
-| `pnpm test:e2e`     | Playwright: phone-dark, desktop-light and phone-webkit (390×844), incl. axe on 26 routes; run `pnpm build` first                            |
+| Command             | Checks                                                                                                                                                                                               |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm check`        | `astro check` + `tsc --noEmit`                                                                                                                                                                       |
+| `pnpm svelte-check` | svelte-check after astro sync                                                                                                                                                                        |
+| `pnpm lint`         | ESLint (Astro, Svelte, the Playwright specs; type-aware on `src/`), no warnings allowed                                                                                                              |
+| `pnpm format:check` | Prettier, LF everywhere                                                                                                                                                                              |
+| `pnpm test`         | Vitest: codes, shared cause, handbook build, copy rules, map zoom, built links and payload, workflow shape (the last two read `dist/`, which must be newer than the sources: run `pnpm build` first) |
+| `pnpm test:e2e`     | Playwright: phone-dark, desktop-light and phone-webkit (390×844), incl. axe on 26 routes; with `BASE_PATH` set also `subpath`, the `@subpath` specs under that base; run `pnpm build` first          |
 
 ## Deploy
 
 Every push to main and every pull request runs the gates; main deploys once they are green.
+One build feeds the unit tests and the three e2e projects; the Pages job builds again under its
+base and runs the link check and the `subpath` e2e project on that build; the Docker job builds
+and smoke-tests the image. A test that passed only on its retry is listed in the e2e job's
+summary.
 
 - **GitHub Pages** (chosen target).
   [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) builds with
@@ -131,9 +135,21 @@ Every push to main and every pull request runs the gates; main deploys once they
   Pages → Source to "GitHub Actions".
 - **Docker**. `docker compose up --build` serves on <http://localhost:8080>.
   Pass `--build-arg BASE_PATH=/TheAddamsFamilyHandbook/` to serve under a
-  sub-path. _Untested locally_ (no Docker here).
+  sub-path. CI builds the image under `/sub/` and runs
+  [`scripts/docker-smoke.sh`](scripts/docker-smoke.sh) on it (pages, the 404,
+  the cache headers, gzip); `sh scripts/docker-smoke.sh podman` runs the same
+  check locally.
 - `BASE_PATH` must start and end with `/`. In Git Bash prefix
   `MSYS_NO_PATHCONV=1`, otherwise MSYS rewrites the path into a Windows path.
+
+### Release check on the iPhone
+
+Playwright's WebKit cannot go offline, so the owner's phone is checked by hand
+after a release that touches the service worker, the precache or the manual
+pages: open the installed app once online and wait for "Ready to work
+offline", switch on flight mode, then open Diagnose with a `?q=` search, the
+Map, a handbook section and a manual page opened before. Each must load; a
+manual page not opened before says it isn't on the device yet.
 
 ## Data pipeline
 
@@ -246,8 +262,9 @@ Recorded from the owner (§10 of the build prompt):
   three location diagrams with markers at the printed callouts. The manual's
   callouts remain in the kit data; the app's positions were calibrated by the
   owner on 2026-09-24.
-- Astro 7 instead of the Astro 5 the prompt mentions. `pnpm-workspace.yaml` sets
-  `minimumReleaseAge: 0` so current releases install.
+- Astro 7 instead of the Astro 5 the prompt mentions. pnpm 12's 24 h
+  release-age quarantine stays on; a fix that cannot wait exempts its one
+  package with `minimumReleaseAgeExclude` in `pnpm-workspace.yaml`.
 - Repo
   [Dsgj/TheAddamsFamilyHandbook](https://github.com/Dsgj/TheAddamsFamilyHandbook)
   is public by owner decision. The manual page images are Williams/Midway

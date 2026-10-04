@@ -21,7 +21,8 @@
     statusClass,
   } from '~/lib/map/items';
   import { COLUMN_SIDE, fitScale } from '~/lib/map/fit';
-  import { createMapZoom, dist, MAX_ZOOM } from '~/lib/map/zoom.svelte';
+  import { createMapZoom } from '~/lib/map/zoom.svelte';
+  import { dist, MAX_ZOOM } from '~/lib/map/zoom-math';
   import { allPositions, PLAYFIELD, positions } from '~/lib/data/positions';
   import { componentKey } from '~/lib/model/key';
   import type { Loc } from '~/lib/model/types';

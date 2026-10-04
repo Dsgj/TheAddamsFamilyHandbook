@@ -3,28 +3,28 @@
  * AR-06): the zoom level and the canvas size it gives, the first fit, the animated zoom about an
  * anchor, pinch, double-tap and the tap that selects the nearest marker. A runes module: call
  * `createMapZoom` during component initialisation (its `$effect` belongs to the component); the
- * coordinator passes its own state as closures and reads the zoom back through the getters.
+ * coordinator passes its own state as closures and reads the zoom back through the getters. The
+ * arithmetic lives in zoom-math.ts.
  */
 import { flushSync } from 'svelte';
 import { PLAYFIELD } from '~/lib/data/positions';
+import {
+  atTop,
+  clamp,
+  dist,
+  fractionAt as fractionOf,
+  fractionIn,
+  isDoubleTap,
+  isDrag,
+  MAX_ZOOM,
+  nextStep,
+  prevStep,
+  scrollFor,
+  type Anchor,
+  type Box,
+  type Pt,
+} from '~/lib/map/zoom-math';
 import type { Loc } from '~/lib/model/types';
-
-/** Zoom steps (spec §7.2). Pinch covers 1–3. */
-const ZOOMS = [1, 1.6, 2.4];
-export const MAX_ZOOM = 3;
-/** A pointer that moves further than this is a drag, and never selects. */
-const DRAG = 6;
-
-/** A point to hold still: a canvas fraction (fx, fy) that sits at (sx, sy) of the scroller. */
-interface Anchor {
-  fx: number;
-  fy: number;
-  sx: number;
-  sy: number;
-}
-export const clamp = (v: number, lo = 0, hi = 1) => Math.min(hi, Math.max(lo, v));
-type Pt = { x: number; y: number };
-export const dist = (a: Pt, b: Pt) => Math.hypot(a.x - b.x, a.y - b.y);
 
 /** What the zoom reads from, and calls back into, the map that owns it. */
 interface ZoomContext {
@@ -79,14 +79,18 @@ export function createMapZoom(ctx: ZoomContext) {
     if (sel) return { fx: sel.x, fy: sel.y, sx, sy };
     return { ...fractionAt(sx, sy), sx, sy };
   }
+  /** The canvas's box in the scroller's content. */
+  const box = (c: HTMLElement): Box => ({
+    left: c.offsetLeft,
+    top: c.offsetTop,
+    width: c.offsetWidth,
+    height: c.offsetHeight,
+  });
   /** The canvas fraction under a scroller-relative point. */
   function fractionAt(sx: number, sy: number) {
-    const c = ctx.canvas()!;
     const s = ctx.scroller()!;
-    return {
-      fx: clamp((s.scrollLeft + sx - c.offsetLeft) / c.offsetWidth),
-      fy: clamp((s.scrollTop + sy - c.offsetTop - ctx.shift()) / c.offsetHeight),
-    };
+    const scroll = { x: s.scrollLeft, y: s.scrollTop };
+    return fractionOf(scroll, sx, sy, box(ctx.canvas()!), ctx.shift());
   }
   function zoomTo(z: number, anchor?: Anchor, dur = 250) {
     const scroller = ctx.scroller();
@@ -103,8 +107,9 @@ export function createMapZoom(ctx: ZoomContext) {
     if (z === 1) {
       scroller.scrollTo({ left: 0, top: 0 });
     } else {
-      scroller.scrollLeft = anchor.fx * canvas.offsetWidth + canvas.offsetLeft - anchor.sx;
-      scroller.scrollTop = anchor.fy * canvas.offsetHeight + canvas.offsetTop - anchor.sy;
+      const to = scrollFor(anchor, box(canvas));
+      scroller.scrollLeft = to.x;
+      scroller.scrollTop = to.y;
     }
     if (dur && !ctx.reduced()) animateScale(k, anchor, dur, prevShift);
     else {
@@ -130,10 +135,8 @@ export function createMapZoom(ctx: ZoomContext) {
     };
     c.addEventListener('transitionend', done);
   }
-  const nextStep = () => ZOOMS.find((z) => z > zoom + 1e-6) ?? ZOOMS[ZOOMS.length - 1]!;
-  const prevStep = () => [...ZOOMS].reverse().find((z) => z < zoom - 1e-6) ?? 1;
-  const zoomIn = () => zoomTo(nextStep());
-  const zoomOut = () => zoomTo(prevStep());
+  const zoomIn = () => zoomTo(nextStep(zoom));
+  const zoomOut = () => zoomTo(prevStep(zoom));
   const fitAll = () => zoomTo(1, undefined, 300);
 
   /** Active pointers by id (plain state, not rendered). */
@@ -163,7 +166,7 @@ export function createMapZoom(ctx: ZoomContext) {
       const sx = (a.x + b.x) / 2 - r.left;
       const sy = (a.y + b.y) / 2 - r.top;
       zoomTo(pinch.z0 * (dist(a, b) / pinch.d0), { ...fractionAt(sx, sy), sx, sy }, 0);
-    } else if (tap && !tap.moved && dist(tap, { x: e.clientX, y: e.clientY }) > DRAG) {
+    } else if (tap && !tap.moved && isDrag(tap, { x: e.clientX, y: e.clientY })) {
       tap.moved = true;
     }
   }
@@ -179,7 +182,7 @@ export function createMapZoom(ctx: ZoomContext) {
     if (t.moved || e.type === 'pointercancel' || ctx.calib()) return;
     const now = performance.now();
     const p = { x: e.clientX, y: e.clientY };
-    if (lastTap && now - lastTap.t < 300 && dist(lastTap, p) < 24) {
+    if (isDoubleTap(lastTap, p, now)) {
       lastTap = undefined;
       doubleTap(p);
       return;
@@ -188,16 +191,14 @@ export function createMapZoom(ctx: ZoomContext) {
     ctx.onTap(p, e.target as Element);
   }
   /** Steps up at the tap point; at the last step, fits. */
-  function doubleTap(p: { x: number; y: number }) {
+  function doubleTap(p: Pt) {
     const scroller = ctx.scroller();
     const canvas = ctx.canvas();
     if (!scroller || !canvas) return;
-    if (zoom >= ZOOMS[ZOOMS.length - 1]! - 1e-6) return fitAll();
+    if (atTop(zoom)) return fitAll();
     const r = scroller.getBoundingClientRect();
-    const c = canvas.getBoundingClientRect();
-    zoomTo(nextStep(), {
-      fx: clamp((p.x - c.left) / c.width),
-      fy: clamp((p.y - c.top) / c.height),
+    zoomTo(nextStep(zoom), {
+      ...fractionIn(p, canvas.getBoundingClientRect()),
       sx: p.x - r.left,
       sy: p.y - r.top,
     });

@@ -19,8 +19,29 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  # One build at the default base ('/') for the gates below (audit TT2-14): the unit tests read it
+  # and every e2e project serves it, so they all test the same site.
+  build:
+    name: build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist
+          retention-days: 1
+
   static:
     name: check, svelte-check, lint, prettier, vitest
+    needs: [build]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
@@ -34,12 +55,16 @@ jobs:
       - run: pnpm svelte-check
       - run: pnpm lint
       - run: pnpm format:check
-      # The unit tests include the dist link check, so the build comes first.
-      - run: pnpm build
+      # The unit tests include the dist link and payload checks, which read the shared build.
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist
       - run: pnpm test
 
   e2e:
     name: e2e ${{ matrix.project }}
+    needs: [build]
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
@@ -60,20 +85,31 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
-      # The suite addresses pages by absolute path, so it runs against the default base ('/'),
-      # as it does locally; the Pages build below is a separate job.
-      - run: pnpm build
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist
       - run: pnpm exec playwright test --project ${{ matrix.project }}
+      # A test that passed on its retry is green; the summary lists it, so a growing flake shows
+      # before it turns red (audit TT2-04). The report and the retried tests' traces upload too.
+      - if: ${{ !cancelled() }}
+        run: node scripts/flaky.mjs test-results/report.json >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v7
-        if: failure()
+        if: ${{ !cancelled() }}
         with:
           name: playwright-${{ matrix.project }}
-          path: test-results
+          path: |
+            test-results
+            playwright-report
           retention-days: 7
+          if-no-files-found: ignore
 
-  build:
-    name: build for Pages
+  pages:
+    name: build for Pages, sub-path e2e
     runs-on: ubuntu-24.04
+    env:
+      # GitHub Pages serves a project site under /<repo>/
+      BASE_PATH: /${{ github.event.repository.name }}/
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -84,18 +120,34 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
         env:
-          # GitHub Pages serves a project site under /<repo>/
-          BASE_PATH: /${{ github.event.repository.name }}/
           SITE_URL: https://${{ github.repository_owner }}.github.io
       # The link check again, on the build that ships: every reference must carry the /<repo>/ base.
       - run: pnpm test tests/unit/links.test.ts
+      # The build that ships, served under its base: the @subpath specs (audit TT2-03).
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm exec playwright test --project subpath
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-subpath
+          path: test-results
+          retention-days: 7
+          if-no-files-found: ignore
       - uses: actions/upload-pages-artifact@v5
         with:
           path: dist
 
+  # The Docker image builds itself under a sub-path and serves through nginx (audit TT2-10).
+  docker:
+    name: docker image
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - run: sh scripts/docker-smoke.sh docker
+
   deploy:
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-    needs: [static, e2e, build]
+    needs: [static, e2e, pages, docker]
     runs-on: ubuntu-24.04
     permissions:
       contents: read

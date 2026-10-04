@@ -13,8 +13,17 @@ export default defineConfig({
   testDir: 'tests/e2e',
   timeout: 60_000,
   fullyParallel: true,
+  forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
-  reporter: process.env.CI ? 'github' : 'list',
+  // CI keeps a report to download and a JSON one that scripts/flaky.mjs lists the retried tests
+  // from into the job summary (audit TT2-04).
+  reporter: process.env.CI
+    ? [
+        ['github'],
+        ['html', { open: 'never' }],
+        ['json', { outputFile: 'test-results/report.json' }],
+      ]
+    : 'list',
   // A reused server must serve this dist/ (TT-08); see tests/e2e/global-setup.ts.
   globalSetup: './tests/e2e/global-setup.ts',
   use: {
@@ -36,6 +45,17 @@ export default defineConfig({
       name: 'phone-webkit',
       use: { ...devices['iPhone 13'], viewport: { width: 390, height: 844 }, colorScheme: 'dark' },
     },
+    // The GitHub Pages build (audit TT2-03): with a BASE_PATH only, the tests tagged @subpath,
+    // whose paths are relative to baseURL. CI runs it in the pages job, on the build that ships.
+    ...(base === '/'
+      ? []
+      : [
+          {
+            name: 'subpath',
+            grep: /@subpath/,
+            use: { ...devices['Pixel 7'], colorScheme: 'dark' as const },
+          },
+        ]),
   ],
   webServer: {
     // --ignore-lock: a live `pnpm preview` started by hand holds Astro's .astro/preview.json lock,

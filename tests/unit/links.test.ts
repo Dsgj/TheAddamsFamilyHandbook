@@ -1,6 +1,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, posix, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { freshDist } from './dist';
 
 /* Every internal reference in the built site resolves to a file in dist/ (audit TT-13): href, src,
    srcset, action, poster and data on the elements that carry them, an island's component and
@@ -11,7 +12,8 @@ import { describe, expect, it } from 'vitest';
    With build.format 'file' a site path `/x` is `x.html`, `/` is `index.html` and `/x/` is
    `x/index.html`; the base is the manifest's scope. */
 
-const DIST = 'dist';
+// a missing build, or one older than its sources, fails here (TT2-14)
+const DIST = freshDist('dist');
 
 type Ref = { page: string; attr: string; raw: string; target: string };
 

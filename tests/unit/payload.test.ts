@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { allShoppingItems } from '~/lib/data/shopping';
 import { jsonScript } from '~/lib/json-script';
 import { precacheKeys } from '~/lib/precache';
+import { freshDist } from './dist';
 
 /**
  * Payload (audit P4 item 5): the built `dist/` is what the design says it is.
@@ -22,7 +23,8 @@ import { precacheKeys } from '~/lib/precache';
  * Runs in the committed CI order: `pnpm build` before `pnpm test`. The base is read from the built
  * manifest's scope (like links.test.ts), so a BASE_PATH build (GitHub Pages, /<repo>/) holds too.
  */
-const DIST = join(process.cwd(), 'dist');
+// a missing build, or one older than its sources, fails here (TT2-14)
+const DIST = freshDist();
 const walk = (d: string, out: string[] = []): string[] => {
   for (const n of readdirSync(d)) {
     const p = join(d, n);
@@ -87,6 +89,13 @@ describe('the precache list', () => {
 
   it('equals the build expectation (globs, ignores, size cap, includeAssets, precacheKeys)', () => {
     expect(entries).toEqual(expected);
+  });
+
+  // Offline in WebKit is the one path Playwright cannot drive (pwa.spec.ts skips it), so the rule
+  // it rests on is read from the built worker (audit TT2-12): a lookup ignores every query string,
+  // so a ?q= or ?layer= address finds its precached page offline on the owner's iPhone too.
+  it('finds a page offline whatever its query string', () => {
+    expect(sw).toContain('ignoreURLParametersMatching:[/.*/]');
   });
 
   it('holds the shell logo and not the drawing that left public/', () => {

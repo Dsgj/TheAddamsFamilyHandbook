@@ -1,7 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { DATA, find } from '~/lib/data/components';
 import { positions } from '~/lib/data/positions';
-import { itemsIn, LAYERS, markerName } from '~/lib/map/items';
+import {
+  fullName,
+  itemsIn,
+  kindOf,
+  LAYERS,
+  layerOf,
+  markerName,
+  matchesQuery,
+  showId,
+} from '~/lib/map/items';
 import { offMap } from '~/lib/present';
 
 describe('markerName', () => {
@@ -43,5 +52,31 @@ describe('offMap', () => {
     ].filter(([k, c]) => !positions(k, c.id).length);
     expect(off.length).toBeGreaterThan(0);
     for (const [, c] of off) expect(offMap(c)).toMatch(/^Not on the playfield map(: .+)?\.$/);
+  });
+});
+
+/* The map's own naming and filtering (audit TT2-09). */
+describe('the map items', () => {
+  const sw32 = itemsIn('sw').find((i) => i.id === '32')!;
+  const lamp = itemsIn('lamp')[0]!;
+  const shot = itemsIn('shot')[0]!;
+
+  it('turn every layer into its kind and back', () => {
+    for (const l of LAYERS) expect(layerOf(kindOf(l))).toBe(l);
+  });
+
+  it('name a part as its heading does, and show a lamp with its L', () => {
+    expect(fullName(sw32)).toBe('Switch 32');
+    expect(fullName(shot)).toBe(`Shot ${shot.id}`);
+    expect(showId(sw32)).toBe('32');
+    expect(showId(lamp)).toBe(`L${lamp.id}`);
+  });
+
+  it('match the filter on the id, the shown code or the name, in any case', () => {
+    expect(matchesQuery('  ', sw32)).toBe(true);
+    expect(matchesQuery(' 32 ', sw32)).toBe(true);
+    expect(matchesQuery(`l${lamp.id}`, lamp)).toBe(true);
+    expect(matchesQuery(sw32.name.slice(0, 5).toUpperCase(), sw32)).toBe(true);
+    expect(matchesQuery('no such part', sw32)).toBe(false);
   });
 });

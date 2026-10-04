@@ -17,7 +17,7 @@ test.describe('toasts', () => {
   // toasts are the ones a test raises.
   test.use({ serviceWorkers: 'block' });
 
-  test('one at a time, Update wins, offline leaves after 4 s, update stays', async ({ page }) => {
+  test('one at a time, Update wins and stays past the 4 s dwell', async ({ page }) => {
     await page.clock.install();
     await gotoHydrated(page, '/tables');
     await raise(page, 'offline', 'Ready to work offline. Manual pages are saved as you open them.');
@@ -36,11 +36,16 @@ test.describe('toasts', () => {
   });
 
   test('the offline toast is gone after 4 s', async ({ page }) => {
+    await page.clock.install();
     await gotoHydrated(page, '/tables');
     await raise(page, 'offline', 'Ready to work offline.');
     const toast = page.locator('.toast', { hasText: 'Ready to work offline.' });
     await expect(toast).toBeVisible();
-    await expect(toast).toBeHidden({ timeout: 6000 });
+    // the 4 s dwell (Toast.svelte) on the fake clock: up just before it ends, gone just after
+    await page.clock.runFor(3900);
+    await expect(toast).toBeVisible();
+    await page.clock.runFor(200);
+    await expect(toast).toBeHidden();
   });
 
   for (const path of ['/care', '/setup', '/shopping']) {
@@ -49,7 +54,7 @@ test.describe('toasts', () => {
       const before = await page.getByRole('status').count();
       await raise(page, 'update', 'A new version of the app is ready.');
       await expect(page.locator('.toast')).toBeVisible();
-      expect(await page.getByRole('status').count()).toBe(before);
+      await expect(page.getByRole('status')).toHaveCount(before);
     });
   }
 
@@ -205,47 +210,47 @@ test('pull-to-refresh lives on the Workshop only and ends in a toast', async ({ 
    all (the glob only covered PNGs). The paths are relative to baseURL, so the test also runs on
    the production sub-path (`BASE_PATH=/valvet/`), where the home used to be keyed `/valvet` and
    missed the precache (src/lib/precache.ts). */
-test('offline, a query string still hits the precache and a handbook photo still decodes', async ({
-  page,
-  context,
-  browserName,
-}) => {
-  test.skip(
-    browserName === 'webkit',
-    "offline navigation is an internal error in Playwright's WebKit",
-  );
-  await gotoHydrated(page, './');
-  // The SW only becomes active once install (which precaches everything) has finished.
-  await page.evaluate(() => navigator.serviceWorker.ready.then(() => undefined));
-  await context.setOffline(true);
+test(
+  'offline, a query string still hits the precache and a handbook photo still decodes',
+  { tag: '@subpath' },
+  async ({ page, context, browserName }) => {
+    test.skip(
+      browserName === 'webkit',
+      "offline navigation is an internal error in Playwright's WebKit",
+    );
+    await gotoHydrated(page, './');
+    // The SW only becomes active once install (which precaches everything) has finished.
+    await page.evaluate(() => navigator.serviceWorker.ready.then(() => undefined));
+    await context.setOffline(true);
 
-  // motion.ts writes the Diagnose tab's href as `/?q=…` once a search has been made.
-  await gotoHydrated(page, './?q=32');
-  await expect(page.locator('.rh')).toHaveText('1 code');
+    // motion.ts writes the Diagnose tab's href as `/?q=…` once a search has been made.
+    await gotoHydrated(page, './?q=32');
+    await expect(page.locator('.rh')).toHaveText('1 code');
 
-  // motion.ts writes the Map tab's href the same way once a marker has been picked.
-  await gotoHydrated(page, './map?layer=sw&id=32');
-  await expect(
-    page
-      .locator('.t-name', { hasText: 'Switch 32' })
-      .or(page.locator('.sheet.map[aria-label="Selected component, Switch 32"]')),
-  ).toBeVisible();
+    // motion.ts writes the Map tab's href the same way once a marker has been picked.
+    await gotoHydrated(page, './map?layer=sw&id=32');
+    await expect(
+      page
+        .locator('.t-name', { hasText: 'Switch 32' })
+        .or(page.locator('.sheet.map[aria-label="Selected component, Switch 32"]')),
+    ).toBeVisible();
 
-  // The appendix is the one handbook section with photos (JPGs) rather than scan diagrams (PNGs).
-  await gotoHydrated(page, './handbook/appendix');
-  const photo = page.locator('figure.photo img').first();
-  await photo.scrollIntoViewIfNeeded();
-  await expect
-    .poll(() => photo.evaluate((img: HTMLImageElement) => img.naturalWidth))
-    .toBeGreaterThan(0);
+    // The appendix is the one handbook section with photos (JPGs) rather than scan diagrams (PNGs).
+    await gotoHydrated(page, './handbook/appendix');
+    const photo = page.locator('figure.photo img').first();
+    await photo.scrollIntoViewIfNeeded();
+    await expect
+      .poll(() => photo.evaluate((img: HTMLImageElement) => img.naturalWidth))
+      .toBeGreaterThan(0);
 
-  // PF-12: a route the precache doesn't know (a typo, a section removed since this SW was built)
-  // gets the branded 404 page offline, not the browser's error page.
-  for (const path of ['./nope', './handbook/']) {
-    await page.goto(path);
-    await expect(page).toHaveTitle(/^Not found/);
-    await expect(page.locator('a', { hasText: 'Back to Diagnose' })).toBeVisible();
-  }
+    // PF-12: a route the precache doesn't know (a typo, a section removed since this SW was built)
+    // gets the branded 404 page offline, not the browser's error page.
+    for (const path of ['./nope', './handbook/']) {
+      await page.goto(path);
+      await expect(page).toHaveTitle(/^Not found/);
+      await expect(page.locator('a', { hasText: 'Back to Diagnose' })).toBeVisible();
+    }
 
-  await context.setOffline(false);
-});
+    await context.setOffline(false);
+  },
+);

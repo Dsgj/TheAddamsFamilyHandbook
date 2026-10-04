@@ -272,6 +272,7 @@ const ROUTES: Route[] = [
         probe.remove();
         return c;
       });
+      // eslint-disable-next-line playwright/no-standalone-expect -- runs inside the route's test
       await expect(other).toHaveCSS('background-color', sunk);
     },
   },
