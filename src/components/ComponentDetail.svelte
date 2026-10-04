@@ -9,6 +9,8 @@
 </script>
 
 <script lang="ts">
+  import Icon from './Icon.svelte';
+  import type { IconName } from '~/lib/icons';
   import { onMount } from 'svelte';
   import {
     capitalise,
@@ -94,6 +96,10 @@
   });
 </script>
 
+{#snippet tile(name: IconName)}
+  <span class="tile" aria-hidden="true"><Icon {name} /></span>
+{/snippet}
+
 <div class="detail" data-kind={kind} data-id={item.id}>
   <header class="dh">
     <span class="code lg dmd">{code}</span>
@@ -160,33 +166,31 @@
       <li>
         {#if pos.length}
           <button class="lrow" type="button" onclick={() => (mapOpen = true)}>
-            <span class="tile" aria-hidden="true">
-              <svg viewBox="0 0 20 20"
-                ><path
-                  d="M10 18s-6-5.2-6-9.5a6 6 0 0 1 12 0C16 12.8 10 18 10 18zM10 10.5a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"
-                /></svg
-              >
-            </span>
+            {@render tile('pin')}
             <span class="txt"><span class="ttl">Show on map</span></span>
-            <svg class="chev" viewBox="0 0 14 14" aria-hidden="true"><path d="M5 2l5 5-5 5" /></svg>
+            <Icon name="chevron" class="chev" />
           </button>
         {:else}
           <!-- Nothing to show on the map: say where it is instead (DA2-06, UX2-05). -->
           <div class="lrow static">
+            {@render tile('pin')}
             <span class="txt">{offMap(item)}</span>
           </div>
         {/if}
       </li>
       <li>
+        <!-- A page tile, so both rows' texts start at one x whichever states they are in (VP3-06). -->
         {#if callouts}
           <a class="lrow" href={manualAt}>
+            {@render tile('page')}
             <span class="txt">
               <span class="ttl">Callout {callouts} on {mapRef}</span>
             </span>
-            <svg class="chev" viewBox="0 0 14 14" aria-hidden="true"><path d="M5 2l5 5-5 5" /></svg>
+            <Icon name="chevron" class="chev" />
           </a>
         {:else}
           <div class="lrow static">
+            {@render tile('page')}
             <span class="txt muted">{noCallout(sw?.notShown)}</span>
           </div>
         {/if}
@@ -207,9 +211,7 @@
                 <span class="ttl">{r.name}</span>
                 <span class="sub">{r.sub}</span>
               </span>
-              <svg class="chev" viewBox="0 0 14 14" aria-hidden="true"
-                ><path d="M5 2l5 5-5 5" /></svg
-              >
+              <Icon name="chevron" class="chev" />
             </a>
           </li>
         {/each}

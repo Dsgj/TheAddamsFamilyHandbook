@@ -1,4 +1,6 @@
 ---
+import Icon from '~/components/Icon.astro';
+import type { IconName } from '~/lib/icons';
 import Base from '~/layouts/Base.astro';
 import { DATA } from '~/lib/data/components';
 import { TABLE_LABEL } from '~/lib/copy';
@@ -18,22 +20,12 @@ interface Row {
   title: string;
   sub?: string;
   value?: string;
-  icon: string;
+  icon: IconName;
 }
 interface Group {
   head: string;
   rows: Row[];
 }
-const ICON = {
-  grid: 'M4 4h5v5H4zM11 4h5v5h-5zM4 11h5v5H4zM11 11h5v5h-5z',
-  lamp: 'M10 3a5 5 0 0 1 3 9v2H7v-2a5 5 0 0 1 3-9zM8 16h4',
-  coil: 'M5 6h10M5 10h10M5 14h10M7 3v14M13 3v14',
-  flip: 'M3 14l8-8M11 6h4v4',
-  gi: 'M10 2v3M10 15v3M2 10h3M15 10h3M10 6a4 4 0 1 0 0 8a4 4 0 1 0 0-8z',
-  fuse: 'M3 10h4l1-4 2 8 1-4h6',
-  led: 'M10 3a4 4 0 0 1 4 4v5H6V7a4 4 0 0 1 4-4zM7 15h6M8 17h4',
-  jumper: 'M4 6h12M4 14h12M7 6v8M13 6v8',
-};
 const GROUPS: Group[] = [
   {
     head: 'Matrices',
@@ -42,13 +34,13 @@ const GROUPS: Group[] = [
         href: tableHref('switch'),
         title: TABLE_LABEL.switch,
         sub: `${matrix} matrix, ${dedicated} dedicated, ${flipper} flipper`,
-        icon: ICON.grid,
+        icon: 'grid',
       },
       {
         href: tableHref('lamp'),
         title: TABLE_LABEL.lamp,
         sub: `${DATA.lamps.length} lamps`,
-        icon: ICON.lamp,
+        icon: 'lamp',
       },
     ],
   },
@@ -59,33 +51,33 @@ const GROUPS: Group[] = [
         href: tableHref('coil'),
         title: TABLE_LABEL.coil,
         value: String(DATA.coils.length),
-        icon: ICON.coil,
+        icon: 'coil',
       },
       {
         href: tableHref('coil', 'flippers'),
         title: 'Flipper coils',
         value: String(DATA.flippers.length),
-        icon: ICON.flip,
+        icon: 'flip',
       },
       {
         href: tableHref('coil', 'gi'),
         title: 'General illumination',
         value: `${DATA.gi.length} strings`,
-        icon: ICON.gi,
+        icon: 'gi',
       },
     ],
   },
   {
     head: 'Boards',
     rows: [
-      { href: href('fuses'), title: 'Fuses', value: String(DATA.fuses.length), icon: ICON.fuse },
+      { href: href('fuses'), title: 'Fuses', value: String(DATA.fuses.length), icon: 'fuse' },
       {
         href: href('fuses#leds'),
         title: 'Diagnostic LEDs',
         value: String(DATA.leds.length),
-        icon: ICON.led,
+        icon: 'led',
       },
-      { href: href('fuses#jumpers'), title: 'Jumper charts', icon: ICON.jumper },
+      { href: href('fuses#jumpers'), title: 'Jumper charts', icon: 'jumper' },
     ],
   },
 ];
@@ -112,7 +104,7 @@ const GROUPS: Group[] = [
         enterkeyhint="search"
       />
       <button class="ibtn clear" type="button" aria-label="Clear search" hidden>
-        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"></path></svg>
+        <Icon name="clear" />
       </button>
     </div>
     <section hidden data-recent data-group>
@@ -124,9 +116,7 @@ const GROUPS: Group[] = [
           <a class="lrow two">
             <span class="code dmd"></span>
             <span class="txt"><span class="ttl"></span><span class="sub"></span></span>
-            <svg class="chev" viewBox="0 0 14 14" aria-hidden="true">
-              <path d="M5 2l5 5-5 5"></path>
-            </svg>
+            <Icon name="chevron" class="chev" />
           </a>
         </li>
       </template>
@@ -140,18 +130,14 @@ const GROUPS: Group[] = [
               <li>
                 <a class:list={['lrow', { two: !!r.sub }]} href={r.href}>
                   <span class="tile" aria-hidden="true">
-                    <svg viewBox="0 0 20 20">
-                      <path d={r.icon} />
-                    </svg>
+                    <Icon name={r.icon} />
                   </span>
                   <span class="txt">
                     <span class="ttl">{r.title}</span>
                     {r.sub && <span class="sub">{r.sub}</span>}
                   </span>
                   {r.value && <span class="val">{r.value}</span>}
-                  <svg class="chev" viewBox="0 0 14 14" aria-hidden="true">
-                    <path d="M5 2l5 5-5 5" />
-                  </svg>
+                  <Icon name="chevron" class="chev" />
                 </a>
               </li>
             ))}

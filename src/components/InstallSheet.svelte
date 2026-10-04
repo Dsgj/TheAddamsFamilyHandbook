@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from './Icon.svelte';
   import { onMount } from 'svelte';
   import BottomSheet from './BottomSheet.svelte';
   import { listen } from '~/lib/events';
@@ -37,7 +38,7 @@
     <ul class="points">
       {#each POINTS as p (p)}
         <li>
-          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10l4 4 8-8" /></svg>
+          <Icon name="check" />
           {p}
         </li>
       {/each}
@@ -70,7 +71,7 @@
     gap: 10px;
     min-height: 36px;
   }
-  .points svg {
+  .points :global(svg) {
     width: 20px;
     height: 20px;
     flex: 0 0 auto;

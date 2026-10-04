@@ -1,4 +1,5 @@
 ---
+import Icon from '~/components/Icon.astro';
 import Base from '~/layouts/Base.astro';
 import DocSeg from '~/components/DocSeg.astro';
 import ManualSearch from '~/components/ManualSearch.svelte';
@@ -38,9 +39,7 @@ import { manualHref } from '~/lib/url';
                     <span class="ttl">{name}</span>
                   </span>
                   <span class="val mono">{pageCellText(d, p)}</span>
-                  <svg class="chev" viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M9 5l7 7-7 7" />
-                  </svg>
+                  <Icon name="forward" class="chev" />
                 </a>
               </li>
             ))}

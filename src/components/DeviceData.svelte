@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from './Icon.svelte';
   import { onDestroy, onMount, tick } from 'svelte';
   import { clearReading, READING_KEY, readReading } from '~/lib/model/reading';
   import {
@@ -194,9 +195,7 @@
     <li>
       <button type="button" class="lrow" onclick={download} disabled={empty}>
         <span class="txt"><span class="ttl">Download backup</span></span>
-        <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"
-          ><path d="M12 4v11m-5-4l5 5 5-5M5 20h14" /></svg
-        >
+        <Icon name="download" class="chev" />
       </button>
     </li>
     <li>
@@ -209,9 +208,7 @@
           bind:this={file}
           onchange={onFile}
         />
-        <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"
-          ><path d="M12 20V9m-5 4l5-5 5 5M5 4h14" /></svg
-        >
+        <Icon name="upload" class="chev" />
       </label>
     </li>
     <li class="lrow static">
@@ -298,7 +295,8 @@
     width: auto;
     max-width: 58%;
     min-height: 44px;
-    padding: 2px 8px;
+    /* 32 on the right: the chevron select.field draws (VP3-10). */
+    padding: 2px 32px 2px 8px;
   }
   .bad {
     color: var(--bad);

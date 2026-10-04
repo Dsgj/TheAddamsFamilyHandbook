@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from './Icon.svelte';
   import { onMount, tick, untrack } from 'svelte';
   import BottomSheet from './BottomSheet.svelte';
   import { isTypingTarget, letterKey, zoomKey } from '~/lib/keys';
@@ -279,7 +280,7 @@
       aria-label="Previous page"
       title="Previous page (←)"
     >
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
+      <Icon name="back" />
     </a>
     <button
       class="pgno"
@@ -301,7 +302,7 @@
       aria-label="Next page"
       title="Next page (→)"
     >
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" /></svg>
+      <Icon name="forward" />
     </a>
     <button
       class="ibtn"
@@ -310,10 +311,7 @@
       aria-label="Rotate page"
       title="Rotate page (R)"
     >
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M20 12a8 8 0 1 1-3-6.2" />
-        <path d="M20 4v5h-5" />
-      </svg>
+      <Icon name="rotate" />
     </button>
     <span class="grow"></span>
     <button
@@ -437,9 +435,7 @@
             title="Zoom in (+)"
             onclick={() => zoomBy(1.2)}
           >
-            <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true">
-              <path d="M10 4v12M4 10h12" />
-            </svg>
+            <Icon name="plus" size={20} />
           </button>
           <button
             class="ibtn sq"
@@ -448,9 +444,7 @@
             title="Zoom out (−)"
             onclick={() => zoomBy(1 / 1.2)}
           >
-            <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true">
-              <path d="M4 10h12" />
-            </svg>
+            <Icon name="minus" size={20} />
           </button>
           <button
             class="ibtn sq fit"
@@ -460,9 +454,7 @@
             aria-pressed={scale === 0 && fitMode === 'width'}
             onclick={() => chooseFit('width')}
           >
-            <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true">
-              <path d="M3 10h14M6 7l-3 3 3 3M14 7l3 3-3 3" />
-            </svg>
+            <Icon name="fitWidth" size={20} />
           </button>
           <button
             class="ibtn sq fit"
@@ -472,9 +464,7 @@
             aria-pressed={scale === 0 && fitMode === 'page'}
             onclick={() => chooseFit('page')}
           >
-            <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true">
-              <path d="M6 3h8v14H6zM3 6v8M17 6v8" />
-            </svg>
+            <Icon name="fitPage" size={20} />
           </button>
         </div>
       </div>
@@ -723,7 +713,7 @@
       border-left: 1px solid var(--sep);
     }
   }
-  .capsule .ibtn svg {
+  .capsule .ibtn :global(svg) {
     width: 20px;
     height: 20px;
   }

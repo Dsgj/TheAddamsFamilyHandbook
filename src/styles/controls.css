@@ -270,9 +270,12 @@
   -webkit-appearance: none;
   display: none;
 }
-/* The select twin (Manuals): a chevron of two gradients in --muted, clipped to the pill. */
-select.search {
-  width: auto;
+/* The select twin (Manuals) and a field select (Device data): one chevron of two gradients in
+   --muted in place of the UA's, clipped to the pill or the field (VP3-10). */
+select.search,
+select.field {
+  -webkit-appearance: none;
+  appearance: none;
   padding-right: 32px;
   background-image:
     linear-gradient(45deg, transparent 50%, var(--muted) 50%),
@@ -283,6 +286,9 @@ select.search {
   background-size: 5px 5px;
   background-repeat: no-repeat;
   cursor: pointer;
+}
+select.search {
+  width: auto;
 }
 .srch {
   position: relative;

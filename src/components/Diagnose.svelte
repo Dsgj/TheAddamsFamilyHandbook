@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from './Icon.svelte';
   import { APPENDICES, appendixHref } from '~/data/appendix';
   import { codesSummary, parseCodes, type ParsedCode } from '~/lib/codes';
   import { componentCode, componentLabel, componentName, plural, TABLE_LABEL } from '~/lib/copy';
@@ -424,25 +425,15 @@
   {#if mode === 'home'}
     <nav class="tiles" aria-label="Quick links">
       <a class="tile" href={href('map')}>
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 21s-6-5.4-6-10a6 6 0 0 1 12 0c0 4.6-6 10-6 10z" /><circle
-            cx="12"
-            cy="11"
-            r="2.2"
-          />
-        </svg>
+        <Icon name="pinLg" />
         <span>Playfield map</span>
       </a>
       <a class="tile" href={tableHref('switch')}>
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z" />
-        </svg>
+        <Icon name="gridLg" />
         <span>Switch matrix</span>
       </a>
       <a class="tile" href={tableHref('lamp')}>
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 3a6 6 0 0 1 3.5 10.9V17h-7v-3.1A6 6 0 0 1 12 3zM9.5 20h5" />
-        </svg>
+        <Icon name="bulbLg" />
         <span>Lamp matrix</span>
       </a>
     </nav>
@@ -611,7 +602,7 @@
     text-align: center;
     text-decoration: none;
   }
-  .tile svg {
+  .tile :global(svg) {
     width: 22px;
     height: 22px;
     fill: none;

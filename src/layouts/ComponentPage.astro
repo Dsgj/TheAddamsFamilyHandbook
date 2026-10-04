@@ -1,4 +1,5 @@
 ---
+import Icon from '~/components/Icon.astro';
 import Base from './Base.astro';
 import ComponentDetail, { type Related } from '~/components/ComponentDetail.svelte';
 import { DATA, mapOf } from '~/lib/data/components';
@@ -95,7 +96,8 @@ const svc = serviceNotes(item)
     {
       prev ? (
         <a class="btn sm" href={componentHref(kind, prev.id)}>
-          ‹ {prev.id} {prev.name}
+          <Icon name="chevronLeft" class="chev" />
+          {prev.id} {prev.name}
         </a>
       ) : (
         <span />
@@ -104,7 +106,8 @@ const svc = serviceNotes(item)
     {
       next ? (
         <a class="btn sm" href={componentHref(kind, next.id)}>
-          {next.id} {next.name} ›
+          {next.id} {next.name}
+          <Icon name="chevron" class="chev" />
         </a>
       ) : (
         <span />
@@ -146,5 +149,15 @@ const svc = serviceNotes(item)
   }
   .pn .btn {
     text-decoration: none;
+  }
+  /* The lists' chevron, not a text glyph (VP3-09); Icon's svg is outside this scope. */
+  .pn .btn :global(.chev) {
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
 </style>

@@ -310,8 +310,23 @@ describe('structure lint', () => {
     expect(found).toEqual([]);
   });
 
+  it('(t) draws icons from icons.ts through Icon.svelte and Icon.astro (DS3-06, AR3-14)', () => {
+    // MapControls' layer glyphs and Matrix's status marks are drawn from circles and conditions.
+    expectNone(
+      hits(
+        /<path\b/,
+        only(
+          'src/components/Icon.svelte',
+          'src/components/Icon.astro',
+          'src/components/MapControls.svelte',
+          'src/components/Matrix.svelte',
+        ),
+      ),
+    );
+  });
+
   it('(control) every rule above still matches inside its home, so none passes vacuously', () => {
-    expect(RULES.length).toBe(19);
+    expect(RULES.length).toBe(20);
     for (const [pattern, allowed] of RULES) {
       if (pattern === KIND_TERNARY) continue;
       const home = FILES.filter((f) => allowed(f.path));

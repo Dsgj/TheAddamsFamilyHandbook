@@ -53,6 +53,19 @@ test('lamp, solenoid and flipper coil cards carry the status row', async ({ page
   await expect(page.getByRole('link', { name: /F901/ }).first()).toHaveAttribute('href', /fuses#/);
 });
 
+test('the Location rows start their text at one x (VP3-06)', async ({ page }) => {
+  await gotoHydrated(page, '/lamp/11');
+  const section = page.locator('main section', {
+    has: page.locator('h3', { hasText: 'Location' }),
+  });
+  const texts = section.locator('.lst .lrow .txt');
+  await expect(texts).toHaveCount(2);
+  await expect(texts.nth(0)).toContainText('Show on map');
+  await expect(texts.nth(1)).toContainText('Callout');
+  const [a, b] = await Promise.all([texts.nth(0).boundingBox(), texts.nth(1).boundingBox()]);
+  expect(a?.x).toBe(b?.x);
+});
+
 test('device data downloads a backup and restores it', async ({ page }) => {
   await gotoHydrated(page, '/switch/32');
   await page.getByRole('button', { name: 'Fault' }).click();

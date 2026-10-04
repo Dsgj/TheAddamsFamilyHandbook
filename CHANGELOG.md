@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Icons: every chevron, row tile and bar icon is drawn from one list. On a
+  component page both Location rows carry a tile, so their text starts at one
+  x; the previous/next buttons use the lists' chevron; the viewer's rotate
+  button shows a page turning inside the arrow.
+- Device data: the restore mode select draws the same chevron as the Manuals
+  pick list, in place of the browser's.
 - Search: the exact code comes first, then the rows whose name holds the
   word, so "flipper" lists the Fliptronics switches and the flipper coils
   before the lanes named after them, and the All preview spreads its five rows

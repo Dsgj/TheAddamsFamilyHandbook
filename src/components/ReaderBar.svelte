@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from './Icon.svelte';
   import { onMount } from 'svelte';
   import BottomSheet from './BottomSheet.svelte';
   import HandbookToc, { readToc } from './HandbookToc.svelte';
@@ -58,7 +59,7 @@
 <nav class="rbar glass" aria-label="Reader">
   {#if prev}
     <a class="rb end" href={prev.href} aria-label={named('Previous', prev)}>
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
+      <Icon name="back" />
       <span class="lbl">{prev.label}</span>
     </a>
   {:else}
@@ -71,7 +72,7 @@
   {#if next}
     <a class="rb end" href={next.href} aria-label={named('Next', next)}>
       <span class="lbl">{next.label}</span>
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" /></svg>
+      <Icon name="forward" />
     </a>
   {:else}
     <span class="rb end off" aria-hidden="true"></span>
@@ -180,7 +181,7 @@
   .rb.off {
     cursor: default;
   }
-  .rb svg {
+  .rb :global(svg) {
     width: 20px;
     height: 20px;
     flex: 0 0 auto;

@@ -1,4 +1,6 @@
 <script lang="ts">
+  import Icon from './Icon.svelte';
+  import type { IconName } from '~/lib/icons';
   /**
    * The Workshop hub's rows (spec §9.14). The counts are read on the device after hydration, so
    * they render empty on the server and never as a build-time 0. No count uses `role=status`.
@@ -77,31 +79,14 @@
     const pick = metas.find((m) => m.getAttribute('media')?.includes(t))?.dataset.own;
     for (const m of metas) m.content = (t === 'system' ? m.dataset.own : pick) ?? m.content;
   }
-
-  const ICON = {
-    cart: 'M3 4h2l2 9h9l2-6H6M8 17a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM15 17a1 1 0 1 0 0-2 1 1 0 0 0 0 2z',
-    check: 'M4 10l4 4 8-8',
-    care: 'M10 3l2 4 4 .6-3 3 .8 4.4L10 13l-3.8 2 .8-4.4-3-3L8 7z',
-    setup: 'M4 6h12M4 10h12M4 14h8M14 13l1.5 1.5L18 12',
-    theme: 'M10 3a7 7 0 1 0 0 14V3z',
-    // One icon per row (VP2-15): a stack of records for the device's data, the download arrow
-    // for Install, a tag for the version and the circled i for About.
-    data: 'M4 5a6 2 0 1 0 12 0a6 2 0 1 0-12 0M4 5v10a6 2 0 0 0 12 0V5M4 10a6 2 0 0 0 12 0',
-    offline: 'M3 9a10 10 0 0 1 14 0M6 12a6 6 0 0 1 8 0M10 15h.01',
-    install: 'M10 3v9M6 8l4 4 4-4M4 16h12',
-    info: 'M10 9v5M10 6h.01M10 2a8 8 0 1 0 0 16 8 8 0 1 0 0-16z',
-    version: 'M3 3h7l7 7-7 7-7-7zM7 7h.01',
-  };
 </script>
 
-{#snippet tile(d: string)}
-  <span class="tile" aria-hidden="true">
-    <svg viewBox="0 0 20 20"><path {d} /></svg>
-  </span>
+{#snippet tile(name: IconName)}
+  <span class="tile" aria-hidden="true"><Icon {name} /></span>
 {/snippet}
 
 {#snippet chev()}
-  <svg class="chev" viewBox="0 0 14 14" aria-hidden="true"><path d="M5 2l5 5-5 5" /></svg>
+  <Icon name="chevron" class="chev" />
 {/snippet}
 
 <div class="hub-body">
@@ -109,7 +94,7 @@
   <ul class="lst">
     <li>
       <a class="lrow two" href={links.shopping}>
-        {@render tile(ICON.cart)}
+        {@render tile('cart')}
         <span class="txt">
           <span class="ttl">Shopping list</span>
           <span class="sub">Parts for what you marked Fault</span>
@@ -120,7 +105,7 @@
     </li>
     <li>
       <a class="lrow two" href={links.verify}>
-        {@render tile(ICON.check)}
+        {@render tile('check')}
         <span class="txt">
           <span class="ttl">Verify</span>
           <span class="sub">{plural(verifyIds.length, 'data point')} to check on the machine</span>
@@ -133,7 +118,7 @@
     </li>
     <li>
       <a class="lrow two" href={links.care}>
-        {@render tile(ICON.care)}
+        {@render tile('care')}
         <span class="txt">
           <span class="ttl">Care</span>
           <span class="sub">Every week to every year</span>
@@ -143,7 +128,7 @@
     </li>
     <li>
       <a class="lrow two" href={links.setup}>
-        {@render tile(ICON.setup)}
+        {@render tile('setup')}
         <span class="txt">
           <span class="ttl">Machine setup</span>
           <!-- The page's unit: it counts settings done, not steps (UX2-10). -->
@@ -163,7 +148,7 @@
   <ul class="lst device">
     <li>
       <div class="lrow two static appearance">
-        {@render tile(ICON.theme)}
+        {@render tile('theme')}
         <span class="txt"><span class="ttl" id="appearance-label">Appearance</span></span>
         <div class="seg" role="group" aria-label="Toggle theme">
           {#each THEMES as [value, label] (value)}
@@ -176,7 +161,7 @@
     </li>
     <li>
       <a class="lrow two" href={links.device}>
-        {@render tile(ICON.data)}
+        {@render tile('data')}
         <span class="txt">
           <span class="ttl">Device data</span>
           <span class="sub">Back up or restore this device</span>
@@ -186,7 +171,7 @@
     </li>
     <li>
       <div class="lrow static">
-        {@render tile(ICON.offline)}
+        {@render tile('offline')}
         <span class="txt"><span class="ttl">Offline</span></span>
         <span class="val">{offline}</span>
       </div>
@@ -194,13 +179,13 @@
     <li>
       {#if standalone}
         <div class="lrow static">
-          {@render tile(ICON.install)}
+          {@render tile('install')}
           <span class="txt"><span class="ttl">Install</span></span>
           <span class="val">Installed</span>
         </div>
       {:else}
         <button class="lrow" type="button" aria-haspopup="dialog" onclick={() => (install = true)}>
-          {@render tile(ICON.install)}
+          {@render tile('install')}
           <span class="txt"><span class="ttl">Install the app</span></span>
           {@render chev()}
         </button>
@@ -212,14 +197,14 @@
   <ul class="lst">
     <li>
       <div class="lrow static">
-        {@render tile(ICON.version)}
+        {@render tile('version')}
         <span class="txt"><span class="ttl">Version</span></span>
         <span class="val mono">{version}</span>
       </div>
     </li>
     <li>
       <button class="lrow" type="button" aria-haspopup="dialog" onclick={() => (about = true)}>
-        {@render tile(ICON.info)}
+        {@render tile('info')}
         <span class="txt"><span class="ttl">About the app</span></span>
         {@render chev()}
       </button>

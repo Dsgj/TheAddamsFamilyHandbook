@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from './Icon.svelte';
   import { onMount } from 'svelte';
   import { loadJson } from '~/lib/load';
   import {
@@ -157,9 +158,7 @@
                 <span class="ttl">{h.label}</span>
                 <span class="sub">{snippet(h, words)}</span>
               </span>
-              <svg class="chev" viewBox="0 0 14 14" aria-hidden="true"
-                ><path d="M5 2l5 5-5 5" /></svg
-              >
+              <Icon name="chevron" class="chev" />
             </a>
           </li>
         {/each}

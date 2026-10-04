@@ -1,4 +1,5 @@
 ---
+import Icon from '~/components/Icon.astro';
 import '~/styles/tokens.css';
 // The global sheet in cascade order (audit AR2-08): on a tie, the later part wins.
 import '~/styles/base.css';
@@ -210,9 +211,7 @@ const hasActions = Astro.slots.has('actions');
           {
             back && (
               <a class="back" href={href(back.path)}>
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M15 5l-7 7 7 7" />
-                </svg>
+                <Icon name="back" />
                 <span>{back.label}</span>
               </a>
             )
@@ -274,9 +273,7 @@ const hasActions = Astro.slots.has('actions');
                 data-tab={t.key}
                 aria-current={tab === t.key ? 'page' : undefined}
               >
-                <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d={t.icon} />
-                </svg>
+                <Icon name={t.icon} class="ico" />
                 <span class="lbl">{t.label}</span>
                 {/* At an idle moment, or after 200 ms, the wait Astro gives it anyway where there
                     is no requestIdleCallback (Safari): a CI Chromium once had none in 15 s. */}

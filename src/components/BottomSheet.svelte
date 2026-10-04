@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from './Icon.svelte';
   import type { Snippet } from 'svelte';
   import type { HTMLAttributes } from 'svelte/elements';
   import { media } from '~/lib/media';
@@ -325,9 +326,7 @@
         <span class="grabber top" aria-hidden="true"></span>
         <h2 class="sheet-title">{title || label}</h2>
         <button class="close" type="button" aria-label="Close" onclick={close}>
-          <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true">
-            <path d="M5 5l10 10M15 5L5 15" />
-          </svg>
+          <Icon name="close" size={20} />
         </button>
       </div>
       <div class="body">
@@ -482,7 +481,7 @@
     color: var(--muted);
     cursor: pointer;
   }
-  .close svg {
+  .close :global(svg) {
     fill: none;
     stroke: currentColor;
     stroke-width: 2;

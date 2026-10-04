@@ -1,4 +1,5 @@
 ---
+import Icon from '~/components/Icon.astro';
 import Base from '~/layouts/Base.astro';
 import DocSeg from '~/components/DocSeg.astro';
 import HandbookToc from '~/components/HandbookToc.svelte';
@@ -46,9 +47,7 @@ const range = (pages: number[]): string => {
               <span class="ttl" data-ttl></span>
               <span class="sub" data-sub></span>
             </span>
-            <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"
-              ><path d="M9 5l7 7-7 7"></path></svg
-            >
+            <Icon name="forward" class="chev" />
           </a>
         </li>
       </ul>
@@ -64,9 +63,7 @@ const range = (pages: number[]): string => {
                 <span class="ttl">{s.title}</span>
               </span>
               {range(s.pages) && <span class="val mono">{range(s.pages)}</span>}
-              <svg class="chev" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M9 5l7 7-7 7" />
-              </svg>
+              <Icon name="forward" class="chev" />
             </a>
           </li>
         ))
@@ -89,9 +86,7 @@ const range = (pages: number[]): string => {
               <span class="txt">
                 <span class="ttl">{title}</span>
               </span>
-              <svg class="chev" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M9 5l7 7-7 7" />
-              </svg>
+              <Icon name="forward" class="chev" />
             </a>
           </li>
         ))

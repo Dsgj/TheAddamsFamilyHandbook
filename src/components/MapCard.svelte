@@ -16,6 +16,7 @@
   import { pageTitleText } from '~/lib/pages';
   import { calloutLabels, wiring, wiringRows } from '~/lib/present';
   import { componentHref, href, manualHref, tableSpotHref } from '~/lib/url';
+  import Icon from './Icon.svelte';
   import OwnerHint from './OwnerHint.svelte';
   import WiringList from './WiringList.svelte';
 
@@ -25,9 +26,7 @@
 {#snippet deselectBtn(onDeselect: (e: MouseEvent) => void)}
   <button class="ibtn sq desel" type="button" aria-label="Deselect" onclick={onDeselect}>
     <span class="x" aria-hidden="true">
-      <svg viewBox="0 0 20 20" width="14" height="14">
-        <path d="M5 5l10 10M15 5L5 15" />
-      </svg>
+      <Icon name="close" size={14} />
     </span>
   </button>
 {/snippet}
@@ -161,7 +160,7 @@
     border-radius: 50%;
     background: var(--sunk);
   }
-  .desel svg {
+  .desel :global(svg) {
     fill: none;
     stroke: currentColor;
     stroke-width: 2;

@@ -1,4 +1,5 @@
 ---
+import Icon from '~/components/Icon.astro';
 import Base from '~/layouts/Base.astro';
 import PageViewer from '~/components/PageViewer.svelte';
 import ManualSearch from '~/components/ManualSearch.svelte';
@@ -116,9 +117,7 @@ const around = toc.slice(from, from + 7).map(([p, name], i) => ({
                   <span class="ttl">Read the transcription</span>
                   <span class="sub">{sec.title}, in the handbook</span>
                 </span>
-                <svg class="chev" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M9 5l7 7-7 7" />
-                </svg>
+                <Icon name="forward" class="chev" />
               </a>
             </li>
           )
@@ -136,9 +135,7 @@ const around = toc.slice(from, from + 7).map(([p, name], i) => ({
                   <span class="ttl">{e.name}</span>
                 </span>
                 <span class="val mono">{pageCellText(doc, e.p)}</span>
-                <svg class="chev" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M9 5l7 7-7 7" />
-                </svg>
+                <Icon name="forward" class="chev" />
               </a>
             </li>
           ))
@@ -148,9 +145,7 @@ const around = toc.slice(from, from + 7).map(([p, name], i) => ({
             <span class="txt">
               <span class="ttl">All contents</span>
             </span>
-            <svg class="chev" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M9 5l7 7-7 7"></path>
-            </svg>
+            <Icon name="forward" class="chev" />
           </a>
         </li>
       </ul>

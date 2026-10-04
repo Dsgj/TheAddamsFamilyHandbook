@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from './Icon.svelte';
   /**
    * The one search field (spec §8.7, audit SV-16): the global `.search` pill (36 painted, 44 to
    * tap) inside a `.srch`, and a "Clear search" button while the field holds text. Clearing
@@ -54,7 +55,7 @@
   />
   {#if value}
     <button class="ibtn clear" type="button" aria-label="Clear search" onclick={clear}>
-      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" /></svg>
+      <Icon name="clear" />
     </button>
   {/if}
 </div>

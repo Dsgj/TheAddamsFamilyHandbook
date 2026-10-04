@@ -1,0 +1,23 @@
+---
+import { ICONS } from '~/lib/icons';
+import type { IconName } from '~/lib/icons';
+
+/** One icon from icons.ts for the static pages: the svg Icon.svelte renders (DS3-06, AR3-14). */
+interface Props {
+  name: IconName;
+  class?: string;
+  size?: number;
+}
+const { name, class: cls, size } = Astro.props;
+const icon = ICONS[name];
+---
+
+<svg
+  class={cls}
+  viewBox={`0 0 ${icon.box} ${icon.box}`}
+  width={size}
+  height={size}
+  aria-hidden="true"
+>
+  <path d={icon.d}></path>
+</svg>

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from './Icon.svelte';
   import { KIND_PLURAL, LAYER_KIND } from '~/lib/copy';
   import type { MapLayer } from '~/lib/map/items';
   import { LABEL, LAYERS } from '~/lib/map/items';
@@ -79,14 +80,10 @@
 {#snippet zoomCapsule()}
   <div class="glass capsule zooms" role="group" aria-label="Zoom">
     <button class="ibtn sq" type="button" aria-label="Zoom in" onclick={zm.zoomIn}>
-      <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true">
-        <path d="M10 4v12M4 10h12" />
-      </svg>
+      <Icon name="plus" size={20} />
     </button>
     <button class="ibtn sq" type="button" aria-label="Zoom out" onclick={zm.zoomOut}>
-      <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true">
-        <path d="M4 10h12" />
-      </svg>
+      <Icon name="minus" size={20} />
     </button>
     <button
       class="ibtn sq fit"
@@ -95,9 +92,7 @@
       aria-disabled={zm.zoom <= 1 ? 'true' : undefined}
       onclick={zm.fitAll}
     >
-      <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true">
-        <path d="M3 8V3h5M12 3h5v5M17 12v5h-5M8 17H3v-5" />
-      </svg>
+      <Icon name="fit" size={20} />
     </button>
   </div>
 {/snippet}
