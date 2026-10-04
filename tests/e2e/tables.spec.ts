@@ -265,6 +265,18 @@ test('visiting a component puts it first under Recently viewed on /tables', asyn
   await expect(page.locator('[data-recent] .lrow:visible')).toContainText('L13');
 });
 
+test('a filter no hub matches links to the search of everything (AR3-08)', async ({ page }) => {
+  await gotoHydrated(page, '/tables');
+  await page.getByRole('searchbox', { name: 'Search tables' }).fill('32');
+  await expect(page.locator('[data-group]:visible')).toHaveCount(0);
+  await expect(page.locator('[data-empty]')).toContainText('No tables match “32”.');
+  const all = page.getByRole('link', { name: 'Search everything for “32”' });
+  await expect(all).toHaveAttribute('href', /\/\?q=32$/);
+  await all.click();
+  await expect(page).toHaveURL(/\?q=32$/);
+  await expect(page.locator('.rh')).toContainText('1 code');
+});
+
 /* P3 item 1 of the app audit (spec §13): one state word and one verb per destination. */
 test.describe('one name per thing', () => {
   for (const [path, name] of [

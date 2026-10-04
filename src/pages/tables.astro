@@ -159,7 +159,11 @@ const GROUPS: Group[] = [
         </section>
       ))
     }
-    <p class="gf" data-empty hidden>No tables match.</p>
+    <!-- No hub matches the typed text: the whole search is one tap away (AR3-08). -->
+    <p class="gf" data-empty hidden>
+      <span data-none>No tables match.</span>
+      <a data-all href={href('')}>Search everything</a>
+    </p>
     <!-- Spec §12, audit AY-09: the filter's announcer, separate from the visible line above. -->
     <p class="sr-only" data-live aria-live="polite" aria-atomic="true"></p>
   </div>
@@ -176,7 +180,7 @@ const GROUPS: Group[] = [
   import { plural } from '~/lib/copy';
   import { viewedEntries } from '~/lib/model/recent.svelte';
   import { enhanceSearchField } from '~/lib/search-field';
-  import { componentHref } from '~/lib/url';
+  import { componentHref, href } from '~/lib/url';
 
   // "Recently viewed" (spec §9.5): the components opened on this device, newest first, each a copy
   // of the row in the section's <template>.
@@ -207,6 +211,8 @@ const GROUPS: Group[] = [
   if (hub && srch) {
     const groups = [...hub.querySelectorAll<HTMLElement>('[data-group]')];
     const empty = hub.querySelector<HTMLElement>('[data-empty]');
+    const noneEl = empty?.querySelector<HTMLElement>('[data-none]');
+    const all = empty?.querySelector<HTMLAnchorElement>('[data-all]');
     enhanceSearchField(srch, hub.querySelector<HTMLElement>('[data-live]'), (query) => {
       const q = query.toLowerCase();
       let shown = 0;
@@ -223,7 +229,11 @@ const GROUPS: Group[] = [
       const none = `No tables match “${query}”.`;
       if (empty) {
         empty.hidden = shown > 0;
-        empty.textContent = none;
+        if (noneEl) noneEl.textContent = none;
+        if (all) {
+          all.href = `${href('')}?q=${encodeURIComponent(query)}`;
+          all.textContent = `Search everything for “${query}”`;
+        }
       }
       return shown ? plural(shown, 'table') : none;
     });

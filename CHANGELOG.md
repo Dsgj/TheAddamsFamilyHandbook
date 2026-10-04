@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Search: the exact code comes first, then the rows whose name holds the
+  word, so "flipper" lists the Fliptronics switches and the flipper coils
+  before the lanes named after them, and the All preview spreads its five rows
+  over the kinds. A short word ("LLF") matches a manual page only at a word
+  start, and pages whose snippet is mostly garbled OCR sort after the clean
+  ones.
+- Tables: when no table matches the typed text, a "Search everything for q"
+  link opens the whole search with it.
 - Diagnose: "switch 32 is stuck closed", "32–68" with a dash and "SW32SW68"
   all read as their codes, and C0 is no longer Solenoid 00. The header counts
   the recognised codes, and a fuse or connector the search below finds is

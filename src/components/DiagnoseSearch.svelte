@@ -1,16 +1,24 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { componentCode, kindLine } from '~/lib/copy';
-  import { DATA } from '~/lib/data/components';
   import { loadJson } from '~/lib/load';
-  import { pageRefText, printedPageText } from '~/lib/pages';
-  import type { DocId } from '~/lib/model/types';
-  import { componentHref, handbookHref, href, manualHref, tableHref } from '~/lib/url';
+  import {
+    componentHits,
+    handbookHits,
+    manualHits,
+    partHits,
+    preview,
+    queryWords,
+    search,
+    snippet,
+    unique,
+  } from '~/lib/search';
+  import type { Group, HandbookFile, Hit, PartRow } from '~/lib/search';
 
   /**
    * The search state of the Diagnose field (spec §9.3): one word or more, no digits. Components
    * come from the bundled data; the handbook headings, the manuals' page text and the parts list
-   * are fetched the first time they are needed (Q20 default: parts and the manuals are in).
+   * are fetched the first time they are needed (Q20 default: parts and the manuals are in). The
+   * indexes, the match, the rank and the snippet live in lib/search.ts (CR3-06).
    * `oncount` reports the result count to Diagnose, which owns the search's announcer (spec §12);
    * `onfilter` tells it a chip changed the results, which is announced even for a pre-filled query.
    * `filters={false}` drops the chips, for the look-up under Diagnose's Not recognised line.
@@ -27,21 +35,6 @@
     filters?: boolean;
   } = $props();
 
-  type Group = 'components' | 'handbook' | 'manuals' | 'parts';
-  interface Hit {
-    group: Group;
-    /** Unique within its group by construction (never the incidental url+label pairing). */
-    id: string;
-    /** The code or id shown as a chip; empty for handbook, manual and part rows. */
-    code: string;
-    label: string;
-    sub: string;
-    url: string;
-    /** The lower-cased text the words are matched against. */
-    text: string;
-    /** A handbook heading's own text and a manual page's OCR, shown as a snippet around a match. */
-    body?: string;
-  }
   const GROUPS: { key: Group | 'all'; label: string }[] = [
     { key: 'all', label: 'All' },
     { key: 'components', label: 'Components' },
@@ -64,6 +57,8 @@
   };
   /** How many rows a group shows in "All" before "Show all". */
   const TOP = 5;
+  /** Of them, at most this many of one kind: "flipper" previews switches and coils (spec §9.3). */
+  const PER_KIND = 3;
   const CAP = 60;
 
   let group = $state<Group | 'all'>('all');
@@ -77,87 +72,11 @@
     if (!failed.includes(g)) failed = [...failed, g];
   };
 
-  const components: Hit[] = (() => {
-    const out: Hit[] = [];
-    /** `extra`: words the search still finds that the row no longer shows (old names, drivers). */
-    const hit = (code: string, label: string, sub: string, url: string, extra = '') =>
-      out.push({
-        group: 'components',
-        id: `components:${out.length}`,
-        code,
-        label,
-        sub,
-        url,
-        text: `${code} ${label} ${sub} ${extra}`.toLowerCase(),
-      });
-    for (const s of DATA.switches)
-      hit(
-        componentCode('switch', s.id),
-        s.name,
-        kindLine('switch', s),
-        componentHref('switch', s.id),
-        s.circuit === 'flip' ? 'Fliptronics' : '',
-      );
-    for (const l of DATA.lamps)
-      hit(componentCode('lamp', l.id), l.name, kindLine('lamp', l), componentHref('lamp', l.id));
-    for (const c of DATA.coils)
-      hit(
-        componentCode('coil', c.id),
-        c.name,
-        kindLine('coil', c),
-        componentHref('coil', c.id),
-        c.driver,
-      );
-    for (const f of DATA.flippers)
-      hit(
-        componentCode('flipper', f.id),
-        f.name,
-        kindLine('flipper', f),
-        componentHref('flipper', f.id),
-        f.coil,
-      );
-    for (const g of DATA.gi)
-      hit(g.id, g.name, `General illumination · ${g.driver}`, tableHref('coil', 'gi'));
-    for (const f of DATA.fuses) hit(f.id, f.circuit, `Fuse · ${f.rating}`, href(`fuses#${f.key}`));
-    return out;
-  })();
-
-  interface TocItem {
-    id: string;
-    text: string;
-    section: string;
-    level: number;
-    label: string;
-    page: number;
-  }
+  const components = componentHits();
   async function loadHandbook() {
     if (handbook) return;
     try {
-      const h = await loadJson<{ toc: TocItem[]; text: Record<string, string> }>(
-        'data/handbook.json',
-      );
-      handbook = h.toc
-        .filter((t) => t.level > 1)
-        .map((t) => {
-          // "p." only before a printed label; the headings of ops pages 2-3 have none (spec §13).
-          const appendix = t.section === 'appendix';
-          const sub = appendix
-            ? 'Handbook appendix'
-            : `Handbook · ${printedPageText(t.label, t.page)}`;
-          // "owner service notes": the appendix's old name, still found by the search.
-          const extra = appendix ? ' owner service notes' : '';
-          const body = h.text[t.id] ?? '';
-          return {
-            group: 'handbook' as const,
-            id: `handbook:${t.id}`,
-            code: '',
-            label: t.text,
-            sub,
-            url: handbookHref(t.section, t.id),
-            text: `${t.text} ${sub}${extra} ${body}`.toLowerCase(),
-            body,
-          };
-        });
+      handbook = handbookHits(await loadJson<HandbookFile>('data/handbook.json'));
     } catch {
       fail('handbook');
     }
@@ -165,24 +84,7 @@
   async function loadManuals() {
     if (manuals) return;
     try {
-      const ocr = await loadJson<Record<string, string[]>>('data/ocr-text.json');
-      const out: Hit[] = [];
-      for (const [doc, pages] of Object.entries(ocr)) {
-        pages.forEach((text, i) => {
-          if (!text) return;
-          out.push({
-            group: 'manuals',
-            id: `manuals:${doc}:${i}`,
-            code: '',
-            label: pageRefText(doc as DocId, i + 1),
-            sub: '',
-            url: manualHref(doc, i + 1),
-            text: text.toLowerCase(),
-            body: text,
-          });
-        });
-      }
-      manuals = out;
+      manuals = manualHits(await loadJson<Record<string, string[]>>('data/ocr-text.json'));
     } catch {
       fail('manuals');
     }
@@ -190,34 +92,7 @@
   async function loadParts() {
     if (parts) return;
     try {
-      const rows =
-        await loadJson<[number, number, string, string, string, number | null][]>(
-          'data/parts.json',
-        );
-      // The BOM lists the same physical part once per assembly it's used in (a common washer
-      // repeats across hundreds of rows), so `no` alone (never duplicated with a different desc)
-      // is the natural key: keep the first row for each part and drop the rest (DA-01, DA-10).
-      // Every kept part still links to /parts#<no>, which is the same row PartsList reveals for
-      // all of them.
-      const seen: Record<string, true> = {};
-      const out: Hit[] = [];
-      for (const [, , no, desc] of rows) {
-        if (seen[no]) continue;
-        seen[no] = true;
-        out.push({
-          group: 'parts',
-          id: `parts:${no}`,
-          code: '',
-          label: desc,
-          // Qty is per assembly, not per part, and the same physical part can carry a different
-          // qty in each assembly it's deduped away from here — so it's dropped rather than shown
-          // as if it were one true value (see the major review note on this dedupe).
-          sub: no,
-          url: href('parts') + '#' + encodeURIComponent(no),
-          text: `${desc} ${no}`.toLowerCase(),
-        });
-      }
-      parts = out;
+      parts = partHits(await loadJson<PartRow[]>('data/parts.json'));
     } catch {
       fail('parts');
     }
@@ -232,47 +107,20 @@
   }
   onMount(loadAll);
 
-  const words = $derived(q.trim().toLowerCase().split(/\s+/).filter(Boolean));
-  const matches = (list: Hit[] | null) =>
-    list ? list.filter((h) => words.every((w) => h.text.includes(w))) : [];
-  /**
-   * A manual page: ~90 characters around the first word. A handbook heading whose title does not
-   * hold every word: its page, then the same window into the text under it (UX2-04).
-   */
-  function snippet(h: Hit): string {
-    if (!h.body) return h.sub;
-    const title = h.label.toLowerCase();
-    if (h.group === 'handbook' && words.every((w) => title.includes(w))) return h.sub;
-    const low = h.body.toLowerCase();
-    const i = low.indexOf(words.find((w) => !title.includes(w)) ?? words[0] ?? '');
-    const from = Math.max(0, i - 30);
-    const s = h.body.slice(from, from + 90).trim();
-    const around = (from > 0 ? '…' : '') + s + (from + 90 < h.body.length ? '…' : '');
-    return h.sub ? `${h.sub} · ${around}` : around;
-  }
-  /** Rows that would read the same (one heading repeated on a page) show once (UX2-11). */
-  function unique(hits: Hit[]): Hit[] {
-    const seen: Record<string, true> = {};
-    return hits.filter((h) => {
-      const k = `${h.label}|${snippet(h)}`;
-      if (seen[k]) return false;
-      seen[k] = true;
-      return true;
-    });
-  }
+  const words = $derived(queryWords(q));
   const results = $derived.by(() => {
     const all: { group: Group; hits: Hit[] }[] = [
-      { group: 'components', hits: matches(components) },
-      { group: 'handbook', hits: unique(matches(handbook)) },
-      { group: 'manuals', hits: matches(manuals) },
-      { group: 'parts', hits: matches(parts) },
+      { group: 'components', hits: search(components, words) },
+      { group: 'handbook', hits: unique(search(handbook, words), words) },
+      { group: 'manuals', hits: search(manuals, words) },
+      { group: 'parts', hits: search(parts, words) },
     ];
     return all.filter((g) => g.hits.length && (group === 'all' || group === g.group));
   });
   const total = $derived(results.reduce((n, g) => n + g.hits.length, 0));
   $effect(() => oncount?.(total));
   const shown = (g: { group: Group; hits: Hit[] }) =>
-    group === 'all' && expanded !== g.group ? g.hits.slice(0, TOP) : g.hits.slice(0, CAP);
+    group === 'all' && expanded !== g.group ? preview(g.hits, TOP, PER_KIND) : g.hits.slice(0, CAP);
 </script>
 
 <div class="qs">
@@ -307,7 +155,7 @@
               {#if h.code}<span class="code dmd">{h.code}</span>{/if}
               <span class="txt">
                 <span class="ttl">{h.label}</span>
-                <span class="sub">{snippet(h)}</span>
+                <span class="sub">{snippet(h, words)}</span>
               </span>
               <svg class="chev" viewBox="0 0 14 14" aria-hidden="true"
                 ><path d="M5 2l5 5-5 5" /></svg
