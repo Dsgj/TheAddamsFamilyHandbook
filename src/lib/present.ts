@@ -133,9 +133,14 @@ export function wiringRows(w: Wiring, show: { parts: boolean; assembly: boolean 
   return rows;
 }
 
+/** The printed callout labels on the location map: ["44a", "44b"]. Empty when there are none. */
+export function calloutLabels(item: { loc: { l: string }[] }): string[] {
+  return item.loc.map((l) => l.l);
+}
+
 /** The printed callout labels on the location map, joined: "44a, 44b". Empty when there are none. */
 export function callouts(item: { loc: { l: string }[] }): string {
-  return item.loc.map((l) => l.l).join(', ');
+  return calloutLabels(item).join(', ');
 }
 
 /**

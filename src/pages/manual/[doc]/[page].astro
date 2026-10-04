@@ -15,6 +15,7 @@ import {
   TOC,
 } from '~/lib/pages';
 import { sectionOfPage } from '~/lib/handbook/sections';
+import { pageCallouts } from '~/lib/data/callouts';
 import { LEGACY_KEYS, PREF_KEYS } from '~/lib/storage';
 import { WIDE } from '~/lib/bp';
 import { handbookHref, href, manualHref } from '~/lib/url';
@@ -38,6 +39,9 @@ const title = tocTitle(doc, page);
  * bar at 320 (14 characters); the caption under the toolbar carries both (VP2-13). */
 const short = title && title.length <= 14 ? title : pageTitle;
 const caption = title ? `${pageTitle} · ${title}` : '';
+/** A location map's callouts, for the ring a `?mark=` link asks for (UX2-07); only pp. 2-39 to
+ * 2-41 carry them, so no other page grows. */
+const callouts = doc === 'ops' ? pageCallouts(page) : [];
 const sec = doc === 'ops' ? sectionOfPage(page) : undefined;
 /** The segment words. The scanned hb document is "Operator's", never bare "Handbook" (the tab). */
 const SHORT: Record<DocId, string> = { ops: 'Operations', hb: "Operator's", wpc: 'Schematics' };
@@ -73,7 +77,16 @@ const around = toc.slice(from, from + 7).map(([p, name], i) => ({
       ))
     }
   </nav>
-  <PageViewer client:load {doc} {page} {meta} count={pageCount(doc)} {text} title={caption} />
+  <PageViewer
+    client:load
+    {doc}
+    {page}
+    {meta}
+    count={pageCount(doc)}
+    {text}
+    title={caption}
+    {...callouts.length ? { callouts } : {}}
+  />
   <script is:inline define:vars={{ FIT: PREF_KEYS.fit, OLD_FIT: LEGACY_KEYS.fit, WIDE }}>
     // Before the first paint (PF2-02): the fit the viewer is about to choose (PageViewer's
     // storedFit) and, for a fit to the page, the stage's top, so the scan is drawn at its size.

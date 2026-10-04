@@ -214,15 +214,17 @@ test.describe('the header back link', { tag: '@subpath' }, () => {
         document.querySelector<HTMLAnchorElement>('header.top a.back')!.click();
         setTimeout(() => {
           sessionStorage.setItem('test:at-link', location.pathname); // the back has not landed
-          document.querySelector<HTMLAnchorElement>('main a.lrow[href$="/manual/ops/97"]')!.click();
+          document
+            .querySelector<HTMLAnchorElement>('main a.lrow[href$="/manual/ops/97?mark=32"]')!
+            .click();
         }, 300);
       });
       await asked;
-      await settle(page, /\/manual\/ops\/97$/);
+      await settle(page, /\/manual\/ops\/97\?mark=32$/);
       expect(await page.evaluate(() => sessionStorage.getItem('test:at-link'))).toMatch(
         /\/switch\/32$/,
       );
-      expect(await where(page)).toMatchObject({ url: '/manual/ops/97', len: s.len + 1 });
+      expect(await where(page)).toMatchObject({ url: '/manual/ops/97?mark=32', len: s.len + 1 });
       const prev = await page.evaluate(
         () => JSON.parse(sessionStorage.getItem('tafh:prev') || 'null') as Record<string, unknown>,
       );

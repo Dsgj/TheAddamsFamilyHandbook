@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- A component's link to its location map in the manual (pp. 2-39 to 2-41)
+  now opens the page zoomed to the component's printed callouts, ringed in
+  amber, rather than at the top of the whole page.
 - Zoom in on the map no longer zooms out: pinched past 2.4x, it used to drop
   back to 2.4x, and now it keeps the zoom.
 - The Docker image caches the scans, brand images and fonts for a day rather

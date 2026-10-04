@@ -320,6 +320,47 @@ test.describe('the manual viewer', () => {
       /handbook\/tests#pg-25$/,
     );
   });
+
+  test("a component's manual link rings its callout, zoomed to and in view (UX2-07)", async ({
+    page,
+  }) => {
+    await gotoHydrated(page, '/switch/32');
+    await expect(page.locator('a[href$="manual/ops/97?mark=32"]').first()).toBeAttached();
+    await gotoHydrated(page, '/manual/ops/97?mark=32');
+    const ring = page.locator('.mark');
+    await expect(ring).toHaveCount(1);
+    await expect(ring).toBeInViewport({ ratio: 1 });
+    await expect(page.locator('.stage')).toHaveAttribute('aria-label', /callout 32 ringed/);
+    // Zoomed far enough to read the print, and on the printed 32 (p. 2-39, at 0.6475, 0.345).
+    const scan = (await page.locator('.sheet.scan').boundingBox())!;
+    expect(scan.width).toBeGreaterThanOrEqual(1530 * 0.6 - 1);
+    const r = (await ring.boundingBox())!;
+    expect(Math.abs((r.x + r.width / 2 - scan.x) / scan.width - 0.6475)).toBeLessThan(0.005);
+    expect(Math.abs((r.y + r.height / 2 - scan.y) / scan.height - 0.345)).toBeLessThan(0.005);
+    // Clear of the top bar and the phone tab bar, and outside the dark theme's scan filter.
+    const clear = await ring.evaluate((e) => {
+      const px = (n: string) =>
+        parseFloat(getComputedStyle(document.documentElement).getPropertyValue(n)) || 0;
+      const b = e.getBoundingClientRect();
+      return b.top >= px('--topbar-h') && b.bottom <= innerHeight - px('--tabbar-h');
+    });
+    expect(clear).toBe(true);
+    expect(await page.locator('.sheet.marks').evaluate((e) => getComputedStyle(e).filter)).toBe(
+      'none',
+    );
+    // Switch 44 prints 44a and 44b twice each: its link names each once, and all four are ringed.
+    await gotoHydrated(page, '/switch/44');
+    await expect(page.locator('a[href$="manual/ops/97?mark=44b,44a"]').first()).toBeAttached();
+    await gotoHydrated(page, '/manual/ops/97?mark=44b,44a');
+    await expect(page.locator('.mark')).toHaveCount(4);
+    await expect(page.locator('.stage')).toHaveAttribute('aria-label', /callouts 44b, 44a ringed/);
+    // No mark, or a mark the page does not print: nothing ringed, the fit untouched.
+    await gotoHydrated(page, '/manual/ops/97');
+    await expect(page.locator('.mark')).toHaveCount(0);
+    await gotoHydrated(page, '/manual/ops/25?mark=32');
+    await expect(page.locator('.mark')).toHaveCount(0);
+    await expect(page.locator('.stage')).not.toHaveAttribute('aria-label', /.+/);
+  });
 });
 
 test('Parts: Search parts, Clear search, the row count and four columns', async ({ page }) => {

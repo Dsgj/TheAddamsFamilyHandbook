@@ -14,7 +14,7 @@
   import type { Item, MapLayer } from '~/lib/map/items';
   import { fullName, kindLine, statusOf } from '~/lib/map/items';
   import { pageTitleText } from '~/lib/pages';
-  import { wiring, wiringRows } from '~/lib/present';
+  import { calloutLabels, wiring, wiringRows } from '~/lib/present';
   import { componentHref, href, manualHref, tableSpotHref } from '~/lib/url';
   import OwnerHint from './OwnerHint.svelte';
   import WiringList from './WiringList.svelte';
@@ -99,7 +99,9 @@
     <OwnerHint hint={sw?.hint} note={coil?.note} at="sheet" />
     <nav class="more" aria-label="More about {fullName(item).toLowerCase()}">
       <a class="btn sm" href={componentHref(item.kind, item.id)}>Details</a>
-      <a class="btn sm" href={manualHref('ops', page)}>Manual {pageTitleText('ops', page)}</a>
+      <a class="btn sm" href={manualHref('ops', page, calloutLabels(item.comp))}
+        >Manual {pageTitleText('ops', page)}</a
+      >
       <a class="btn sm" href={tableSpotHref(item.kind, item.comp)}>{TABLE_LABEL[item.kind]}</a>
       {#if statusOf(item) === 'fault'}
         <a class="btn sm" href={href('shopping')}>On the shopping list</a>

@@ -15,8 +15,21 @@ export function componentHref(kind: 'switch' | 'lamp' | 'coil', id: string): str
   return href(`${kind}/${id}`);
 }
 
-export function manualHref(doc: string, page: number): string {
-  return href(`manual/${doc}/${page}`);
+/**
+ * A manual page, with the callouts to ring when there are any (`manual/ops/97?mark=44b,44a`,
+ * audit UX2-07): the labels a component's `loc` prints on its location map, each once (Switch 44
+ * prints 44a and 44b twice each).
+ */
+export function manualHref(doc: string, page: number, marks: string[] = []): string {
+  const labels = [...new Set(marks)];
+  const q = labels.length ? `?mark=${labels.map(encodeURIComponent).join(',')}` : '';
+  return href(`manual/${doc}/${page}${q}`);
+}
+
+/** The callout labels a manual page's `?mark=` names (see manualHref); none without one. */
+export function markLabels(search: string): string[] {
+  const v = new URLSearchParams(search).get('mark') ?? '';
+  return v.split(',').filter(Boolean);
 }
 
 /** The Map with one layer on and one marker selected: `map?layer=lamp&id=13`. */

@@ -3,7 +3,7 @@
   import { positions } from '~/lib/data/positions';
   import type { AnyComponent, MapMeta } from '~/lib/model/types';
   import { pageTitleText } from '~/lib/pages';
-  import { callouts as calloutsOf, offMap, wiring, wiringRows } from '~/lib/present';
+  import { calloutLabels, callouts as calloutsOf, offMap, wiring, wiringRows } from '~/lib/present';
   import { componentHref, manualHref, mapHref } from '~/lib/url';
   import MiniMap from './MiniMap.svelte';
   import StatusRow from './StatusRow.svelte';
@@ -41,6 +41,8 @@
   const layer = $derived(MAP_LAYER[kind]);
   const callouts = $derived(calloutsOf(item));
   const mapPage = $derived(mapMeta.page);
+  /** The location map's page with this component's callouts ringed (UX2-07). */
+  const manualAt = $derived(manualHref('ops', mapPage, calloutLabels(item)));
   const pos = $derived(positions(kind, item.id));
   const onMap = $derived(pos.length > 0);
   const code = $derived(componentCode(kind, item.id));
@@ -68,7 +70,7 @@
     <dt>Callout</dt>
     <dd>
       {#if callouts}
-        {callouts} on <a href={manualHref('ops', mapPage)}>{mapRef}</a>
+        {callouts} on <a href={manualAt}>{mapRef}</a>
       {:else}
         {noCallout(sw?.notShown)}
       {/if}
@@ -89,7 +91,7 @@
     {#if onMap && !inMap}
       <a class="btn sm tinted" href={mapHref(layer, item.id)}>Show on map</a>
     {/if}
-    <a class="btn sm tinted" href={manualHref('ops', mapPage)}>Manual {mapRef}</a>
+    <a class="btn sm tinted" href={manualAt}>Manual {mapRef}</a>
     {#if linkTitle}
       <a class="btn sm tinted" href={componentHref(kind, item.id)}>Details</a>
     {/if}

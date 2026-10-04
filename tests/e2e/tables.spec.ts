@@ -212,7 +212,7 @@ test.describe('the component detail page', () => {
     );
     await expect(dialog.getByRole('link', { name: /^Manual p\. 2-/ })).toHaveAttribute(
       'href',
-      /manual\/ops\/\d+$/,
+      /manual\/ops\/\d+\?mark=32$/,
     );
     await expect(dialog).toContainText(/Callout 32 on p\. 2-/);
     await expect(dialog.locator('.mini .ring')).toBeVisible();

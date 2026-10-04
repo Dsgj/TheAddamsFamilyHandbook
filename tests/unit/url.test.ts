@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   handbookHref,
   href,
+  manualHref,
   mapHref,
+  markLabels,
   parseMapId,
   tableHref,
   tablePath,
@@ -57,5 +59,19 @@ describe('link helpers', () => {
     expect(tableSpotHref('switch', { id: 'D1', circuit: 'ded' })).toBe(href('switches#j205'));
     expect(tableSpotHref('switch', { id: 'F1', circuit: 'flip' })).toBe(href('switches#j806'));
     expect(tableSpotHref('coil', { id: '01' })).toBe(href('coils#coil-01'));
+  });
+
+  it('links a manual page with its callouts to ring, and reads them back (UX2-07)', () => {
+    expect(manualHref('ops', 97)).toBe(href('manual/ops/97'));
+    expect(manualHref('ops', 97, [])).toBe(href('manual/ops/97'));
+    expect(manualHref('ops', 97, ['32'])).toBe(href('manual/ops/97?mark=32'));
+    expect(manualHref('ops', 98, ['13', '14'])).toBe(href('manual/ops/98?mark=13,14'));
+    expect(manualHref('ops', 97, ['44b', '44a', '44b', '44a'])).toBe(
+      href('manual/ops/97?mark=44b,44a'),
+    );
+    expect(markLabels('?mark=13,14')).toEqual(['13', '14']);
+    expect(markLabels('?mark=')).toEqual([]);
+    expect(markLabels('')).toEqual([]);
+    expect(markLabels('?x=1')).toEqual([]);
   });
 });

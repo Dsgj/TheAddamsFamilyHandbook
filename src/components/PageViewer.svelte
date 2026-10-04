@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { onMount, untrack } from 'svelte';
+  import { onMount, tick, untrack } from 'svelte';
   import BottomSheet from './BottomSheet.svelte';
   import { isTypingTarget, letterKey, zoomKey } from '~/lib/keys';
   import { media } from '~/lib/media';
   import { readPref, writePref } from '~/lib/storage';
-  import type { DocId, PageMeta } from '~/lib/model/types';
+  import type { DocId, Loc, PageMeta } from '~/lib/model/types';
   import { pageImage, pageRefText, pdfPageFromLabel } from '~/lib/pages';
-  import { href, manualHref, replacePage } from '~/lib/url';
+  import { href, manualHref, markLabels, replacePage } from '~/lib/url';
 
   /**
    * The manual page viewer (spec §9.12). Toolbar: Previous page, "97 of 124" (opens the Go to page
@@ -17,6 +17,8 @@
    * Paging (Prev, Next, the arrow keys, Go to) replaces the history entry
    * (`replacePage`, `data-replace` for motion.ts), so Back leaves the manual instead of stepping
    * back through every page read, and the back link carries over from the page replaced.
+   * Opened at a callout (`?mark=32`, a component's link to its location map), the page zooms to it
+   * and rings it (audit UX2-07).
    */
   let {
     doc,
@@ -25,6 +27,7 @@
     count,
     text = '',
     title = '',
+    callouts = [],
   }: {
     doc: DocId;
     page: number;
@@ -32,6 +35,8 @@
     count: number;
     text?: string;
     title?: string;
+    /** The callouts printed on this page, normalised to the scan (lib/data/callouts.ts). */
+    callouts?: Loc[];
   } = $props();
 
   const [, W, H, tiled] = $derived(meta);
@@ -172,6 +177,38 @@
     zoomBy(e.deltaY < 0 ? 1.2 : 1 / 1.2, e.clientX, e.clientY);
   }
   const rotate = () => (rot = (rot + 90) % 360);
+
+  /** The callouts this visit was sent to (`?mark=`), ringed until the page is left. */
+  let marks = $state<Loc[]>([]);
+  const markText = $derived.by(() => {
+    const labels = [...new Set(marks.map((m) => m.l))];
+    return `${labels.length > 1 ? 'callouts' : 'callout'} ${labels.join(', ')}`;
+  });
+  /** Zoomed at least this far, a callout's printed number reads on a phone. */
+  const MARK_SCALE = 0.6;
+  /** Zoom to the rings and centre them in the visible part of the stage. */
+  async function focusMarks() {
+    if (!stage) return;
+    scale = Math.max(effScale, MARK_SCALE);
+    await tick();
+    const rings = [...stage.querySelectorAll<HTMLElement>('.mark')].map((r) =>
+      r.getBoundingClientRect(),
+    );
+    if (!rings.length) return;
+    const cx = (Math.min(...rings.map((r) => r.left)) + Math.max(...rings.map((r) => r.right))) / 2;
+    const cy = (Math.min(...rings.map((r) => r.top)) + Math.max(...rings.map((r) => r.bottom))) / 2;
+    const r = stage.getBoundingClientRect();
+    const visTop = Math.max(r.top, rootPx('--topbar-h'));
+    const visBottom = Math.min(r.bottom, innerHeight - rootPx('--tabbar-h'));
+    stage.scrollLeft += cx - (r.left + r.right) / 2;
+    stage.scrollTop += cy - (visTop + visBottom) / 2;
+  }
+  onMount(() => {
+    const want = markLabels(location.search);
+    marks = callouts.filter((c) => want.includes(c.l));
+    // After the fit's first measure, which the zoom starts from.
+    if (marks.length) requestAnimationFrame(() => void focusMarks());
+  });
   /** Spec §9.12, audit AY-11: one guard first. Nothing fires while typing in a field or with Ctrl,
    *  Cmd or Alt held (Alt+← is the browser's Back, Ctrl+= its zoom); Shift passes (Shift+P = P).
    *  With the zoomed stage focused the arrows scroll it, 40 a press, and stop at its edges: left to
@@ -320,7 +357,7 @@
         tabindex={scale !== 0 ? 0 : undefined}
         role={scale !== 0 ? 'region' : undefined}
         aria-label={scale !== 0
-          ? `${pageRefText(doc, page)}, zoomed, arrow keys scroll`
+          ? `${pageRefText(doc, page)}${marks.length ? `, ${markText} ringed` : ''}, zoomed, arrow keys scroll`
           : undefined}
         style:--avail-h={availH ? `${availH}px` : undefined}
         bind:this={stage}
@@ -375,6 +412,20 @@
               />
             {/if}
           </div>
+          {#if marks.length}
+            <!-- Outside .scan, whose dark-theme filter would turn the amber blue. -->
+            <div
+              class="sheet marks"
+              aria-hidden="true"
+              style:width={fitted ? `${W * effScale}px` : undefined}
+              style:height={fitted ? `${H * effScale}px` : undefined}
+              style:transform="translate(-50%,-50%) rotate({rot}deg)"
+            >
+              {#each marks as m, i (i)}
+                <span class="mark" style:left="{m.x * 100}%" style:top="{m.y * 100}%"></span>
+              {/each}
+            </div>
+          {/if}
         </div>
       </div>
       <div class="corner">
@@ -576,6 +627,46 @@
   .full {
     grid-column: 1 / -1;
     grid-row: 1 / -1;
+  }
+  /* The callouts a component's link sent the reader to (UX2-07), ringed like the map's selected
+     marker: a ring wide enough for the printed circle, one pulse thrice. */
+  .marks {
+    pointer-events: none;
+  }
+  .mark {
+    position: absolute;
+    width: 4%;
+    aspect-ratio: 1;
+    translate: -50% -50%;
+    border: 3px solid var(--amber);
+    border-radius: 50%;
+    box-shadow:
+      0 0 0 2px var(--ground),
+      0 0 14px var(--amber-glow);
+  }
+  .mark::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: inherit;
+    border: 2px solid var(--amber);
+    animation: pulse 1.6s var(--ease-standard) 3 forwards;
+  }
+  @keyframes pulse {
+    from {
+      transform: scale(1);
+      opacity: 0.9;
+    }
+    to {
+      transform: scale(2.2);
+      opacity: 0;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mark::after {
+      animation: none;
+      display: none;
+    }
   }
   /* A zero-height sticky row at the stage's foot: the capsule rides 12 above the viewport's foot
      (and the phone tab bar) while the page runs past it, and rests 12 inside the stage otherwise.

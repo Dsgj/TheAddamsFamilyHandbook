@@ -26,7 +26,7 @@
   import { shortDate } from '~/lib/status-io';
   import type { AnyComponent, MapMeta, StatusValue } from '~/lib/model/types';
   import { pageTitleText } from '~/lib/pages';
-  import { callouts as calloutsOf, offMap, wiring, wiringRows } from '~/lib/present';
+  import { calloutLabels, callouts as calloutsOf, offMap, wiring, wiringRows } from '~/lib/present';
   import { href, manualHref, mapHref } from '~/lib/url';
   import BottomSheet from './BottomSheet.svelte';
   import MiniMap from './MiniMap.svelte';
@@ -55,6 +55,8 @@
   const layer = $derived(MAP_LAYER[kind]);
   const callouts = $derived(calloutsOf(item));
   const mapPage = $derived(mapMeta.page);
+  /** The location map's page with this component's callouts ringed (UX2-07). */
+  const manualAt = $derived(manualHref('ops', mapPage, calloutLabels(item)));
   /** "p. 2-39": the location map's printed label. */
   const mapRef = $derived(pageTitleText('ops', mapPage));
   const pos = $derived(positions(kind, item.id));
@@ -171,7 +173,7 @@
       </li>
       <li>
         {#if callouts}
-          <a class="lrow" href={manualHref('ops', mapPage)}>
+          <a class="lrow" href={manualAt}>
             <span class="txt">
               <span class="ttl">Callout {callouts} on {mapRef}</span>
             </span>
@@ -257,7 +259,7 @@
       </p>
       <div class="acts">
         <a class="btn primary" href={mapHref(layer, item.id)}>Show on map</a>
-        <a class="btn" href={manualHref('ops', mapPage)}>Manual {mapRef}</a>
+        <a class="btn" href={manualAt}>Manual {mapRef}</a>
       </div>
     </div>
   </BottomSheet>
