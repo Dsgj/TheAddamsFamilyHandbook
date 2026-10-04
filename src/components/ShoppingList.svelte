@@ -127,6 +127,7 @@
             {@const dx = drag?.key === key(i) ? drag.dx : 0}
             <li class="sw" class:armed={-dx >= PANE}>
               <div class="pane" aria-hidden="true">Fixed</div>
+              <!-- svelte-ignore a11y_no_static_element_interactions (the swipe is a shortcut; the Fixed button is the keyboard and screen-reader path) -->
               <div
                 class="lrow static row"
                 style:transform={dx ? `translateX(${dx}px)` : undefined}

@@ -10,7 +10,7 @@ export interface Heading {
   page: number;
 }
 
-export interface RenderedPage {
+interface RenderedPage {
   page: number;
   label: string;
   html: string;

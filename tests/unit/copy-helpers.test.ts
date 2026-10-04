@@ -55,10 +55,10 @@ describe('copy helpers', () => {
   it('says where a component sits in one line', () => {
     expect(locationLine('switch', { col: 3, row: 2 })).toBe('matrix column 3, row 2');
     // A flipper switch names its own connector: the buttons are on J805, the EOS switches on J806.
-    expect(locationLine('switch', { kind: 'flip', pin: 'J805-1' })).toBe('flipper (J805)');
-    expect(locationLine('switch', { kind: 'flip', pin: 'J806-3' })).toBe('flipper (J806)');
-    expect(locationLine('switch', { kind: 'flip' })).toBe('flipper (Fliptronics)');
-    expect(locationLine('switch', { kind: 'ded', unused: true })).toBe(
+    expect(locationLine('switch', { circuit: 'flip', pin: 'J805-1' })).toBe('flipper (J805)');
+    expect(locationLine('switch', { circuit: 'flip', pin: 'J806-3' })).toBe('flipper (J806)');
+    expect(locationLine('switch', { circuit: 'flip' })).toBe('flipper (Fliptronics)');
+    expect(locationLine('switch', { circuit: 'ded', unused: true })).toBe(
       'dedicated (CPU J205) · not used',
     );
     expect(locationLine('coil', { type: 'Flasher', cabinet: true })).toBe('Flasher · cabinet');
@@ -68,7 +68,7 @@ describe('copy helpers', () => {
   });
 
   it('names the connector each flipper and dedicated switch is wired to', () => {
-    const wired = DATA.switches.filter((s) => s.kind === 'flip' || s.kind === 'ded');
+    const wired = DATA.switches.filter((s) => s.circuit === 'flip' || s.circuit === 'ded');
     expect(wired.map((s) => String(s.pin).split('-')[0])).toContain('J805');
     for (const s of wired) expect(locationLine('switch', s)).toContain(String(s.pin).split('-')[0]);
   });

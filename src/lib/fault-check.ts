@@ -6,7 +6,7 @@ import type { Kind } from '~/lib/model/types';
  * device status and writes Fault / clear on change. One module per page, no island per row. The
  * store's watcher redraws the boxes after a change here, in another tab, or after a bfcache restore.
  */
-export function initFaultChecks(root: ParentNode = document) {
+function initFaultChecks(root: ParentNode = document) {
   const boxes = [...root.querySelectorAll<HTMLInputElement>('input.fault-check')];
   const refresh = () => {
     for (const el of boxes) {

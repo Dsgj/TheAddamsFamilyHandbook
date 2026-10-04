@@ -15,7 +15,7 @@ const cells = DATA.lamps.map((l) => ({
   col: l.col,
   row: l.row,
   unused: l.unused,
-  off: positions('lamp', l.id).length ? undefined : offMap('lamp', l),
+  off: positions('lamp', l.id).length ? undefined : offMap(l),
 }));
 ---
 

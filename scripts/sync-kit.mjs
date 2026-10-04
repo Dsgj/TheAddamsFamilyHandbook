@@ -29,8 +29,9 @@ import { fileURLToPath } from 'node:url';
 
 /** Kit source → repo destination. `files` lists single files; otherwise every file under `from`. */
 export const COPIES = [
+  // The OCR text ships from its kit copy through src/pages/data/ocr-text.json.ts (audit AR2-16).
   { from: 'data', to: 'src/data/kit', files: ['components.json', 'pages.json', 'ocr-text.json'] },
-  { from: 'data', to: 'public/data', files: ['ocr-text.json', 'parts.json'] },
+  { from: 'data', to: 'public/data', files: ['parts.json'] },
   { from: 'content/handbook', to: 'src/content/handbook', match: /^ops\d+\.md$/ },
   { from: 'assets/maps', to: 'public/assets/maps' }, // the three scans feed the map's calibration overlay
   { from: 'assets/figures', to: 'public/assets/figures' },

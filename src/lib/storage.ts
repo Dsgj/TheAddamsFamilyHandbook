@@ -20,7 +20,7 @@
 
 import { toast } from '~/lib/events';
 
-export type Entries<V> = Record<string, V>;
+type Entries<V> = Record<string, V>;
 type Fn<V> = (cur: V | undefined) => V | undefined;
 
 /** The keys that go into the backup file. A write to one of them asks to keep storage. */
@@ -368,7 +368,7 @@ export const PREF_KEYS = {
   text: 'tafh:text',
   fit: 'tafh:manual-fit',
 } as const;
-export type Pref = keyof typeof PREF_KEYS;
+type Pref = keyof typeof PREF_KEYS;
 const LEGACY_PREF: Partial<Record<Pref, string>> = {
   theme: LEGACY_KEYS.theme,
   fit: LEGACY_KEYS.fit,

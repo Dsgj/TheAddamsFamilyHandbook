@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseCodes } from '~/lib/codes';
+import { codesSummary, parseCodes } from '~/lib/codes';
 
 const keys = (s: string) => parseCodes(s).map((c) => `${c.kind}:${c.id}`);
 
@@ -52,5 +52,26 @@ describe('parseCodes', () => {
     const r = parseCodes('32, 32; D5 hello');
     expect(r).toHaveLength(3);
     expect(r[2]).toMatchObject({ kind: 'unknown', id: 'HELLO' });
+  });
+});
+
+describe('codesSummary (AR2-07)', () => {
+  const none = () => false;
+  it('counts each kind, switches first and solenoids last', () => {
+    expect(codesSummary(parseCodes('L55 32 C07 68'), none)).toBe('2 switches, 1 lamp, 1 solenoid');
+    expect(codesSummary(parseCodes('C07 C12'), none)).toBe('2 solenoids');
+  });
+  it('says how many are marked Fault', () => {
+    const two = parseCodes('32 68');
+    expect(codesSummary(two, (_, id) => id === '32')).toBe('2 switches · 1 marked Fault');
+    expect(codesSummary(two, () => true)).toBe('2 switches · both marked Fault');
+    expect(codesSummary(parseCodes('32 68 L55'), () => true)).toBe(
+      '2 switches, 1 lamp · all marked Fault',
+    );
+    expect(codesSummary(parseCodes('L55'), () => true)).toBe('1 lamp · 1 marked Fault');
+  });
+  it('leaves out what it does not recognise', () => {
+    expect(codesSummary(parseCodes('32 xyz'), () => true)).toBe('1 switch · 1 marked Fault');
+    expect(codesSummary(parseCodes('xyz'), none)).toBe('');
   });
 });

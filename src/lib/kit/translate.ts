@@ -15,8 +15,8 @@ import type {
 
 /*
  * The kit's components.json (Swedish-authored) to the app's English model, once, at build time:
- * ./plugin.ts runs translateKit when Vite loads the file, so no page or island ships the
- * dictionaries or the Swedish. Closed-world: every field of every record is declared below as
+ * src/build/kit-plugin.ts runs translateKit when Vite loads the file, so no page or island ships
+ * the dictionaries or the Swedish. Closed-world: every field of every record is declared below as
  * verbatim (ids, codes, pins, parts, names, ratings, the kit's English twins), dictionary (an en.ts
  * dictionary must hold the value, '' allowed for hint and note), wire (en.ts wireEn must know every
  * colour) or dropped (the Swedish twins). An unknown key throws, an overlay key that names no
@@ -76,6 +76,15 @@ function oneOf<T extends string>(r: Raw, k: string, options: readonly T[], at: s
 function maybe<K extends string>(r: Raw, k: K, at: string): Partial<Record<K, string>> {
   return (Object.hasOwn(r, k) ? { [k]: text(r, k, at) } : {}) as Partial<Record<K, string>>;
 }
+/** `maybe` under the model's name: the kit's `colWireEn` is the model's `colWire`. */
+function maybeAs<K extends string>(
+  r: Raw,
+  k: string,
+  as: K,
+  at: string,
+): Partial<Record<K, string>> {
+  return (Object.hasOwn(r, k) ? { [as]: text(r, k, at) } : {}) as Partial<Record<K, string>>;
+}
 function own(d: Record<string, string>, k: string): string | undefined {
   return Object.hasOwn(d, k) ? d[k] : undefined;
 }
@@ -108,8 +117,10 @@ const slug = (s: string) =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '');
 
-// colWire, rowWire and wire are the kit's Swedish twins of the *En fields: declared, then dropped.
-// The result keeps the kit's key order (the dedicated switches' wire fields come after loc).
+// colWire, rowWire and wire are the kit's Swedish twins of the *En fields: declared, then dropped,
+// and the *En fields take their plain names. The kit's `kind` (ded, flip) is the switch's
+// `circuit`, so `kind` tells the components apart (AR2-06). Otherwise the result keeps the kit's
+// key order (the dedicated switches' wire fields come after loc).
 // prettier-ignore
 const SWITCH = [
   'id', 'name', 'part', 'assy', 'col', 'row',
@@ -121,16 +132,17 @@ function toSwitch(x: unknown, at: string): Switch {
   only(r, at, SWITCH);
   const hint = text(r, 'hint', at);
   return {
+    kind: 'switch',
     id: text(r, 'id', at),
     name: text(r, 'name', at),
     part: text(r, 'part', at),
     assy: text(r, 'assy', at),
     col: countOrNull(r, 'col', at),
     row: countOrNull(r, 'row', at),
-    ...maybe(r, 'colWireEn', at),
+    ...maybeAs(r, 'colWireEn', 'colWire', at),
     ...maybe(r, 'colPin', at),
     ...maybe(r, 'colIc', at),
-    ...maybe(r, 'rowWireEn', at),
+    ...maybeAs(r, 'rowWireEn', 'rowWire', at),
     ...maybe(r, 'rowPin', at),
     ...maybe(r, 'rowIc', at),
     under: flag(r, 'under', at),
@@ -138,9 +150,11 @@ function toSwitch(x: unknown, at: string): Switch {
     unused: flag(r, 'unused', at),
     hint: hint === '' ? '' : dict(HINT, hint, `${at}.hint`),
     loc: locs(r['loc'], `${at}.loc`),
-    ...maybe(r, 'wireEn', at),
+    ...maybeAs(r, 'wireEn', 'wire', at),
     ...maybe(r, 'pin', at),
-    ...(Object.hasOwn(r, 'kind') ? { kind: oneOf(r, 'kind', ['ded', 'flip'] as const, at) } : {}),
+    ...(Object.hasOwn(r, 'kind')
+      ? { circuit: oneOf(r, 'kind', ['ded', 'flip'] as const, at) }
+      : {}),
   };
 }
 
@@ -155,6 +169,7 @@ function toLamp(x: unknown, at: string, leds: Overlay): Lamp {
   only(r, at, LAMP);
   const id = text(r, 'id', at);
   return {
+    kind: 'lamp',
     id,
     name: text(r, 'name', at),
     bulbPart: text(r, 'bulbPart', at),
@@ -163,10 +178,10 @@ function toLamp(x: unknown, at: string, leds: Overlay): Lamp {
     led: own(leds, `lamp:${id}`) ?? '',
     col: count(r, 'col', at),
     row: count(r, 'row', at),
-    colWireEn: text(r, 'colWireEn', at),
+    colWire: text(r, 'colWireEn', at),
     colPin: text(r, 'colPin', at),
     colQ: text(r, 'colQ', at),
-    rowWireEn: text(r, 'rowWireEn', at),
+    rowWire: text(r, 'rowWireEn', at),
     rowPin: text(r, 'rowPin', at),
     rowQ: text(r, 'rowQ', at),
     speaker: flag(r, 'speaker', at),
@@ -210,10 +225,11 @@ function toCoil(x: unknown, at: string, notes: Overlay, fuses: Overlay, ref: Fus
   const printed = own(fuses, `coil:${id}`);
   const kitNote = text(r, 'note', at);
   return {
+    kind: 'coil',
     id,
     name: text(r, 'name', at),
     type: oneOf(r, 'type', ['High Power', 'Low Power', 'Flasher'] as const, at),
-    wireEn: text(r, 'wireEn', at),
+    wire: text(r, 'wireEn', at),
     pin: text(r, 'pin', at),
     driver: text(r, 'driver', at),
     part: text(r, 'part', at),

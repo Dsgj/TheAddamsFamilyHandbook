@@ -1,7 +1,7 @@
 <script lang="ts">
   import { componentCode, kindLine as kindLineOf, MAP_LAYER, noCallout } from '~/lib/copy';
   import { positions } from '~/lib/data/positions';
-  import type { Coil, Kind, Lamp, MapMeta, Switch } from '~/lib/model/types';
+  import type { AnyComponent, MapMeta } from '~/lib/model/types';
   import { pageTitleText } from '~/lib/pages';
   import { callouts as calloutsOf, offMap, wiring, wiringRows } from '~/lib/present';
   import { componentHref, manualHref, mapHref } from '~/lib/url';
@@ -17,9 +17,7 @@
    * Show on map (VL2-05, AY2-08). A component with no place on the map gets neither anywhere,
    * and a line that says where it is instead (UX2-05).
    */
-  type Any = Switch | Lamp | Coil;
   let {
-    kind,
     item,
     mapMeta,
     compact = false,
@@ -27,8 +25,7 @@
     inMap = false,
     id,
   }: {
-    kind: Kind;
-    item: Any;
+    item: AnyComponent;
     mapMeta: MapMeta;
     compact?: boolean;
     linkTitle?: boolean;
@@ -37,9 +34,10 @@
     id?: string | undefined;
   } = $props();
 
-  const sw = $derived(kind === 'switch' ? (item as Switch) : undefined);
-  const coil = $derived(kind === 'coil' ? (item as Coil) : undefined);
-  const rows = $derived(wiringRows(wiring(kind, item), { parts: true, assembly: true }));
+  const kind = $derived(item.kind);
+  const sw = $derived(item.kind === 'switch' ? item : undefined);
+  const coil = $derived(item.kind === 'coil' ? item : undefined);
+  const rows = $derived(wiringRows(wiring(item), { parts: true, assembly: true }));
   const layer = $derived(MAP_LAYER[kind]);
   const callouts = $derived(calloutsOf(item));
   const mapPage = $derived(mapMeta.page);
@@ -78,7 +76,7 @@
   </WiringList>
 
   {#if !onMap}
-    <p class="off muted">{offMap(kind, item)}</p>
+    <p class="off muted">{offMap(item)}</p>
   {:else if !compact && !inMap}
     <a class="map-link" href={mapHref(layer, item.id)} aria-label="Show on map">
       <MiniMap {pos} w={310} h={120} />

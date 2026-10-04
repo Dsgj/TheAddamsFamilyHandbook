@@ -16,7 +16,7 @@ import {
  */
 const KEY = BACKUP_KEYS.verify;
 
-export type VerifyTicks = Record<string, string>;
+type VerifyTicks = Record<string, string>;
 
 const read = () => readEntries<string>(KEY);
 const state = $state<{ items: VerifyTicks }>({ items: read() });

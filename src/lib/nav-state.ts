@@ -12,10 +12,10 @@ import { SESSION_KEYS } from '~/lib/storage';
  * given when it was created (audit P1 item 7), so a reload, a Back/Forward or a restore shows the
  * same link instead of re-deriving it from whatever page happened to be left last.
  */
-export const PREV_KEY = SESSION_KEYS.prev;
-export const STATE_KEY = SESSION_KEYS.nav;
+const PREV_KEY = SESSION_KEYS.prev;
+const STATE_KEY = SESSION_KEYS.nav;
 /** A `tafh:prev` record older than this is not about the page now loading. */
-export const FRESH_MS = 10_000;
+const FRESH_MS = 10_000;
 /** A second back (double tap, a tap during a swipe) within this window does nothing. */
 export const BACK_GUARD_MS = 1500;
 
@@ -61,14 +61,14 @@ export interface Here {
 }
 
 /** The record each history entry carries in `history.state.tafh`. */
-export interface Entry {
+interface Entry {
   /** The back link decided when the entry was created; null means the static parent. */
   back: BackLink | null;
   /** The previous entry's path and query, for browsers without the Navigation API. */
   from?: string;
 }
 
-export interface NavState {
+interface NavState {
   /** Tab key → the URL that tab last showed. */
   tabs: Record<string, string>;
   /** URL → scroll offset. */
@@ -270,7 +270,7 @@ export function depthOf(backPath: string | null | undefined, tabPaths: string[])
   return tabPaths.includes(backPath) ? 1 : 2;
 }
 
-export function emptyState(): NavState {
+function emptyState(): NavState {
   return { tabs: {}, scroll: {} };
 }
 

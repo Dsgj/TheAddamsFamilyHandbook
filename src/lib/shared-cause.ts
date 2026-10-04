@@ -2,7 +2,7 @@ import { componentCode } from '~/lib/copy';
 import { wireName } from '~/lib/wire';
 import type { Lamp, MatrixHeaders, Switch } from '~/lib/model/types';
 
-export interface SharedCause {
+interface SharedCause {
   kind: 'column' | 'row' | 'connector' | 'independent';
   /** Which matrix the cause belongs to. */
   matrix: 'switch' | 'lamp';
@@ -97,7 +97,7 @@ export function sharedCauses(
     const named = ids.map((id) => switches.find((s) => s.id === id));
     const eos = named.every((s) => s?.name.includes('End of Stroke'));
     const lower = named.every((s) => !/^U\.?\s?[LR]\./.test(s?.name ?? ''));
-    const flip = named[0]?.kind === 'flip';
+    const flip = named[0]?.circuit === 'flip';
     out.push({
       kind: 'connector',
       matrix: 'switch',

@@ -1,3 +1,4 @@
+import { plural } from '~/lib/copy';
 import { componentKey } from '~/lib/model/key';
 import type { Kind } from '~/lib/model/types';
 
@@ -65,4 +66,41 @@ export function parseCodes(input: string): ParsedCode[] {
     seen.add(k);
     return true;
   });
+}
+
+const SUMMARY_NOUN: Record<Kind, [string, string]> = {
+  switch: ['switch', 'switches'],
+  lamp: ['lamp', 'lamps'],
+  coil: ['solenoid', 'solenoids'],
+};
+
+/**
+ * The line a Recent entry and the live region carry for a set of codes: "1 switch · 1 marked
+ * Fault", "2 lamps · both marked Fault", "1 solenoid". Unrecognised codes are left out; `faulty`
+ * says whether the owner has marked a component Fault (audit AR2-07).
+ */
+export function codesSummary(
+  codes: readonly { kind: Kind | 'unknown'; id: string }[],
+  faulty: (kind: Kind, id: string) => boolean,
+): string {
+  const n: Record<Kind, number> = { switch: 0, lamp: 0, coil: 0 };
+  let total = 0;
+  let faults = 0;
+  for (const c of codes) {
+    if (c.kind === 'unknown') continue;
+    n[c.kind]++;
+    total++;
+    if (faulty(c.kind, c.id)) faults++;
+  }
+  const kinds = (['switch', 'lamp', 'coil'] as const)
+    .filter((k) => n[k])
+    .map((k) => plural(n[k], ...SUMMARY_NOUN[k]))
+    .join(', ');
+  const marked =
+    faults === 0
+      ? ''
+      : faults === total && total > 1
+        ? ` · ${total === 2 ? 'both' : 'all'} marked Fault`
+        : ` · ${faults} marked Fault`;
+  return kinds + marked;
 }

@@ -35,7 +35,7 @@
   /** The cell whose card shows below the grid (spec §9.6): the highlighted one, then any focused. */
   let selected = $state<string>(untrack(() => highlight));
   const sel = $derived(cells.find((c) => c.id === selected));
-  const layer = MAP_LAYER[kind];
+  const layer = $derived(MAP_LAYER[kind]);
   let hoverCol = $state(0);
   let hoverRow = $state(0);
   let card = $state<HTMLElement>();
@@ -125,8 +125,9 @@
           <th class="rowh" class:hi={hoverRow === r} scope="row">
             <div class="hd">
               <span class="n">{r}</span>
-              <!-- Each code is a nowrap .tok (base.css): the pin wraps at the separator, never at a
-                   code's hyphen ('U18-11' on paper). From 1000 each code takes its own line. -->
+              <!-- Each code is a nowrap .tok (content.css): the pin wraps at the separator, never
+                   at a code's hyphen ('U18-11' on paper). From 1000 each code takes its own
+                   line. -->
               {#if h}<WireChip colour={h[0]} /><span class="mono pin"
                   ><span class="tok">{h[1]}</span> <span class="sep">·</span>
                   <span class="tok">{h[2]}</span></span

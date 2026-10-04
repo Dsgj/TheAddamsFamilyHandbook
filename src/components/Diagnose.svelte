@@ -1,6 +1,6 @@
 <script lang="ts">
   import { APPENDICES, appendixHref } from '~/data/appendix';
-  import { parseCodes, type ParsedCode } from '~/lib/codes';
+  import { codesSummary, parseCodes, type ParsedCode } from '~/lib/codes';
   import { componentCode, componentLabel, componentName, plural, TABLE_LABEL } from '~/lib/copy';
   import { DATA, find, mapOf } from '~/lib/data/components';
   import { emit, listen } from '~/lib/events';
@@ -12,14 +12,13 @@
   } from '~/lib/model/recent.svelte';
   import { later } from '~/lib/later';
   import { liveText } from '~/lib/live.svelte';
+  import { media } from '~/lib/media';
   import { shareText } from '~/lib/share';
   import { whenLabel } from '~/lib/status-io';
   import { allStatuses, getStatus } from '~/lib/model/status.svelte';
-  import type { Lamp, Switch } from '~/lib/model/types';
   import { lampSharedCauses, sharedCauses } from '~/lib/shared-cause';
   import { href, replaceUrl, tableHref } from '~/lib/url';
-  import { onDestroy, onMount, tick, untrack } from 'svelte';
-  import { MediaQuery } from 'svelte/reactivity';
+  import { onDestroy, onMount, tick } from 'svelte';
   import ComponentCard from './ComponentCard.svelte';
   import DiagnoseSearch from './DiagnoseSearch.svelte';
 
@@ -27,8 +26,7 @@
    * The Diagnose home (spec §9.1), its results (§9.2) and its search state (§9.3). Diagnosis is
    * live on input; "Diagnose" and Enter record the entry in Recent and move focus to the results.
    */
-  let { initial = '' }: { initial?: string } = $props();
-  let input = $state(untrack(() => initial));
+  let input = $state('');
   /** DiagnoseSearch's result count (it mounts only in search mode; this component owns the
    *  announcer, spec §12). */
   let searchCount = $state(0);
@@ -177,8 +175,8 @@
   );
   const found = $derived(resolved.filter((r) => r.item));
   const missing = $derived(resolved.filter((r) => !r.item));
-  const switches = $derived(found.filter((r) => r.kind === 'switch').map((r) => r.item as Switch));
-  const lamps = $derived(found.filter((r) => r.kind === 'lamp').map((r) => r.item as Lamp));
+  const switches = $derived(found.flatMap((r) => (r.item?.kind === 'switch' ? [r.item] : [])));
+  const lamps = $derived(found.flatMap((r) => (r.item?.kind === 'lamp' ? [r.item] : [])));
   const causes = $derived([
     ...sharedCauses(switches, DATA.swCols, DATA.swRows),
     ...lampSharedCauses(lamps, DATA.lCols, DATA.lRows),
@@ -216,31 +214,7 @@
   }
 
   /** "1 switch · 1 marked Fault", "2 lamps · both marked Fault", "1 solenoid". */
-  function summary(): string {
-    const n = { switch: 0, lamp: 0, coil: 0 };
-    let faults = 0;
-    for (const r of found) {
-      if (r.kind === 'unknown') continue;
-      n[r.kind]++;
-      if (getStatus(r.kind, r.id)?.status === 'fault') faults++;
-    }
-    const kinds = (['switch', 'lamp', 'coil'] as const)
-      .filter((k) => n[k])
-      .map((k) =>
-        k === 'switch'
-          ? plural(n[k], 'switch', 'switches')
-          : plural(n[k], k === 'lamp' ? 'lamp' : 'solenoid'),
-      )
-      .join(', ');
-    const total = found.length;
-    const marked =
-      faults === 0
-        ? ''
-        : faults === total && total > 1
-          ? ` · ${total === 2 ? 'both' : 'all'} marked Fault`
-          : ` · ${faults} marked Fault`;
-    return kinds + marked;
-  }
+  const summary = () => codesSummary(found, (k, id) => getStatus(k, id)?.status === 'fault');
   function record() {
     if (mode === 'results' && found.length) recordRecent(input, summary());
   }
@@ -261,8 +235,7 @@
   // view, and written only when the value changes.
   let dock: HTMLElement | undefined = $state();
   // From 1000 the field sits at the top of the column (spec §9.1): no bottom dock to clear.
-  const wideQ = new MediaQuery('(min-width: 1000px)');
-  const docked = $derived(!wideQ.current);
+  const docked = $derived(!media.wide.current);
   const TOAST_BAND = 80; // the 10 gap and a toast of up to two lines (60), with room to spare
   $effect(() => {
     if (!docked || !dock || !root) return;
@@ -313,7 +286,7 @@
       // Under 1000 the results take the column under the sticky bar. From 1000 the field sits at
       // the top of the column, so the page moves only as far as the heading needs: the field
       // stays in view for the next code (spec §9.1).
-      resultsHead.scrollIntoView({ block: wideQ.current ? 'nearest' : 'start' });
+      resultsHead.scrollIntoView({ block: media.wide.current ? 'nearest' : 'start' });
     } else field?.focus();
   }
   function onKey(e: KeyboardEvent) {
@@ -391,7 +364,7 @@
   <!-- Spec §9.1: the field comes first in the DOM at every width. Below 1000 it is ordered to
        the foot (the docked hero, the sticky bar); from 1000 it stays at the top of the column. -->
   <div class="dock" bind:this={dock}>
-    <label class="lbl" class:sr-only={mode !== 'home' && !wideQ.current} for="codes"
+    <label class="lbl" class:sr-only={mode !== 'home' && !media.wide.current} for="codes"
       >Test report or display message</label
     >
     <textarea
@@ -566,12 +539,7 @@
     <div class="cards">
       {#each found as r (r.kind + r.id)}
         {#if r.item && r.kind !== 'unknown'}
-          <ComponentCard
-            kind={r.kind}
-            item={r.item}
-            mapMeta={mapOf(r.kind)}
-            id={cardId(r.kind, r.id)}
-          />
+          <ComponentCard item={r.item} mapMeta={mapOf(r.kind)} id={cardId(r.kind, r.id)} />
         {/if}
       {/each}
     </div>

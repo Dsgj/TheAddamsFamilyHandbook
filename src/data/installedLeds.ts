@@ -82,7 +82,7 @@ export const INSTALLED_LEDS: Record<string, string> = {
   'lamp:88': '555 Warm Super',
 };
 
-export interface InstalledFlasher {
+interface InstalledFlasher {
   where: string;
   led: string;
 }

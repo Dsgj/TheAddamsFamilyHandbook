@@ -4,7 +4,7 @@ export const HISTORY_MAX = 10;
 /** 2 added the Verify ticks. Older builds ignore both the version and the `verify` block. */
 export const EXPORT_VERSION = 2;
 
-export interface StatusExport {
+interface StatusExport {
   app: 'tafh';
   version: number;
   exportedAt: string;
@@ -124,7 +124,7 @@ function cleanVerify(key: string, v: unknown): string | undefined {
   return Number.isFinite(Date.parse(v)) ? v : undefined;
 }
 
-export interface Backup {
+interface Backup {
   items: Record<string, ComponentStatus>;
   /** Undefined when the file predates the Setup page, so an import leaves setup alone. */
   setup?: Record<string, SetupEntry>;
@@ -134,7 +134,7 @@ export interface Backup {
 
 /** Why a file cannot be read as a backup. Nothing on the device has been touched. */
 /** `unsaved`: the file was fine, but this device's storage refused to keep it. */
-export type BackupProblem =
+type BackupProblem =
   'json' | 'not-backup' | 'foreign' | 'newer' | 'malformed' | 'empty' | 'unsaved';
 
 export class BackupError extends Error {

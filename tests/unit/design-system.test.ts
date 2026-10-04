@@ -83,6 +83,15 @@ function sources(scope: string[]): string[] {
 
 const RULES = sources(SCOPE).flatMap((file) => parse(file, styleText(join(ROOT, file))));
 const where = (r: Rule) => `${r.file} ${r.selector}`;
+/** The global sheet, in the order Base.astro imports its parts after tokens.css (audit AR2-08). */
+const GLOBAL = [
+  ...readFileSync(join(ROOT, 'src/layouts/Base.astro'), 'utf8').matchAll(
+    /^import '~\/styles\/(\w+)\.css';/gm,
+  ),
+]
+  .map((m) => `src/styles/${m[1]}.css`)
+  .filter((f) => f !== 'src/styles/tokens.css');
+const isGlobal = (file: string) => GLOBAL.includes(file);
 
 /** One token block of tokens.css, by selector and enclosing at-rule ('' for none). */
 function block(selector: string, at: string): Map<string, string> {
@@ -123,9 +132,9 @@ function contrast(x: RGBA, y: RGBA): number {
 /* Font sizes that stay relative on purpose (spec §2 "Exceptions"). Keyed by file and selector. */
 const EM_ALLOWED: [string, string][] = [
   ['src/styles/base.css', 'code, .mono'],
-  ['src/styles/base.css', ":root[data-text='sm'] .prose"],
-  ['src/styles/base.css', ":root[data-text='lg'] .prose"],
-  ['src/styles/base.css', "a[href^='http']::after"],
+  ['src/styles/controls.css', ":root[data-text='sm'] .prose"],
+  ['src/styles/controls.css', ":root[data-text='lg'] .prose"],
+  ['src/styles/print.css', "a[href^='http']::after"],
   ['src/components/ShoppingList.svelte', '.total .dmd'],
   ['src/components/ShoppingList.svelte', '.sw.armed .pane'],
   ['src/components/SetupGuide.svelte', '.n'],
@@ -156,20 +165,20 @@ const SPACE_STEPS = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 24, 32];
 /* Off the scale on purpose, keyed by file, selector and value (spec §3 "Exceptions"). */
 const SPACE_ALLOWED: [string, string, number][] = [
   // The kit's group header and footer: 22 over and 7 under the header, 7 over the footer.
-  ['src/styles/base.css', '.lst-h', 22],
-  ['src/styles/base.css', '.lst-h', 7],
-  ['src/styles/base.css', '.gf', 7],
+  ['src/styles/lists.css', '.lst-h', 22],
+  ['src/styles/lists.css', '.lst-h', 7],
+  ['src/styles/lists.css', '.gf', 7],
   ['src/components/Diagnose.svelte', '.rec-h', 22],
   ['src/components/Diagnose.svelte', '.rec-h', 7],
   ['src/components/DiagnoseSearch.svelte', '.lst-h', 7],
   // The kit's large title sits 5 over the content; a row has 11 over and under its text.
-  ['src/styles/base.css', '.lt', 5],
-  ['src/styles/base.css', '.checklist .body', 11],
+  ['src/styles/layout.css', '.lt', 5],
+  ['src/styles/lists.css', '.checklist .body', 11],
   // A handbook table's page ref: 3 over and under the 20 line, taken back by its margin.
-  ['src/styles/base.css', ".prose td > :is(a[href*='#pg-'], a[href*='/manual/'])", 3],
+  ['src/styles/content.css', ".prose td > :is(a[href*='#pg-'], a[href*='/manual/'])", 3],
   // Indents that line text up with the label beside an icon: 12 + the 22 icon + 12, and the
   // Appearance control under its label past the 30 icon and its 12 gap.
-  ['src/styles/base.css', '.shell .sub', 46],
+  ['src/styles/nav.css', '.shell .sub', 46],
   ['src/components/WorkshopHub.svelte', '.appearance .seg', 42],
   // The matrix scrolls a cell clear of the sticky 112 header column and its 12 gap.
   ['src/components/Matrix.svelte', 'td a, td .empty', 124],
@@ -179,7 +188,7 @@ const SPACE_ALLOWED: [string, string, number][] = [
 const AMBER_TEXT_ALLOWED: [string, string][] = [];
 /* Custom properties that carry the ring colour, and so could reach text through var(). The map's
    switch layer --k is its marker ring, dot and icon; its headings read the text twin --k-ink. */
-const AMBER_VAR_ALLOWED: [string, string][] = [['src/styles/base.css', '.k-sw']];
+const AMBER_VAR_ALLOWED: [string, string][] = [['src/styles/controls.css', '.k-sw']];
 /** var(--amber) itself, with or without a fallback or spaces; not --amber-ink, -fill or -glow. */
 const RING = /var\(\s*--amber\s*[,)]/;
 const allowed = (list: [string, string][], r: Rule) =>
@@ -205,7 +214,9 @@ const Z_ORDER = [
 describe('design system source rules', () => {
   it('finds the style sources it lints', () => {
     expect(RULES.length).toBeGreaterThan(100);
-    expect(new Set(RULES.map((r) => r.file))).toContain('src/styles/base.css');
+    const files = new Set(RULES.map((r) => r.file));
+    expect([GLOBAL[0], GLOBAL.at(-1)]).toEqual(['src/styles/base.css', 'src/styles/print.css']);
+    for (const f of GLOBAL) expect(files, f).toContain(f);
   });
 
   it('(a) sets every z-index from the --z-* scale, never a bare number', () => {
@@ -315,7 +326,7 @@ describe('design system source rules', () => {
       return new Map(r!.decls);
     };
     for (const decls of [
-      rule('src/styles/base.css', '.dmd'),
+      rule('src/styles/buttons.css', '.dmd'),
       rule('src/components/Diagnose.svelte', '.well'),
     ]) {
       expect(decls.get('color')).toBe('var(--dmd-ink)');
@@ -331,7 +342,7 @@ describe('design system source rules', () => {
     // In print a .dmd is plain (no glow, a grey border); the Diagnose well is hidden with the dock,
     // so no print rule styles it.
     const basePrint = RULES.filter(
-      (r) => r.file === 'src/styles/base.css' && r.at.includes('@media print'),
+      (r) => r.file === 'src/styles/print.css' && r.at.includes('@media print'),
     );
     const hidden = basePrint.find((r) =>
       r.decls.some(([p, v]) => p === 'display' && /none/.test(v)),
@@ -360,14 +371,14 @@ describe('design system source rules', () => {
       .filter(({ r }) => !r.at.includes('@media print'));
     expect(light.length).toBe(2);
     for (const { i } of light) expect(i).toBeLessThan(print);
-    // base.css's print block sets no token of its own any more.
+    // print.css's print block sets no token of its own any more.
     const basePrintTokens = RULES.filter(
-      (r) => r.file === 'src/styles/base.css' && r.at.includes('@media print'),
+      (r) => r.file === 'src/styles/print.css' && r.at.includes('@media print'),
     ).flatMap((r) => r.decls.filter(([p]) => p.startsWith('--')).map(([p]) => `${where(r)} ${p}`));
     expect(basePrintTokens).toEqual([]);
     // Nor a colour of its own: it reads the print tokens (audit DS2-10).
     const basePrintColours = RULES.filter(
-      (r) => r.file === 'src/styles/base.css' && r.at.includes('@media print'),
+      (r) => r.file === 'src/styles/print.css' && r.at.includes('@media print'),
     ).flatMap((r) =>
       r.decls
         .filter(([, v]) => /#[0-9a-f]{3,8}\b|rgba?\(/i.test(v))
@@ -416,8 +427,8 @@ describe('design system source rules', () => {
         ).toBeGreaterThanOrEqual(4.5);
     }
     const faintText: [string, string][] = [
-      ['src/styles/base.css', '.field::placeholder'],
-      ['src/styles/base.css', '.search::placeholder'],
+      ['src/styles/buttons.css', '.field::placeholder'],
+      ['src/styles/controls.css', '.search::placeholder'],
       ['src/components/Matrix.svelte', 'td.unused .id'],
     ];
     for (const [file, selector] of faintText) {
@@ -450,7 +461,7 @@ describe('design system source rules', () => {
         ).toBeGreaterThanOrEqual(4.5);
     }
     const brassText: [string, string][] = [
-      ['src/styles/base.css', '.hint strong'],
+      ['src/styles/controls.css', '.hint strong'],
       ['src/components/SetupGuide.svelte', '.n'],
     ];
     for (const [file, selector] of brassText) {
@@ -490,16 +501,16 @@ describe('design system source rules', () => {
       RULES.find(
         (r) => r.file === file && r.selector === selector && r.at.length === 0,
       )?.decls.find(([p]) => p === prop)?.[1];
-    expect(decl('src/styles/base.css', '.wrap', 'max-width')).toBe('var(--content-w)');
-    expect(decl('src/styles/base.css', '.hub', 'max-width')).toMatch(/var\(--hub-w\)/);
+    expect(decl('src/styles/layout.css', '.wrap', 'max-width')).toBe('var(--content-w)');
+    expect(decl('src/styles/nav.css', '.hub', 'max-width')).toMatch(/var\(--hub-w\)/);
     const prose = '.prose :where(p, ul, ol, dl, blockquote, h2, h3, h4, .owner-note)';
-    expect(decl('src/styles/base.css', prose, 'max-width')).toBe('var(--measure)');
+    expect(decl('src/styles/content.css', prose, 'max-width')).toBe('var(--measure)');
     expect(decl('src/layouts/ComponentPage.astro', '.notes p', 'max-width')).toBe('var(--measure)');
     // A page's own paragraphs, a tab panel's, the group footers, the provenance notes and a static
     // list row's text (VL2-06), and the Care and Setup step text and Setup's item names.
     expect(
       decl(
-        'src/styles/base.css',
+        'src/styles/content.css',
         '.wrap > p, .panel > p, .gf, .prov, .lrow.static .txt',
         'max-width',
       ),
@@ -542,10 +553,10 @@ describe('design system source rules', () => {
             .includes(selector) &&
           r.decls.some(([p, v]) => p === 'white-space' && v === 'nowrap'),
       );
-    expect(nowrap('src/styles/base.css', 'table.t td.mono'), 'table.t td.mono').toBe(true);
-    expect(nowrap('src/styles/base.css', '.code'), '.code').toBe(true);
+    expect(nowrap('src/styles/content.css', 'table.t td.mono'), 'table.t td.mono').toBe(true);
+    expect(nowrap('src/styles/controls.css', '.code'), '.code').toBe(true);
     // A phrase cell wraps at its spaces only: each token of it is a nowrap .tok (Phrase.astro).
-    expect(nowrap('src/styles/base.css', '.tok'), '.tok').toBe(true);
+    expect(nowrap('src/styles/content.css', '.tok'), '.tok').toBe(true);
   });
 
   it('(q) gives every alt-text content a plain content before it, for engines without the form', () => {
@@ -649,7 +660,7 @@ describe('design system source rules', () => {
   it('(u) keeps the field focus ring, and draws field edges in --field-line at 3:1', () => {
     // Spec §1.1 and §8.7, audits AY-15 and FIELD-3-1: a field's edge is a non-text contrast cue, 3:1
     // on every surface a field sits on, and its focus keeps the global ring.
-    const base = RULES.filter((r) => r.file === 'src/styles/base.css');
+    const base = RULES.filter((r) => isGlobal(r.file));
     const killed = base
       .filter((r) => /\.field:focus\b/.test(r.selector))
       .filter((r) =>
@@ -706,8 +717,7 @@ describe('design system source rules', () => {
           .pop()!,
       );
     const off = RULES.filter(
-      (r) =>
-        r.file === 'src/styles/base.css' && r.selector !== '.field' && /\.field\b/.test(r.selector),
+      (r) => isGlobal(r.file) && r.selector !== '.field' && /\.field\b/.test(r.selector),
     )
       .filter(sets)
       .map(where);
@@ -728,8 +738,9 @@ describe('design system source rules', () => {
     }
     expect(off).toEqual([]);
     const own = new Map(
-      RULES.find((r) => r.file === 'src/styles/base.css' && r.selector === '.field' && !r.at.length)
-        ?.decls,
+      RULES.find(
+        (r) => r.file === 'src/styles/buttons.css' && r.selector === '.field' && !r.at.length,
+      )?.decls,
     );
     expect(own.get('border-radius')).toBe('var(--r-xs)');
     expect(own.get('line-height')).toBe('21px');
@@ -854,7 +865,7 @@ describe('design system source rules', () => {
     ];
     for (const name of names) expect(tokens, name).toMatch(new RegExp(`${name}:`));
     const base = new Set(
-      parse('base.css', styleText(join(ROOT, 'src/styles/base.css'))).flatMap((r) =>
+      RULES.filter((r) => isGlobal(r.file)).flatMap((r) =>
         r.selector.split(',').map((s) => s.trim()),
       ),
     );

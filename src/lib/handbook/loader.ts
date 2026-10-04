@@ -7,7 +7,7 @@ import { imageSize, type ImageSize } from './image-size';
 import { SECTIONS, sectionOfPage } from './sections';
 import { plural } from '../copy';
 
-export interface HandbookEntry {
+interface HandbookEntry {
   page: number;
   label: string;
   section: string;

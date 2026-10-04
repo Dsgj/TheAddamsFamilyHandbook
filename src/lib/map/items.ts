@@ -5,7 +5,6 @@
  * `$derived` as before.
  */
 import { SHOTS } from '~/data/shots';
-import type { AnyComponent } from '~/lib/data/components';
 import { itemsOf } from '~/lib/data/components';
 import {
   capitalise,
@@ -21,7 +20,7 @@ import {
 } from '~/lib/copy';
 import type { PosKind } from '~/lib/data/positions';
 import { getStatus } from '~/lib/model/status.svelte';
-import type { Lamp, Layer, Switch } from '~/lib/model/types';
+import type { AnyComponent, Layer } from '~/lib/model/types';
 import { pageTitleText } from '~/lib/pages';
 
 /** Component layers plus the manual's lettered shots. Any combination can be shown. */
@@ -81,7 +80,7 @@ export function kindLine(item: Item) {
 export function subtitle(item: Item) {
   const c = item.comp;
   if (!c || item.kind === 'shot') return '';
-  if (item.kind !== 'coil' && !inMatrix(c as Switch | Lamp)) return '';
+  if (c.kind !== 'coil' && !inMatrix(c)) return '';
   // The row's name already says "Not Used" and the row says "not on map": no third "not used".
   return capitalise(locationLine(item.kind, { ...c, unused: false }));
 }

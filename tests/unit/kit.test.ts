@@ -29,9 +29,13 @@ describe('kit data boundary', () => {
   it('builds an English model without the Swedish twins, and refuses what it does not know', () => {
     const json = JSON.stringify(DATA);
     expect(json).not.toMatch(/[åäöÅÄÖ]/);
-    expect(json).not.toMatch(/"(colWire|rowWire)":/);
-    expect(DATA.switches.some((s) => Object.hasOwn(s, 'wire'))).toBe(false);
-    expect(DATA.coils.some((c) => Object.hasOwn(c, 'wire'))).toBe(false);
+    // The Swedish wire fields are dropped and the English *En ones take their names (AR2-06).
+    expect(json).not.toMatch(/"(colWireEn|rowWireEn|wireEn)":/);
+    const kit = JSON.parse(read(KIT)) as Record<string, Record<string, unknown>[]>;
+    expect(DATA.coils.map((c) => c.wire)).toEqual(kit.coils!.map((c) => c.wireEn));
+    expect(DATA.lamps.map((l) => l.colWire)).toEqual(kit.lamps!.map((l) => l.colWireEn));
+    expect(DATA.switches.map((s) => s.rowWire)).toEqual(kit.switches!.map((s) => s.rowWireEn));
+    expect(DATA.switches.map((s) => s.circuit)).toEqual(kit.switches!.map((s) => s.kind));
     const none = {};
     expect(() => translateKit({ ...raw(), extra: [] }, none, none, none, none)).toThrow(
       /unknown key/,

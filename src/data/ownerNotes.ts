@@ -3,7 +3,7 @@
  * Keyed by manual page number; each note names the appendix it comes from. Rendered by
  * `src/pages/handbook/[section].astro`, never on appendix pages.
  */
-export interface OwnerNote {
+interface OwnerNote {
   code: string;
   text: string;
 }

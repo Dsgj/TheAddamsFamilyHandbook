@@ -10,8 +10,8 @@ import { href, tableHref } from '~/lib/url';
  */
 const sw = DATA.switches;
 const matrix = sw.filter((s) => s.col !== null).length;
-const dedicated = sw.filter((s) => s.kind === 'ded').length;
-const flipper = sw.filter((s) => s.kind === 'flip').length;
+const dedicated = sw.filter((s) => s.circuit === 'ded').length;
+const flipper = sw.filter((s) => s.circuit === 'flip').length;
 
 interface Row {
   href: string;
@@ -118,6 +118,18 @@ const GROUPS: Group[] = [
     <section hidden data-recent data-group>
       <h2 class="lst-h">Recently viewed</h2>
       <ul class="lst"></ul>
+      <!-- One row, which the script below copies for each component (SV2-13). -->
+      <template>
+        <li>
+          <a class="lrow two">
+            <span class="code dmd"></span>
+            <span class="txt"><span class="ttl"></span><span class="sub"></span></span>
+            <svg class="chev" viewBox="0 0 14 14" aria-hidden="true">
+              <path d="M5 2l5 5-5 5"></path>
+            </svg>
+          </a>
+        </li>
+      </template>
     </section>
     {
       GROUPS.map((g) => (
@@ -163,58 +175,40 @@ const GROUPS: Group[] = [
 <script>
   import { plural } from '~/lib/copy';
   import { viewedEntries } from '~/lib/model/recent.svelte';
+  import { enhanceSearchField } from '~/lib/search-field';
   import { componentHref } from '~/lib/url';
 
-  // "Recently viewed" (spec §9.5): the components opened on this device, newest first.
+  // "Recently viewed" (spec §9.5): the components opened on this device, newest first, each a copy
+  // of the row in the section's <template>.
   const recent = document.querySelector<HTMLElement>('[data-recent]');
+  const row = recent?.querySelector('template')?.content.firstElementChild;
   const viewed = viewedEntries();
-  if (recent && viewed.length) {
+  if (recent && row && viewed.length) {
     const ul = recent.querySelector('ul');
     for (const v of viewed) {
-      const li = document.createElement('li');
-      const a = document.createElement('a');
-      a.className = 'lrow two';
-      a.href = componentHref(v.kind, v.id);
-      const code = document.createElement('span');
-      code.className = 'code dmd';
-      code.textContent = v.code;
-      const txt = document.createElement('span');
-      txt.className = 'txt';
-      const ttl = document.createElement('span');
-      ttl.className = 'ttl';
-      ttl.textContent = v.name;
-      const sub = document.createElement('span');
-      sub.className = 'sub';
-      sub.textContent = v.sub;
-      txt.append(ttl, sub);
-      const chev = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      chev.setAttribute('class', 'chev');
-      chev.setAttribute('viewBox', '0 0 14 14');
-      chev.setAttribute('aria-hidden', 'true');
-      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      path.setAttribute('d', 'M5 2l5 5-5 5');
-      chev.append(path);
-      a.append(code, txt, chev);
-      li.append(a);
+      const li = row.cloneNode(true) as HTMLElement;
+      const fill = (selector: string, text: string) => {
+        const el = li.querySelector(selector);
+        if (el) el.textContent = text;
+      };
+      li.querySelector('a')?.setAttribute('href', componentHref(v.kind, v.id));
+      fill('.code', v.code);
+      fill('.ttl', v.name);
+      fill('.sub', v.sub);
       ul?.append(li);
     }
     recent.hidden = false;
   }
 
-  // "Search tables" filters the rows by their text as you type; a group with no match hides.
-  // "Clear search" shows while the field holds text; it empties the field, re-runs the filter
-  // through an input event and puts focus back in the field (SearchField.svelte's behaviour).
+  // "Search tables" filters the rows by their text as you type; a group with no match hides. The
+  // field's clear button and announcement are SearchField.svelte's (lib/search-field.ts).
   const hub = document.querySelector<HTMLElement>('[data-hub="tables"]');
-  const field = hub?.querySelector<HTMLInputElement>('input.search');
-  const clear = hub?.querySelector<HTMLButtonElement>('.srch .clear');
-  if (hub && field) {
+  const srch = hub?.querySelector<HTMLElement>('.srch');
+  if (hub && srch) {
     const groups = [...hub.querySelectorAll<HTMLElement>('[data-group]')];
     const empty = hub.querySelector<HTMLElement>('[data-empty]');
-    const live = hub.querySelector<HTMLElement>('[data-live]');
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const apply = () => {
-      if (clear) clear.hidden = !field.value;
-      const q = field.value.trim().toLowerCase();
+    enhanceSearchField(srch, hub.querySelector<HTMLElement>('[data-live]'), (query) => {
+      const q = query.toLowerCase();
       let shown = 0;
       for (const g of groups) {
         let n = 0;
@@ -226,23 +220,12 @@ const GROUPS: Group[] = [
         g.hidden = n === 0;
         shown += n;
       }
+      const none = `No tables match “${query}”.`;
       if (empty) {
         empty.hidden = shown > 0;
-        empty.textContent = `No tables match “${field.value.trim()}”.`;
+        empty.textContent = none;
       }
-      // The count, announced 400 ms after the last keystroke; an empty field clears it at once.
-      clearTimeout(timer);
-      if (live && !q) live.textContent = '';
-      else if (live) {
-        const text = shown ? plural(shown, 'table') : `No tables match “${field.value.trim()}”.`;
-        timer = setTimeout(() => (live.textContent = text), 400);
-      }
-    };
-    field.addEventListener('input', apply);
-    clear?.addEventListener('click', () => {
-      field.value = '';
-      field.dispatchEvent(new Event('input', { bubbles: true }));
-      field.focus();
+      return shown ? plural(shown, 'table') : none;
     });
   }
 </script>

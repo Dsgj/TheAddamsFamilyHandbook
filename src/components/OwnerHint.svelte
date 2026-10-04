@@ -2,7 +2,7 @@
   /**
    * The owner's hint on a switch and the note on a coil (AR2-01, CP2-03): one wording, with the
    * provenance tag, on the card, the detail page and the map's phone sheet (DS-13). The look is
-   * base.css `.hint`; `at` only sets where it sits.
+   * controls.css `.hint`; `at` only sets where it sits.
    */
   let {
     hint,

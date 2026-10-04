@@ -27,7 +27,7 @@ const onMap = (kind: 'switch' | 'lamp', id: string): Link => [
  */
 export const FLASHERS = { circuits: 6, table: 14, parts: 15 } as const;
 
-export interface VerifyItem {
+interface VerifyItem {
   id: string;
   group: string;
   text: string;

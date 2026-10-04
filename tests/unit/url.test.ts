@@ -54,8 +54,8 @@ describe('link helpers', () => {
   it('links one part to its cell, its panel or its row (UX2-07)', () => {
     expect(tableSpotHref('switch', { id: '32' })).toBe(href('switches#c32'));
     expect(tableSpotHref('lamp', { id: '55' })).toBe(href('lamps#c55'));
-    expect(tableSpotHref('switch', { id: 'D1', kind: 'ded' })).toBe(href('switches#j205'));
-    expect(tableSpotHref('switch', { id: 'F1', kind: 'flip' })).toBe(href('switches#j806'));
+    expect(tableSpotHref('switch', { id: 'D1', circuit: 'ded' })).toBe(href('switches#j205'));
+    expect(tableSpotHref('switch', { id: 'F1', circuit: 'flip' })).toBe(href('switches#j806'));
     expect(tableSpotHref('coil', { id: '01' })).toBe(href('coils#coil-01'));
   });
 });

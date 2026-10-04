@@ -17,7 +17,7 @@
     "fonts": "node scripts/copy-fonts.mjs",
     "thumbs": "node scripts/thumbnails.mjs",
     "icons": "node scripts/icons.mjs",
-    "svelte-check": "astro sync && svelte-check --tsconfig ./tsconfig.json",
+    "svelte-check": "astro sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
     "format:check": "prettier --check ."
   },
   "dependencies": {

@@ -1,5 +1,5 @@
 import { PAGES_RAW } from '~/lib/kit/pages';
-import type { DocId, PageMeta } from '~/lib/model/types';
+import type { DocId } from '~/lib/model/types';
 
 export const PAGES = PAGES_RAW;
 export const DOCS: DocId[] = ['ops', 'hb', 'wpc'];
@@ -10,14 +10,8 @@ export const DOC_NAME: Record<DocId, string> = {
 };
 export const DOC_UNIT: Record<DocId, string> = { ops: 'pages', hb: 'pages', wpc: 'pages' };
 
-export function isDocId(s: string): s is DocId {
-  return s === 'ops' || s === 'hb' || s === 'wpc';
-}
 export function pageCount(doc: DocId): number {
   return PAGES[doc].length;
-}
-export function pageMeta(doc: DocId, page: number): PageMeta | undefined {
-  return PAGES[doc].find((p) => p[0] === page);
 }
 
 /** Printed label for a PDF page: `1-15`, `2-39`, `A`…`F`, handbook `9`; empty when unnumbered. */

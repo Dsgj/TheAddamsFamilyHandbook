@@ -1,6 +1,16 @@
 ---
 import '~/styles/tokens.css';
+// The global sheet in cascade order (audit AR2-08): on a tie, the later part wins.
 import '~/styles/base.css';
+import '~/styles/layout.css';
+import '~/styles/surfaces.css';
+import '~/styles/buttons.css';
+import '~/styles/content.css';
+import '~/styles/lists.css';
+import '~/styles/controls.css';
+import '~/styles/nav.css';
+import '~/styles/motion.css';
+import '~/styles/print.css';
 import { pwaInfo } from 'virtual:pwa-info';
 import { href } from '~/lib/url';
 import { jsonScript } from '~/lib/json-script';
@@ -115,8 +125,10 @@ const hasActions = Astro.slots.has('actions');
       // It mirrors `classify` in src/lib/nav-state.ts: keep the two in step.
       addEventListener('pagereveal', function (e) {
         const vt = e.viewTransition;
+        // What ran, for the tests only (SV2-13): Playwright's browsers set navigator.webdriver.
+        const probe = navigator.webdriver;
         if (!vt) {
-          window.tafhMotion = { type: 'none', animations: [] };
+          if (probe) window.tafhMotion = { type: 'none', animations: [] };
           return;
         }
         let prev = null;
@@ -144,8 +156,9 @@ const hasActions = Astro.slots.has('actions');
           else type = prev.tab === d.tab ? 'fade' : 'tab';
         }
         vt.types.add(type);
-        // What ran, for the tests: `window.tafhMotion`. Only the clock's animations: a scroller's
-        // edge fade runs on its scroll timeline and has no duration (VP2-04).
+        if (!probe) return;
+        // What ran: `window.tafhMotion`. Only the clock's animations: a scroller's edge fade runs
+        // on its scroll timeline and has no duration (VP2-04).
         window.tafhMotion = { type: type, animations: [], pending: true };
         const ran = function () {
           window.tafhMotion = {
@@ -330,7 +343,7 @@ const hasActions = Astro.slots.has('actions');
           reduce.addEventListener('change', apply);
         }
         // Under 1280 a back label too long for its side wraps out of the link and only the
-        // chevron shows (base.css, VP-03/AY-13). data-bare mirrors that, so the focus ring and
+        // chevron shows (layout.css, VP-03/AY-13). data-bare mirrors that, so the focus ring and
         // the hover pill go round the chevron. The link and the label both resize whenever the
         // label wraps, returns or is rewritten (motion.ts), so observing the two is enough.
         const back = document.querySelector('header.top a.back');

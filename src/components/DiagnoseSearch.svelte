@@ -96,7 +96,7 @@
         s.name,
         kindLine('switch', s),
         componentHref('switch', s.id),
-        s.kind === 'flip' ? 'Fliptronics' : '',
+        s.circuit === 'flip' ? 'Fliptronics' : '',
       );
     for (const l of DATA.lamps)
       hit(componentCode('lamp', l.id), l.name, kindLine('lamp', l), componentHref('lamp', l.id));

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import BottomSheet from './BottomSheet.svelte';
   import HandbookToc, { readToc } from './HandbookToc.svelte';
   import type { TocItem } from '~/lib/handbook/types';
@@ -8,7 +9,7 @@
    * The Handbook reader's bottom toolbar (spec §9.11): previous, Contents, Text size, next. The
    * reader pages by section (Q17), so the two ends name the nearest page of the adjacent section.
    * Contents opens the full contents in a modal sheet; Text size sets `data-text` on <html>
-   * (`tafh:text`), which base.css turns into the `.prose` font size.
+   * (`tafh:text`), which controls.css turns into the `.prose` font size.
    */
   interface End {
     href: string;
@@ -40,7 +41,7 @@
     open = 'toc';
   }
   let size = $state<Size>('md');
-  $effect(() => {
+  onMount(() => {
     const t = document.documentElement.dataset.text;
     if (t === 'sm' || t === 'lg') size = t;
   });

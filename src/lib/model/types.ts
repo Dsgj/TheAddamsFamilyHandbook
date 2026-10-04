@@ -1,8 +1,8 @@
 /**
  * Static component data, transcribed from the owner's manuals (see kit-docs/DATA-SCHEMA.md). The
  * kit's JSON is Swedish-authored; src/lib/kit/translate.ts turns it into this English model at build
- * time, so every string here is English and the kit's Swedish twins (`colWire`, `rowWire`, `wire`
- * on switches and coils) are gone.
+ * time, so every string here is English: the kit's Swedish wire fields are dropped and its English
+ * twins (`colWireEn`, `rowWireEn`, `wireEn`) take the plain names `colWire`, `rowWire` and `wire`.
  */
 
 export interface Loc {
@@ -14,22 +14,25 @@ export interface Loc {
 }
 
 export interface Switch {
+  /** What the component is: AnyComponent narrows on it, with no casts (audit AR2-06). */
+  kind: 'switch';
   id: string;
   name: string;
   part: string;
   assy: string;
   col: number | null;
   row: number | null;
-  colWireEn?: string;
+  colWire?: string;
   colPin?: string;
   colIc?: string;
-  rowWireEn?: string;
+  rowWire?: string;
   rowPin?: string;
   rowIc?: string;
   /** Dedicated / flipper switches only. */
-  wireEn?: string;
+  wire?: string;
   pin?: string;
-  kind?: 'ded' | 'flip';
+  /** Off the matrix: a dedicated (coin door, CPU J205) or a flipper (Fliptronics) switch. */
+  circuit?: 'ded' | 'flip';
   under: boolean;
   notShown: boolean;
   unused: boolean;
@@ -39,6 +42,8 @@ export interface Switch {
 }
 
 export interface Lamp {
+  /** What the component is: AnyComponent narrows on it, with no casts (audit AR2-06). */
+  kind: 'lamp';
   id: string;
   name: string;
   bulbPart: string;
@@ -51,10 +56,10 @@ export interface Lamp {
   assy: string;
   col: number;
   row: number;
-  colWireEn: string;
+  colWire: string;
   colPin: string;
   colQ: string;
-  rowWireEn: string;
+  rowWire: string;
   rowPin: string;
   rowQ: string;
   speaker: boolean;
@@ -63,10 +68,12 @@ export interface Lamp {
 }
 
 export interface Coil {
+  /** What the component is: AnyComponent narrows on it, with no casts (audit AR2-06). */
+  kind: 'coil';
   id: string;
   name: string;
   type: 'High Power' | 'Low Power' | 'Flasher';
-  wireEn: string;
+  wire: string;
   pin: string;
   driver: string;
   part: string;
@@ -129,7 +136,7 @@ export interface Led {
 }
 
 /** [wire, connectorPin, icPinOrTransistor] (the kit's Swedish wire column is dropped at build time). */
-export type MatrixHeader = [string, string, string];
+type MatrixHeader = [string, string, string];
 export type MatrixHeaders = Record<string, MatrixHeader>;
 
 export interface MapMeta {
@@ -162,14 +169,12 @@ export type PageMeta = [number, number, number, boolean];
 export type Pages = Record<DocId, PageMeta[]>;
 
 export type Kind = 'switch' | 'lamp' | 'coil';
+/** Any component, told apart by its `kind`. */
+export type AnyComponent = Switch | Lamp | Coil;
 /** A component layer of the map and its location page: `sw`, `lamp`, `coil` (copy.ts MAP_LAYER). */
 export type Layer = 'sw' | 'lamp' | 'coil';
 /** A marker kind on the map: the component kinds plus the manual's lettered shots. */
 export type MapKind = Kind | 'shot';
-export interface ComponentRef {
-  kind: Kind;
-  id: string;
-}
 
 export type StatusValue = 'ok' | 'fault' | 'untested';
 /** One status change, kept per component as a short service log. */

@@ -44,7 +44,3 @@ export const isAppendixPage = (page: number) => page >= APPENDIX_FIRST_PAGE;
 export function sectionOfPage(page: number): Section | undefined {
   return SECTIONS.find((s) => s.pages.includes(page));
 }
-
-export function sectionByKey(key: string): Section | undefined {
-  return SECTIONS.find((s) => s.key === key);
-}

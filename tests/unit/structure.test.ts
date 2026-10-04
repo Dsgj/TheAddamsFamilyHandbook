@@ -36,6 +36,24 @@ const FILES = sources().map((path) => ({
   text: stripComments(readFileSync(join(path), 'utf8').replace(/\r\n/g, '\n')),
 }));
 
+/** The tests, the scripts and the root configs, read the same way: the consumers outside src/. */
+function tree(dir: string): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
+    const path = `${dir}/${e.name}`;
+    if (e.isDirectory()) return tree(path);
+    return /\.(ts|mjs)$/.test(e.name) ? [path] : [];
+  });
+}
+const CONSUMERS = [
+  ...FILES,
+  ...[...tree('tests'), ...tree('scripts'), 'astro.config.ts', 'playwright.config.ts'].map(
+    (path) => ({
+      path,
+      text: stripComments(readFileSync(join(path), 'utf8').replace(/\r\n/g, '\n')),
+    }),
+  ),
+];
+
 /** Every rule that went through hits(), so the control test can prove each one matches in its home. */
 const RULES: [RegExp, (path: string) => boolean][] = [];
 
@@ -258,6 +276,38 @@ describe('structure lint', () => {
 
   it('(q) leaves copy and share to share.ts (AR2-15)', () => {
     expectNone(hits(/navigator\.(clipboard\.writeText|share\b)/, only('src/lib/share.ts')));
+  });
+
+  it('(r) every export of a src module has a consumer in another file (AR2-11)', () => {
+    // Astro reads the content collections and the endpoints under src/pages without an import.
+    const modules = FILES.filter(
+      (f) =>
+        /\.ts$/.test(f.path) &&
+        !f.path.endsWith('.d.ts') &&
+        !f.path.startsWith('src/pages/') &&
+        f.path !== 'src/content.config.ts',
+    );
+    const declared =
+      /^export\s+(?:async\s+)?(?:const|let|function\*?|class|type|interface|enum)\s+([A-Za-z_$][\w$]*)/gm;
+    const dead: string[] = [];
+    for (const m of modules) {
+      for (const [, name] of m.text.matchAll(declared)) {
+        const used = new RegExp(`\\b${name!.replace(/\$/g, '\\$')}\\b`);
+        if (!CONSUMERS.some((c) => c.path !== m.path && used.test(c.text)))
+          dead.push(`${m.path}: ${name}`);
+      }
+    }
+    expect(dead).toEqual([]);
+    expect(modules.length).toBeGreaterThan(40);
+  });
+
+  it('(s) narrows a component on its kind, never with a cast (AR2-06)', () => {
+    const cast = /[\s(]as (Switch|Lamp|Coil|AnyComponent)\b/;
+    expect(cast.test('(item as Switch)')).toBe(true);
+    const found = FILES.flatMap((f) =>
+      f.text.split('\n').flatMap((line, i) => (cast.test(line) ? [`${f.path}:${i + 1}`] : [])),
+    );
+    expect(found).toEqual([]);
   });
 
   it('(control) every rule above still matches inside its home, so none passes vacuously', () => {

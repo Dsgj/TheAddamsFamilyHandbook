@@ -48,10 +48,10 @@ export function tableHref(kind: Kind, anchor?: string): string {
  * One part on its table page (UX2-07): its matrix cell (`switches#c32`, which Matrix focuses), the
  * Dedicated or Flippers panel for a switch outside the matrix, or its coil row (`coils#coil-01`).
  */
-export function tableSpotHref(kind: Kind, part: { id: string; kind?: 'ded' | 'flip' }): string {
+export function tableSpotHref(kind: Kind, part: { id: string; circuit?: 'ded' | 'flip' }): string {
   if (kind === 'coil') return tableHref('coil', `coil-${part.id}`);
-  if (part.kind === 'ded') return tableHref(kind, 'j205');
-  if (part.kind === 'flip') return tableHref(kind, 'j806');
+  if (part.circuit === 'ded') return tableHref(kind, 'j205');
+  if (part.circuit === 'flip') return tableHref(kind, 'j806');
   return tableHref(kind, `c${part.id}`);
 }
 

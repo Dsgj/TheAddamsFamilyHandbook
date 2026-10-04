@@ -1,12 +1,12 @@
 <script lang="ts">
   import { onMount, untrack } from 'svelte';
   import BottomSheet from './BottomSheet.svelte';
-  import { isTypingTarget } from '~/lib/keys';
+  import { isTypingTarget, letterKey, zoomKey } from '~/lib/keys';
+  import { media } from '~/lib/media';
   import { readPref, writePref } from '~/lib/storage';
   import type { DocId, PageMeta } from '~/lib/model/types';
   import { pageImage, pageRefText, pdfPageFromLabel } from '~/lib/pages';
   import { href, manualHref, replacePage } from '~/lib/url';
-  import { WIDE } from '~/lib/bp';
 
   /**
    * The manual page viewer (spec §9.12). Toolbar: Previous page, "97 of 124" (opens the Go to page
@@ -60,7 +60,7 @@
   function storedFit(): Fit {
     const v = readPref('fit');
     if (v === 'width' || v === 'page') return v;
-    return matchMedia(WIDE).matches ? 'page' : 'width';
+    return media.wide.current ? 'page' : 'width';
   }
   function chooseFit(m: Fit) {
     fitMode = m;
@@ -131,7 +131,14 @@
     else setTimeout(warm, 1000);
   });
 
-  /** Zoom about a viewport point (the pointer, or the middle of the stage's visible part). */
+  /**
+   * Zoom about a viewport point (the pointer, or the middle of the stage's visible part).
+   *
+   * A page zooms its own way, not through the map's zoom.svelte.ts (audit AR2-07, VL-05): at the
+   * fit it scrolls with the document, zoomed it scrolls inside the stage, and a phone pinches it
+   * natively (touch-action), where the map transforms one canvas inside a fixed frame. The keys
+   * are the map's (lib/keys.ts).
+   */
   function zoomBy(f: number, clientX?: number, clientY?: number) {
     if (!stage) return;
     const before = effScale;
@@ -177,15 +184,17 @@
       stage.scrollBy(step('ArrowLeft', 'ArrowRight'), step('ArrowUp', 'ArrowDown'));
       return;
     }
+    const zoom = zoomKey(e.key);
+    const letter = letterKey(e.key);
     if (e.key === 'ArrowLeft' && page > 1) replacePage(manualHref(doc, page - 1));
     else if (e.key === 'ArrowRight' && page < count) replacePage(manualHref(doc, page + 1));
-    else if (e.key === '+' || e.key === '=') zoomBy(1.2);
-    else if (e.key === '-') zoomBy(1 / 1.2);
-    else if (e.key === '0') scale = 0;
-    else if (e.key === 'w' || e.key === 'W') chooseFit('width');
-    else if (e.key === 'p' || e.key === 'P') chooseFit('page');
-    else if (e.key === 'r') rotate();
-    else if (e.key === 't') mode = mode === 'text' ? 'image' : 'text';
+    else if (zoom === 'in') zoomBy(1.2);
+    else if (zoom === 'out') zoomBy(1 / 1.2);
+    else if (zoom === 'fit') scale = 0;
+    else if (letter === 'w') chooseFit('width');
+    else if (letter === 'p') chooseFit('page');
+    else if (letter === 'r') rotate();
+    else if (letter === 't') mode = mode === 'text' ? 'image' : 'text';
   }
 
   // Drag to pan with a mouse (touch already pans via overflow scroll).

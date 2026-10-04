@@ -8,7 +8,7 @@
  * while `href('')` and the manifest's `start_url` are `/valvet/`, so the home and every
  * `/valvet/?q=…` link missed the precache and fell through to the offline 404 page.
  */
-export interface PrecacheEntry {
+interface PrecacheEntry {
   url: string;
   revision: string | null;
   size: number;

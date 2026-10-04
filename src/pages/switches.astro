@@ -25,10 +25,10 @@ const matrix = DATA.switches
     row: s.row!,
     unused: s.unused,
     // The card's line in place of Show on map, for a switch the map does not draw (UX2-05).
-    off: positions('switch', s.id).length ? undefined : offMap('switch', s),
+    off: positions('switch', s.id).length ? undefined : offMap(s),
   }));
-const ded = DATA.switches.filter((s) => s.kind === 'ded');
-const flip = DATA.switches.filter((s) => s.kind === 'flip');
+const ded = DATA.switches.filter((s) => s.circuit === 'ded');
+const flip = DATA.switches.filter((s) => s.circuit === 'flip');
 
 const TABS = [
   { id: 'matrix', label: 'Matrix' },
@@ -99,7 +99,7 @@ const TABS = [
                     {s.name}
                   </td>
                   <td role="cell" data-h="Wire">
-                    <WireChip colour={s.wireEn ?? ''} />
+                    <WireChip colour={s.wire ?? ''} />
                   </td>
                   <td role="cell" class="mono" data-h="Pin">
                     {s.pin}
@@ -151,7 +151,7 @@ const TABS = [
                     {s.name}
                   </td>
                   <td role="cell" data-h="Wire">
-                    <WireChip colour={s.wireEn ?? ''} />
+                    <WireChip colour={s.wire ?? ''} />
                   </td>
                   <td role="cell" class="mono" data-h="Pin">
                     {s.pin}

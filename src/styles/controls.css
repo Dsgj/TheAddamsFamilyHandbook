@@ -1,0 +1,320 @@
+/* Controls: the segmented control and the reader's text size, the toggle, the map layer colours,
+   chips, pills, codes, wires and key hints, and the search field. One part of the global sheet;
+   Base.astro imports the parts in cascade order (audit AR2-08). */
+
+/* ---- Segmented control (spec §8.3) ---- */
+.seg {
+  display: inline-grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 2px;
+  height: 36px;
+  padding: 2px;
+  border-radius: var(--r-track);
+  background: var(--seg-track);
+}
+/* A segment is 32 tall; its ::after reaches 6 above and below, so the hit area is 44 (audit
+   AY-12). The 2 px gap keeps neighbours apart. */
+.seg > button,
+.seg > a {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  height: 32px;
+  padding: 0 12px;
+  text-decoration: none;
+  border: 0;
+  border-radius: var(--r-thumb);
+  background: none;
+  color: var(--ink);
+  font: var(--t-sub);
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background var(--dur-2) var(--ease-standard),
+    box-shadow var(--dur-2) var(--ease-standard);
+}
+.seg > button::after,
+.seg > a::after {
+  content: '';
+  position: absolute;
+  inset: -6px 0;
+}
+.seg > button[aria-pressed='true'],
+.seg > button[aria-selected='true'],
+.seg > a[aria-current] {
+  background: var(--seg-thumb);
+  font-weight: 600;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.28),
+    0 0 0 1px var(--seg-edge);
+}
+.seg > .st-ok[aria-pressed='true'] {
+  background: var(--ok-tint);
+  box-shadow: inset 0 0 0 1px var(--ok);
+}
+.seg > .st-fault[aria-pressed='true'] {
+  background: var(--bad-tint);
+  box-shadow: inset 0 0 0 1px var(--bad);
+}
+
+/* Reader text size (Phase 8): the Handbook reader's Text size sheet writes `data-text` on <html>. */
+:root[data-text='sm'] .prose {
+  font-size: 0.93rem;
+}
+:root[data-text='lg'] .prose {
+  font-size: 1.16rem;
+}
+
+/* ---- Toggle (spec §8.4) ---- */
+.toggle {
+  position: relative;
+  flex: 0 0 auto;
+  width: 51px;
+  height: 31px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-chip);
+  background: var(--sunk);
+  cursor: pointer;
+  transition: background var(--dur-2) var(--ease-standard);
+}
+.toggle::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  background: #f4efe6;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: transform var(--dur-2) var(--ease-standard);
+}
+.toggle[aria-checked='true'] {
+  background: var(--amber-fill);
+}
+.toggle[aria-checked='true']::after {
+  transform: translateX(20px);
+}
+
+/* ---- Map layers (spec §7.5): the switch, lamp, coil and shot colours ----
+   One home for the map's markers and list, MapControls' toggles and MapParts' headings (audit
+   AR2-02). --k is a layer's ring and dot colour; a heading in the layer colour reads --k-ink,
+   the text twin, where the ring colour is too light for text (the switch layer's --amber). */
+.k-sw {
+  --k: var(--amber);
+  --k-ink: var(--amber-ink);
+  --k-fill: var(--tint);
+  --m: 12px;
+}
+.k-lamp {
+  --k: var(--violet);
+  --k-fill: var(--violet-tint);
+  --m: 10px;
+}
+.k-coil {
+  --k: var(--brass);
+  --k-fill: var(--brass-tint);
+  --m: 13px;
+}
+.k-shot {
+  --k: var(--ink);
+  --k-fill: var(--raised);
+  --m: 16px;
+}
+
+/* ---- Chips, pills, codes, wires (spec §8.6) ----
+   .chip is a control (a filter, a recent search); a label that only shows a value is a .pill,
+   a .code or a .wire, never a .chip. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--r-chip);
+  background: var(--sunk);
+  color: var(--ink);
+  font: var(--t-sub);
+  font-weight: 500;
+  cursor: pointer;
+}
+.chip.on {
+  background: var(--tint);
+  box-shadow: inset 0 0 0 1px var(--amber-ink);
+  color: var(--amber-ink);
+}
+.pill {
+  /* The tint is a variable so a list can lay it over its own ground (MapParts, AY-16). */
+  --pill-tint: var(--sunk);
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: var(--r-btn);
+  font: var(--t-foot);
+  font-weight: 600;
+  background: var(--pill-tint);
+  color: var(--muted);
+}
+.pill.ok {
+  --pill-tint: var(--ok-tint);
+  color: var(--ok);
+}
+.pill.fault {
+  --pill-tint: var(--bad-tint);
+  color: var(--bad);
+}
+.pill.untested {
+  --pill-tint: var(--warn-tint);
+  color: var(--warn);
+}
+.pill .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+/* A code chip. `.code.dmd` puts it on the DMD well: .dmd gives the look, .code (later) the box. */
+.code {
+  display: inline-grid;
+  place-items: center;
+  min-width: 36px;
+  height: 26px;
+  padding: 0 6px;
+  border-radius: var(--r-xs);
+  font: var(--t-code);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  /* Spec §8.6: a code is one token; `SOL 01` never wraps (VP-06). */
+  white-space: nowrap;
+}
+.code.lg {
+  min-width: 54px;
+  height: 40px;
+  border-radius: var(--r-code-lg);
+  font: var(--t-code-lg);
+}
+/* A wire colour: the swatch and its name. A label, not a control: no background, no cursor. */
+.wire {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: var(--t-foot);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+.wire i {
+  display: inline-block;
+  flex: none;
+  width: 26px;
+  height: 10px;
+  border-radius: var(--r-wire);
+  box-shadow: var(--wire-edge);
+}
+.hint {
+  padding: 12px 14px;
+  border-radius: var(--r-btn);
+  background: var(--brass-tint);
+  font: var(--t-sub);
+}
+.hint strong {
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--brass-ink);
+}
+/* A keyboard hint: a touch phone has no arrow keys to press (audit CP2-18). */
+@media (hover: none), (pointer: coarse) {
+  .kbd-only {
+    display: none;
+  }
+}
+
+/* ---- The search field (spec §8.7) ----
+   One field: a 36-tall pill (radius 10, --seg-track) painted inside a 44 box, so the hit area
+   stays 44. The 4px transparent border and the padding-box clip draw the pill; the outer radius
+   is the pill's plus the border. The text is 16/21, not the spec's 15/20: iOS Safari zooms into
+   any field under 16px. .srch wraps an input.search and its "Clear search" button. */
+.search {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 44px;
+  padding: 0 12px;
+  border: 4px solid transparent;
+  border-radius: calc(var(--r-sm) + 4px);
+  background-color: var(--seg-track);
+  background-clip: padding-box;
+  /* The pill's 1 px edge at the padding box, 3:1 on the ground (audit FIELD-3-1). */
+  box-shadow: inset 0 0 0 1px var(--field-line);
+  color: var(--ink);
+  font: var(--t-callout);
+}
+.search::placeholder {
+  color: var(--faint-ink);
+  opacity: 1;
+}
+/* The ring sits 1 outside the pill, inside the box. */
+.search:focus {
+  outline: 2px solid var(--amber);
+  outline-offset: -3px;
+}
+.search::-webkit-search-decoration,
+.search::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  display: none;
+}
+/* The select twin (Manuals): a chevron of two gradients in --muted, clipped to the pill. */
+select.search {
+  width: auto;
+  padding-right: 32px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position:
+    right 19px center,
+    right 14px center;
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+.srch {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+/* The 44 box reaches 4 past the wrapper on each side, so the pill itself lines up with the cards
+   and lists under it (VL2-09). */
+.srch > .search {
+  flex: none;
+  width: calc(100% + 8px);
+  margin-inline: -4px;
+}
+/* Room for the clear button only while there is text to clear, so a long placeholder is not cut. */
+.srch .search:not(:placeholder-shown) {
+  padding-right: var(--touch);
+}
+.srch .clear {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  color: var(--muted);
+}
+.srch .clear svg {
+  width: 16px;
+  height: 16px;
+}
+@media (hover: hover) {
+  .srch .clear:hover {
+    background: none;
+    color: var(--ink);
+  }
+}

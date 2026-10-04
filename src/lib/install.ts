@@ -5,7 +5,7 @@ import { emit } from '~/lib/events';
  * `promptInstall`. Both live on `window`, so it does not matter that the two are separate bundles.
  * Safari never fires the event, so the sheet's iPhone footer covers that case.
  */
-export interface BeforeInstallPromptEvent extends Event {
+interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }

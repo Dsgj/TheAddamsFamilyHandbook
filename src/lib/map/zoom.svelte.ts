@@ -10,24 +10,24 @@ import { PLAYFIELD } from '~/lib/data/positions';
 import type { Loc } from '~/lib/model/types';
 
 /** Zoom steps (spec §7.2). Pinch covers 1–3. */
-export const ZOOMS = [1, 1.6, 2.4];
+const ZOOMS = [1, 1.6, 2.4];
 export const MAX_ZOOM = 3;
 /** A pointer that moves further than this is a drag, and never selects. */
 const DRAG = 6;
 
 /** A point to hold still: a canvas fraction (fx, fy) that sits at (sx, sy) of the scroller. */
-export interface Anchor {
+interface Anchor {
   fx: number;
   fy: number;
   sx: number;
   sy: number;
 }
 export const clamp = (v: number, lo = 0, hi = 1) => Math.min(hi, Math.max(lo, v));
-export type Pt = { x: number; y: number };
+type Pt = { x: number; y: number };
 export const dist = (a: Pt, b: Pt) => Math.hypot(a.x - b.x, a.y - b.y);
 
 /** What the zoom reads from, and calls back into, the map that owns it. */
-export interface ZoomContext {
+interface ZoomContext {
   /** The fit (px per drawing px at 1×); 0 until the stage is measured. */
   fit: () => number;
   /** The expanded sheet's vertical shift of the canvas at 1× (fractionAt reads it). */

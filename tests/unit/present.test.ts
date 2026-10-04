@@ -10,10 +10,10 @@ const pair = (a: string | undefined, b: string | undefined) => `${text(a)} · ${
 describe('wiring', () => {
   it('gives a matrix switch its column and row, and no wire', () => {
     const sw = find('switch', '32')!;
-    const w = wiring('switch', sw);
+    const w = wiring(sw);
     expect(w.kind).toBe('switch');
     if (w.kind !== 'switch' || !w.matrix) throw new Error('switch 32 is in the matrix');
-    expect(w.matrix.column).toEqual({ n: sw.col, colour: sw.colWireEn, text: 'J206-3 · U20-16' });
+    expect(w.matrix.column).toEqual({ n: sw.col, colour: sw.colWire, text: 'J206-3 · U20-16' });
     expect(w.matrix.row.n).toBe(sw.row);
     expect(w.wire).toBeNull();
     expect(w.part).toBe('SW-11A-37');
@@ -22,30 +22,30 @@ describe('wiring', () => {
 
   it('gives a dedicated switch its wire, and no matrix', () => {
     const sw = find('switch', 'D1')!;
-    const w = wiring('switch', sw);
+    const w = wiring(sw);
     if (w.kind !== 'switch' || w.matrix) throw new Error('D1 is not in the matrix');
-    expect(w.wire).toEqual({ colour: sw.wireEn ?? '', text: sw.pin ?? '' });
+    expect(w.wire).toEqual({ colour: sw.wire ?? '', text: sw.pin ?? '' });
   });
 
   it('gives a lamp its column, row and bulb, an empty bulb included', () => {
     const lamp = find('lamp', '13')!;
-    const w = wiring('lamp', lamp);
+    const w = wiring(lamp);
     if (w.kind !== 'lamp') throw new Error('a lamp');
     expect(w.column).toEqual({
       n: lamp.col,
-      colour: lamp.colWireEn,
+      colour: lamp.colWire,
       text: `${lamp.colPin} · ${lamp.colQ}`,
     });
     expect(w.bulb).toEqual({ code: lamp.bulb, part: lamp.bulbPart });
     for (const id of ['41', '76', '88']) {
-      const b = wiring('lamp', find('lamp', id)!);
+      const b = wiring(find('lamp', id)!);
       if (b.kind !== 'lamp') throw new Error('a lamp');
       expect(b.bulb.code, `lamp ${id}`).toBe('');
     }
   });
 
   it('gives a coil its wire, part, assembly and fuse, with or without an assembly', () => {
-    const w = wiring('coil', find('coil', '05')!);
+    const w = wiring(find('coil', '05')!);
     expect(w).toMatchObject({
       kind: 'coil',
       wire: { colour: 'Vio-Grn', text: 'J130-6 · Q64' },
@@ -53,35 +53,35 @@ describe('wiring', () => {
       fuse: 'F105 (3A S.B.)',
       fuseKey: 'F105',
     });
-    const bare = wiring('coil', find('coil', '16')!);
+    const bare = wiring(find('coil', '16')!);
     if (bare.kind !== 'coil') throw new Error('a coil');
     expect(bare.assy).toBe('');
   });
 
   it('reads every text as the old templates did, over the whole kit', () => {
     for (const sw of DATA.switches) {
-      const w = wiring('switch', sw);
+      const w = wiring(sw);
       if (w.kind !== 'switch') throw new Error('a switch');
       expect([w.part, w.assy]).toEqual([sw.part, sw.assy]);
       if (sw.col !== null) {
         expect(w.matrix, sw.id).toEqual({
-          column: { n: sw.col, colour: sw.colWireEn ?? '', text: pair(sw.colPin, sw.colIc) },
-          row: { n: sw.row, colour: sw.rowWireEn ?? '', text: pair(sw.rowPin, sw.rowIc) },
+          column: { n: sw.col, colour: sw.colWire ?? '', text: pair(sw.colPin, sw.colIc) },
+          row: { n: sw.row, colour: sw.rowWire ?? '', text: pair(sw.rowPin, sw.rowIc) },
         });
         expect(w.wire).toBeNull();
       } else {
         expect(w.matrix).toBeNull();
-        expect(w.wire, sw.id).toEqual({ colour: sw.wireEn ?? '', text: text(sw.pin) });
+        expect(w.wire, sw.id).toEqual({ colour: sw.wire ?? '', text: text(sw.pin) });
       }
     }
     for (const lamp of DATA.lamps) {
       // The lamp chips took the raw colour; every lamp has one, so `?? ''` changes nothing.
-      expect(typeof lamp.colWireEn, lamp.id).toBe('string');
-      expect(typeof lamp.rowWireEn, lamp.id).toBe('string');
-      expect(wiring('lamp', lamp), lamp.id).toEqual({
+      expect(typeof lamp.colWire, lamp.id).toBe('string');
+      expect(typeof lamp.rowWire, lamp.id).toBe('string');
+      expect(wiring(lamp), lamp.id).toEqual({
         kind: 'lamp',
-        column: { n: lamp.col, colour: lamp.colWireEn, text: pair(lamp.colPin, lamp.colQ) },
-        row: { n: lamp.row, colour: lamp.rowWireEn, text: pair(lamp.rowPin, lamp.rowQ) },
+        column: { n: lamp.col, colour: lamp.colWire, text: pair(lamp.colPin, lamp.colQ) },
+        row: { n: lamp.row, colour: lamp.rowWire, text: pair(lamp.rowPin, lamp.rowQ) },
         bulb: { code: text(lamp.bulb), part: text(lamp.bulbPart) },
         led: lamp.led,
         assy: lamp.assy,
@@ -89,10 +89,10 @@ describe('wiring', () => {
     }
     for (const coil of DATA.coils) {
       // The same for the coil chip.
-      expect(typeof coil.wireEn, coil.id).toBe('string');
-      expect(wiring('coil', coil), coil.id).toEqual({
+      expect(typeof coil.wire, coil.id).toBe('string');
+      expect(wiring(coil), coil.id).toEqual({
         kind: 'coil',
-        wire: { colour: coil.wireEn, text: pair(coil.pin, coil.driver) },
+        wire: { colour: coil.wire, text: pair(coil.pin, coil.driver) },
         part: coil.part,
         assy: coil.assy,
         fuse: coil.fuse,
@@ -111,7 +111,7 @@ describe('wiringRows', () => {
 
   it('labels a matrix switch, a lamp and a coil in one order on every surface', () => {
     const sw = DATA.switches.find((s) => s.col !== null && s.part && s.assy)!;
-    const w = wiring('switch', sw);
+    const w = wiring(sw);
     expect(labels(wiringRows(w, ALL))).toEqual([
       `Column ${sw.col}`,
       `Row ${sw.row}`,
@@ -122,7 +122,7 @@ describe('wiringRows', () => {
     expect(labels(wiringRows(w, WIRES))).toEqual([`Column ${sw.col}`, `Row ${sw.row}`]);
 
     const lamp = DATA.lamps.find((l) => l.led && l.assy)!;
-    expect(labels(wiringRows(wiring('lamp', lamp), ALL))).toEqual([
+    expect(labels(wiringRows(wiring(lamp), ALL))).toEqual([
       `Column ${lamp.col}`,
       `Row ${lamp.row}`,
       'Bulb',
@@ -131,18 +131,13 @@ describe('wiringRows', () => {
     ]);
 
     const coil = DATA.coils.find((c) => c.assy)!;
-    expect(labels(wiringRows(wiring('coil', coil), ALL))).toEqual([
-      'Wire',
-      'Coil',
-      'Assembly',
-      'Fuse',
-    ]);
-    expect(labels(wiringRows(wiring('coil', coil), WIRES))).toEqual(['Wire', 'Fuse']);
+    expect(labels(wiringRows(wiring(coil), ALL))).toEqual(['Wire', 'Coil', 'Assembly', 'Fuse']);
+    expect(labels(wiringRows(wiring(coil), WIRES))).toEqual(['Wire', 'Fuse']);
   });
 
   it('gives a switch off the matrix one wire, and leaves out a part or assembly it lacks', () => {
     for (const sw of DATA.switches) {
-      const got = labels(wiringRows(wiring('switch', sw), ALL));
+      const got = labels(wiringRows(wiring(sw), ALL));
       expect(got.includes('Wire'), sw.id).toBe(sw.col === null);
       expect(got.includes('Switch'), sw.id).toBe(!!sw.part);
       expect(got.includes('Assembly'), sw.id).toBe(!!sw.assy);
@@ -151,7 +146,7 @@ describe('wiringRows', () => {
 
   it('carries the values: the bulb code with its part number, the LED, the fuse and its anchor', () => {
     for (const lamp of DATA.lamps) {
-      const rows = wiringRows(wiring('lamp', lamp), SHEET);
+      const rows = wiringRows(wiring(lamp), SHEET);
       expect(
         rows.find((r) => r.label === 'Bulb'),
         lamp.id,
@@ -167,7 +162,7 @@ describe('wiringRows', () => {
       ).toBe(!!lamp.led);
     }
     for (const coil of DATA.coils) {
-      const rows = wiringRows(wiring('coil', coil), WIRES);
+      const rows = wiringRows(wiring(coil), WIRES);
       expect(rows.at(-1), coil.id).toEqual({
         kind: 'fuse',
         label: 'Fuse',

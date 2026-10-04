@@ -322,7 +322,7 @@
 /* Print (spec §1.1, audit DS-03): black on white in both themes. The selector list matches the
    light blocks' specificity (0,2,0) and comes after them, so it wins in every scheme and theme
    without !important. Every ink keeps a light value (4.5 or more on white), so a dark-theme print
-   is as readable as a light one, and the scans and figures print uninverted. base.css hides the
+   is as readable as a light one, and the scans and figures print uninverted. print.css hides the
    chrome and the controls. */
 @media print {
   :root,

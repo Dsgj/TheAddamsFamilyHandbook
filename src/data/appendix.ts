@@ -5,8 +5,7 @@
  * `findHeading`, the same way Setup and Care links are; `appendixAnchor` is the same id for
  * client islands, checked against the rendered headings by the unit test.
  */
-import type { AnyComponent } from '~/lib/data/components';
-import type { Coil, Kind, Lamp, Switch } from '~/lib/model/types';
+import type { AnyComponent, Coil, Kind, Lamp, Switch } from '~/lib/model/types';
 import { pageRefText } from '~/lib/pages';
 import { handbookHref } from '~/lib/url';
 
@@ -70,7 +69,7 @@ export function appendixFor(kind: Kind, item: AnyComponent): string[] {
   return out;
 }
 
-export interface ServiceNote {
+interface ServiceNote {
   code: string;
   text: string;
 }
@@ -130,7 +129,7 @@ function switchNote(s: Switch): ServiceNote {
       text: `A leaf switch pair behind the cabinet button (button assembly B-12273-6), read by the Fliptronics board through ${s.pin ?? 'J805'} with the orange switch ground on J805-6; the connector at the button carries three wires. A dead or intermittent button is the blade gap, dirty contacts (card stock, never a file) or that three-pin connector before anything on the playfield.`,
     };
   }
-  if (s.kind === 'ded' || s.col === null || s.row === null) {
+  if (s.circuit === 'ded' || s.col === null || s.row === null) {
     return {
       code: 'A3',
       text: `A dedicated switch on ${s.pin ?? 'its own pin'}, outside the matrix, so it cannot ghost other switches. Check the gap, the wire at the lug and the connector; grounded switches read against the cabinet ground.`,
@@ -157,8 +156,8 @@ function lampNote(l: Lamp): ServiceNote {
 }
 
 /** The plain-text service note for a component page, from the appendix that fits it best. */
-export function serviceNotes(kind: Kind, item: AnyComponent): ServiceNote[] {
-  if (kind === 'switch') return [switchNote(item as Switch)];
-  if (kind === 'lamp') return [lampNote(item as Lamp)];
-  return [coilNote(item as Coil)];
+export function serviceNotes(item: AnyComponent): ServiceNote[] {
+  if (item.kind === 'switch') return [switchNote(item)];
+  if (item.kind === 'lamp') return [lampNote(item)];
+  return [coilNote(item)];
 }

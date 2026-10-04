@@ -2,7 +2,7 @@ import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'astro/config';
 import svelte from '@astrojs/svelte';
 import AstroPWA from '@vite-pwa/astro';
-import { kitPlugin } from './src/lib/kit/plugin';
+import { kitPlugin } from './src/build/kit-plugin';
 import { precacheKeys } from './src/lib/precache';
 
 // BASE_PATH is "/" locally and "/<repo>/" on GitHub Pages; the Docker image sets it at build time.

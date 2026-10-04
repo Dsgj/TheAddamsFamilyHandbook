@@ -122,6 +122,7 @@ describe('sync-kit', () => {
     expect(after['public/assets/pages/ops/002.webp']).toBe('webp');
     expect(after['tools/build_data.py']).toBe('print(2)\n');
     expect(existsSync(join(repo, 'src/data/kit/parts.json'))).toBe(false);
+    expect(existsSync(join(repo, 'public/data/ocr-text.json'))).toBe(false);
     expect(existsSync(join(repo, 'public/data/components.json'))).toBe(false);
     expect(existsSync(join(repo, 'public/data/callouts-page-relative.json'))).toBe(false);
     const manifest = JSON.parse(after['src/data/kit/kit-sync.json']!) as Record<string, string>;

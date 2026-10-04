@@ -14,7 +14,7 @@ export const CTRL_FOOT = 156 + 28 + 4;
  *  pre-hydration CSS repeats the 58). */
 export const COLUMN_SIDE = 10 + 44 + 4;
 
-export interface Stage {
+interface Stage {
   w: number;
   h: number;
   /** The height a phone's peeking sheet takes from the stage's foot. */

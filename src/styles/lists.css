@@ -1,0 +1,181 @@
+/* Lists: the list vocabulary (groups of rows) and the shared checklist row. One part of the global
+   sheet; Base.astro imports the parts in cascade order (audit AR2-08). */
+
+/* ---- List vocabulary (spec §8.4): groups of rows, each an <a> or a <button> ---- */
+.lst-h {
+  margin: 22px 16px 7px;
+  font: var(--t-foot);
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.lst {
+  list-style: none;
+  margin: 0 16px;
+  padding: 0;
+  border-radius: var(--r-md);
+  background: var(--cell);
+  overflow: hidden;
+}
+.lst > li + li > .lrow {
+  border-top: 1px solid var(--sep);
+}
+.lrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 6px 16px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.lrow.two {
+  min-height: 60px;
+}
+/* The ring goes inside the row: .lst clips to its rounded box, and the global ring outside the
+   row showed as two separator-like lines (AY2-02). Rounded, so the first and last rows fit the
+   list's corners. */
+.lrow:focus-visible {
+  outline-offset: -2px;
+  border-radius: var(--r-md);
+}
+.lrow:is(a, button):active {
+  background: var(--press);
+}
+.lrow .tile {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-thumb);
+  background: var(--tint);
+  color: var(--amber-ink);
+}
+.lrow .tile svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.lrow .txt {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+}
+/* A code chip that leads a row is at least as wide as `SOL 00` in --t-code with its tracking
+   (69.5 px), so the titles after `L22`, `SOL 10` and `31-35` share one start line (VP2-07). */
+.lrow > .code {
+  flex: none;
+  min-width: 70px;
+}
+.lrow .ttl {
+  min-width: 0;
+  font-size: 17px;
+  line-height: 22px;
+  overflow-wrap: anywhere;
+}
+.lrow .sub {
+  font-size: 15px;
+  line-height: 20px;
+  color: var(--muted);
+}
+.lrow .val {
+  flex: 0 0 auto;
+  font-size: 17px;
+  line-height: 22px;
+  color: var(--muted);
+}
+.lrow .val.mono {
+  font-size: 15px;
+  line-height: 20px;
+}
+.lrow .chev {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  color: var(--faint);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.lrow.danger {
+  color: var(--bad);
+}
+.lrow.static {
+  cursor: default;
+}
+.gf {
+  margin: 7px 16px 0;
+  font: var(--t-foot);
+  color: var(--muted);
+}
+
+/* ---- Checklist (spec §8.3, §12): Setup, Care and Verify share one row (VP2-05) ----
+   The tick at the top of a 44 column, then the row's title and text, then a row of links with the
+   date of the tick. Rows are at least 44 tall with a 44 tick target. */
+.checklist {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.checklist > li {
+  display: grid;
+  grid-template-columns: var(--touch) 1fr;
+  gap: 4px;
+  min-height: 44px;
+  padding: 6px 0;
+  border-top: 1px solid var(--line);
+}
+.checklist .tick {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  align-self: start;
+  cursor: pointer;
+}
+.checklist .tick input {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--ok);
+}
+/* The body's first line centres on the tick: (44 - 21) / 2. */
+.checklist .body {
+  min-width: 0;
+  padding-top: 11px;
+}
+.checklist .done .title {
+  color: var(--muted);
+  text-decoration: line-through;
+  text-decoration-color: var(--ok);
+}
+/* The links are a row under the text, not in it, so each is a real 44 target and a tap beside one
+   never reaches the tick. A source label ('Manual p. 2-16') wraps as a whole (VP2-18). */
+.checklist .links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 14px;
+  margin: 0;
+}
+.checklist .links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch);
+  min-width: var(--touch);
+  white-space: nowrap;
+}

@@ -24,7 +24,7 @@
   import { recordViewed } from '~/lib/model/recent.svelte';
   import { getStatus, setStatus } from '~/lib/model/status.svelte';
   import { shortDate } from '~/lib/status-io';
-  import type { Coil, Kind, Lamp, MapMeta, StatusValue, Switch } from '~/lib/model/types';
+  import type { AnyComponent, MapMeta, StatusValue } from '~/lib/model/types';
   import { pageTitleText } from '~/lib/pages';
   import { callouts as calloutsOf, offMap, wiring, wiringRows } from '~/lib/present';
   import { href, manualHref, mapHref } from '~/lib/url';
@@ -41,18 +41,17 @@
    * hint and the Service log. "Add to list" marks Fault (Q6 default: the list is derived from
    * Fault status). The visit is recorded for "Recently viewed" on the Tables hub.
    */
-  type Any = Switch | Lamp | Coil;
   let {
-    kind,
     item,
     mapMeta,
     related = [],
-  }: { kind: Kind; item: Any; mapMeta: MapMeta; related?: Related[] } = $props();
+  }: { item: AnyComponent; mapMeta: MapMeta; related?: Related[] } = $props();
 
-  const sw = $derived(kind === 'switch' ? (item as Switch) : undefined);
-  const lamp = $derived(kind === 'lamp' ? (item as Lamp) : undefined);
-  const coil = $derived(kind === 'coil' ? (item as Coil) : undefined);
-  const w = $derived(wiring(kind, item));
+  const kind = $derived(item.kind);
+  const sw = $derived(item.kind === 'switch' ? item : undefined);
+  const lamp = $derived(item.kind === 'lamp' ? item : undefined);
+  const coil = $derived(item.kind === 'coil' ? item : undefined);
+  const w = $derived(wiring(item));
   const layer = $derived(MAP_LAYER[kind]);
   const callouts = $derived(calloutsOf(item));
   const mapPage = $derived(mapMeta.page);
@@ -166,7 +165,7 @@
         {:else}
           <!-- Nothing to show on the map: say where it is instead (DA2-06, UX2-05). -->
           <div class="lrow static">
-            <span class="txt">{offMap(kind, item)}</span>
+            <span class="txt">{offMap(item)}</span>
           </div>
         {/if}
       </li>

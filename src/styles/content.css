@@ -1,0 +1,394 @@
+/* Page content: the data tables and their cells, the status colours, provenance notes, scans and
+   the handbook prose. One part of the global sheet; Base.astro imports the parts in cascade order
+   (audit AR2-08). */
+
+/* Tables */
+table.t {
+  border-collapse: collapse;
+  width: 100%;
+  font: var(--t-sub);
+}
+table.t th,
+table.t td {
+  text-align: left;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+/* Spec §8.9: a code, pin or part number never breaks mid-token (`J205-1`, `AE-26-1200`); the
+   name column gives way instead. */
+table.t td.mono,
+table.t td.chk,
+table.t .mono {
+  white-space: nowrap;
+}
+/* A code phrase ('F111 Flasher Secondary (5A S.B.)', 'CPU D19') wraps at its spaces only: each
+   token is a .tok (Phrase.astro), so a cell can take two lines and still never break a code. */
+table.t td.phrase {
+  white-space: normal;
+}
+.tok {
+  white-space: nowrap;
+}
+table.t th {
+  color: var(--muted);
+  font: var(--t-cap);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+@media (hover: hover) {
+  table.t tbody tr:hover {
+    background: var(--sunk);
+  }
+}
+
+/* Status colours */
+.st-ok {
+  color: var(--ok);
+}
+.st-fault {
+  color: var(--bad);
+}
+.st-untested {
+  color: var(--warn);
+}
+
+/* Provenance notes */
+.prov {
+  font: var(--t-foot);
+  color: var(--muted);
+  border-left: 2px solid var(--brass);
+  padding-left: 10px;
+  margin: 8px 0;
+}
+
+/* Scans */
+.scan {
+  filter: var(--scan-filter);
+  background: #fff;
+}
+
+/* Handbook prose. Spec §3.1: the measure goes on the text blocks, never on the article, so figures,
+   tables and the embedded map keep the full column. :where() keeps each block's own specificity. */
+.prose :where(p, ul, ol, dl, blockquote, h2, h3, h4, .owner-note) {
+  max-width: var(--measure);
+}
+/* The same measure on a page's own paragraphs (the intros of /care, /setup and the tables), a
+   tab panel's (the matrix note on /switches), the group footers (.gf, a <p> of text and links
+   only), the provenance notes and the text of a static list row (the service kit on /shopping,
+   VL2-06). Text only: the panel's matrix keeps the column. */
+.wrap > p,
+.panel > p,
+.gf,
+.prov,
+.lrow.static .txt {
+  max-width: var(--measure);
+}
+/* The handbook's own headings (render.ts: h2 for a level-2 heading, h3 below it, spec §9.11,
+   audit AY-14) keep the name and section-head sizes. Scoped to the rendered sections, so an
+   embed's card heading inside .prose keeps its own. */
+.prose > section > h2 {
+  font: var(--t-name);
+  margin-top: 1.4em;
+  color: var(--violet);
+}
+.prose > section > h3 {
+  font: var(--t-head);
+  margin-top: 1.2em;
+}
+.prose ul,
+.prose ol {
+  padding-left: 1.3em;
+}
+.prose li {
+  margin: 0.2em 0;
+}
+.prose figure.fig {
+  margin: 1em 0;
+  padding: 8px;
+  background: var(--sunk);
+  border-radius: var(--r-xs);
+}
+/* Its own width, the column's, or the width that keeps it 70vh tall, whichever is least: a definite
+   width, so the box its width and height give is there before the file arrives (AY2-06). */
+.prose figure.fig img {
+  display: block;
+  margin: 0 auto;
+  max-height: 70vh;
+  width: min(100%, var(--w) * 1px, 70vh * var(--w) / var(--h));
+  filter: var(--scan-filter);
+  background: #fff;
+}
+.prose figure.fig.photo img {
+  filter: none;
+  background: transparent;
+  max-width: 100%;
+}
+.prose figcaption,
+.prose .fig-note {
+  font: var(--t-foot);
+  color: var(--muted);
+  margin-top: 6px;
+}
+.prose .scroll-x {
+  margin: 0.8em 0;
+}
+/* The appendix cites sources as bare <https://…> links; nothing else inside .prose needs to break
+   mid-word (that would crush table cells, see .prose .scroll-x above), so this is scoped to links,
+   not the whole .prose block (VP-01). */
+.prose a {
+  overflow-wrap: anywhere;
+}
+/* Spec §12, audit AY-12: a handbook table's page refs (the quick reference's "1-2, 3", render.ts
+   turns #goto links into #pg- anchors or /manual/ pages) were 9-33 × 19, some 21 apart. Each is
+   now a box at least 24 wide and 26 tall (3 px over and under the 20 px line, taken back by the
+   margin, so the 33 row keeps its height), which leaves the focus ring inside the table's
+   scroller. The cell holds refs and commas only and never wraps: a second line 20 px under the
+   first would put two refs closer than 24 (WCAG 2.5.8). */
+.prose td > :is(a[href*='#pg-'], a[href*='/manual/']) {
+  display: inline-block;
+  min-width: 24px;
+  padding-block: 3px;
+  margin-block: -3px;
+  text-align: center;
+}
+.prose td:has(> :is(a[href*='#pg-'], a[href*='/manual/'])) {
+  white-space: nowrap;
+}
+.prose blockquote {
+  margin: 1em 0;
+  padding: 8px 12px;
+  border-left: 3px solid var(--warn);
+  background: var(--sunk);
+}
+.pg-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 1.8em 0 0.8em;
+  padding-top: 8px;
+  border-top: 1px dashed var(--line);
+  font: var(--t-cap);
+  color: var(--muted);
+}
+.pg-bar .btn {
+  margin-left: auto;
+}
+
+/* Menu map from the manual (ops p. 1-7), raw HTML in the transcription */
+.mmap {
+  display: grid;
+  gap: var(--gap);
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+.mcard {
+  background: var(--sunk);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xs);
+  padding: 10px 12px;
+}
+.mhead {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  font: var(--t-head);
+  font-family: var(--font-display);
+  font-weight: 400;
+  margin-bottom: 6px;
+}
+.mhead b {
+  color: var(--amber-ink);
+  font-family: var(--font-mono);
+}
+.mcard ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+/* Spec §12: the entries are contiguous rows, so each link is a real 44 row. */
+.mcard li > a {
+  display: flex;
+  align-items: center;
+  min-height: var(--touch);
+}
+.mcard .mc {
+  font-family: var(--font-mono);
+  color: var(--muted);
+  margin-right: 6px;
+  font-size: 13px;
+}
+
+/* The Broken tick (spec §8.9): an 18 box in a 44 × 44 label, which is the whole cell, so rows
+   never share a target and the label never spills out of the table. */
+table.t td.chk {
+  text-align: center;
+  width: 1%;
+  height: 44px;
+  padding: 0;
+  vertical-align: middle;
+}
+.chk-hit {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  vertical-align: middle;
+  cursor: pointer;
+}
+.fault-check {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--bad);
+  cursor: pointer;
+}
+table.t tr.row-fault td:first-child a,
+table.t tr.row-fault td:first-child {
+  color: var(--bad);
+}
+/* Spec §8.9, from 600: a table wider than its .scroll-x keeps the id column and the Broken tick
+   in view. The pinned cells take the background of the surface under the table (--tbl-bg) and
+   the row's hover. Sticky cells paint above the static ones, so no z-index. */
+table.t {
+  --tbl-bg: var(--ground);
+}
+.card table.t {
+  --tbl-bg: var(--cell);
+}
+/* Spec §12: the id link in a key cell (/lamps, /coils) is 17 × 18. Its 44 box is centred on it
+   upright and runs right from its left edge, because the column starts at the table scroller's
+   clipping edge; it reaches only the name beside it, plain text, and never meets the next row's
+   box (the rows are 45 apart or more). */
+table.t td.key > a {
+  position: relative;
+}
+table.t td.key > a::after {
+  content: '';
+  position: absolute;
+  top: min(0px, (100% - var(--touch)) / 2);
+  bottom: min(0px, (100% - var(--touch)) / 2);
+  left: 0;
+  width: max(100%, var(--touch));
+}
+/* Spec §12: a fuse link on /coils (DA2-05) is 17 or 35 tall. One block, so a wrapped "F105 (3A
+   S.B.)" has one box, with a 44 box centred on it. Its row is 45 tall at least, as a row with a
+   Broken tick is, so the boxes of two rows never meet (the flipper and GI rows were 33); in a
+   phone's stacked row the row's other links sit on other lines. */
+@media (min-width: 600px) {
+  table.t tr:has(> td.fuse) {
+    height: 45px;
+  }
+}
+table.t td.fuse > a {
+  display: inline-block;
+  position: relative;
+}
+table.t td.fuse > a::after {
+  content: '';
+  position: absolute;
+  inset: min(0px, (100% - var(--touch)) / 2);
+}
+@media (min-width: 600px) {
+  table.t :is(td, th).key {
+    position: sticky;
+    left: 0;
+    background: var(--tbl-bg);
+  }
+  table.t :is(td, th).chk {
+    position: sticky;
+    right: 0;
+    background: var(--tbl-bg);
+  }
+}
+@media (min-width: 600px) and (hover: hover) {
+  table.t tbody tr:hover > :is(.key, .chk) {
+    background: var(--sunk);
+  }
+}
+/* Spec §8.9, under 600: a `t two` table is a list of two-line rows. Line 1 is the id, the name
+   (its note under it) and the Broken tick; line 2 is the other cells as muted-label pairs. The
+   display change drops table semantics in WebKit, so the markup carries explicit ARIA roles, and
+   the column headers stay for screen readers. Not in print: A4 is 718 wide. */
+@media (max-width: 599px) {
+  table.t.two,
+  table.t.two tbody {
+    display: block;
+  }
+  table.t.two thead {
+    display: block;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  table.t.two tbody tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    column-gap: 8px;
+    padding-block: 4px;
+    border-bottom: 1px solid var(--line);
+  }
+  table.t.two tbody td {
+    order: 4;
+    padding: 2px 0;
+    border-bottom: 0;
+  }
+  table.t.two td.key {
+    order: 0;
+  }
+  /* The rows wrap, so nothing scrolls sideways: the scroller and its edge mask let a key link's
+     focus ring show whole at the column's edge (AY2-03). */
+  .scroll-x:has(> table.t.two) {
+    overflow-x: visible;
+    mask-image: none;
+  }
+  table.t.two td.nm {
+    order: 1;
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  /* Beside a 44 tick, the id and the name's first line sit on its middle (12 + 20 + 12), so a
+     name with a note under it keeps the id and the tick on its first line. */
+  table.t.two tbody tr:has(> td.chk) > :is(td.key, td.nm) {
+    padding-top: 12px;
+  }
+  table.t.two td.nm .note {
+    display: block;
+  }
+  table.t.two td.nm .note .sep {
+    display: none;
+  }
+  table.t.two td.chk {
+    order: 2;
+    width: auto;
+    margin-left: auto;
+  }
+  table.t.two tbody tr::after {
+    content: '';
+    order: 3;
+    flex-basis: 100%;
+  }
+  /* An empty pair (no location, no bulb) is not shown: the build renders its cell with no
+     whitespace, so it is :empty (the e2e checks no empty pair shows). */
+  table.t.two tbody td:empty {
+    display: none;
+  }
+  /* A pair wraps as a whole to the next line; only a phrase longer than the row (a fuse's
+     'F111 Flasher Secondary (5A S.B.)', a td.phrase) wraps inside, and then at its spaces. A
+     one-token code keeps the nowrap of td.mono. */
+  table.t.two td[data-h] {
+    font-size: 13px;
+    line-height: 18px;
+  }
+  /* The label is in the body face, whatever the value's face. The alt-text form keeps it out of
+     the accessible name (the header says it); engines without it take the plain form first. */
+  table.t.two td[data-h]::before {
+    content: attr(data-h) ' ';
+    content: attr(data-h) ' ' / '';
+    font: var(--t-foot);
+    color: var(--muted);
+  }
+}

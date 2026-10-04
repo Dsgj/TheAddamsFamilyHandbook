@@ -587,7 +587,7 @@ describe('README copy (spec §13)', () => {
 
   it('names the flipper switches by the connectors the data wires them to', () => {
     const flip = DATA.switches
-      .filter((s) => s.kind === 'flip')
+      .filter((s) => s.circuit === 'flip')
       .map((s) => String(s.pin).split('-')[0]);
     expect(readme).toContain(`Fliptronics ${[...new Set(flip)].sort().join('/')}`);
   });

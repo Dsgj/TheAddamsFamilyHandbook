@@ -1,5 +1,5 @@
 /** Wire colour chips. Keys are the manual's English colour names and abbreviations. */
-export const WIRE_COLOURS: Record<string, string> = {
+const WIRE_COLOURS: Record<string, string> = {
   Brown: '#7B4B2A',
   Brn: '#7B4B2A',
   Red: '#C62828',
@@ -27,7 +27,7 @@ export const WIRE_COLOURS: Record<string, string> = {
  * Full colour names for the manual's abbreviations (spec §13: wire colours are spelled out, UK
  * spelling). The solenoid table prints `Vio-Brn`; the app shows `Violet-Brown`.
  */
-export const WIRE_NAME: Record<string, string> = {
+const WIRE_NAME: Record<string, string> = {
   Blk: 'Black',
   Blu: 'Blue',
   Brn: 'Brown',

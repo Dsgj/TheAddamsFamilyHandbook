@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- The manual viewer's shortcuts ignore Shift and Caps Lock (R and T as well
+  as W and P), and `_` zooms out as `-` does, the same keys as on the map.
 - Copying or sharing Diagnose results, the shopping list or the map's
   calibration JSON now confirms with a toast. Where the clipboard refuses, the
   shopping list and the calibration card still show the text to copy by hand.

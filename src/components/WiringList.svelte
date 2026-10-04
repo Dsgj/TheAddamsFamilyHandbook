@@ -21,7 +21,7 @@
     rows: WiringRow[];
     variant: 'dl' | 'list';
     links?: boolean;
-    /** The detail page's list stands on its own, as a card (base.css .card). */
+    /** The detail page's list stands on its own, as a card (surfaces.css .card). */
     card?: boolean;
     children?: Snippet;
   } = $props();

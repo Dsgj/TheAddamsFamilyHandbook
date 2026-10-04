@@ -1,4 +1,5 @@
 import { untrack } from 'svelte';
+import { ANNOUNCE_MS } from '~/lib/search-field';
 
 /**
  * A search surface's polite announcement (spec §12, audit AY-09). Render `.text` into the
@@ -8,7 +9,7 @@ import { untrack } from 'svelte';
  * pre-fill such as `?q=`) until it is typed in or `arm()` is called, and clearing the query clears
  * the announcement at once. The timer is cleared on unmount. Call during component initialisation.
  */
-export function liveText(query: () => string, text: () => string, delay = 400) {
+export function liveText(query: () => string, text: () => string, delay = ANNOUNCE_MS) {
   let out = $state('');
   /** The query at mount (or at the last rebase); undefined until the first run. */
   let base: string | undefined;

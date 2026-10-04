@@ -3,9 +3,9 @@
  * sub-rows. Base.astro renders one `nav aria-label="Sections"` from this and CSS gives it three
  * forms: the phone tab bar below 600, the rail from 600 and the sidebar from 1280.
  */
-export type TabKey = 'diagnose' | 'map' | 'tables' | 'handbook' | 'workshop';
+type TabKey = 'diagnose' | 'map' | 'tables' | 'handbook' | 'workshop';
 
-export interface SubRow {
+interface SubRow {
   label: string;
   /** Path for `href()`. */
   path: string;
@@ -79,7 +79,7 @@ export const TABS: Tab[] = [
 ];
 
 /** Base `nav` key → tab. ComponentPage passes its list path (switches / lamps / coils). */
-export const NAV_TAB: Record<string, TabKey> = {
+const NAV_TAB: Record<string, TabKey> = {
   diagnose: 'diagnose',
   map: 'map',
   tables: 'tables',

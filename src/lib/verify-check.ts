@@ -6,7 +6,7 @@
 import { getTick, setTick, watchVerify } from '~/lib/model/verify.svelte';
 import { shortDate } from '~/lib/status-io';
 
-export function initVerifyChecks(root: ParentNode = document) {
+function initVerifyChecks(root: ParentNode = document) {
   const counter = root.querySelector<HTMLElement>('[data-verify-count]');
   const boxes = [...root.querySelectorAll<HTMLInputElement>('input.verify-check')];
   const apply = (el: HTMLInputElement) => {

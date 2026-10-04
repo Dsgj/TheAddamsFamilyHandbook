@@ -24,15 +24,15 @@ describe('markerName', () => {
 });
 
 describe('offMap', () => {
-  const sw = (id: string) => offMap('switch', find('switch', id)!);
+  const sw = (id: string) => offMap(find('switch', id)!);
 
   it('says where a part with no place on the map is, when the kit or the hardware says so', () => {
     expect(sw('D1')).toBe('Not on the playfield map: on the coin door.');
     expect(sw('F2')).toMatch(/: a flipper button on the side of the cabinet\.$/);
     expect(sw('F1')).toMatch(/: on the flipper assembly under the playfield\.$/);
     expect(sw('11')).toBe('Not on the playfield map: not used in this machine.');
-    expect(offMap('coil', find('coil', '02')!)).toBe('Not on the playfield map: in the cabinet.');
-    expect(offMap('lamp', find('lamp', '77')!)).toBe('Not on the playfield map.');
+    expect(offMap(find('coil', '02')!)).toBe('Not on the playfield map: in the cabinet.');
+    expect(offMap(find('lamp', '77')!)).toBe('Not on the playfield map.');
   });
 
   it('has a line for every component the map does not draw (UX2-05, DA2-06)', () => {
@@ -42,6 +42,6 @@ describe('offMap', () => {
       ...DATA.coils.map((c) => ['coil', c] as const),
     ].filter(([k, c]) => !positions(k, c.id).length);
     expect(off.length).toBeGreaterThan(0);
-    for (const [k, c] of off) expect(offMap(k, c)).toMatch(/^Not on the playfield map(: .+)?\.$/);
+    for (const [, c] of off) expect(offMap(c)).toMatch(/^Not on the playfield map(: .+)?\.$/);
   });
 });

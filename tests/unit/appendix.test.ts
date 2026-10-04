@@ -103,7 +103,7 @@ describe('owner appendices', () => {
 
   it('gives every component a plain-text service note from its first appendix', () => {
     for (const [kind, item] of allComponents()) {
-      const notes = serviceNotes(kind, item);
+      const notes = serviceNotes(item);
       expect(notes.length, `${kind} ${item.id}`).toBeGreaterThan(0);
       for (const n of notes) {
         expect(APPENDICES[n.code]).toBeTruthy();
@@ -113,8 +113,8 @@ describe('owner appendices', () => {
       expect(notes[0]!.code).toBe(appendixFor(kind, item)[0]);
     }
     const swamp = DATA.coils.find((c) => /Swamp Release/.test(c.name))!;
-    expect(serviceNotes('coil', swamp)[0]!.text).toContain('41 Ω');
-    expect(serviceNotes('coil', swamp)[0]!.text).toContain('J122');
+    expect(serviceNotes(swamp)[0]!.text).toContain('41 Ω');
+    expect(serviceNotes(swamp)[0]!.text).toContain('J122');
     expect(coilOhms('14-7966 12V')).toBeUndefined();
     expect(coilOhms('AE-26-1200')?.mark).toBe('vendor');
   });

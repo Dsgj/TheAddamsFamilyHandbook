@@ -17,11 +17,11 @@ export interface ShoppingItem {
 }
 
 /** A faulted item on the list, with the note the owner typed on its status (CR2-03). */
-export interface ShoppingRow extends ShoppingItem {
+interface ShoppingRow extends ShoppingItem {
   note: string;
 }
 
-export interface ShoppingGroup {
+interface ShoppingGroup {
   kind: Kind;
   /** Installed LED (or bulb type when none is recorded) for lamps, part number for the rest. */
   label: string;
@@ -70,7 +70,7 @@ export function groupFaults(items: ShoppingItem[], statuses: ComponentStatus[]):
 }
 
 /** "2 × #555 (24-8768): L11 Thing Multiball (socket loose), L12 Left Ramp": a note in brackets. */
-export function formatGroup(g: ShoppingGroup): string {
+function formatGroup(g: ShoppingGroup): string {
   const ref = g.part ? `${g.label} (${g.part})` : g.label;
   const item = (i: ShoppingRow) => `${itemRef(i)} ${i.name}` + (i.note ? ` (${i.note})` : '');
   return `${g.items.length} × ${ref}: ${g.items.map(item).join(', ')}`;

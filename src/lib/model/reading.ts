@@ -8,7 +8,7 @@ import { KEYS, readJson, writeJson } from '~/lib/storage';
 
 export const READING_KEY = KEYS.reading;
 
-export interface Reading {
+interface Reading {
   /** The section key (`tests`). */
   section: string;
   /** The section title (`Test menu`). */

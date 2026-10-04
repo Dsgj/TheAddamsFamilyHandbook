@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import type { HTMLAttributes } from 'svelte/elements';
+  import { media } from '~/lib/media';
 
   /**
    * Bottom sheet, spec §8.2. Two kinds:
@@ -51,8 +52,7 @@
   const still = $derived(
     kind === 'map' && globalThis.navigator?.userActivation?.hasBeenActive === false,
   );
-  const reduced = () =>
-    typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const reduced = () => media.reduced.current;
 
   // ---- easing: the spec's curves as JS for the Svelte transitions
   function bezier(x1: number, y1: number, x2: number, y2: number) {
@@ -297,7 +297,7 @@
   </section>
 {:else}
   <div class="modal" {...rest}>
-    <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+    <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions (a tap on the scrim closes; Esc and Close are the keyboard path) -->
     <div
       class="scrim"
       class:clear={!dim}
@@ -315,6 +315,7 @@
       in:rise|global={{ duration: 420 }}
       out:leave|global={{ duration: 300 }}
     >
+      <!-- svelte-ignore a11y_no_static_element_interactions (the head drags the sheet down; Esc and Close are the keyboard path) -->
       <div
         class="sheet-head"
         onpointerdown={headDown}

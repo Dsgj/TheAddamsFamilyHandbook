@@ -1,15 +1,13 @@
 import { COMPONENTS } from '~/lib/kit/components';
 import { MAP_LAYER } from '~/lib/copy';
-import type { Coil, Kind, Lamp, Layer, MapMeta, Switch } from '~/lib/model/types';
+import type { AnyComponent, Coil, Kind, Lamp, Layer, MapMeta, Switch } from '~/lib/model/types';
 
 export const DATA = COMPONENTS;
 
 const byId = <T extends { id: string }>(list: T[]) => new Map(list.map((x) => [x.id, x]));
 export const SWITCHES = byId(DATA.switches);
 export const LAMPS = byId(DATA.lamps);
-export const COILS = byId(DATA.coils);
-
-export type AnyComponent = Switch | Lamp | Coil;
+const COILS = byId(DATA.coils);
 
 export function find(kind: 'switch', id: string): Switch | undefined;
 export function find(kind: 'lamp', id: string): Lamp | undefined;
@@ -32,17 +30,4 @@ export function mapOf(kind: Kind): MapMeta {
 
 export function itemsOf(layer: Layer): AnyComponent[] {
   return layer === 'sw' ? DATA.switches : layer === 'lamp' ? DATA.lamps : DATA.coils;
-}
-
-export function isSwitch(c: AnyComponent): c is Switch {
-  return 'hint' in c;
-}
-export function isLamp(c: AnyComponent): c is Lamp {
-  return 'bulb' in c;
-}
-export function isCoil(c: AnyComponent): c is Coil {
-  return 'driver' in c && 'type' in c;
-}
-export function kindOf(c: AnyComponent): Kind {
-  return isSwitch(c) ? 'switch' : isLamp(c) ? 'lamp' : 'coil';
 }

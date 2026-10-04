@@ -8,7 +8,7 @@ import { nowIso } from '~/lib/status-io';
 import { KEYS, readList, updateJson, watch } from '~/lib/storage';
 import type { Kind } from '~/lib/model/types';
 
-export interface RecentEntry {
+interface RecentEntry {
   /** What was typed, tidied by `tidyInput`: a pasted report keeps its lines. */
   input: string;
   /** "1 switch · 1 marked Fault" */
@@ -17,7 +17,7 @@ export interface RecentEntry {
   at: string;
 }
 
-export interface ViewedEntry {
+interface ViewedEntry {
   kind: Kind;
   id: string;
   /** "32", "L13", "SOL 10" */
@@ -30,7 +30,7 @@ export interface ViewedEntry {
 
 const KEY = KEYS.recent;
 const VIEWED_KEY = KEYS.viewed;
-export const RECENT_MAX = 8;
+const RECENT_MAX = 8;
 
 const load = <T>(key: string) => readList<T>(key, RECENT_MAX);
 const isList = <T>(v: unknown): v is T[] => Array.isArray(v);

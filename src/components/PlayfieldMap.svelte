@@ -1,11 +1,12 @@
 <script lang="ts">
-  import { tick, untrack } from 'svelte';
+  import { onMount, tick, untrack } from 'svelte';
   import { SvelteSet } from 'svelte/reactivity';
   import { SHOTS } from '~/data/shots';
   import { mapOf } from '~/lib/data/components';
   import { agree, plural } from '~/lib/copy';
   import { listen } from '~/lib/events';
-  import { isTypingTarget } from '~/lib/keys';
+  import { isTypingTarget, zoomKey } from '~/lib/keys';
+  import { media } from '~/lib/media';
   import { liveText } from '~/lib/live.svelte';
   import type { CalibrationApi, Item, MapLayer, OverlayImage } from '~/lib/map/items';
   import {
@@ -32,7 +33,6 @@
   import { deselectBtn, emptyCard, partBody, partHead, shotCard, srcLink } from './MapCard.svelte';
   import MapControls from './MapControls.svelte';
   import MapParts from './MapParts.svelte';
-  import { DESKTOP, PHONE, WIDE } from '~/lib/bp';
 
   /** A tap that lands on no marker selects the nearest visible marker within this many screen px. */
   const HIT = 22;
@@ -91,13 +91,14 @@
   let stageH = $state(0);
   /** The scroller's document top; the scroller's height is 100dvh minus this and the bars. */
   let stageTop = $state(0);
+  /** Set on mount: the first render matches the server's, where every query is false (SV2-15). */
+  let mounted = $state(false);
   /** From 1000: the glass layers list and the side panel. */
-  let wide = $state(false);
+  const wide = $derived(mounted && media.wide.current);
   /** From 1280: the keyboard legend. */
-  let desktop = $state(false);
+  const desktop = $derived(mounted && media.desktop.current);
   /** Below 600: the selection sheet re-fits the drawing (spec §7.1 `phone`). */
-  let phone = $state(false);
-  let reduced = false;
+  const phone = $derived(mounted && media.phone.current);
   /** The selection sheet's detent. */
   let expanded = $state(false);
   /** The "All components on the map" modal (phones and tablets). */
@@ -109,7 +110,7 @@
   const zm = createMapZoom({
     fit: () => fit,
     shift: () => shift,
-    reduced: () => reduced,
+    reduced: () => media.reduced.current,
     calib: () => calib,
     scroller: () => scroller,
     canvas: () => canvas,
@@ -145,7 +146,9 @@
     stageTop = Math.max(0, scroller.getBoundingClientRect().top + scrollY);
   }
 
-  $effect(() => {
+  // Once, on mount (SV2-10): the link's layers, zoom and selection, and the calibration tool.
+  onMount(() => {
+    mounted = true;
     const u = new URLSearchParams(location.search);
     const l = u.get('layer');
     if (l) setOn(parseLayers(l));
@@ -155,12 +158,12 @@
     if (m?.kind) {
       // `id=kind:id` (what syncUrl writes) is exact, and shows its layer.
       const kind = m.kind;
-      untrack(() => on.add(layerOf(kind)));
+      on.add(layerOf(kind));
       selKey = componentKey(kind, m.id);
     } else if (m) {
       // A bare id (the link builders' form) is looked up in the layers that are on, in order.
       const i = m.id;
-      const layers = untrack(() => LAYERS.filter((x) => on.has(x)));
+      const layers = LAYERS.filter((x) => on.has(x));
       const hit = layers
         .map(kindOf)
         .find((k) => positions(k, i).length || itemsIn(layerOf(k)).some((c) => c.id === i));
@@ -187,18 +190,6 @@
     if (calibEl) above.observe(calibEl);
     addEventListener('resize', measureTop);
     measureTop();
-    const mqs: [MediaQueryList, (m: boolean) => void][] = [
-      [matchMedia(WIDE), (m) => (wide = m)],
-      [matchMedia(DESKTOP), (m) => (desktop = m)],
-      [matchMedia(PHONE), (m) => (phone = m)],
-      [matchMedia('(prefers-reduced-motion: reduce)'), (m) => (reduced = m)],
-    ];
-    const offs = mqs.map(([mq, set]) => {
-      set(mq.matches);
-      const h = (e: MediaQueryListEvent) => set(e.matches);
-      mq.addEventListener('change', h);
-      return () => mq.removeEventListener('change', h);
-    });
     // The top bar's buttons (map.astro, spec §6.5): "All components on the map" opens the list
     // sheet; "Search components" opens it with its field focused below 1000 and focuses the panel's field
     // from 1000 (Q28).
@@ -216,7 +207,6 @@
       above.disconnect();
       removeEventListener('resize', measureTop);
       offBar();
-      for (const off of offs) off();
     };
   });
 
@@ -359,7 +349,7 @@
     scroller.scrollTo({
       left: l.x * canvas.offsetWidth + canvas.offsetLeft - scroller.clientWidth / 2,
       top: l.y * canvas.offsetHeight + canvas.offsetTop - band / 2,
-      behavior: reduced ? 'auto' : 'smooth',
+      behavior: media.reduced.current ? 'auto' : 'smooth',
     });
   }
   $effect(() => {
@@ -408,18 +398,15 @@
     const t = e.target as HTMLElement | null;
     if (fromWindow && t !== document.body && t !== document.documentElement) return;
     if (isTypingTarget(t) || e.altKey || e.ctrlKey || e.metaKey) return;
+    const zoom = zoomKey(e.key);
+    if (zoom) {
+      if (zoom === 'in') zm.zoomIn();
+      else if (zoom === 'out') zm.zoomOut();
+      else zm.fitAll();
+      e.preventDefault();
+      return;
+    }
     switch (e.key) {
-      case '+':
-      case '=':
-        zm.zoomIn();
-        break;
-      case '-':
-      case '_':
-        zm.zoomOut();
-        break;
-      case '0':
-        zm.fitAll();
-        break;
       case 'Escape':
         if (!selKey) return;
         clearSelection();
@@ -440,7 +427,11 @@
         const step = 80;
         const dx = e.key === 'ArrowLeft' ? -step : e.key === 'ArrowRight' ? step : 0;
         const dy = e.key === 'ArrowUp' ? -step : e.key === 'ArrowDown' ? step : 0;
-        scroller.scrollBy({ left: dx, top: dy, behavior: reduced ? 'auto' : 'smooth' });
+        scroller.scrollBy({
+          left: dx,
+          top: dy,
+          behavior: media.reduced.current ? 'auto' : 'smooth',
+        });
         break;
       }
       default:
@@ -448,18 +439,14 @@
     }
     e.preventDefault();
   }
-  $effect(() => {
-    if (embed) return;
-    const h = (e: KeyboardEvent) => onKey(e, true);
-    window.addEventListener('keydown', h);
-    return () => window.removeEventListener('keydown', h);
-  });
 </script>
+
+<svelte:window onkeydown={(e) => !embed && onKey(e, true)} />
 
 <!-- The selected part in the wide panel and the embed: its card, a shot's or the empty one. -->
 {#snippet selection()}
   {#if current?.comp && current.kind !== 'shot'}
-    <ComponentCard kind={current.kind} item={current.comp} mapMeta={mapOf(current.kind)} inMap />
+    <ComponentCard item={current.comp} mapMeta={mapOf(current.kind)} inMap />
   {:else if currentShot}
     {@render shotCard(currentShot)}
   {:else}

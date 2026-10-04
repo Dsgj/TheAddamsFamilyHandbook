@@ -13,7 +13,6 @@
   import { componentCode, MAP_TITLE, STATUS_LABEL, TABLE_LABEL } from '~/lib/copy';
   import type { Item, MapLayer } from '~/lib/map/items';
   import { fullName, kindLine, statusOf } from '~/lib/map/items';
-  import type { Coil, Switch } from '~/lib/model/types';
   import { pageTitleText } from '~/lib/pages';
   import { wiring, wiringRows } from '~/lib/present';
   import { componentHref, href, manualHref, tableSpotHref } from '~/lib/url';
@@ -88,12 +87,12 @@
 <!-- The phone sheet's expanded content: wiring, the hint and the links (spec §7.6). -->
 {#snippet partBody(item: Item)}
   {#if item.comp && item.kind !== 'shot'}
-    {@const sw = item.kind === 'switch' ? (item.comp as Switch) : undefined}
-    {@const coil = item.kind === 'coil' ? (item.comp as Coil) : undefined}
+    {@const sw = item.comp.kind === 'switch' ? item.comp : undefined}
+    {@const coil = item.comp.kind === 'coil' ? item.comp : undefined}
     {@const page = mapOf(item.kind).page}
     <h3 class="gh">Wiring</h3>
     <WiringList
-      rows={wiringRows(wiring(item.kind, item.comp), { parts: true, assembly: false })}
+      rows={wiringRows(wiring(item.comp), { parts: true, assembly: false })}
       variant="list"
       links
     />

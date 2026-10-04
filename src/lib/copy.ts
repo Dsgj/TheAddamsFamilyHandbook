@@ -109,10 +109,10 @@ export function inMatrix(item: { col?: number | null }): boolean {
 }
 
 /** What locationLine reads. A component has all of it; a matrix cell only col, row and unused. */
-export interface Located {
+interface Located {
   col?: number | null;
   row?: number | null;
-  kind?: string;
+  circuit?: 'ded' | 'flip';
   /** "J805-1": a flipper or dedicated switch names the connector it is wired to. */
   pin?: string;
   /** "#555": a Related row names a lamp's bulb in place of its matrix place. */
@@ -125,7 +125,7 @@ export interface Located {
 }
 
 /** Options for locationLine: `bulb` puts a lamp's bulb ("bulb #555") in place of its matrix place. */
-export interface LocationOpts {
+interface LocationOpts {
   bulb?: boolean;
 }
 
@@ -142,8 +142,9 @@ export function locationLine(kind: Kind, item: Located, opts: LocationOpts = {})
   if (kind === 'lamp' && opts.bulb && item.bulb) parts.push(`bulb ${item.bulb}`);
   else if (kind !== 'coil' && inMatrix(item))
     parts.push(`matrix column ${item.col}, row ${item.row}`);
-  if (kind === 'switch' && item.kind === 'ded') parts.push(`dedicated (CPU ${conn ?? 'J205'})`);
-  if (kind === 'switch' && item.kind === 'flip') parts.push(`flipper (${conn ?? 'Fliptronics'})`);
+  if (kind === 'switch' && item.circuit === 'ded') parts.push(`dedicated (CPU ${conn ?? 'J205'})`);
+  if (kind === 'switch' && item.circuit === 'flip')
+    parts.push(`flipper (${conn ?? 'Fliptronics'})`);
   if (kind === 'lamp' && item.speaker) parts.push('speaker panel');
   if (kind === 'coil' && item.type) parts.push(item.type);
   if (item.unused) parts.push('not used');

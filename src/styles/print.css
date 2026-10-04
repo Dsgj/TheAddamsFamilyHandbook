@@ -1,0 +1,139 @@
+/* Print: the shopping list at the parts drawer, a component card taped inside the cabinet. One part
+   of the global sheet; Base.astro imports the parts in cascade order (audit AR2-08). */
+
+/* Print (audit DS-03): the token resets live at the end of tokens.css, where they beat the light
+   theme's blocks. Here: the shell, the bar's chrome, the controls and the toasts go; the page title
+   prints once, as the page's real h1 (the bar's on bar pages, the large title's on large-title
+   pages, the page's own on the rest). */
+@media print {
+  /* Colours come from the print tokens (tokens.css): white ground, black ink, --line rules. */
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-size: 12px;
+  }
+  /* Paper does not scroll: no edge fade on a cut table. */
+  .scroll-x {
+    mask-image: none;
+  }
+  .shell,
+  .btn,
+  .field,
+  .srch,
+  .search,
+  .foot,
+  .toast-host,
+  .map-controls,
+  .sr-only,
+  .top astro-island,
+  .ibtn,
+  .tlink,
+  .seg,
+  nav.rbar,
+  .acts,
+  .back,
+  .ptr,
+  .sheet.map,
+  .sheet.dialog,
+  .scrim,
+  nav.pn,
+  .chip,
+  .dock,
+  .hb .side,
+  button.lrow,
+  .pgno,
+  header.top[data-h1='page'],
+  header.top[data-h1='large'],
+  .top .lead,
+  .top .trail,
+  .top::after {
+    display: none !important;
+  }
+  /* On a bar page the bar's title is the h1: print it whole, as a plain heading. */
+  .top {
+    position: static;
+    padding: 0;
+    background: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .top .tb {
+    display: block;
+    height: auto;
+    padding: 0;
+  }
+  .top .ct {
+    max-width: none;
+    overflow: visible;
+    white-space: normal;
+    text-align: left;
+    opacity: 1;
+    font: var(--t-title);
+  }
+  .top .ct .full,
+  .top .ct .full.has-short {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+  }
+  .top .ct .short {
+    display: none;
+  }
+  /* On a large-title page the large title is the h1 (from 600 it is visually hidden, and under 600
+     it fades on scroll): print it whole, in place of the bar's aria-hidden copy. */
+  .lt {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+    padding: 0;
+  }
+  .lt h1 {
+    opacity: 1;
+    font: var(--t-title);
+  }
+  /* The Diagnose well is hidden with the dock. */
+  .dmd {
+    text-shadow: none;
+    border-color: var(--line);
+  }
+  .wrap {
+    max-width: none;
+    padding: 0;
+  }
+  /* The screen's 44 tick rows and pinned columns are for fingers and scrolling, not paper. */
+  table.t td.chk {
+    height: auto;
+    padding: 6px 10px;
+  }
+  .chk-hit {
+    display: inline;
+    width: auto;
+    height: auto;
+  }
+  table.t :is(td, th):is(.key, .chk) {
+    position: static;
+  }
+  .card {
+    break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid var(--line);
+  }
+  a,
+  :is(a:not([class]), a.small, .prose a, .owner-note a):not(.btn, .seg > a) {
+    color: var(--ink);
+    text-decoration: none;
+  }
+  /* Paper has no touch targets: a page ref prints as plain text again. */
+  .prose td > :is(a[href*='#pg-'], a[href*='/manual/']) {
+    display: inline;
+  }
+  a[href^='http']::after {
+    content: ' (' attr(href) ')';
+    font-size: 0.85em;
+    color: var(--muted);
+  }
+}

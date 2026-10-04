@@ -1,0 +1,273 @@
+/* Layout and the top bar: the content column, the full-bleed map, the bar with its title, back link
+   and icon buttons, the footer and the glass surfaces. One part of the global sheet; Base.astro
+   imports the parts in cascade order (audit AR2-08). */
+
+/* Layout. Spec §3.1: every route of every tab but the map renders in this one column. */
+.wrap {
+  max-width: var(--content-w);
+  margin: 0 auto;
+  padding: var(--pad);
+  /* Spec §11: the side gutter clears the notch in landscape. */
+  padding-left: max(var(--pad), env(safe-area-inset-left, 0px));
+  padding-right: max(var(--pad), env(safe-area-inset-right, 0px));
+}
+/* Full-bleed pages (the map): no gutter, no max-width, no footer (Base.astro `fullbleed`). */
+main.fullbleed {
+  padding: 0;
+  max-width: none;
+}
+/* The top bar (spec §6.5): a sticky compact bar of --topbar-h under the safe area. Tab roots add
+   the large-title row `.lt` under it in the content; the compact title fades in as it collapses
+   (Base.astro drives --ct and --lt from the scroll position). */
+.top {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-topbar);
+  padding-top: var(--safe-top);
+  background: var(--bar);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  backdrop-filter: blur(20px) saturate(1.5);
+}
+.top::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: var(--sep);
+}
+/* VP-03, AY-13: the title takes its width first and the sides share the rest, each keeping a
+   touch target for the chevron or a trailing button, so the title stays centred. The 1280 block
+   replaces the columns with a left-aligned title. */
+.top .tb {
+  display: grid;
+  grid-template-columns: minmax(var(--touch), 1fr) minmax(0, auto) minmax(var(--touch), 1fr);
+  align-items: center;
+  height: var(--topbar-h);
+  padding: 0 8px;
+}
+.top .lead,
+.top .trail {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+.top .trail {
+  justify-content: flex-end;
+}
+.top .ct {
+  margin: 0;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+  font: var(--t-head);
+  letter-spacing: 0;
+  color: var(--ink);
+}
+.top .ct .short {
+  display: none;
+}
+/* On tab roots the compact title and the hairline appear only once the large title has gone. */
+.top[data-h1='large'] .ct {
+  opacity: var(--ct, 0);
+}
+.top[data-h1='large']:not([data-collapsed])::after {
+  opacity: 0;
+}
+.lt {
+  height: 52px;
+  padding: 0 0 5px;
+  display: flex;
+  align-items: flex-end;
+}
+.lt h1 {
+  margin: 0;
+  font: var(--t-lt);
+  letter-spacing: 0.01em;
+  opacity: var(--lt, 1);
+}
+.back {
+  display: inline-flex;
+  align-items: center;
+  height: var(--touch);
+  padding: 0 8px 0 2px;
+  color: var(--amber-ink);
+  font-size: 17px;
+  line-height: 22px;
+  white-space: nowrap;
+}
+.back svg {
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.ibtn {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-full);
+  background: none;
+  color: var(--ink);
+  cursor: pointer;
+}
+.ibtn svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* Spec §6.5 (audit DS2-03): the map's icon button. The same 44 box with --r-md corners, a 2 px
+   line and a press tint, for the zoom capsules, the layer toggles and Deselect. A capsule squares
+   its inner corners itself. */
+.ibtn.sq {
+  border-radius: var(--r-md);
+}
+.ibtn.sq svg {
+  stroke-width: 2;
+}
+.ibtn.sq:active {
+  background: var(--press);
+}
+/* Spec §6 and §12: a 44 target both ways, so a short label ("Clear") is never narrower than a tap. */
+.tlink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  min-width: var(--touch);
+  padding: 0 8px;
+  font-size: 17px;
+  line-height: 22px;
+}
+@media (max-width: 599px) {
+  .top .ct .full.has-short {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+  .top .ct .short {
+    display: inline;
+  }
+}
+/* From 600 the bar carries the title on every page; the large-title row is read, not seen. */
+@media (min-width: 600px) {
+  .top[data-h1='large'] .ct {
+    opacity: 1;
+  }
+  .top[data-h1='large']:not([data-collapsed])::after {
+    opacity: 1;
+  }
+  .lt {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    padding: 0;
+  }
+}
+/* VP-03, AY-13: a back label that does not fit its side wraps onto a second flex line, which
+   .back clips, and the chevron stays; the label is still the link's name. `clip`, not a scroll
+   container, so find-in-page or scrollIntoView cannot scroll the label up into the box. */
+@media (max-width: 1279px) {
+  .back {
+    min-width: 0;
+    max-width: 100%;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    overflow: hidden;
+  }
+  /* In @supports, not as a second declaration: the minifier drops a duplicate property. */
+  @supports (overflow: clip) {
+    .back {
+      overflow: clip;
+    }
+  }
+  .back svg {
+    flex: none;
+    box-sizing: content-box;
+    /* the chevron's line is a touch target tall even after the label has wrapped away */
+    padding: calc((var(--touch) - 26px) / 2) 0;
+  }
+  .back > span {
+    line-height: var(--touch); /* a wrapped label starts below the box, entirely outside it */
+  }
+  /* The whole side stays the tap area, but a bare link (Base's script sets data-bare once the
+     label has wrapped away) draws its focus ring and hover pill round the chevron alone, as if
+     the label were empty, not round an empty box that ends at the title. The svg takes over the
+     link's side padding, so nothing moves. */
+  .back[data-bare] svg {
+    margin-inline: -2px -8px;
+    padding-inline: 2px 8px;
+    border-radius: var(--r-sm);
+  }
+  .back[data-bare]:focus-visible {
+    outline: none;
+  }
+  .back[data-bare]:focus-visible svg {
+    outline: 2px solid var(--amber);
+    outline-offset: -2px; /* inside the box: .back clips anything outside it */
+  }
+}
+@media (min-width: 1280px) {
+  .top .tb {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    padding: 0 8px 0 24px;
+  }
+  .top .ct {
+    max-width: none;
+    text-align: left;
+    font: var(--t-h1-wide);
+    letter-spacing: 0.02em;
+  }
+  .top .lead:empty {
+    display: none;
+  }
+}
+@media (hover: hover) {
+  .ibtn:hover,
+  .back:hover {
+    background: var(--sunk);
+    text-decoration: none;
+  }
+  .back:hover {
+    border-radius: var(--r-sm);
+  }
+}
+@media (hover: hover) and (max-width: 1279px) {
+  .back[data-bare]:hover {
+    background: none;
+  }
+  .back[data-bare]:hover svg {
+    background: var(--sunk);
+  }
+}
+.foot {
+  border-top: 1px solid var(--line);
+  margin-top: 32px;
+}
+
+/* Glass surfaces (spec §4): the map controls, hint pills, the zoom readout, the keyboard legend. */
+.glass {
+  background: var(--bar);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  backdrop-filter: blur(20px) saturate(1.5);
+  box-shadow:
+    var(--shadow-2),
+    inset 0 0 0 1px var(--sep);
+}

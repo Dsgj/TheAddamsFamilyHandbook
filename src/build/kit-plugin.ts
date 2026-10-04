@@ -1,7 +1,7 @@
 import type { Plugin } from 'vitest/config';
-import { INSTALLED_LEDS } from '../../data/installedLeds';
-import { COMPONENT_FUSES, COMPONENT_NOTES, COMPONENT_WIRES } from '../../data/ownerNotes';
-import { translateKit } from './translate';
+import { INSTALLED_LEDS } from '../data/installedLeds';
+import { COMPONENT_FUSES, COMPONENT_NOTES, COMPONENT_WIRES } from '../data/ownerNotes';
+import { translateKit } from '../lib/kit/translate';
 
 /*
  * Translates the kit's components.json to the app's English model when Vite loads it (build, dev
@@ -10,6 +10,9 @@ import { translateKit } from './translate';
  * plugin and hands it JSON. The overlays and en.ts are read when the config loads: restart
  * `astro dev` after editing src/data/ownerNotes.ts, src/data/installedLeds.ts or
  * src/lib/data/en.ts.
+ *
+ * It lives in src/build, beside no page or island, since it runs only in the config (audit AR2-17).
+ * Plugin comes from vitest/config: vite is not a direct dependency, and pnpm does not hoist it.
  */
 
 const KIT_COMPONENTS = /[\\/]src[\\/]data[\\/]kit[\\/]components\.json(\?.*)?$/;

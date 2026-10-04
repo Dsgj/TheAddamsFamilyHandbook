@@ -5,10 +5,10 @@
  * Base.astro's inline shell script cannot import, so it gets a name from `eventType` through
  * `define:vars`.
  */
-export type ToastKind = 'offline' | 'update' | 'info';
+type ToastKind = 'offline' | 'update' | 'info';
 export type ToastDetail = { kind: ToastKind; text: string };
 
-export interface AppEvents {
+interface AppEvents {
   /** An island rendered the page's content after load (Diagnose's results): motion.ts restores the scroll. */
   content: undefined;
   /** A Diagnose bar button (index.astro): its `data-diag`. */
@@ -26,7 +26,7 @@ export interface AppEvents {
   /** The Workshop's pull-to-refresh: pwa.ts checks for a new worker and answers with a toast. */
   'check-update': undefined;
 }
-export type EventName = keyof AppEvents;
+type EventName = keyof AppEvents;
 
 /** The DOM event type of an app event. */
 export const eventType = (name: EventName) => `tafh:${name}`;

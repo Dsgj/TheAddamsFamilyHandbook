@@ -1,0 +1,123 @@
+/* Buttons and fields: the button family, the form field and the DMD well. One part of the global
+   sheet; Base.astro imports the parts in cascade order (audit AR2-08). */
+
+/* ---- Buttons (spec §8.7) ----
+   The base is the gray variant: 50 tall, radius 12, 17/22 weight 600, no border. .primary, .tinted
+   and .plain recolour it; .sm is the 36-tall small button. Focus uses the global :focus-visible. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 50px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: var(--r-btn);
+  background: var(--sunk);
+  color: var(--ink);
+  font: var(--t-head);
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn svg {
+  flex: none;
+  width: 20px;
+  height: 20px;
+}
+.btn.primary {
+  background: var(--amber-fill);
+  color: var(--on-amber);
+}
+.btn.tinted {
+  background: var(--tint);
+  color: var(--amber-ink);
+}
+.btn.plain {
+  background: none;
+  color: var(--amber-ink);
+}
+.btn.sm {
+  position: relative;
+  min-height: 36px;
+  /* 44 wide at least, so a one-glyph value ("3", "YES") keeps the 44 target (audit AY-12). */
+  min-width: 44px;
+  padding: 0 14px;
+  border-radius: var(--r-sm);
+  font: var(--t-sub);
+  font-weight: 500;
+}
+/* A small button still offers a 44 hit area: 4 above and 4 below its 36 box. Rows of small
+   buttons keep a gap of at least 8, so the areas meet and never overlap. */
+.btn.sm::after {
+  content: '';
+  position: absolute;
+  inset: -4px 0;
+}
+/* After .sm, whose shorthand would reset the face (SetupGuide's suggested values). */
+.btn.mono {
+  font-family: var(--font-mono);
+}
+.btn[aria-pressed='true'] {
+  background: var(--tint);
+  color: var(--amber-ink);
+  box-shadow: inset 0 0 0 1px var(--amber-ink);
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+@media (hover: hover) {
+  .btn:hover {
+    filter: brightness(1.08);
+    text-decoration: none;
+  }
+}
+/* A form field. 16px at least on every input, select and textarea, whatever the visual size:
+   iOS Safari zooms into a smaller field on focus (spec §8.7). */
+.field {
+  width: 100%;
+  min-height: var(--touch);
+  padding: 8px 12px;
+  background: var(--sunk);
+  /* --field-line, 3:1 on the surfaces a field sits on (audit FIELD-3-1). */
+  border: 1px solid var(--field-line);
+  border-radius: var(--r-xs);
+  font-size: 16px;
+  line-height: 21px;
+}
+/* The amber edge, plus the global :focus-visible ring (spec §8.7, audit AY-15). A text field
+   matches :focus-visible on every focus, a tap included: the ring is its focus indicator. */
+.field:focus {
+  border-color: var(--amber);
+}
+/* The UA's placeholder grey is 3.4 on --sunk; --faint-ink passes in both themes, as on .search
+   (AY-16). */
+.field::placeholder {
+  color: var(--faint-ink);
+  opacity: 1;
+}
+textarea.field {
+  min-height: 80px;
+  resize: vertical;
+}
+
+/* DMD string — display text on a near-black well with a 4 px dot grid (spec §8.6). The well
+   stays dark in the light theme, so the ink, the dots and the glow are the DMD's own tokens and
+   literal, never the page's amber (--amber-glow is transparent in light). Diagnose's .well is the
+   other DMD surface and reads the same three tokens. */
+.dmd {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--dmd-ink);
+  background:
+    radial-gradient(circle at 2px 2px, var(--dmd-dot) 0.6px, transparent 1px) 0 0 / 4px 4px,
+    var(--dmd-well);
+  padding: 8px 14px;
+  border-radius: var(--r-xs);
+  text-shadow: 0 0 6px rgba(255, 138, 61, 0.45);
+  border: 1px solid #2a2230;
+}
