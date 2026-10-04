@@ -118,6 +118,15 @@ export function matrixSpan(headers: MatrixHeaders): { connectors: string; driver
   return { connectors, drivers: sides.length > 1 ? `${first}–${last}` : first };
 }
 
+/**
+ * Where a switch hint comes from, for its provenance tag (CP3-01): the kit's hints are the owner's
+ * experience, except one that cites the manual (a page reference such as "p. 2-16", or "the
+ * manual"/"the parts list"), which is the manual's own text and must not be tagged as experience.
+ */
+export function hintSource(hint: string): 'owner' | 'manual' {
+  return /\bp\. ?\d|\bmanual\b|parts list/i.test(hint) ? 'manual' : 'owner';
+}
+
 export function inMatrix(item: { col?: number | null }): boolean {
   return item.col != null;
 }

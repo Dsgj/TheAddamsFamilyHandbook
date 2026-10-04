@@ -10,6 +10,7 @@ import {
   kindLine,
   LAYER_KIND,
   LAYER_LABEL,
+  hintSource,
   locationLine,
   matrixSpan,
   MAP_LAYER,
@@ -110,6 +111,24 @@ const ALL = [
 
 // The presentation helpers of audit P4 item 1. Each one is also checked against the inline
 // expression it replaced, over the real data.
+describe('hintSource (CP3-01)', () => {
+  it('tags the manual-sourced EOS hint as the manual and every other kit hint as experience', () => {
+    const manual = DATA.switches.filter((s) => s.hint && hintSource(s.hint) === 'manual');
+    expect(manual.map((s) => s.id)).toEqual(['F1', 'F3', 'F5', 'F7']);
+    for (const s of manual) expect(s.hint).toMatch(/\(p\. 2-16\)/);
+    const owner = DATA.switches.filter((s) => s.hint && hintSource(s.hint) === 'owner');
+    expect(owner.length).toBeGreaterThan(50);
+    for (const s of owner) expect(s.hint).not.toMatch(/manual|parts list|\bp\. ?\d/i);
+  });
+  it('reads a page reference or the manual by name', () => {
+    expect(hintSource('Leaf switch under the jet bumper skirt.')).toBe('owner');
+    expect(hintSource('Contact gap 0.062″ (p. 2-16).')).toBe('manual');
+    expect(hintSource('The parts list gives SW-1A-194.')).toBe('manual');
+    expect(hintSource('As the manual says.')).toBe('manual');
+    expect(hintSource('A manually adjusted gap.')).toBe('owner');
+  });
+});
+
 describe('matrixSpan (DA3-02)', () => {
   it('reads the connectors and the driver span of each lamp matrix side from the data', () => {
     expect(matrixSpan(DATA.lCols)).toEqual({ connectors: 'J137/J138', drivers: 'Q98–Q91' });

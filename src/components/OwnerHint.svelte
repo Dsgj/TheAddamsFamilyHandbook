@@ -1,9 +1,12 @@
 <script lang="ts">
   /**
    * The owner's hint on a switch and the note on a coil (AR2-01, CP2-03): one wording, with the
-   * provenance tag, on the card, the detail page and the map's phone sheet (DS-13). The look is
-   * controls.css `.hint`; `at` only sets where it sits.
+   * provenance tag, on the card, the detail page and the map's phone sheet (DS-13). The tag follows
+   * the hint's source (copy.ts hintSource): a hint that is the manual's own text is not tagged as
+   * the owner's experience (CP3-01). The look is controls.css `.hint`; `at` only sets where it sits.
    */
+  import { hintSource } from '~/lib/copy';
+
   let {
     hint,
     note,
@@ -16,9 +19,15 @@
 </script>
 
 {#if hint}
+  {@const manual = hintSource(hint) === 'manual'}
   <p class="hint in-{at}">
-    <strong>Owner's hint</strong><br />
-    {hint} <em>(owner's experience, not the manual)</em>
+    <strong>{manual ? 'From the manual' : "Owner's hint"}</strong><br />
+    {hint}
+    <em
+      >{manual
+        ? "(the manual's own pages and parts lists, not the owner's experience)"
+        : "(owner's experience, not the manual)"}</em
+    >
   </p>
 {/if}
 {#if note}

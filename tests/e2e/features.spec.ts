@@ -106,3 +106,18 @@ test('verify checklist ticks persist on the device', async ({ page }) => {
   await expect(page.locator('input.verify-check[data-id="flasher-count"]')).toBeChecked();
   await expect(page.locator('[data-verify-count]')).toContainText('1 of');
 });
+
+test("a hint's provenance tag follows its source (CP3-01)", async ({ page }) => {
+  // The EOS hint is the manual's text (p. 2-16, the parts lists), not the owner's experience.
+  await gotoHydrated(page, '/switch/F1');
+  const eos = page.locator('.hint.in-detail');
+  await expect(eos).toContainText('From the manual');
+  await expect(eos).toContainText('(p. 2-16)');
+  await expect(eos).toContainText("not the owner's experience");
+  await expect(eos).not.toContainText("Owner's hint");
+  // A jet bumper switch carries the owner's own hint.
+  await gotoHydrated(page, '/switch/32');
+  const jet = page.locator('.hint.in-detail');
+  await expect(jet).toContainText("Owner's hint");
+  await expect(jet).toContainText("(owner's experience, not the manual)");
+});

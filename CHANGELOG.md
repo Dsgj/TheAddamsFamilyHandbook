@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- The end-of-stroke switches' hint is the manual's own text (p. 2-16 and
+  the parts lists), so it is now headed "From the manual" with a tag that
+  says so, instead of being passed off as the owner's experience. The
+  other switch hints keep the "Owner's hint" heading and tag.
 - The lamp matrix drivers are on the power driver board, as the manual has
   them, not on the CPU board: both lamp shared-cause hints and the lamps'
   owner note now say so. The Lamp matrix page's lead reads its connectors
