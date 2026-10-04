@@ -323,10 +323,12 @@ test(
 
     // motion.ts writes the Map tab's href the same way once a marker has been picked.
     await gotoHydrated(page, './map?layer=sw&id=32');
+    // The phone sheet is named for the switch; the desktop panel's card heads with the part's
+    // name, with no "Switch 32" heading above it (P2 item 8 of the app audit, round 3).
     await expect(
       page
-        .locator('.t-name', { hasText: 'Switch 32' })
-        .or(page.locator('.sheet.map[aria-label="Selected component, Switch 32"]')),
+        .locator('.sheet.map[aria-label="Selected component, Switch 32"]')
+        .or(page.getByRole('complementary').getByRole('heading', { name: 'Upper Right Jet' })),
     ).toBeVisible();
 
     // The appendix is the one handbook section with photos (JPGs) rather than scan diagrams (PNGs).
