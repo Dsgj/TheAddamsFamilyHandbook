@@ -14,19 +14,23 @@ export async function gotoHydrated(page: Page, url: string, visible: string[] = 
 /**
  * Every `client:load` and `client:idle` island hydrated, and every `client:media` one whose query
  * matches: Astro drops the `ssr` attribute from `<astro-island>` once the component is live.
- * `client:visible` ones stay server-rendered off screen (see hydrateVisible).
+ * `client:visible` ones stay server-rendered off screen (see hydrateVisible). A `client:idle` island
+ * (the Workshop tab badge, on every page) waits for an idle moment, which a busy CI runner decoding
+ * a manual scan can hold off past expect's 5 s, hence the longer wait.
  */
 export async function hydrated(page: Page) {
   await expect
-    .poll(() =>
-      page.evaluate(
-        () =>
-          !document.querySelector('astro-island[ssr]:is([client="load"], [client="idle"])') &&
-          [...document.querySelectorAll('astro-island[ssr][client="media"]')].every(
-            (el) =>
-              !matchMedia(JSON.parse(el.getAttribute('opts') ?? '{}').value ?? 'not all').matches,
-          ),
-      ),
+    .poll(
+      () =>
+        page.evaluate(
+          () =>
+            !document.querySelector('astro-island[ssr]:is([client="load"], [client="idle"])') &&
+            [...document.querySelectorAll('astro-island[ssr][client="media"]')].every(
+              (el) =>
+                !matchMedia(JSON.parse(el.getAttribute('opts') ?? '{}').value ?? 'not all').matches,
+            ),
+        ),
+      { timeout: 15_000 },
     )
     .toBe(true);
 }
