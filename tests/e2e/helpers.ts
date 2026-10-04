@@ -15,8 +15,9 @@ export async function gotoHydrated(page: Page, url: string, visible: string[] = 
  * Every `client:load` and `client:idle` island hydrated, and every `client:media` one whose query
  * matches: Astro drops the `ssr` attribute from `<astro-island>` once the component is live.
  * `client:visible` ones stay server-rendered off screen (see hydrateVisible). A `client:idle` island
- * (the Workshop tab badge, on every page) waits for an idle moment, which a busy CI runner decoding
- * a manual scan can hold off past expect's 5 s, hence the longer wait.
+ * waits for an idle moment: the Workshop tab badge (every page) 200 ms at most, ReaderBar (a
+ * Handbook section) as long as it takes, which a busy CI runner can hold off past expect's 5 s,
+ * hence the longer wait.
  */
 export async function hydrated(page: Page) {
   await expect

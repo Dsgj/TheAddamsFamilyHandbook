@@ -278,7 +278,9 @@ const hasActions = Astro.slots.has('actions');
                   <path d={t.icon} />
                 </svg>
                 <span class="lbl">{t.label}</span>
-                {t.key === 'workshop' && <TabBadge client:idle />}
+                {/* At an idle moment, or after 200 ms, the wait Astro gives it anyway where there
+                    is no requestIdleCallback (Safari): a CI Chromium once had none in 15 s. */}
+                {t.key === 'workshop' && <TabBadge client:idle={{ timeout: 200 }} />}
               </a>
               {t.subs.length > 0 && (
                 <ul class="subs">

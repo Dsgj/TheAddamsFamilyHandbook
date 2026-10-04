@@ -71,6 +71,21 @@ test.describe('phone tab bar', () => {
     );
   });
 
+  test('the Workshop badge hydrates on a page that never idles', async ({ page }) => {
+    // CI run 37190360378: a Chromium runner gave /manual/wpc/10 no idle moment in 15 s, and the
+    // badge, waiting for one, never hydrated. Here none comes at all: only a timeout runs a callback.
+    await page.addInitScript(() => {
+      window.requestIdleCallback = (cb, opts) =>
+        opts?.timeout
+          ? window.setTimeout(() => cb({ didTimeout: true, timeRemaining: () => 0 }), opts.timeout)
+          : 0;
+    });
+    await page.goto('/manual/wpc/10');
+    await expect(
+      page.locator('astro-island[component-url*="/TabBadge."][client="idle"]'),
+    ).not.toHaveAttribute('ssr');
+  });
+
   test('the last row of /parts scrolls clear of the tab bar', async ({ page }) => {
     await gotoHydrated(page, '/parts');
     const last = page.locator('table.t tbody tr').last();

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- The Workshop tab's shopping-list count shows on a page that keeps the
+  browser busy too: it waits at most 200 ms for an idle moment, as it
+  already did in Safari.
 - A component's link to its location map in the manual (pp. 2-39 to 2-41)
   now opens the page zoomed to the component's printed callouts, ringed in
   amber, rather than at the top of the whole page.
