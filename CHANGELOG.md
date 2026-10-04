@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- A Fault on a component the kit records no part number for (the flipper
+  switches F1 to F8) no longer shows as "no part number ()" on the Shopping
+  list: the group is labelled "no part number recorded" with nothing in
+  brackets, and the counter says how many such items sit under the parts to
+  order instead of counting them as parts.
 - The end-of-stroke switches' hint is the manual's own text (p. 2-16 and
   the parts lists), so it is now headed "From the manual" with a tag that
   says so, instead of being passed off as the owner's experience. The

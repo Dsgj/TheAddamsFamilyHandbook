@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ComponentStatus } from '~/lib/model/types';
-import { formatShopping, groupFaults, type ShoppingItem } from '~/lib/shopping';
+import { countOrders, formatShopping, groupFaults, type ShoppingItem } from '~/lib/shopping';
 
 const items: ShoppingItem[] = [
   {
@@ -116,11 +116,17 @@ describe('groupFaults', () => {
       'coil:AE-26-1200',
     ]);
   });
-  it('keeps a faulty part without a part number, labelled as such', () => {
+  it('keeps a faulty part without a part number, labelled as such, with nothing in brackets', () => {
     const g = groupFaults(items, [st('switch:F1', 'fault')]);
-    expect(g.map((x) => [x.label, x.items.map((i) => i.name)])).toEqual([
-      ['no part number', ['Right Flipper EOS']],
+    expect(g.map((x) => [x.label, x.part, x.items.map((i) => i.name)])).toEqual([
+      ['no part number recorded', '', ['Right Flipper EOS']],
     ]);
+    expect(formatShopping(g)).toBe('Switches\n1 × no part number recorded: F1 Right Flipper EOS');
+  });
+  it('counts what has a number to order by apart from what has none (UX3-01)', () => {
+    const g = groupFaults(items, [st('switch:F1', 'fault'), st('lamp:11', 'fault')]);
+    expect(countOrders(g)).toEqual({ parts: 1, unnumbered: 1 });
+    expect(countOrders([])).toEqual({ parts: 0, unnumbered: 0 });
   });
   it('ignores statuses for components that are not in the list', () => {
     expect(groupFaults(items, [st('lamp:99', 'fault')])).toEqual([]);
@@ -141,7 +147,7 @@ describe('formatShopping', () => {
         '2 × #555 (24-8768): L11 Thing Multiball, L12 Left Ramp',
         '',
         'Switches',
-        '1 × no part number: F1 Right Flipper EOS',
+        '1 × no part number recorded: F1 Right Flipper EOS',
         '',
         'Solenoids',
         '1 × AE-26-1200 (A-15115): SOL 01 Chair Kickout',

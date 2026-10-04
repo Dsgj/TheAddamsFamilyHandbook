@@ -10,7 +10,7 @@
     groupFaults,
     itemRef,
     KIND_ORDER,
-    NO_PART,
+    countOrders,
     type ShoppingItem,
   } from '~/lib/shopping';
 
@@ -24,7 +24,8 @@
 
   const groups = $derived(groupFaults(items, allStatuses()));
   const text = $derived(formatShopping(groups));
-  const total = $derived(groups.reduce((n, g) => n + g.items.length, 0));
+  const counts = $derived(countOrders(groups));
+  const total = $derived(counts.parts);
   const kinds = $derived(KIND_ORDER.filter((k) => groups.some((g) => g.kind === k)));
 
   let show = $state(false);
@@ -96,7 +97,8 @@
   <div class="bar">
     <p class="total">
       <span class="dmd">{total}</span>
-      {agree(total, 'part')} to order
+      {agree(total, 'part')} to order{#if counts.unnumbered}, {counts.unnumbered}
+        {agree(counts.unnumbered, 'item')} without a part number{/if}
     </p>
     <div class="acts">
       <button type="button" class="btn sm" onclick={copy}>Copy as text</button>
@@ -121,7 +123,7 @@
           <li class="lrow static part">
             <span class="count">{g.items.length} ×</span>
             <span class="mono">{g.label}</span>
-            {#if g.part !== NO_PART}<span class="muted">({g.part})</span>{/if}
+            {#if g.part}<span class="muted">({g.part})</span>{/if}
           </li>
           {#each g.items as i (key(i))}
             {@const dx = drag?.key === key(i) ? drag.dx : 0}

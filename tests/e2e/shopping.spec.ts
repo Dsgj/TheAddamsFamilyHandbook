@@ -144,3 +144,20 @@ test('the swipe pane is the OK colour and its label shows before the armed point
   await page.mouse.up();
   await expect(page.getByRole('button', { name: 'Fixed: Thing Multiball' })).toBeVisible();
 });
+
+test('a Fault without a recorded part number shows no empty brackets and is not counted as a part (UX3-01)', async ({
+  page,
+}) => {
+  await gotoHydrated(page, '/switches');
+  await page.getByRole('tab', { name: 'Flippers' }).click();
+  await page.getByLabel('Fault: Right Flipper End of Stroke').check();
+  await gotoHydrated(page, '/coils');
+  await page.getByLabel('Fault: Chair Kickout').check();
+  await gotoHydrated(page, '/shopping');
+  await expect(page.locator('.total')).toContainText(
+    '1 part to order, 1 item without a part number',
+  );
+  await expect(page.locator('li.part', { hasText: 'no part number recorded' })).toHaveCount(1);
+  await expect(page.locator('li.part', { hasText: '()' })).toHaveCount(0);
+  await expect(page.locator('li.part')).toHaveCount(2);
+});

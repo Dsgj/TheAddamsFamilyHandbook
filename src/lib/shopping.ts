@@ -30,7 +30,8 @@ interface ShoppingGroup {
   items: ShoppingRow[];
 }
 
-export const NO_PART = 'no part number';
+/** The group label for a component the kit records no bulb type or part number for (F1 to F8). */
+const NO_PART = 'no part number recorded';
 export const KIND_ORDER: Kind[] = ['lamp', 'switch', 'coil'];
 /** The component's code as the tables print it: "32", "L55", "SOL 01" (spec §13). */
 export const itemRef = (i: ShoppingItem) => componentCode(i.kind, i.id);
@@ -67,6 +68,21 @@ export function groupFaults(items: ShoppingItem[], statuses: ComponentStatus[]):
         b.items.length - a.items.length ||
         cmp(a.label, b.label),
     );
+}
+
+/**
+ * What the list adds up to: items whose group has something to order by (a bulb type, an LED or a
+ * part number) and items the kit records no number for, which the list shows but cannot count as
+ * parts (UX3-01).
+ */
+export function countOrders(groups: ShoppingGroup[]): { parts: number; unnumbered: number } {
+  let parts = 0;
+  let unnumbered = 0;
+  for (const g of groups) {
+    if (g.label === NO_PART) unnumbered += g.items.length;
+    else parts += g.items.length;
+  }
+  return { parts, unnumbered };
 }
 
 /** "2 × #555 (24-8768): L11 Thing Multiball (socket loose), L12 Left Ramp": a note in brackets. */
