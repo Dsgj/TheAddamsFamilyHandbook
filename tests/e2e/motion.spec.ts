@@ -105,7 +105,7 @@ test('each tab keeps its stack, scroll and the Map zoom and selection', async ({
 test('a view pushed from Diagnose results goes back to Results', async ({ page }) => {
   await gotoHydrated(page, '/');
   await page.getByRole('textbox').first().fill('32');
-  await page.locator('article.comp h2 a').first().click();
+  await page.locator('article.comp h3 a').first().click();
   await expect(page).toHaveURL(/\/switch\/32$/);
   const back = page.locator('header.top a.back');
   await expect(back).toHaveText('Results');

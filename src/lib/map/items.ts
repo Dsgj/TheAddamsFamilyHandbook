@@ -85,6 +85,16 @@ export function subtitle(item: Item) {
   // The row's name already says "Not Used" and the row says "not on map": no third "not used".
   return capitalise(locationLine(item.kind, { ...c, unused: false }));
 }
+/**
+ * A list row's accessible name, its parts set apart (AY3-10): "11, Not Used, Matrix column 1,
+ * row 1, not on map". The row's spans alone ran together ("11 Not Used Matrix column 1, row 1 not
+ * on map"). `fault` is the Fault pill, which only the panel's list renders.
+ */
+export function rowName(item: Item, o: { onMap: boolean; sub?: string; fault?: boolean }) {
+  return [showId(item), item.name, o.sub, o.onMap ? '' : 'not on map', o.fault ? 'Fault' : '']
+    .filter(Boolean)
+    .join(', ');
+}
 /** The "Search components" filter (Q28): id, tile code or name; an empty query matches all. */
 export function matchesQuery(q: string, item: Item): boolean {
   const s = q.trim().toLowerCase();

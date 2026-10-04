@@ -9,6 +9,7 @@ import {
   layerOf,
   markerName,
   matchesQuery,
+  rowName,
   showId,
 } from '~/lib/map/items';
 import { offMap } from '~/lib/present';
@@ -29,6 +30,17 @@ describe('markerName', () => {
     expect(markerName(item, false, 1, 4)).toMatch(/, place 2 of 4$/);
     expect(markerName(item, true)).toMatch(new RegExp(`^Switch ${item.id}, .*, selected$`));
     expect(markerName(item, true)).not.toContain('place');
+  });
+});
+
+describe('rowName', () => {
+  it("sets a list row's parts apart with commas (AY3-10)", () => {
+    const sw = (id: string) => itemsIn('sw').find((i) => i.id === id)!;
+    expect(rowName(sw('11'), { onMap: false, sub: 'Matrix column 1, row 1' })).toBe(
+      `11, ${sw('11').name}, Matrix column 1, row 1, not on map`,
+    );
+    expect(rowName(sw('32'), { onMap: true })).toBe('32, Upper Right Jet');
+    expect(rowName(sw('32'), { onMap: true, fault: true })).toBe('32, Upper Right Jet, Fault');
   });
 });
 

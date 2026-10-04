@@ -553,7 +553,12 @@
     <div class="cards">
       {#each found as r (r.kind + r.id)}
         {#if r.item && r.kind !== 'unknown'}
-          <ComponentCard item={r.item} mapMeta={mapOf(r.kind)} id={cardId(r.kind, r.id)} />
+          <ComponentCard
+            item={r.item}
+            mapMeta={mapOf(r.kind)}
+            id={cardId(r.kind, r.id)}
+            level={3}
+          />
         {/if}
       {/each}
     </div>

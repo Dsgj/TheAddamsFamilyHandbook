@@ -11,7 +11,7 @@ test.describe('smoke', { tag: '@subpath' }, () => {
     await expect(page.locator('article.comp')).toHaveCount(4);
     await expect(page.getByText('Shared cause?')).toBeVisible();
     await expect(page.getByText(/J806/).first()).toBeVisible();
-    await expect(page.locator('article.comp[data-id="32"] h2')).toContainText('Upper Right Jet');
+    await expect(page.locator('article.comp[data-id="32"] h3')).toContainText('Upper Right Jet');
   });
 
   test('map marker opens the component card', async ({ page }) => {

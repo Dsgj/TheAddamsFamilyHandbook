@@ -301,7 +301,7 @@ test.describe('search', () => {
     await field(page).fill('row 5');
     await expect(page.locator('.prov')).toContainText('Not recognised');
     await field(page).fill('Check Switch 32');
-    await expect(page.locator('article.comp[data-id="32"] h2')).toContainText('Upper Right Jet');
+    await expect(page.locator('article.comp[data-id="32"] h3')).toContainText('Upper Right Jet');
   });
 });
 
@@ -423,17 +423,20 @@ test.describe('the result card', () => {
     await gotoHydrated(page, '/?q=32');
     const card = page.locator('article.comp[data-id="32"]');
     await expect(card.locator('.code.lg')).toHaveText('32');
-    await expect(card.locator('h2')).toContainText('Upper Right Jet');
+    // The name is a level 3 under the results heading (AY3-06).
+    await expect(card.locator('h3')).toContainText('Upper Right Jet');
+    await expect(card.locator('h2')).toHaveCount(0);
     await expect(card.locator('.kind')).toContainText('Switch · matrix column');
-    await expect(card.locator('a.map-link')).toHaveAccessibleName('Show on map');
+    // The mini-map is the same link as the Show on map button: hidden, not a tab stop (AY3-06).
+    await expect(card.locator('a.map-link')).toHaveAttribute('aria-hidden', 'true');
+    await expect(card.locator('a.map-link')).toHaveAttribute('tabindex', '-1');
     await expect(card.getByRole('group', { name: 'Test status' }).getByRole('button')).toHaveText([
       'OK',
       'Fault',
       'Not tested',
     ]);
-    await expect(card.getByRole('link', { name: 'Show on map', exact: true })).toHaveCount(2);
-    for (const link of await card.getByRole('link', { name: 'Show on map', exact: true }).all())
-      await expect(link).toHaveAttribute('href', /map\?layer=sw&id=32$/);
+    await expect(card.getByRole('link', { name: 'Show on map', exact: true })).toHaveCount(1);
+    await expect(card.locator('a[href$="map?layer=sw&id=32"]')).toHaveCount(2);
     await expect(card.getByRole('link', { name: 'Details' })).toHaveAttribute(
       'href',
       /switch\/32$/,

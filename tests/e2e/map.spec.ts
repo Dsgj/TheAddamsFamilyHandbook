@@ -10,6 +10,8 @@ const SIZES = [
   { width: 1180, height: 820 },
   { width: 1440, height: 900 },
 ];
+/** The stage's padding above and below the drawing at 1× (PlayfieldMap's EDGE, VP3-17). */
+const EDGE = 12;
 
 interface Geometry {
   scroller: {
@@ -77,14 +79,14 @@ for (const size of SIZES) {
     await gotoHydrated(page, '/map?layer=sw');
     await expect.poll(() => fitted(page)).toBe(true);
     const g = await geometry(page);
-    // Inside the scroller, touching its top.
+    // Inside the scroller, EDGE below its top and above its bottom (VP3-17).
     expect(g.canvas.left).toBeGreaterThanOrEqual(g.scroller.left - 0.5);
     expect(g.canvas.right).toBeLessThanOrEqual(g.scroller.right + 0.5);
-    expect(g.canvas.bottom).toBeLessThanOrEqual(g.scroller.bottom + 0.5);
-    expect(Math.abs(g.canvas.top - g.scroller.top)).toBeLessThanOrEqual(0.5);
-    // Fills the width (less the control column below 1000) or the height.
+    expect(g.canvas.bottom).toBeLessThanOrEqual(g.scroller.bottom - EDGE + 0.5);
+    expect(Math.abs(g.canvas.top - (g.scroller.top + EDGE))).toBeLessThanOrEqual(0.5);
+    // Fills the width (less the control column below 1000) or the height less the two edges.
     const fillsW = Math.abs(g.canvas.width - fitWidth(page, g.scroller.width)) <= 1;
-    const fillsH = Math.abs(g.canvas.height - g.scroller.height) <= 1;
+    const fillsH = Math.abs(g.canvas.height - (g.scroller.height - 2 * EDGE)) <= 1;
     expect(fillsW || fillsH, 'canvas fills the stage width or height').toBe(true);
     // Aspect ratio of the drawing.
     expect(
@@ -363,7 +365,7 @@ test.describe('phone selection sheet', () => {
     const grab = sheet.getByRole('button', { name: 'Expand details' });
     await expect(grab).toHaveAttribute('aria-expanded', 'false');
     await expect.poll(() => fitted(page)).toBe(true);
-    // The sheet sits inside the viewport at 96 px, the drawing ends at its top edge.
+    // The sheet sits inside the viewport at 96 px, the drawing ends above its top edge.
     await expect
       .poll(async () => {
         const s = await box(page, SHEET);
@@ -372,7 +374,7 @@ test.describe('phone selection sheet', () => {
           near(s.height, 96) &&
           s.y + s.height <= g.innerHeight + 0.5 &&
           g.canvas.bottom <= s.y + 0.5 &&
-          near(g.canvas.height, g.scroller.height - 96)
+          near(g.canvas.height, g.scroller.height - 2 * EDGE - 96)
         );
       })
       .toBe(true);
@@ -428,7 +430,7 @@ test.describe('phone selection sheet', () => {
       .poll(async () => {
         const g = await geometry(page);
         return (
-          near(g.canvas.height, g.scroller.height) ||
+          near(g.canvas.height, g.scroller.height - 2 * EDGE) ||
           near(g.canvas.width, fitWidth(page, g.scroller.width))
         );
       })
@@ -483,7 +485,7 @@ test.describe('phone selection sheet', () => {
     const rows = dialog.locator('.rows .row');
     await expect(rows.first()).toBeVisible();
     for (const text of await rows.allInnerTexts()) expect(text.toLowerCase()).toContain('jet');
-    await dialog.getByRole('button', { name: /^32\s+Upper Right Jet/ }).click();
+    await dialog.getByRole('button', { name: /^32, Upper Right Jet/ }).click();
     await expect(dialog).toHaveCount(0);
     await expect(opener).toBeFocused();
     await expect(page.locator(SHEET)).toHaveAttribute(
@@ -653,7 +655,17 @@ test.describe('wide panel', () => {
     await expect(panel).toBeVisible();
     expect(near((await panel.boundingBox())!.width, 420)).toBe(true);
     await expect(panel.locator('article.comp[data-id="32"]')).toBeVisible();
-    await expect(panel.getByRole('heading', { name: 'Switch 32' })).toBeVisible();
+    // The card names the part; no "Switch 32" heading repeats it above (VL3-14). Deselect sits in
+    // the card header's line.
+    await expect(panel.getByRole('heading', { name: 'Switch 32' })).toHaveCount(0);
+    await expect(panel.getByRole('heading', { name: 'Upper Right Jet' })).toBeVisible();
+    const [d, h] = await Promise.all([
+      panel.getByRole('button', { name: 'Deselect' }).boundingBox(),
+      panel.locator('article.comp > header').boundingBox(),
+    ]);
+    expect(d!.y + d!.height / 2).toBeGreaterThan(h!.y);
+    expect(d!.y + d!.height / 2).toBeLessThan(h!.y + h!.height);
+    expect(d!.x).toBeGreaterThan(h!.x + h!.width / 2);
     await expect(panel.locator('[aria-current="true"]')).toHaveCount(1);
     await expect(panel.locator('[aria-current="true"]')).toContainText('Upper Right Jet');
     await expect(page.locator(SHEET)).toHaveCount(0);
@@ -693,7 +705,7 @@ test.describe('wide panel', () => {
     const panel = page.getByRole('complementary', {
       name: 'Selected component and components on the map',
     });
-    const row = panel.getByRole('button', { name: /^11\s+Not Used/ });
+    const row = panel.getByRole('button', { name: /^11, Not Used/ });
     await expect(row.locator('.sub')).toHaveText('Matrix column 1, row 1');
     await expect(row).toContainText('not on map');
   });

@@ -42,7 +42,7 @@ const where = (page: Page): Promise<Where> =>
 const backLink = (page: Page) => page.locator('header.top a.back');
 const field = (page: Page) => page.getByLabel('Test report or display message');
 const diag = (page: Page) => page.locator('section.diag');
-const card = (page: Page) => page.locator('article.comp h2 a').first();
+const card = (page: Page) => page.locator('article.comp h3 a').first();
 const tabLink = (page: Page, name: string) =>
   page.getByRole('navigation', { name: 'Sections' }).locator('a.tab', { hasText: name });
 const CARD = /\/(switch|lamp|coil)\/[^/?]+$/;
@@ -272,7 +272,7 @@ test.describe('Diagnose ?q', () => {
     const codes = '11 12 13 14 15 16 17 18 21 22 23 24 25 26 27 28 31 32 33 34';
     const results = new RegExp(`[?]q=${encodeURIComponent(codes)}$`);
     await gotoHydrated(page, `./?q=${encodeURIComponent(codes)}`);
-    const opened = page.locator('article.comp h2 a[href$="/switch/32"]');
+    const opened = page.locator('article.comp h3 a[href$="/switch/32"]');
     await opened.scrollIntoViewIfNeeded();
     await expect(opened).toBeInViewport();
     // By system back, then by the header back link.

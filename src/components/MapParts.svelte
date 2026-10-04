@@ -10,6 +10,7 @@
     itemsIn,
     LABEL,
     matchesQuery,
+    rowName,
     showId,
     statusClass,
     statusOf,
@@ -62,6 +63,7 @@
               class="row {statusClass(item)}"
               class:sel={selKey === key}
               aria-current={selKey === key ? 'true' : undefined}
+              aria-label={rowName(item, { onMap: !!posOf(item).length })}
               type="button"
               onclick={() => onpick(item)}
             >
@@ -103,6 +105,11 @@
                 class:two={!!sub}
                 class:sel={selKey === key}
                 aria-current={selKey === key ? 'true' : undefined}
+                aria-label={rowName(item, {
+                  onMap: !!posOf(item).length,
+                  sub,
+                  fault: statusOf(item) === 'fault',
+                })}
                 type="button"
                 onclick={() => onpick(item)}
               >

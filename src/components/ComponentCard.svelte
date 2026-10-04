@@ -23,6 +23,7 @@
     compact = false,
     linkTitle = true,
     inMap = false,
+    level = 2,
     id,
   }: {
     item: AnyComponent;
@@ -30,6 +31,8 @@
     compact?: boolean;
     linkTitle?: boolean;
     inMap?: boolean;
+    /** The name's heading level: 3 under Diagnose's results heading, 2 elsewhere (AY3-06). */
+    level?: 2 | 3;
     /** An anchor for links to this card (Diagnose's code chips, UX2-12). */
     id?: string | undefined;
   } = $props();
@@ -55,13 +58,13 @@
   <header>
     <span class="code lg dmd">{code}</span>
     <div class="head">
-      <h2>
+      <svelte:element this={`h${level}`} class="ttl">
         {#if linkTitle}
           <a href={componentHref(kind, item.id)}>{item.name}</a>
         {:else}
           {item.name}
         {/if}
-      </h2>
+      </svelte:element>
       <p class="kind">{kindLine}</p>
     </div>
   </header>
@@ -80,7 +83,8 @@
   {#if !onMap}
     <p class="off muted">{offMap(item)}</p>
   {:else if !compact && !inMap}
-    <a class="map-link" href={mapHref(layer, item.id)} aria-label="Show on map">
+    <!-- The same link as the Show on map button below: one tab stop, one name (AY3-06). -->
+    <a class="map-link" href={mapHref(layer, item.id)} tabindex="-1" aria-hidden="true">
       <MiniMap {pos} w={310} h={120} />
     </a>
   {/if}
@@ -124,19 +128,19 @@
   .head {
     min-width: 0;
   }
-  .head h2 {
+  .head .ttl {
     margin: 0;
     font: var(--t-title);
   }
-  .head h2 a {
+  .head .ttl a {
     color: inherit;
   }
   /* Spec §12: the title link (28 tall) gets a 44 box centred on it, over the card padding and the
      kind line, where no other target sits. WiringList gives the callout page link its own. */
-  .head h2 a {
+  .head .ttl a {
     position: relative;
   }
-  .head h2 a::after {
+  .head .ttl a::after {
     content: '';
     position: absolute;
     inset: min(0px, (100% - var(--touch)) / 2);

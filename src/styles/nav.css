@@ -260,8 +260,3 @@
     line-height: 20px;
   }
 }
-
-/* ---- Type utility (spec §2): a step as a class where markup wants one; rules use the token ---- */
-.t-name {
-  font: var(--t-name);
-}

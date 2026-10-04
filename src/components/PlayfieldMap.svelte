@@ -40,6 +40,11 @@
   /** Selection sheet detents (spec §8.2). */
   const PEEK = 96;
   const FULL = 416;
+  /** VP3-17: the stage keeps this much clear above and below the drawing at 1×, so the edge
+   *  markers never touch the top bar or the tab bar. It is padding on the scroller: the
+   *  pre-hydration CSS sees it through 100cqh (the content box) and repeats the 12, the zoom's
+   *  scroll maths through the scrollport. The embed, framed by its own border, has none. */
+  const EDGE = 12;
   /** Spec §7.4: the floating layers list is 164 wide at left 16; it floats only where the
    *  drawing's side gutter at the fit clears it by 4 or more. */
   const GLASS_GUTTER = 16 + 164 + 4;
@@ -47,6 +52,8 @@
    *  16 + the list (4 rows of 44 + 8) + 16 + the legend (6 lines of 20, 5 gaps of 6, 20 padding) + 16. */
   const LEGEND_STAGE_H = 16 + (4 * 44 + 8) + 16 + (6 * 20 + 5 * 6 + 20) + 16;
 
+  /** For the ids this instance owns (the key hint the drawing is described by). */
+  const uid = $props.id();
   let {
     layer: initialLayer = '',
     id: initialId = '',
@@ -106,7 +113,9 @@
   let partsOpen = $state(false);
   /** The "Search components" filter (Q28). */
   let q = $state('');
-  const fit = $derived.by(() => fitScale({ w: stageW, h: stageH, inset, wide, embed }, PLAYFIELD));
+  const fit = $derived.by(() =>
+    fitScale({ w: stageW, h: stageH - 2 * edge, inset, wide, embed }, PLAYFIELD),
+  );
   /** Zoom, first fit and pointer gestures (spec §7.2, §7.5); the canvas size comes from here. */
   const zm = createMapZoom({
     fit: () => fit,
@@ -238,6 +247,8 @@
   const sheetOpen = $derived(!embed && !wide && !calib && !!current);
   /** Px the sheet takes from the fit at 1×: phones only (Q29 open; tablets keep the overlap). */
   const inset = $derived(sheetOpen && phone ? PEEK : 0);
+  /** The scroller's padding above and below the drawing (`EDGE`; the embed has none). */
+  const edge = $derived(embed ? 0 : EDGE);
   /** Px of the stage the sheet covers now; centring above 1× uses the band left (spec §7.1). */
   const cover = $derived(sheetOpen ? (expanded ? FULL : PEEK) : 0);
   /** Expanded at 1× the scroller can't scroll: the canvas moves so the part sits mid-band. */
@@ -245,7 +256,8 @@
     if (!sheetOpen || !expanded || zm.zoom > 1 || !current || !zm.canvasH) return 0;
     const l = posOf(current)[0];
     if (!l) return 0;
-    const band = stageH - FULL;
+    // The band is measured from the content box's top, `edge` below the scroller's.
+    const band = stageH - FULL - edge;
     if (zm.canvasH <= band) return 0;
     const y = Math.min(0, Math.max(band - zm.canvasH, band / 2 - l.y * zm.canvasH));
     return Math.round(y * 10) / 10;
@@ -475,6 +487,11 @@
 
   <div class="stage" style:--stage-h={stageH ? `${stageH}px` : undefined}>
     <div class="stage-wrap">
+      <!-- The arrow-key model for assistive tech (AY3-04): the visible legend floats only from 1280. -->
+      <p class="sr-only" id="{uid}-keys">
+        Arrow keys move between the markers, Enter selects the focused one and Escape deselects.
+        Shift with an arrow pans, plus and minus zoom, 0 fits the whole playfield.
+      </p>
       <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
       <div
         class="scroller"
@@ -482,6 +499,7 @@
         class:embed
         role="region"
         aria-label="Playfield drawing"
+        aria-describedby="{uid}-keys"
         tabindex="0"
         style:--stage-top={stageTop ? `${stageTop}px` : undefined}
         style:height={embed && stageW ? `${embedH}px` : undefined}
@@ -508,13 +526,15 @@
           <img
             class="scan"
             src={href('assets/maps/playfield.png')}
-            alt="Playfield drawing"
+            alt=""
             width={PLAYFIELD.w}
             height={PLAYFIELD.h}
             loading={embed ? 'lazy' : undefined}
             decoding={embed ? 'async' : undefined}
             draggable="false"
           />
+          <!-- The region above is named; the drawing itself is decorative to assistive tech and the
+               markers say what sits where, so the name is not read twice (AY3-09). -->
           {#if overlayImg}
             <img
               class="scan overlay"
@@ -622,11 +642,10 @@
           tabindex="-1"
           bind:this={selectedEl}
         >
+          <!-- The card's own header names the part (tile, name, kind line); a "Switch 32" heading
+               above it said so twice (VL3-14). Deselect keeps its place, at the header's free end. -->
           {#if current}
-            <div class="ph slim">
-              <h2 class="t-name">{fullName(current)}</h2>
-              {@render deselectBtn(clearSelection)}
-            </div>
+            {@render deselectBtn(clearSelection)}
           {/if}
           {@render selection()}
         </section>
@@ -646,7 +665,7 @@
     {/if}
 
     {#if embed}
-      <aside class="side">
+      <aside class="side" aria-label="Selected component and components on the map">
         {@render srcLink(only)}
         {#if desktop && !floatLegend}
           <MapControls place="side" {on} {counts} {toggle} {zm} keys />
@@ -733,6 +752,8 @@
      1000 it stays centred, or moves left, to leave COLUMN_SIDE at the right (VP2-11). */
   .map-ui:not(.embed) .scroller {
     container-type: size;
+    /* EDGE (VP3-17): 100cqh below is the content box, so the fit formulas need no term for it. */
+    padding-block: 12px;
   }
   .map-ui:not(.embed) .canvas {
     --fit: min(100cqw - 58px, (100cqh - var(--map-inset, 0px)) * var(--r));
@@ -813,8 +834,27 @@
   .marker.k-shot {
     z-index: var(--z-lift-3);
   }
+  /* The keyboard cursor is a two-tone ring, ink outside a ground gap, so it reads apart from the
+     amber selection ring and the switch layer's own amber ring in light mode (AY3-08). A Fault
+     keeps its red halo and takes the ring outside it; a selected marker takes it outside the
+     amber ring. */
   .marker:focus-visible {
     z-index: var(--z-lift-4);
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+    box-shadow:
+      0 0 0 2px var(--ground),
+      inset 0 0 0 1.5px var(--k);
+  }
+  .marker.st-fault:focus-visible {
+    outline-offset: 6px;
+    box-shadow:
+      0 0 0 2px var(--ground),
+      0 0 0 4px var(--bad),
+      0 0 0 6px var(--ground);
+  }
+  .marker.sel:focus-visible {
+    outline-offset: 8px;
   }
   .marker.st-ok {
     --k: var(--ok);
@@ -903,25 +943,6 @@
     }
   }
 
-  /* The wide panel's `.ph.slim` header (MapCard has the same rule for the sheet's header). */
-  .ph {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    min-height: 56px;
-    margin-top: 8px;
-    padding: 0 16px;
-  }
-  .ph.slim {
-    margin: 0 0 6px;
-    padding: 0;
-    min-height: 44px;
-  }
-  .ph .t-name {
-    flex: 1;
-    margin: 0;
-  }
-
   /* The wide panel (spec §7.7): one scroll column of the stage height, the selected part above the
      list. `.side.panel` so the embed's `.side` grid below does not win (VL-01). The panel shows the
      page ground; the sticky list headers and the foot fade paint in it (--panel-bg). */
@@ -959,8 +980,19 @@
     padding: 10px var(--pad) 0;
   }
   .selected {
+    position: relative;
     flex: none;
     padding: var(--pad);
+  }
+  /* Deselect sits on the card header's free right end (VL3-14): the 44 button centred on the 40
+     tile, its 30 circle flush with the card's content edge; the header keeps the name clear of it. */
+  .selected :global(.desel) {
+    position: absolute;
+    top: calc(var(--pad) + 14px);
+    right: calc(var(--pad) + 9px);
+  }
+  .selected :global(.card > header) {
+    padding-right: var(--touch);
   }
   .listing {
     flex: 1 0 auto;

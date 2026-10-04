@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Map and cards, for assistive tech: the playfield drawing explains its arrow
+  keys, the image under the markers is decorative so its name is not read
+  twice, the handbook's map embed names its side panel and the desktop list
+  rows set id, name, position and "not on map" apart with commas. A Diagnose
+  result card has one "Show on map" link (the mini-map is the same link) and
+  its name is a level-3 heading under "Search". The keyboard cursor on a
+  marker is a two-tone ring, distinct from the amber selection. The drawing
+  keeps 12 px clear of the top bar and the tab bar, and the wide panel no
+  longer repeats "Switch 32" above the selected part's card.
 - Offline and updates: "Ready to work offline" follows you to the next page
   when the first install finishes after you moved on; a check for updates
   while offline says so instead of "The app is up to date"; a manual page

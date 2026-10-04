@@ -305,6 +305,115 @@ test.describe('map keyboard model (AY-01, spec §7.5)', () => {
 /** The desktop panel is always there; the phone sheet only while a part is selected. */
 const isWide = (page: Page) => page.evaluate(() => innerWidth >= 1000);
 
+test.describe('map names and hints (P2 item 8 of the app audit, round 3)', () => {
+  test('the drawing describes its keys, its image is decorative and the focus ring is two-tone (AY3-04, AY3-08, AY3-09)', async ({
+    page,
+  }) => {
+    await gotoHydrated(page, '/map?layer=sw&id=32');
+    const scroller = page.getByRole('region', { name: 'Playfield drawing' });
+    await expect(scroller).toHaveAttribute('aria-describedby', /\S/);
+    const hint = await scroller.evaluate(
+      (el) => document.getElementById(el.getAttribute('aria-describedby') ?? '')?.textContent ?? '',
+    );
+    expect(hint.replace(/\s+/g, ' ')).toMatch(/Arrow keys .*Enter .*Escape .*Shift .*0 fits/);
+    // The region alone carries the name; the image under the markers is decorative.
+    await expect(page.locator('.canvas img.scan').first()).toHaveAttribute('alt', '');
+    await expect(page.getByRole('img', { name: 'Playfield drawing' })).toHaveCount(0);
+    // The keyboard cursor: an ink outline over a ground gap, not the selection's amber.
+    await expect(page.locator('button.marker').first()).toBeAttached();
+    await scroller.focus();
+    await page.keyboard.press('ArrowRight'); // the selected part
+    await page.keyboard.press('ArrowRight'); // the next entry, not selected
+    await expect(page.locator('button.marker:focus-visible')).toHaveCount(1);
+    const ring = await page.locator('button.marker:focus').evaluate((el) => {
+      const cs = getComputedStyle(el);
+      const sel = document.querySelector('.marker.sel')!;
+      return {
+        selected: el.classList.contains('sel'),
+        outline: `${cs.outlineWidth} ${cs.outlineStyle}`,
+        colour: cs.outlineColor,
+        shadows: cs.boxShadow.split(/,(?![^(]*\))/).length,
+        amber: getComputedStyle(sel, '::before').borderTopColor,
+      };
+    });
+    expect(ring.selected).toBe(false);
+    expect(ring.outline).toBe('2px solid');
+    expect(ring.colour).not.toBe(ring.amber);
+    expect(ring.shadows, 'a ground ring outside the marker, its own ring inset').toBe(2);
+  });
+
+  test('a Diagnose result card has one Show on map link, under a level-3 heading (AY3-06)', async ({
+    page,
+  }) => {
+    await gotoHydrated(page, '/?q=32');
+    const card = page.locator('article.comp[data-id="32"]');
+    await expect(card.getByRole('link', { name: 'Show on map', exact: true })).toHaveCount(1);
+    await expect(card.getByRole('heading', { level: 3 })).toHaveText('Upper Right Jet');
+    await expect(card.locator('h2')).toHaveCount(0);
+    await expect(page.locator('h2.rh')).toHaveCount(1);
+  });
+
+  test('the handbook embed names its aside (AY3-10)', async ({ page }) => {
+    await gotoHydrated(page, '/handbook/rules');
+    await expect(page.locator('#pg-9 .shot-map aside')).toHaveAttribute(
+      'aria-label',
+      'Selected component and components on the map',
+    );
+  });
+
+  test.describe('on the wide panel', () => {
+    test.use({ viewport: { width: 1440, height: 900 } });
+
+    test('the listing rows set their parts apart (AY3-10)', async ({ page }) => {
+      await gotoHydrated(page, '/map?layer=sw');
+      const panel = page.getByRole('complementary', {
+        name: 'Selected component and components on the map',
+      });
+      await expect(
+        panel.getByRole('button', {
+          name: '11, Not Used, Matrix column 1, row 1, not on map',
+          exact: true,
+        }),
+      ).toHaveCount(1);
+      const names = await panel
+        .locator('.rows .row')
+        .evaluateAll((els) => els.map((el) => el.getAttribute('aria-label') ?? ''));
+      expect(names.length).toBeGreaterThan(50);
+      for (const n of names) expect(n, n).toMatch(/^\S+, \S/);
+    });
+  });
+
+  test.describe('on a 412 phone', () => {
+    test.use({ viewport: { width: 412, height: 839 } });
+
+    test('the edge markers keep 12 px from the top bar and the tab bar (VP3-17)', async ({
+      page,
+    }) => {
+      await gotoHydrated(page, '/map?layer=sw,lamp,coil,shot');
+      await expect
+        .poll(() =>
+          page.locator('.canvas').evaluate((el) => (el as HTMLElement).style.width.endsWith('px')),
+        )
+        .toBe(true);
+      const gaps = await page.evaluate(() => {
+        const ms = [...document.querySelectorAll('button.marker')].map((m) =>
+          m.getBoundingClientRect(),
+        );
+        const bar = document.querySelector('header.top')!.getBoundingClientRect();
+        const tabs = document.querySelector('nav.shell')!.getBoundingClientRect();
+        return {
+          n: ms.length,
+          top: Math.min(...ms.map((r) => r.top)) - bar.bottom,
+          bottom: tabs.top - Math.max(...ms.map((r) => r.bottom)),
+        };
+      });
+      expect(gaps.n).toBeGreaterThan(100);
+      expect(gaps.top).toBeGreaterThanOrEqual(11.5);
+      expect(gaps.bottom).toBeGreaterThanOrEqual(11.5);
+    });
+  });
+});
+
 test.describe('focus is never under a bar (AY-02)', () => {
   for (const url of ['/', '/?q=flipper', '/setup', '/shopping']) {
     test(`every tab stop on ${url} is on screen and uncovered`, async ({ page, browserName }) => {

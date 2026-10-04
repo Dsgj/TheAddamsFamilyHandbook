@@ -892,7 +892,6 @@ describe('design system source rules', () => {
       '.ibtn',
       '.ibtn.sq',
       '.pill',
-      '.t-name',
     ];
     expect(classes.filter((c) => !base.has(c))).toEqual([]);
     // And markup uses each of them (audit DS2-06, AR2-10): a class nothing writes is deleted, not
