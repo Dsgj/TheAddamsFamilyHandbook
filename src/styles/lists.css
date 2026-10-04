@@ -168,7 +168,10 @@
   text-decoration-color: var(--ok);
 }
 /* The links are a row under the text, not in it, so each is a real 44 target and a tap beside one
-   never reaches the tick. A source label ('Manual p. 2-16') wraps as a whole (VP2-18). */
+   never reaches the tick. A source label ('A5 Power driver board') wraps as a whole, since a flex
+   line takes it or moves it down (VP2-18); only one wider than the line, 'Machine setup step 7,
+   Upgrades and upkeep' in a 208 body at 320, breaks inside. `nowrap` made that one the page's
+   min-content, and a phone's layout viewport grew to it (2026-10-05, after audit round 3 DA3-05). */
 .checklist .links {
   display: flex;
   flex-wrap: wrap;
@@ -181,5 +184,4 @@
   align-items: center;
   min-height: var(--touch);
   min-width: var(--touch);
-  white-space: nowrap;
 }
