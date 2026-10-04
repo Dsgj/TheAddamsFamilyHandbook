@@ -3,7 +3,7 @@
   import { plural } from '~/lib/copy';
   import { loadJson } from '~/lib/load';
   import type { PartRow } from '~/lib/model/types';
-  import { replaceUrl } from '~/lib/url';
+  import { replaceUrl, safeDecode } from '~/lib/url';
   import SearchField from './SearchField.svelte';
 
   /**
@@ -44,15 +44,8 @@
   }
   onMount(load);
 
-  function decodeHash(): string {
-    const raw = location.hash.slice(1);
-    if (!raw) return '';
-    try {
-      return decodeURIComponent(raw);
-    } catch {
-      return raw;
-    }
-  }
+  /** The hash, decoded; a hand-typed `#100%` stays as typed (SV2-04). */
+  const decodeHash = () => safeDecode(location.hash.slice(1));
 
   function applyHash() {
     const decoded = decodeHash();

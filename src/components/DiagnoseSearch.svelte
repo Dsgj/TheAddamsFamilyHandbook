@@ -58,7 +58,7 @@
   /** What "Show all N …" counts: a manual hit is a page, a handbook hit a heading (CP2-01). */
   const GROUP_NOUN: Record<Group, string> = {
     components: 'components',
-    handbook: 'handbook sections',
+    handbook: 'handbook headings',
     manuals: 'manual pages',
     parts: 'parts',
   };

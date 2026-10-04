@@ -1,4 +1,4 @@
-import { componentCode } from '~/lib/copy';
+import { andList, componentCode } from '~/lib/copy';
 import { wireName } from '~/lib/wire';
 import type { Lamp, MatrixHeaders, Switch } from '~/lib/model/types';
 
@@ -85,8 +85,8 @@ export function sharedCauses(
 ): SharedCause[] {
   const out = matrixCauses('switch', switches, cols, rows, (axis, key, ids, h) =>
     axis === 'column'
-      ? `${ids.join(', ')} share column ${key} (${wireName(h?.[0] ?? '')}, ${h?.[1] ?? ''}). Check the common column wire and connector before adjusting the switches. Columns are driven by ${h?.[2] ?? 'U20'} on the CPU board; a whole column dead with good wiring is that driver, and one shorted switch diode in the column makes the others misread.`
-      : `${ids.join(', ')} share row ${key} (${wireName(h?.[0] ?? '')}, ${h?.[1] ?? ''}). Check the row wire and ${h?.[1]?.split('-')[0] ?? 'J208'} first. Rows are read by ${h?.[2] ?? 'the LM339 comparator'} on the CPU board; a whole row stuck is the comparator or a shorted diode on one switch in the row.`,
+      ? `${andList(ids)} share column ${key} (${wireName(h?.[0] ?? '')}, ${h?.[1] ?? ''}). Check the common column wire and connector before adjusting the switches. Columns are driven by ${h?.[2] ?? 'U20'} on the CPU board; a whole column dead with good wiring is that driver, and one shorted switch diode in the column makes the others misread.`
+      : `${andList(ids)} share row ${key} (${wireName(h?.[0] ?? '')}, ${h?.[1] ?? ''}). Check the row wire and ${h?.[1]?.split('-')[0] ?? 'J208'} first. Rows are read by ${h?.[2] ?? 'the LM339 comparator'} on the CPU board; a whole row stuck is the comparator or a shorted diode on one switch in the row.`,
   );
   const byPin = groupBy(
     switches.filter((s) => s.pin),
@@ -107,7 +107,7 @@ export function sharedCauses(
       eos: eos && lower,
       appendix: flip ? 'A6' : 'A3',
       text:
-        `${ids.join(', ')} both go to connector ${p} on the ${flip ? 'Fliptronics' : 'CPU'} board.` +
+        `${andList(ids)} ${ids.length > 2 ? 'all' : 'both'} go to connector ${p} on the ${flip ? 'Fliptronics' : 'CPU'} board.` +
         (eos && lower
           ? ' Two EOS faults on the lower flippers at the same time, but not on the upper ones, usually point at something mechanical and shared: EOS gap after a rebuild, wrong switch type or burnt contacts. Check the mechanics on both lower flippers before troubleshooting electrically.'
           : ''),
@@ -135,7 +135,7 @@ export function lampSharedCauses(
   rows: MatrixHeaders,
 ): SharedCause[] {
   const out = matrixCauses('lamp', lamps, cols, rows, (axis, key, ids, h) => {
-    const list = ids.map((id) => componentCode('lamp', id)).join(', ');
+    const list = andList(ids.map((id) => componentCode('lamp', id)));
     const q = h?.[2] ?? '';
     const pin = h?.[1] ?? '';
     return axis === 'column'

@@ -31,6 +31,15 @@ describe('sharedCauses', () => {
     expect(c[0]?.text).toContain('Check the row wire and J208 first');
     expect(c[0]?.text).toContain('Rows are read by U18-11');
   });
+  it('names two switches with "both" and three or more with "all" (CO3-05)', () => {
+    const two = sharedCauses([sw('F1'), sw('F3')], DATA.swCols, DATA.swRows);
+    expect(two[0]?.text).toMatch(/^F1 and F3 both go to connector J806 on the Fliptronics board\./);
+    const three = sharedCauses([sw('F1'), sw('F3'), sw('F5')], DATA.swCols, DATA.swRows);
+    expect(three).toHaveLength(1);
+    expect(three[0]?.text).toMatch(/^F1, F3 and F5 all go to connector J806/);
+    const col = sharedCauses([sw('31'), sw('32'), sw('33')], DATA.swCols, DATA.swRows);
+    expect(col[0]?.text).toMatch(/^31, 32 and 33 share column 3/);
+  });
   it('reports independent faults', () => {
     const c = sharedCauses([sw('11'), sw('68')], DATA.swCols, DATA.swRows);
     expect(c).toEqual([expect.objectContaining({ kind: 'independent' })]);

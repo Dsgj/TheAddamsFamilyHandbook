@@ -308,10 +308,13 @@ test.describe('search', () => {
 });
 
 test.describe('what the app prints, looked up (CO2-04, CO2-05, CO2-07)', () => {
-  test('a fuse or connector is searched under Not recognised', async ({ page }) => {
+  test('a fuse or connector the search finds is "Found below", not "Not recognised" (UX3-02)', async ({
+    page,
+  }) => {
     await gotoHydrated(page, '/');
     await field(page).fill('F105');
-    await expect(page.locator('.prov')).toContainText('Not recognised: F105');
+    await expect(page.locator('.prov')).toContainText('Found below: F105');
+    await expect(page.locator('.prov')).not.toContainText('Not recognised');
     const hits = page.locator('.qs .lst a');
     await expect(hits.first()).toBeVisible();
     await expect(page.locator('.qs .lst a .code', { hasText: 'F105' })).toHaveCount(1);
@@ -319,6 +322,17 @@ test.describe('what the app prints, looked up (CO2-04, CO2-05, CO2-07)', () => {
     await expect(page.locator('.qs .lst-h').first()).toBeVisible();
     // The look-up lists hits; the chips belong to the search state.
     await expect(page.getByRole('group', { name: 'Search in' })).toHaveCount(0);
+  });
+
+  test('the header counts the recognised codes, not every token (UX3-02)', async ({ page }) => {
+    await gotoHydrated(page, '/?q=check+F105+lamp+55');
+    await expect(page.locator('.rh')).toHaveText('1 code');
+    await expect(page.locator('.codes .code')).toHaveCount(3);
+    await expect(page.locator('.prov')).toContainText('Not recognised: CHECK.');
+    await expect(page.locator('.prov')).toContainText('Found below: F105.');
+    await field(page).fill('switch 32 is stuck closed');
+    await expect(page.locator('.rh')).toHaveText('1 code');
+    await expect(page.locator('.prov')).toHaveCount(0);
   });
 
   test('punctuation, # and a dash between two codes still diagnose', async ({ page }) => {

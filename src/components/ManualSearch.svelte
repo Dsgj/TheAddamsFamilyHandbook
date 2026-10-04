@@ -5,7 +5,7 @@
   import { plural } from '~/lib/copy';
   import { DOC_NAME, DOCS, pageTitleText, tocTitle } from '~/lib/pages';
   import { loadJson } from '~/lib/load';
-  import { manualHref } from '~/lib/url';
+  import { manualHref, safeDecode } from '~/lib/url';
   import SearchField from './SearchField.svelte';
 
   /** Full-text search over the page text of all three documents (fetched on first use). */
@@ -21,12 +21,7 @@
     const m = /[?&]q=([^&]*)/.exec(location.search);
     if (!m) return;
     // A hand-typed `?q=100%` is no URI escape: keep the raw text rather than throw (SV2-04).
-    const raw = m[1]!.replace(/\+/g, ' ');
-    try {
-      q = decodeURIComponent(raw);
-    } catch {
-      q = raw;
-    }
+    q = safeDecode(m[1]!.replace(/\+/g, ' '));
     live.rebase(); // a pre-filled ?q= is never announced (spec §12)
     void ensure();
   });

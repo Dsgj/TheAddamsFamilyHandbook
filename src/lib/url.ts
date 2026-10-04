@@ -11,6 +11,18 @@ export function href(path: string): string {
   return `${base}/${path.replace(/^\//, '')}`;
 }
 
+/**
+ * `decodeURIComponent`, or the raw text when it is no URI escape: a hand-typed `?q=100%` or a
+ * `#c%E0` must not throw (SV2-04, CO3-06).
+ */
+export function safeDecode(raw: string): string {
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
+}
+
 export function componentHref(kind: Kind, id: string): string {
   return href(`${kind}/${id}`);
 }

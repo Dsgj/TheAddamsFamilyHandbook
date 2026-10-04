@@ -85,6 +85,15 @@ test.describe('the switch matrix tabs', () => {
     await expect(page.locator('[data-cell-card="42"]')).toBeVisible();
   });
 
+  test('a hash that is no URI escape is no cell, not a page error (CO3-06)', async ({ page }) => {
+    const errors: string[] = [];
+    page.on('pageerror', (e) => errors.push(String(e)));
+    await gotoHydrated(page, '/switches#c%E0');
+    await expect(page.locator('[data-cell="32"]')).toBeVisible();
+    await expect(page.locator('[data-cell="32"]')).not.toHaveClass(/target/);
+    expect(errors).toEqual([]);
+  });
+
   test('a link to one part lands on its cell, its panel or its row (UX2-07)', async ({ page }) => {
     await gotoHydrated(page, '/switches#c32');
     await expect(page.locator('[data-cell="32"]')).toBeFocused();

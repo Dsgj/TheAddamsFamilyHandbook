@@ -48,6 +48,18 @@ describe('parseCodes', () => {
     expect(keys('A-15200 - ...')).toEqual(['unknown:A-15200']);
     expect(keys('F105 J206')).toEqual(['unknown:F105', 'unknown:J206']);
   });
+  it('drops the words of a typed sentence (CO3-07)', () => {
+    expect(keys('switch 32 is stuck closed')).toEqual(['switch:32']);
+    expect(keys('lamp 55 is open, sw 68 stuck')).toEqual(['lamp:55', 'switch:68']);
+  });
+  it('reads a dash between two codes and codes typed without a space (CO3-07)', () => {
+    expect(keys('32–68 L11—L12')).toEqual(['switch:32', 'switch:68', 'lamp:11', 'lamp:12']);
+    expect(keys('SW32SW68 sw32swF1')).toEqual(['switch:32', 'switch:68', 'switch:F1']);
+  });
+  it('does not read C0 as a solenoid (CO3-07)', () => {
+    expect(keys('C0 C00 sol 0')).toEqual(['unknown:C0', 'unknown:C00']);
+    expect(keys('C1 C01 sol 10')).toEqual(['coil:01', 'coil:10']);
+  });
   it('de-duplicates and flags unknown tokens', () => {
     const r = parseCodes('32, 32; D5 hello');
     expect(r).toHaveLength(3);

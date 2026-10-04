@@ -179,20 +179,27 @@
   );
   const found = $derived(resolved.filter((r) => r.item));
   const missing = $derived(resolved.filter((r) => !r.item));
+  /** The codes a kind was read for: what the header counts (UX3-02). */
+  const recognised = $derived(parsed.filter((p) => p.kind !== 'unknown'));
   const switches = $derived(found.flatMap((r) => (r.item?.kind === 'switch' ? [r.item] : [])));
   const lamps = $derived(found.flatMap((r) => (r.item?.kind === 'lamp' ? [r.item] : [])));
   const causes = $derived([
     ...sharedCauses(switches, DATA.swCols, DATA.swRows),
     ...lampSharedCauses(lamps, DATA.lCols, DATA.lRows),
   ]);
-  const shownMissing = $derived(missing.slice(0, 6));
   /** Tokens with a digit that are no code (F105, J206, A-15200) go to the search (CO2-04). */
-  const lookup = $derived(
+  const lookupTokens = $derived(
     missing
       .filter((m) => m.kind === 'unknown' && /\d/.test(m.raw) && m.raw.length > 2)
-      .map((m) => m.raw)
-      .join(' '),
+      .map((m) => m.raw),
   );
+  const lookup = $derived(lookupTokens.join(' '));
+  /** How many hits that search has, reported by its DiagnoseSearch. */
+  let lookupHits = $state(0);
+  /** The tokens the search found: "Found below", not "Not recognised" (UX3-02). */
+  const foundBelow = $derived(lookup && lookupHits ? lookupTokens : []);
+  const notRecognised = $derived(missing.filter((m) => !foundBelow.includes(m.raw)));
+  const shownMissing = $derived(notRecognised.slice(0, 6));
   const recent = $derived(hydrated ? recentEntries() : []);
   /**
    * Faults marked on this device: the home leads to them (UX2-10), counted as the Shopping list
@@ -207,6 +214,18 @@
   const RANGES =
     'Matrix switches are 11–88, dedicated D1–D8, flipper F1–F8, lamps L11–L88, solenoids SOL 01–28.';
   const label = (p: ParsedCode) => (p.kind === 'unknown' ? p.raw : componentName(p.kind, p.id));
+  /** The line under the codes: what was not recognised, what the search below found. */
+  const provText = $derived.by(() => {
+    const parts: string[] = [];
+    if (notRecognised.length) {
+      const more = notRecognised.length - shownMissing.length;
+      const names = shownMissing.map((m) => label(m)).join(', ');
+      parts.push(`Not recognised: ${names}${more > 0 ? ` and ${more} more` : ''}. ${RANGES}`);
+    }
+    if (foundBelow.length) parts.push(`Found below: ${foundBelow.join(', ')}.`);
+    else if (lookup) parts.push('The search below looks for the rest.');
+    return parts.join(' ');
+  });
   const codeText = (p: ParsedCode) => (p.kind === 'unknown' ? p.raw : componentCode(p.kind, p.id));
   /** The anchor of a found code's card; the code chips link to it (UX2-12). */
   const cardId = (kind: string, id: string) => `card-${kind}-${id}`;
@@ -381,6 +400,7 @@
       rows="1"
       autocomplete="off"
       autocapitalize="characters"
+      autocorrect="off"
       spellcheck="false"
       placeholder="32 68 F1 F3"
       bind:this={field}
@@ -481,7 +501,7 @@
     <div class="rbar">
       <button type="button" class="tlink" onclick={clear}>Clear</button>
       <h2 class="rh" bind:this={resultsHead} tabindex="-1">
-        {plural(parsed.length, 'code')}
+        {recognised.length ? plural(recognised.length, 'code') : 'No codes'}
       </h2>
       {#if parsed.length}
         <button type="button" class="tlink" onclick={share}>Share results</button>
@@ -507,14 +527,9 @@
         Nothing here reads as a code. Type the numbers from the display or the Test Report: {RANGES}
       </p>
     {:else if missing.length}
-      <p class="prov">
-        Not recognised: {shownMissing.map((m) => label(m)).join(', ')}{missing.length >
-        shownMissing.length
-          ? ` and ${missing.length - shownMissing.length} more`
-          : ''}. {RANGES}{lookup ? ' The search below looks for the rest.' : ''}
-      </p>
+      <p class="prov">{provText}</p>
       {#if lookup}
-        <DiagnoseSearch q={lookup} filters={false} />
+        <DiagnoseSearch q={lookup} filters={false} oncount={(n) => (lookupHits = n)} />
       {/if}
     {/if}
 

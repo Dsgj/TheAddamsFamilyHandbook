@@ -72,6 +72,12 @@ export function plural(n: number, one: string, many = `${one}s`): string {
   return `${n} ${agree(n, one, many)}`;
 }
 
+/** A list in prose, without the Oxford comma: "32", "32 and 68", "32, 68 and F1". */
+export function andList(items: readonly string[]): string {
+  if (items.length < 2) return items[0] ?? '';
+  return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
+}
+
 /**
  * The code a component carries: switch `32`, lamp `L55`, solenoid `SOL 01`. Fuses (`F101`), GI
  * strings and flippers keep the id as printed. Headings and accessible names use componentName

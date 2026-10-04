@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Diagnose: "switch 32 is stuck closed", "32–68" with a dash and "SW32SW68"
+  all read as their codes, and C0 is no longer Solenoid 00. The header counts
+  the recognised codes, and a fuse or connector the search below finds is
+  "Found below" rather than "Not recognised". The field no longer autocorrects.
+- Shared cause: three or more parts on one connector "all go to" it; lists in
+  the text read "31, 32 and 33".
+- Tables: a matrix link whose hash is no URI escape (`#c%E0`) loads without a
+  page error; "Show all N handbook headings" names what it counts.
 - Map: a pinch holds the point under the fingers from its first frame; it used
   to drift sideways by up to a finger's width over a spread from the fitted
   drawing.

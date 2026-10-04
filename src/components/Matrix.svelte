@@ -3,7 +3,7 @@
   import { componentCode, kindLine, MAP_LAYER, STATUS_LABEL, TABLE_LABEL } from '~/lib/copy';
   import { getStatus } from '~/lib/model/status.svelte';
   import type { Kind, MatrixHeaders } from '~/lib/model/types';
-  import { componentHref, mapHref } from '~/lib/url';
+  import { componentHref, mapHref, safeDecode } from '~/lib/url';
   import WireChip from './WireChip.svelte';
 
   interface Cell {
@@ -44,10 +44,11 @@
   let target = $state(untrack(() => highlight));
 
   // A link to one part lands on its cell (UX2-07): `/switches#c32` focuses cell 32 and shows its
-  // card, so the reader does not have to find it in the 64.
+  // card, so the reader does not have to find it in the 64. A hash that is no URI escape (`#c%E0`)
+  // is no cell, not a page error (CO3-06).
   onMount(() => {
     const id = /^#c(.+)$/.exec(location.hash)?.[1];
-    const cell = id ? cells.find((c) => c.id === decodeURIComponent(id)) : undefined;
+    const cell = id ? cells.find((c) => c.id === safeDecode(id)) : undefined;
     if (!cell) return;
     target = cell.id;
     selected = cell.id;
