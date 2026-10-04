@@ -38,6 +38,10 @@ test.describe('toasts', () => {
   test('the offline toast is gone after 4 s', async ({ page }) => {
     await page.clock.install();
     await gotoHydrated(page, '/tables');
+    // Installed, the clock still flows with real time (the page loads on it); paused, the dwell
+    // counts only the fake time below. Flowing, a slow WebKit runner spent the last 100 ms of the
+    // dwell between the raise and the first runFor (CI run 37188520290).
+    await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
     await raise(page, 'offline', 'Ready to work offline.');
     const toast = page.locator('.toast', { hasText: 'Ready to work offline.' });
     await expect(toast).toBeVisible();

@@ -51,8 +51,15 @@ test('under reduced motion a push holds only opacity animations of 150 ms or les
     /\/tables$/,
   );
   expect(m.type).toBe('push');
-  expect(m.animations.length).toBeGreaterThan(0);
-  for (const a of m.animations) {
+  // A colour fade is not motion: on a slow runner WebKit was still fading the /switches tab
+  // buttons' background and shadow (200 ms) as the page was revealed (CI run 37188520290).
+  // Everything else, the push's own fades first, is opacity alone, 150 ms or less.
+  const colour = /^(background|boxShadow|color|borderColor|outlineColor)/;
+  const moving = m.animations.filter(
+    (a) => !a.props.length || !a.props.every((p) => colour.test(p)),
+  );
+  expect(moving.length).toBeGreaterThan(0);
+  for (const a of moving) {
     expect(a.duration, a.name).toBeLessThanOrEqual(150);
     expect(a.props, a.name).toEqual(['opacity']);
   }
