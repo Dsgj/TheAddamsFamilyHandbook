@@ -5,7 +5,7 @@ import Base from '~/layouts/Base.astro';
 import HandbookToc from '~/components/HandbookToc.svelte';
 import PlayfieldMap from '~/components/PlayfieldMap.svelte';
 import ReaderBar from '~/components/ReaderBar.svelte';
-import { SECTIONS, isAppendixPage } from '~/lib/handbook/sections';
+import { APPENDIX_FIRST_PAGE, SECTIONS, isAppendixPage } from '~/lib/handbook/sections';
 import { handbookToc } from '~/lib/handbook/toc';
 import { jsonScript } from '~/lib/json-script';
 import { PREF_KEYS } from '~/lib/storage';
@@ -36,7 +36,10 @@ const end = (s: typeof section | undefined, page: number | undefined) =>
   s && page !== undefined
     ? {
         href: handbookHref(s.key),
-        label: isAppendixPage(page) ? 'Appendix' : pageLabel('ops', page) || s.short || s.title,
+        label: isAppendixPage(page)
+          ? `A${page - APPENDIX_FIRST_PAGE + 1}`
+          : pageLabel('ops', page) || s.short || s.title,
+        short: s.short ?? s.title,
         title: s.title,
       }
     : undefined;

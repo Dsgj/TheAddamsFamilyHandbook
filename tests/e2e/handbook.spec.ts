@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { activate, gotoHydrated, hydrated } from './helpers';
+import { activate, gotoHydrated, hydrated, twoFrames } from './helpers';
 
 /* Phase 8 of the app redesign: the Handbook tab's segmented links, the Handbook home, the reader
    toolbar, the manual viewer toolbar with its Go to page sheet and zoom capsule, and Parts. */
@@ -89,13 +89,17 @@ test.describe('the reader', () => {
       'href',
       /manual\/ops\/25$/,
     );
-    // Each end's name holds the page it shows, so a voice command can say it (AY2-09).
+    // Each end's name holds the page it shows, so a voice command can say it (AY2-09); it shows
+    // the page label on a phone and the section's short title from 1000 (P2 item 11, VP3-12).
     const bar = page.getByRole('navigation', { name: 'Reader' });
-    await expect(
-      bar.getByRole('link', { name: 'Previous: 1-14 Menu system and bookkeeping', exact: true }),
-    ).toHaveText('1-14');
+    const wide = (page.viewportSize()?.width ?? 0) >= 1000;
+    await expect(bar.getByRole('link', { name: 'Previous: 1-14 Menus', exact: true })).toHaveText(
+      wide ? 'Menus' : '1-14',
+      { useInnerText: true },
+    );
     await expect(bar.getByRole('link', { name: 'Next: 1-20 Utilities', exact: true })).toHaveText(
-      '1-20',
+      wide ? 'Utilities' : '1-20',
+      { useInnerText: true },
     );
     await expect(page.locator('.pg-bar').first()).toContainText('p. 1-15');
     // The bar says the page once: the marker, then a "Manual" button named with the page.
@@ -472,5 +476,84 @@ test.describe('handbook tables', () => {
     await expect(region).toBeFocused();
     await page.keyboard.press('ArrowRight');
     await expect.poll(() => region.evaluate((el) => el.scrollLeft)).toBeGreaterThan(0);
+  });
+});
+
+/* P2 item 11 of the app audit, round 3: the reader bar's ends show whole or not at all (AY3-07), a
+   page label below 1000 and the section's short title from 1000 (VP3-12), and Contents keeps its
+   rows between opens (PF3-05). */
+test.describe('the reader bar ends and the kept contents', () => {
+  // At 8 of inset a page label ("1-14") fits from 360 and a title's first six characters from 392;
+  // narrower, the end is its arrow alone, 44 wide, with the page still in its name.
+  for (const [width, height, path, want] of [
+    [320, 640, '/handbook/tests', ['', '']],
+    [360, 740, '/handbook/tests', ['1-14', '1-20']],
+    [390, 844, '/handbook/rules', ['', '1-1']],
+    [412, 839, '/handbook/rules', ['Quick', '1-1']],
+  ] as const) {
+    test(`${width}: the ends read "${want[0]}" and "${want[1]}", or are arrows alone`, async ({
+      page,
+      isMobile,
+    }) => {
+      test.skip(!isMobile, 'phone widths');
+      await page.setViewportSize({ width, height });
+      await gotoHydrated(page, path);
+      await page.evaluate(() => document.fonts.ready);
+      const ends = page.locator('nav.rbar .rb.end');
+      await expect(ends).toHaveCount(2);
+      for (const [i, text] of want.entries()) {
+        const end = ends.nth(i);
+        await expect(end).toHaveAttribute('aria-label', /^(Previous|Next): /);
+        expect((await end.boundingBox())!.width).toBeGreaterThanOrEqual(44);
+        // The label on show: whole, or clipped to at least six of its characters.
+        const shown = await end.locator('.lbl').evaluateAll((els) =>
+          els
+            .filter((el) => el.getClientRects().length > 0)
+            .map((el) => {
+              const clipped = el.scrollWidth > el.clientWidth + 1;
+              const probe = document.createElement('span');
+              probe.style.cssText = 'position:absolute;visibility:hidden;white-space:pre';
+              probe.textContent = '000000';
+              el.append(probe);
+              const six = probe.getBoundingClientRect().width;
+              probe.remove();
+              return { text: el.textContent ?? '', clipped, room: el.clientWidth, six };
+            }),
+        );
+        if (!text) {
+          expect(shown).toEqual([]);
+          continue;
+        }
+        expect(shown).toHaveLength(1);
+        const l = shown[0]!;
+        expect(l.text.startsWith(text)).toBe(true);
+        if (l.clipped) expect(l.room).toBeGreaterThanOrEqual(l.six - 0.5);
+        else expect(l.text).toBe(text);
+      }
+    });
+  }
+
+  test('Contents keeps its rows between opens (PF3-05)', async ({ page, browserName }) => {
+    await gotoHydrated(page, '/handbook/tests');
+    const contents = page
+      .getByRole('navigation', { name: 'Reader' })
+      .getByRole('button', { name: 'Contents' });
+    const dialog = page.getByRole('dialog', { name: 'Contents' });
+    await activate(contents, browserName);
+    const rows = dialog.locator('nav.toc');
+    await expect(rows).toBeVisible();
+    await rows.evaluate((n) => n.setAttribute('data-kept', 'yes'));
+    await dialog.getByLabel('Search the handbook').fill('utilit');
+    await expect(dialog.getByRole('link', { name: 'Utilities' }).first()).toBeVisible();
+    await activate(dialog.getByRole('button', { name: 'Close' }), browserName);
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await twoFrames(page);
+    // Closed, the rows wait in a hidden store rather than being torn down.
+    const kept = page.locator('nav.toc[data-kept="yes"]');
+    await expect(kept).toHaveCount(1);
+    await expect(kept).toBeHidden();
+    await activate(contents, browserName);
+    await expect(dialog.locator('nav.toc[data-kept="yes"]')).toBeVisible();
+    await expect(dialog.getByLabel('Search the handbook')).toHaveValue('utilit');
   });
 });

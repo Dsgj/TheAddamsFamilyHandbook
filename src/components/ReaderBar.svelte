@@ -16,13 +16,17 @@
     href: string;
     /** The page label at that end ("1-14"), or the section title when the page has none. */
     label: string;
+    /** The section's short title, shown instead from 1000, where the bar has room for it. */
+    short: string;
     title: string;
   }
   let { prev, next, current }: { prev?: End | undefined; next?: End | undefined; current: string } =
     $props();
   /** The link's name holds the label it shows ("1-1"), so a voice command can say it (AY2-09). */
+  // The name carries both labels, so it contains whichever one shows (axe's
+  // label-content-name-mismatch): "Previous: 1-14 Menus", "Next: A1 Appendix".
   const named = (dir: string, e: End) =>
-    `${dir}: ${e.title.includes(e.label) ? e.title : `${e.label} ${e.title}`}`;
+    `${dir}: ${e.short.includes(e.label) ? e.short : `${e.label} ${e.short}`}`;
 
   const SIZES = [
     ['sm', 'Small'],
@@ -41,6 +45,19 @@
     items ??= readToc();
     open = 'toc';
   }
+  /**
+   * The rendered contents, kept between opens (audit P2 item 11, PF3-05): they mount on the first
+   * open and then wait in a hidden store, which the open sheet adopts, so a reopen neither re-reads
+   * nor re-renders the 285 rows, and the filter typed last time is still there.
+   */
+  let toc = $state<HTMLElement>();
+  function adopt(host: HTMLElement) {
+    const kept = toc;
+    if (!kept) return;
+    const store = kept.parentElement;
+    host.append(kept);
+    return () => store?.append(kept);
+  }
   let size = $state<Size>('md');
   onMount(() => {
     const t = document.documentElement.dataset.text;
@@ -58,9 +75,15 @@
 
 <nav class="rbar glass" aria-label="Reader">
   {#if prev}
-    <a class="rb end" href={prev.href} aria-label={named('Previous', prev)}>
+    <a
+      class="rb end"
+      class:long={prev.label.length > 4}
+      href={prev.href}
+      aria-label={named('Previous', prev)}
+    >
       <Icon name="back" />
-      <span class="lbl">{prev.label}</span>
+      <span class="lbl pg">{prev.label}</span>
+      <span class="lbl ttl">{prev.short}</span>
     </a>
   {:else}
     <span class="rb end off" aria-hidden="true"></span>
@@ -70,8 +93,14 @@
     Text size
   </button>
   {#if next}
-    <a class="rb end" href={next.href} aria-label={named('Next', next)}>
-      <span class="lbl">{next.label}</span>
+    <a
+      class="rb end"
+      class:long={next.label.length > 4}
+      href={next.href}
+      aria-label={named('Next', next)}
+    >
+      <span class="lbl pg">{next.label}</span>
+      <span class="lbl ttl">{next.short}</span>
       <Icon name="forward" />
     </a>
   {:else}
@@ -79,11 +108,18 @@
   {/if}
 </nav>
 
-{#if open === 'toc'}
-  <BottomSheet label="Contents" detent="large" recede={RECEDE} onclose={() => (open = '')}>
-    <div class="sheet-toc">
+{#if items}
+  <!-- The contents wait here between opens; the open sheet adopts them (PF3-05). -->
+  <div class="toc-store" hidden>
+    <div class="sheet-toc" bind:this={toc}>
       <HandbookToc {items} {current} />
     </div>
+  </div>
+{/if}
+
+{#if open === 'toc'}
+  <BottomSheet label="Contents" detent="large" recede={RECEDE} onclose={() => (open = '')}>
+    <div {@attach adopt}></div>
   </BottomSheet>
 {:else if open === 'size'}
   <!-- As tall as its two rows, over an undimmed page: the text it sizes stays in view (VP2-10). -->
@@ -129,6 +165,8 @@
     height: 52px;
     padding: 4px;
     border-radius: var(--r-chip);
+    /* The end labels show or hide by the bar's own width (AY3-07). */
+    container-type: inline-size;
     max-width: 520px;
     margin: 0 auto;
   }
@@ -170,6 +208,7 @@
     }
   }
   .rb.end {
+    padding: 0 8px;
     color: var(--amber-ink);
     font-family: var(--font-mono);
   }
@@ -177,6 +216,31 @@
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 9em;
+  }
+  /* The page label below 1000 and the section's short title from 1000 (audit P2 item 11, VP3-12).
+     Whole or gone (AY3-07): at 8 of inset a page label ("1-14") fits once the bar's content box is
+     328 wide (a 360 view) and a title's first six characters at 360 (392); narrower, the end is its
+     arrow alone and keeps its name. */
+  .rb.end .ttl {
+    display: none;
+  }
+  @container (width < 328px) {
+    .rb.end .lbl {
+      display: none;
+    }
+  }
+  @container (width < 360px) {
+    .rb.end.long .lbl {
+      display: none;
+    }
+  }
+  @media (min-width: 1000px) {
+    .rb.end .pg {
+      display: none;
+    }
+    .rb.end .ttl {
+      display: block;
+    }
   }
   .rb.off {
     cursor: default;

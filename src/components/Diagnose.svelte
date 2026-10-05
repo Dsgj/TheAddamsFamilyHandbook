@@ -300,6 +300,20 @@
       if (lift) html.style.removeProperty('--toast-lift');
     };
   });
+  /**
+   * Over results and a search the stuck dock covered 130 of a phone's 839 (audit P2 item 11,
+   * VP3-13): once the page scrolls it folds to the field alone, 72 tall, and a focus on the field
+   * brings the buttons back. A scroll back up leaves it folded: at the end of the page the dock's
+   * own height sets the scroll range, so the two would pump.
+   */
+  let compact = $state(false);
+  const folded = $derived(compact && docked && mode !== 'home');
+  // Not while a dock control has focus: hiding the focused action would drop focus to body
+  // (WebKit scrolls on a focus move even when the dock is stuck in place).
+  function fold() {
+    if (docked && mode !== 'home' && scrollY > 24 && !dock?.contains(document.activeElement))
+      compact = true;
+  }
   function onBlur() {
     record();
     commit();
@@ -381,6 +395,8 @@
   }
 </script>
 
+<svelte:window onscroll={fold} />
+
 <section class="diag" data-mode={mode} bind:this={root}>
   <p class="sr-only" aria-live="polite" aria-atomic="true">{live.text}</p>
   {#if mode === 'home'}
@@ -391,7 +407,7 @@
 
   <!-- Spec §9.1: the field comes first in the DOM at every width. Below 1000 it is ordered to
        the foot (the docked hero, the sticky bar); from 1000 it stays at the top of the column. -->
-  <div class="dock" bind:this={dock}>
+  <div class="dock" class:compact={folded} bind:this={dock} onfocusin={() => (compact = false)}>
     <label class="lbl" class:sr-only={mode !== 'home' && !media.wide.current} for="codes"
       >Test report or display message</label
     >
@@ -860,6 +876,13 @@
   }
   .diag:not([data-mode='home']) .acts {
     margin-top: 8px;
+  }
+  /* Once the results scroll, the stuck dock folds to the field alone until the field is focused
+     (audit P2 item 11, VP3-13): 72 tall over the results, not 130. */
+  @media (max-width: 999px) and (min-height: 500px) {
+    .diag:not([data-mode='home']) .dock.compact .acts {
+      display: none;
+    }
   }
   .well::placeholder {
     color: var(--dmd-ink);

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Handbook reader: the bar's ends show a page label on a phone and the section
+  title on a desktop, whole or not at all (no more one-letter stubs at 320),
+  and Contents keeps its rows between opens. Diagnose: once results scroll the
+  field folds to one line over them and opens up again when tapped.
 - Tables: the matrix index and the setup step numbers are plain numerals (the
   display face drew a 1 like an I), the Fault heading stays in view over the
   ticks on a phone, matrix column headers share one height at every desktop

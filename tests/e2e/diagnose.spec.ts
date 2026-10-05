@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { gotoHydrated } from './helpers';
+import { gotoHydrated, twoFrames } from './helpers';
 
 /* Phase 6 of the app redesign: the Diagnose home, its results and its search state. */
 
@@ -477,6 +477,32 @@ test.describe('results on a narrow or short screen (P2 item 3 of the app audit, 
       .evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().left)));
     expect(xs.length).toBeGreaterThan(1);
     expect(Math.max(...xs) - Math.min(...xs)).toBeLessThanOrEqual(1);
+  });
+
+  // P2 item 11 of the app audit, round 3 (VP3-13): over results the stuck dock is the field alone
+  // once the page scrolls, under 100 tall, and the buttons come back when the field is focused.
+  test('a phone folds the stuck dock to the field once the results scroll (VP3-13)', async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(!isMobile, 'the bottom dock is below 1000 (spec §9.1)');
+    await page.setViewportSize({ width: 412, height: 839 });
+    await gotoHydrated(page, '/?q=32');
+    const dock = page.locator('.diag .dock');
+    const acts = dock.locator('.acts');
+    await expect(acts).toBeVisible();
+    expect((await dock.boundingBox())!.height).toBeGreaterThan(100);
+    await page.evaluate(() => window.scrollTo(0, 240));
+    await expect(acts).toBeHidden();
+    expect((await dock.boundingBox())!.height).toBeLessThan(100);
+    // Back at the top it stays folded; a focus on the field brings the buttons back.
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+    await twoFrames(page);
+    await expect(acts).toBeHidden();
+    await page.getByLabel('Test report or display message').focus();
+    await expect(acts).toBeVisible();
+    expect((await dock.boundingBox())!.height).toBeGreaterThan(100);
   });
 });
 
