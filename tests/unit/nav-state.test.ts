@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { CLASSIFY_CASES, NOW, visit } from './classify-cases';
 import {
   backAction,
   backOverride,
@@ -18,15 +19,6 @@ import {
   type Visit,
 } from '~/lib/nav-state';
 
-const NOW = 1_700_000_000_000;
-const visit = (v: Partial<Visit>): Visit => ({
-  url: '/tables',
-  tab: 'tables',
-  depth: 0,
-  label: 'Tables',
-  at: NOW - 500,
-  ...v,
-});
 const here = (h: Partial<Here>): Here => ({
   tab: 'tables',
   depth: 2,
@@ -42,44 +34,11 @@ const load: Load = {
 };
 
 describe('classify', () => {
-  it('follows depth inside a tab', () => {
-    expect(classify(visit({}), { tab: 'tables', depth: 2 }, undefined, NOW)).toBe('push');
-    expect(classify(visit({ depth: 2 }), { tab: 'tables', depth: 1 }, undefined, NOW)).toBe('pop');
-    expect(classify(visit({ depth: 1 }), { tab: 'tables', depth: 1 }, undefined, NOW)).toBe('fade');
+  // The table is classify-cases.ts, which inline.test.ts runs the shipped script against too.
+  it.each(CLASSIFY_CASES)('$name', ({ prev, here, traverse, expect: want }) => {
+    expect(classify(prev, here, traverse, NOW)).toBe(want);
   });
-  it('cross-fades a tab-bar tap whatever the depths', () => {
-    const tap = visit({ depth: 2, viaTab: true });
-    expect(classify(tap, { tab: 'map', depth: 0 }, undefined, NOW)).toBe('tab');
-    expect(classify(visit({ viaTab: true }), { tab: 'handbook', depth: 2 }, undefined, NOW)).toBe(
-      'tab',
-    );
-  });
-  it('pushes a view opened from another tab, and pops back to it', () => {
-    const results = visit({ url: '/?q=32', tab: 'diagnose', label: 'Results' });
-    expect(classify(results, { tab: 'tables', depth: 2 }, undefined, NOW)).toBe('push');
-    expect(classify(visit({ depth: 2 }), { tab: 'diagnose', depth: 0 }, undefined, NOW)).toBe(
-      'pop',
-    );
-  });
-  it('lets a traversal decide by direction', () => {
-    expect(classify(visit({}), { tab: 'tables', depth: 2 }, 'back', NOW)).toBe('pop');
-    expect(classify(visit({ depth: 2 }), { tab: 'tables', depth: 0 }, 'forward', NOW)).toBe('push');
-    expect(classify(null, { tab: 'tables', depth: 1 }, undefined, NOW)).toBe('fade');
-  });
-  it('only fades after a swipe, even when the swipe traversed', () => {
-    const swiped = visit({ depth: 2, swipe: true, back: true });
-    expect(classify(swiped, { tab: 'tables', depth: 1 }, undefined, NOW)).toBe('fade');
-    expect(classify(swiped, { tab: 'tables', depth: 1 }, 'back', NOW)).toBe('fade');
-  });
-  it('pops after a header back that replaced, whatever the depths', () => {
-    const backed = visit({ depth: 1, back: true, replace: true });
-    expect(classify(backed, { tab: 'tables', depth: 2 }, undefined, NOW)).toBe('pop');
-  });
-  it('treats a stale record, or one without a time, as none', () => {
-    const old = visit({ at: NOW - 60_000 });
-    expect(classify(old, { tab: 'tables', depth: 2 }, undefined, NOW)).toBe('fade');
-    const untimed: Visit = { url: '/tables', tab: 'tables', depth: 0, label: 'Tables' };
-    expect(classify(untimed, { tab: 'tables', depth: 2 }, undefined, NOW)).toBe('fade');
+  it('counts a record as fresh for 10 s, never from the future', () => {
     expect(fresh(visit({ at: NOW + 5 }), NOW)).toBe(false);
     expect(fresh(visit({ at: NOW - 10_000 }), NOW)).toBe(true);
   });

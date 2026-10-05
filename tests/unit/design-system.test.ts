@@ -804,18 +804,19 @@ describe('design system source rules', () => {
     // 1279/1280, and a height query 559/560 (DS3-10). Container queries size a component to its
     // own box and are not read.
     const off: string[] = [];
-    for (const file of sources(SCOPE).concat(['src/lib/bp.ts'])) {
+    const inline = walk(join(ROOT, 'src/inline')).map((p) =>
+      relative(ROOT, p).split('\\').join('/'),
+    );
+    for (const file of sources(SCOPE).concat(['src/lib/bp.ts'], inline)) {
       const text = readFileSync(join(ROOT, file), 'utf8');
       for (const m of text.matchAll(/\((min|max)-(width|height):\s*(\d+)px\)/g)) {
         const scale: readonly number[] = m[2] === 'width' ? BREAKPOINTS : HEIGHTS;
         if (!scale.includes(Number(m[3]))) off.push(`${file} ${m[0]}`);
       }
-      // A module script imports the query; only an inline script (which cannot) writes one.
-      for (const m of text.matchAll(/(matchMedia|client:media=)\(?['"]\((min|max)-width/g)) {
-        const before = text.slice(0, m.index);
-        const inline = before.lastIndexOf('<script is:inline>') > before.lastIndexOf('</script>');
-        if (!inline) off.push(`${file} ${m[0]}: import it from ~/lib/bp`);
-      }
+      // A module script imports the query; a before-paint script (src/inline) reads it off its
+      // tag, which the page writes from bp.ts (AR3-03).
+      for (const m of text.matchAll(/(matchMedia|client:media=)\(?['"]\((min|max)-width/g))
+        off.push(`${file} ${m[0]}: import it from ~/lib/bp`);
     }
     expect(off).toEqual([]);
     expect([PHONE, WIDE, DESKTOP, SHORT]).toEqual([

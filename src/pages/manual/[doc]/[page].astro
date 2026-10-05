@@ -18,6 +18,8 @@ import {
 import { sectionOfPage } from '~/lib/handbook/sections';
 import { pageCallouts } from '~/lib/data/callouts';
 import { LEGACY_KEYS, PREF_KEYS } from '~/lib/storage';
+import { inlineScript } from '~/lib/inline-script';
+import fitSrc from '~/inline/fit.js?raw';
 import { WIDE } from '~/lib/bp';
 import { handbookHref, href, manualHref } from '~/lib/url';
 
@@ -88,22 +90,16 @@ const around = toc.slice(from, from + 7).map(([p, name], i) => ({
     title={caption}
     {...callouts.length ? { callouts } : {}}
   />
-  <script is:inline define:vars={{ FIT: PREF_KEYS.fit, OLD_FIT: LEGACY_KEYS.fit, WIDE }}>
-    // Before the first paint (PF2-02): the fit the viewer is about to choose (PageViewer's
-    // storedFit) and, for a fit to the page, the stage's top, so the scan is drawn at its size.
-    (function () {
-      let fit = null;
-      try {
-        fit = localStorage.getItem(FIT) ?? localStorage.getItem(OLD_FIT);
-      } catch {}
-      if (fit !== 'width' && fit !== 'page') fit = matchMedia(WIDE).matches ? 'page' : 'width';
-      const html = document.documentElement;
-      html.dataset.manualFit = fit;
-      const stage = document.querySelector('.viewer .stage');
-      if (stage)
-        html.style.setProperty('--viewer-top', stage.getBoundingClientRect().top + scrollY + 'px');
-    })();
-  </script>
+  {
+    /* Before the first paint (PF2-02): src/inline/fit.js, its keys and the wide query on the tag. */
+  }
+  <script
+    is:inline
+    data-fit={PREF_KEYS.fit}
+    data-old-fit={LEGACY_KEYS.fit}
+    data-wide={WIDE}
+    set:html={inlineScript(fitSrc)}
+  />
 
   <div class="below flush">
     <section>

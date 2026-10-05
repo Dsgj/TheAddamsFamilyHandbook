@@ -13,6 +13,10 @@ export const CTRL_FOOT = 156 + 28 + 4;
  *  it: the embed from 1000 on both sides, /map below 1000 at the right only (VP2-11; the canvas's
  *  pre-hydration CSS repeats the 58). */
 export const COLUMN_SIDE = 10 + 44 + 4;
+/** Spec §8.2: the selection sheet's detents, the peek a selected part opens to under the drawing
+ *  and its full height. The pre-paint script (src/inline/map.js) takes the peek from map.astro. */
+export const SHEET_PEEK = 96;
+export const SHEET_FULL = 416;
 
 interface Stage {
   w: number;

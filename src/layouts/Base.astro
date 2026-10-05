@@ -15,10 +15,13 @@ import '~/styles/print.css';
 import { pwaInfo } from 'virtual:pwa-info';
 import { href } from '~/lib/url';
 import { jsonScript } from '~/lib/json-script';
+import { inlineScript } from '~/lib/inline-script';
+import classifySrc from '~/inline/classify.js?raw';
+import revealSrc from '~/inline/reveal.js?raw';
+import themeSrc from '~/inline/theme.js?raw';
 import Toast from '~/components/Toast.svelte';
 import { PARENT, TABS, tabFor, type BackLink } from '~/lib/nav';
 import { depthOf } from '~/lib/nav-state';
-import { eventType } from '~/lib/events';
 import { LEGACY_KEYS, PREF_KEYS, SESSION_KEYS } from '~/lib/storage';
 import { allShoppingItems } from '~/lib/data/shopping';
 import TabBadge from '~/components/TabBadge.svelte';
@@ -114,92 +117,21 @@ const hasActions = Astro.slots.has('actions');
       media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
     />
     {pwaInfo && <Fragment set:html={pwaInfo.webManifest.linkTag} />}
-    <script is:inline define:vars={{ THEME: PREF_KEYS.theme, OLD_THEME: LEGACY_KEYS.theme }}>
-      try {
-        const t = localStorage.getItem(THEME) ?? localStorage.getItem(OLD_THEME);
-        if (t === 'light' || t === 'dark') {
-          document.documentElement.dataset.theme = t;
-          // The browser's bar follows the chosen theme too (audit DS2-01), whatever the system's.
-          const metas = document.querySelectorAll('meta[name="theme-color"]');
-          const own = [...metas].find((m) => m.getAttribute('media')?.includes(t))?.dataset.own;
-          if (own) for (const m of metas) m.content = own;
-        }
-      } catch {}
-    </script>
-    <script is:inline define:vars={{ PREV: SESSION_KEYS.prev }}>
-      // The view transition's type (spec §10): push, pop, tab or fade, decided from the page
-      // being left (motion.ts writes `tafh:prev` on pagehide) or the history direction. This must
-      // run before the first render, so it is inline; the rest of the continuity is motion.ts.
-      // It mirrors `classify` in src/lib/nav-state.ts: keep the two in step.
-      addEventListener('pagereveal', function (e) {
-        const vt = e.viewTransition;
-        // What ran, for the tests only (SV2-13): Playwright's browsers set navigator.webdriver.
-        const probe = navigator.webdriver;
-        if (!vt) {
-          if (probe) window.tafhMotion = { type: 'none', animations: [] };
-          return;
-        }
-        let prev = null;
-        try {
-          prev = JSON.parse(sessionStorage.getItem(PREV) || 'null');
-        } catch {}
-        // A record older than 10 s (or without a time) is not about this page.
-        const age = prev && typeof prev.at === 'number' ? Date.now() - prev.at : -1;
-        if (!(age >= 0 && age <= 10000)) prev = null;
-        const d = document.documentElement.dataset;
-        const depth = Number(d.depth || 0);
-        let type = 'fade';
-        // Truthiness, not just `in`: a browser (or a test) may define it without the API.
-        const nav = 'navigation' in window ? window.navigation : null;
-        const act = nav && nav.currentEntry ? nav.activation : null;
-        if (prev && prev.swipe) {
-          type = 'fade';
-        } else if (act && act.navigationType === 'traverse' && act.from) {
-          type = act.from.index > nav.currentEntry.index ? 'pop' : 'push';
-        } else if (prev) {
-          if (prev.back) type = 'pop';
-          else if (prev.viaTab) type = 'tab';
-          else if (prev.depth < depth) type = 'push';
-          else if (prev.depth > depth) type = 'pop';
-          else type = prev.tab === d.tab ? 'fade' : 'tab';
-        }
-        vt.types.add(type);
-        if (!probe) return;
-        // What ran: `window.tafhMotion`. Only the clock's animations: a scroller's edge fade runs
-        // on its scroll timeline and has no duration (VP2-04).
-        window.tafhMotion = { type: type, animations: [], pending: true };
-        const ran = function () {
-          window.tafhMotion = {
-            type: type,
-            animations: document
-              .getAnimations()
-              .filter(function (a) {
-                return a.timeline === document.timeline;
-              })
-              .map(function (a) {
-                const fx = a.effect;
-                const keys = fx && fx.getKeyframes ? fx.getKeyframes() : [];
-                const props = {};
-                keys.forEach(function (k) {
-                  Object.keys(k).forEach(function (p) {
-                    if (!/^(offset|computedOffset|easing|composite)$/.test(p)) props[p] = 1;
-                  });
-                });
-                return {
-                  name: a.animationName || a.transitionProperty || a.id || '',
-                  duration: fx ? Number(fx.getTiming().duration) : 0,
-                  props: Object.keys(props).sort(),
-                };
-              }),
-          };
-        };
-        // One chain with both handlers: a `.then` beside a `.catch` leaves its own promise
-        // rejected, unhandled, whenever the browser aborts the transition.
-        vt.ready.then(ran, function () {
-          window.tafhMotion = { type: type, animations: [], skipped: true };
-        });
-      });
-    </script>
+    {
+      /* Before the first paint, from src/inline through inlineScript: the chosen theme, then the
+        view transition's type from classify.js. Their keys ride as data attributes. */
+    }
+    <script
+      is:inline
+      data-theme={PREF_KEYS.theme}
+      data-old-theme={LEGACY_KEYS.theme}
+      set:html={inlineScript(themeSrc)}
+    />
+    <script
+      is:inline
+      data-prev={SESSION_KEYS.prev}
+      set:html={inlineScript(classifySrc, revealSrc)}
+    />
     <link rel="expect" href="#main" blocking="render" />
     {
       /* The tab bar comes after the page now, so the first frame (and a view transition's new
@@ -208,6 +140,7 @@ const hasActions = Astro.slots.has('actions');
     <link rel="expect" href="#sections" blocking="render" />
     <script src="~/pwa.ts"></script>
     <script src="~/motion.ts"></script>
+    <script src="~/shell.ts"></script>
   </head>
   <body>
     <a class="skip sr-only" href="#main">Skip to content</a>
@@ -331,90 +264,5 @@ const hasActions = Astro.slots.has('actions');
       )
     }
     <Toast client:load />
-    <script is:inline define:vars={{ RESELECT: eventType('reselect') }}>
-      (function () {
-        // The large title collapses over the first 52 px of scroll (spec §6.5): the compact
-        // title fades in between 40 and 52 and the hairline appears at 52. Under reduced motion
-        // the titles swap at 52. A page with its own h1 (data-h1="page") runs the same fade off
-        // that h1 instead, over its last 12 px under the bar, so the bar never repeats a title
-        // that is still on screen (audit P2 item 9); with no h1 to wait for, the title just shows.
-        const top = document.querySelector('header.top');
-        const lt = document.querySelector('main > .lt');
-        const own = top && top.dataset.h1 === 'page' ? document.querySelector('main h1') : null;
-        if (top && top.dataset.h1 === 'page' && !own) top.style.setProperty('--ct', '1');
-        if (top && (lt || own)) {
-          const reduce = matchMedia('(prefers-reduced-motion: reduce)');
-          let queued = false;
-          const apply = function () {
-            queued = false;
-            // For an own h1, y is how far its bottom edge has come up the bar's last 52 px.
-            const y = lt
-              ? Math.max(0, window.scrollY)
-              : 52 - (own.getBoundingClientRect().bottom - top.getBoundingClientRect().bottom);
-            const done = y >= 52;
-            const ct = reduce.matches ? (done ? 1 : 0) : Math.min(1, Math.max(0, (y - 40) / 12));
-            top.style.setProperty('--ct', String(ct));
-            if (lt) {
-              const large = reduce.matches ? (done ? 0 : 1) : Math.max(0, 1 - y / 52);
-              lt.style.setProperty('--lt', String(large));
-            }
-            top.toggleAttribute('data-collapsed', done);
-          };
-          const onScroll = function () {
-            if (queued) return;
-            queued = true;
-            requestAnimationFrame(apply);
-          };
-          apply();
-          addEventListener('scroll', onScroll, { passive: true });
-          addEventListener('resize', onScroll);
-          reduce.addEventListener('change', apply);
-        }
-        // Under 1280 a back label too long for its side wraps out of the link and only the
-        // chevron shows (layout.css, VP-03/AY-13). data-bare mirrors that, so the focus ring and
-        // the hover pill go round the chevron. The link and the label both resize whenever the
-        // label wraps, returns or is rewritten (motion.ts), so observing the two is enough.
-        const back = document.querySelector('header.top a.back');
-        const label = back && back.querySelector('span');
-        if (label && window.ResizeObserver) {
-          const bare = new ResizeObserver(function () {
-            const gone =
-              label.getBoundingClientRect().top >= back.getBoundingClientRect().bottom - 0.5;
-            back.toggleAttribute('data-bare', gone);
-          });
-          bare.observe(back);
-          bare.observe(label);
-        }
-        // Reselecting the current tab (spec §6.1): on the tab's root it scrolls to the top and
-        // focuses the h1; on a pushed page the link itself goes to the root.
-        const norm = function (p) {
-          return p
-            .replace(/\.html$/, '')
-            .replace(/\/index$/, '')
-            .replace(/\/$/, '');
-        };
-        const shell = document.querySelector('nav.shell');
-        if (shell) {
-          shell.addEventListener('click', function (e) {
-            // A Ctrl/Cmd, Shift or Alt click is the browser's: a new tab or window (CO2-13).
-            if (e.defaultPrevented || e.button !== 0) return;
-            if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-            const a = e.target.closest && e.target.closest('a.tab[aria-current="page"]');
-            if (!a || norm(location.pathname) !== norm(new URL(a.href).pathname)) return;
-            e.preventDefault();
-            window.scrollTo({ top: 0 });
-            const h1 = document.querySelector('h1');
-            if (h1) {
-              h1.tabIndex = -1;
-              h1.focus({ preventScroll: true });
-            }
-            // Diagnose keeps results/search state on its own root (`?q=`), so reselecting its tab
-            // needs to pop that state too, not just scroll and focus (spec §6.1). An inline
-            // script cannot import `emit`, so it raises the app event by its type (events.ts).
-            window.dispatchEvent(new CustomEvent(RESELECT));
-          });
-        }
-      })();
-    </script>
   </body>
 </html>

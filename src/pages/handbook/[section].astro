@@ -8,6 +8,8 @@ import ReaderBar from '~/components/ReaderBar.svelte';
 import { APPENDIX_FIRST_PAGE, SECTIONS, isAppendixPage } from '~/lib/handbook/sections';
 import { handbookToc } from '~/lib/handbook/toc';
 import { jsonScript } from '~/lib/json-script';
+import { inlineScript } from '~/lib/inline-script';
+import textSrc from '~/inline/text.js?raw';
 import { PREF_KEYS } from '~/lib/storage';
 import HandbookTocList from '~/components/HandbookTocList.svelte';
 import { pageLabel, pageTitleText, printedPageText } from '~/lib/pages';
@@ -73,14 +75,7 @@ const description =
       </a>
     )
   }
-  <script is:inline define:vars={{ TEXT: PREF_KEYS.text }}>
-    try {
-      const t = localStorage.getItem(TEXT);
-      if (t === 'sm' || t === 'lg') document.documentElement.dataset.text = t;
-    } catch {
-      /* no storage: the default size */
-    }
-  </script>
+  <script is:inline data-text={PREF_KEYS.text} set:html={inlineScript(textSrc)} />
   <script is:inline type="application/json" id="tafh-toc" set:html={jsonScript(toc)} />
   <div class="hb">
     {

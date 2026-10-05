@@ -17,3 +17,6 @@ export const BREAKPOINTS = [599, 600, 999, 1000, 1279, 1280] as const;
 export const SHORT = '(max-height: 559px)';
 /** Every height a media query may name: both sides of the one step. */
 export const HEIGHTS = [559, 560] as const;
+/** The motion preference: the one query beside the breakpoints that scripts match (media.ts,
+ *  motion.ts, shell.ts). */
+export const REDUCED = '(prefers-reduced-motion: reduce)';

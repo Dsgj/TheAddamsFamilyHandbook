@@ -178,7 +178,7 @@ test.describe('the Diagnose home stays reachable after a ?q= URL', () => {
   test('re-tapping the Diagnose tab while on ?q= results pops to the home', async ({ page }) => {
     await gotoHydrated(page, '/?q=32');
     await expect(field(page)).toHaveValue('32');
-    // Base.astro's reselect handler (spec §6.1) intercepts a tap on the tab's own current link.
+    // shell.ts's reselect handler (spec §6.1) intercepts a tap on the tab's own current link.
     await page.locator('nav.shell a.tab[aria-current="page"]').click();
     await home(page);
   });

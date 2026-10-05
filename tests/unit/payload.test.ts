@@ -2,6 +2,13 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, posix } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { allShoppingItems } from '~/lib/data/shopping';
+import classifySrc from '~/inline/classify.js?raw';
+import fitSrc from '~/inline/fit.js?raw';
+import mapSrc from '~/inline/map.js?raw';
+import revealSrc from '~/inline/reveal.js?raw';
+import textSrc from '~/inline/text.js?raw';
+import themeSrc from '~/inline/theme.js?raw';
+import { inlineScript } from '~/lib/inline-script';
 import { jsonScript } from '~/lib/json-script';
 import { precacheKeys } from '~/lib/precache';
 import { freshDist } from './dist';
@@ -105,6 +112,11 @@ describe('the precache list', () => {
   });
 });
 
+/* The most inline code of ours a page carries, in bytes: the shell's two scripts plus the map's,
+   measured after round 3 (P3 item 1) at 3.2 kB; a copy of a module or a comment that slips back
+   in would cross it (PF3-06). Astro's island runtime (its own inline scripts) is not counted. */
+const INLINE_BUDGET = 3600;
+
 describe('references', () => {
   const text = files
     .filter(
@@ -134,6 +146,28 @@ describe('references', () => {
         !allowed.has(f),
     );
     expect(unreferenced).toEqual([]);
+  });
+  it('ships each inline script from its src/inline file, stripped, and under the budget (AR3-01, PF3-06)', () => {
+    // Every page: the theme and the pagereveal classifier (Base.astro); the map page, a section
+    // page and a manual page add theirs. Ours carry their keys as data attributes; the only other
+    // inline scripts are Astro's minified island runtime. No comment or blank line is left, and a
+    // page's inline code of ours stays under INLINE_BUDGET, so a copy cannot creep back.
+    const pages = text.filter(({ f }) => f.endsWith('.html'));
+    let most = 0;
+    for (const { f, s } of pages) {
+      const all = [...s.matchAll(/<script(?![^>]*\b(?:src|type)=)([^>]*)>([\s\S]*?)<\/script>/g)];
+      const inline = all.filter((m) => /\sdata-/.test(m[1] ?? '')).map((m) => m[2] ?? '');
+      for (const m of all.filter((m) => !/\sdata-/.test(m[1] ?? '')))
+        expect(m[2], `${f}: an inline script that is not ours nor Astro's`).toMatch(/^\(\(\)=>\{/);
+      const want = [inlineScript(themeSrc), inlineScript(classifySrc, revealSrc)];
+      if (f === 'map.html') want.push(inlineScript(mapSrc));
+      if (/^handbook\/[^/]+\.html$/.test(f)) want.push(inlineScript(textSrc));
+      if (/^manual\/[^/]+\/[^/]+\.html$/.test(f)) want.push(inlineScript(fitSrc));
+      expect(inline, f).toEqual(want);
+      for (const code of inline) expect(code, f).not.toMatch(/^\s*(\/\/|\/\*)|^\s*$/m);
+      most = Math.max(most, inline.join('').length);
+    }
+    expect(most).toBeLessThan(INLINE_BUDGET);
   });
   it('every page carries the shopping ids, a section page the TOC, once, whole and inert', () => {
     // the escape: no `<` is left, so neither `</script` nor `<!--` can reach the text

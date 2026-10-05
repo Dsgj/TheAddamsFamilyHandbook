@@ -1,3 +1,4 @@
+import { classify, fresh, norm } from '~/inline/classify.js';
 import { SESSION_KEYS } from '~/lib/storage';
 
 /**
@@ -14,8 +15,11 @@ import { SESSION_KEYS } from '~/lib/storage';
  */
 const PREV_KEY = SESSION_KEYS.prev;
 const STATE_KEY = SESSION_KEYS.nav;
-/** A `tafh:prev` record older than this is not about the page now loading. */
-const FRESH_MS = 10_000;
+/* The classifier, the freshness rule and the path rule are src/inline/classify.js, the plain JS
+   Base.astro inlines before the first paint (audit AR3-01, TT3-04), re-exported here so the
+   page modules and the tests reach the functions that ship. */
+export { classify, fresh, norm };
+export type { Transition } from '~/inline/classify.js';
 /** A second back (double tap, a tap during a swipe) within this window does nothing. */
 export const BACK_GUARD_MS = 1500;
 
@@ -73,23 +77,6 @@ interface NavState {
   tabs: Record<string, string>;
   /** URL → scroll offset. */
   scroll: Record<string, number>;
-}
-
-export type Transition = 'push' | 'pop' | 'tab' | 'fade';
-
-/** The record is about the page now loading: written within the last FRESH_MS. */
-export function fresh(prev: Visit | null | undefined, now: number): prev is Visit {
-  if (!prev || typeof prev.at !== 'number') return false;
-  const age = now - prev.at;
-  return age >= 0 && age <= FRESH_MS;
-}
-
-/** The path rule Base's reselect uses: no `.html`, no `/index`, no trailing slash. */
-export function norm(p: string): string {
-  return p
-    .replace(/\.html$/, '')
-    .replace(/\/index$/, '')
-    .replace(/\/$/, '');
 }
 
 function parts(u: string): { path: string; query: string } | null {
@@ -161,29 +148,6 @@ export function readEntry(state: unknown): Entry | null {
 export function withEntry(state: unknown, rec: Entry): Record<string, unknown> {
   const base = state && typeof state === 'object' ? (state as Record<string, unknown>) : {};
   return { ...base, tafh: rec };
-}
-
-/**
- * Which animation the incoming page runs. A swipe back already moved the page, so it only fades;
- * a history traversal is decided by direction; a back that replaced pops; a tab-bar tap
- * cross-fades; otherwise depth decides. A `prev` that is not fresh counts as none. Base.astro's
- * inline `pagereveal` script mirrors this.
- */
-export function classify(
-  prev: Visit | null,
-  cur: { tab: string; depth: number },
-  traverse?: 'back' | 'forward',
-  now = Date.now(),
-): Transition {
-  const p = fresh(prev, now) ? prev : null;
-  if (p?.swipe) return 'fade';
-  if (traverse) return traverse === 'back' ? 'pop' : 'push';
-  if (!p) return 'fade';
-  if (p.back) return 'pop';
-  if (p.viaTab) return 'tab';
-  if (p.depth < cur.depth) return 'push';
-  if (p.depth > cur.depth) return 'pop';
-  return p.tab === cur.tab ? 'fade' : 'tab';
 }
 
 /** The navigation that brought this page, as far as the back link cares. */

@@ -20,7 +20,7 @@
     matchesQuery,
     statusClass,
   } from '~/lib/map/items';
-  import { COLUMN_SIDE, fitScale } from '~/lib/map/fit';
+  import { COLUMN_SIDE, fitScale, SHEET_FULL, SHEET_PEEK } from '~/lib/map/fit';
   import { createMapZoom } from '~/lib/map/zoom.svelte';
   import { dist, MAX_ZOOM } from '~/lib/map/zoom-math';
   import { allPositions, PLAYFIELD, positions } from '~/lib/data/positions';
@@ -37,9 +37,6 @@
 
   /** A tap that lands on no marker selects the nearest visible marker within this many screen px. */
   const HIT = 22;
-  /** Selection sheet detents (spec §8.2). */
-  const PEEK = 96;
-  const FULL = 416;
   /** VP3-17: the stage keeps this much clear above and below the drawing at 1×, so the edge
    *  markers never touch the top bar or the tab bar. It is padding on the scroller: the
    *  pre-hydration CSS sees it through 100cqh (the content box) and repeats the 12, the zoom's
@@ -246,18 +243,18 @@
   /** The selection sheet: below 1000 on /map, with a part selected (spec §7.6). */
   const sheetOpen = $derived(!embed && !wide && !calib && !!current);
   /** Px the sheet takes from the fit at 1×: phones only (Q29 open; tablets keep the overlap). */
-  const inset = $derived(sheetOpen && phone ? PEEK : 0);
+  const inset = $derived(sheetOpen && phone ? SHEET_PEEK : 0);
   /** The scroller's padding above and below the drawing (`EDGE`; the embed has none). */
   const edge = $derived(embed ? 0 : EDGE);
   /** Px of the stage the sheet covers now; centring above 1× uses the band left (spec §7.1). */
-  const cover = $derived(sheetOpen ? (expanded ? FULL : PEEK) : 0);
+  const cover = $derived(sheetOpen ? (expanded ? SHEET_FULL : SHEET_PEEK) : 0);
   /** Expanded at 1× the scroller can't scroll: the canvas moves so the part sits mid-band. */
   const shift = $derived.by(() => {
     if (!sheetOpen || !expanded || zm.zoom > 1 || !current || !zm.canvasH) return 0;
     const l = posOf(current)[0];
     if (!l) return 0;
     // The band is measured from the content box's top, `edge` below the scroller's.
-    const band = stageH - FULL - edge;
+    const band = stageH - SHEET_FULL - edge;
     if (zm.canvasH <= band) return 0;
     const y = Math.min(0, Math.max(band - zm.canvasH, band / 2 - l.y * zm.canvasH));
     return Math.round(y * 10) / 10;
@@ -604,8 +601,8 @@
           kind="map"
           label="Selected component, {fullName(current)}"
           bind:expanded
-          peek={PEEK}
-          full={FULL}
+          peek={SHEET_PEEK}
+          full={SHEET_FULL}
           tabindex={-1}
           data-kind={current.kind}
           data-id={current.id}

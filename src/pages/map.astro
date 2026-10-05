@@ -2,6 +2,11 @@
 import Icon from '~/components/Icon.astro';
 import Base from '~/layouts/Base.astro';
 import PlayfieldMap from '~/components/PlayfieldMap.svelte';
+import { inlineScript } from '~/lib/inline-script';
+import mapSrc from '~/inline/map.js?raw';
+import { PHONE, WIDE } from '~/lib/bp';
+import { SHEET_PEEK } from '~/lib/map/fit';
+import { MAX_ZOOM } from '~/lib/map/zoom-math';
 ---
 
 <Base
@@ -27,28 +32,18 @@ import PlayfieldMap from '~/components/PlayfieldMap.svelte';
       <Icon name="menu" />
     </button>
   </Fragment>
-  <script is:inline>
-    // Before the map is parsed, so before its first paint (PF2-01): the canvas's CSS fit takes what
-    // hydration will apply, so it lands without a jump: the zoom the URL restores (?z=, at most
-    // MAX_ZOOM 3) and, below 600, the selection sheet's peek (PEEK 96) that a selected part (?id=)
-    // opens under the drawing.
-    (function () {
-      const u = new URLSearchParams(location.search);
-      const root = document.documentElement.style;
-      const z = Math.min(Number(u.get('z')) || 1, 3);
-      if (z > 1) root.setProperty('--map-z', String(z));
-      const sheet = u.get('id') && !u.has('calib') && matchMedia('(max-width: 999px)').matches;
-      if (sheet && matchMedia('(max-width: 599px)').matches)
-        root.setProperty('--map-inset', '96px');
-      // A page that opens with the sheet up arrives without the cross-fade: that view transition
-      // crashed WebKit (Playwright's, a Map tab back to a selected part). BottomSheet skips the
-      // one out of it.
-      if (sheet)
-        addEventListener('pagereveal', function (e) {
-          if (e.viewTransition) e.viewTransition.skipTransition();
-        });
-    })();
-  </script>
+  {
+    /* Before the map is parsed (PF2-01): src/inline/map.js, with the zoom cap, the sheet's peek
+      and the queries it matches from their modules (AR3-03). */
+  }
+  <script
+    is:inline
+    data-max-zoom={MAX_ZOOM}
+    data-peek={SHEET_PEEK}
+    data-wide={WIDE}
+    data-phone={PHONE}
+    set:html={inlineScript(mapSrc)}
+  />
   <PlayfieldMap client:load />
 </Base>
 

@@ -182,7 +182,7 @@ test.describe('the phone bar: back label, title and actions never overlap', () =
 });
 
 // The collapsed link keeps its whole side as the tap area, but its focus ring and hover pill go
-// round the chevron alone (data-bare, set by Base's script), not round an empty box whose ring
+// round the chevron alone (data-bare, set by shell.ts), not round an empty box whose ring
 // ran over the title. The chevron does not move, and a label that fits again brings the usual
 // look back. Both projects: the phone for the keyboard ring, the desktop for hover.
 test.describe('a bare back link', () => {

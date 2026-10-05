@@ -1,5 +1,5 @@
 import { MediaQuery } from 'svelte/reactivity';
-import { DESKTOP, PHONE, WIDE } from '~/lib/bp';
+import { DESKTOP, PHONE, REDUCED, WIDE } from '~/lib/bp';
 
 /**
  * The breakpoints and the motion preference as live queries, one set for every island (audit
@@ -14,5 +14,5 @@ export const media = {
   /** From 1280: the sidebar navigation and the map's keyboard legend. */
   desktop: new MediaQuery(DESKTOP),
   /** The system asks for less motion. */
-  reduced: new MediaQuery('(prefers-reduced-motion: reduce)'),
+  reduced: new MediaQuery(REDUCED),
 };

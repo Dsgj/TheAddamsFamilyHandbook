@@ -14,7 +14,7 @@ function sources(dir = 'src'): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
     const path = `${dir}/${e.name}`;
     if (e.isDirectory()) return path === 'src/content' ? [] : sources(path);
-    return /\.(ts|svelte|astro)$/.test(e.name) ? [path] : [];
+    return /\.(ts|js|svelte|astro)$/.test(e.name) ? [path] : [];
   });
 }
 
@@ -258,20 +258,38 @@ describe('structure lint', () => {
   });
 
   it('(q) touches localStorage and sessionStorage only in storage.ts and the before-paint scripts (SV2-14)', () => {
-    // The inline scripts read a preference or the view-transition record before the first paint
-    // (keys through define:vars); motion.ts writes the per-tab records it owns.
+    // The before-paint scripts (src/inline) read a preference or the view-transition record, by
+    // the key on their tag; motion.ts writes the per-tab records it owns.
     const homes = only(
       'src/lib/storage.ts',
-      'src/layouts/Base.astro',
-      'src/pages/handbook/[section].astro',
-      'src/pages/manual/[doc]/[page].astro',
+      'src/inline/theme.js',
+      'src/inline/reveal.js',
+      'src/inline/text.js',
+      'src/inline/fit.js',
       'src/motion.ts',
     );
     expectNone(hits(/\b(localStorage|sessionStorage)\b/, homes));
   });
 
-  it('(q) builds an app event only in events.ts (and the inline reselect script) (AR2-09)', () => {
-    expectNone(hits(/new CustomEvent\(/, only('src/lib/events.ts', 'src/layouts/Base.astro')));
+  it('(q) builds an app event only in events.ts (AR2-09)', () => {
+    expectNone(hits(/new CustomEvent\(/, only('src/lib/events.ts')));
+  });
+
+  it('(q) ships inline code only from src/inline, through inlineScript, its keys as data attributes (AR3-01, PF3-06, TT3-08)', () => {
+    // An .astro file's <script is:inline> is JSON or a set:html of a src/inline file, so the code
+    // that ships is the code tsc checks and the unit tests run; define:vars is gone, since astro
+    // check cannot see the names it declares (the ts(2570) hints).
+    const off: string[] = [];
+    for (const f of FILES.filter((f) => f.path.endsWith('.astro'))) {
+      if (/define:vars/.test(f.text)) off.push(`${f.path}: define:vars`);
+      for (const m of f.text.matchAll(/<script\b([^>]*?)(\/>|>([\s\S]*?)<\/script>)/g)) {
+        const [tag, attrs = '', , body = ''] = m;
+        if (!/\bis:inline\b/.test(attrs) || /type="application\/json"/.test(attrs)) continue;
+        if (!/set:html=\{inlineScript\(/.test(attrs) || body.trim())
+          off.push(`${f.path}: ${tag.slice(0, 60)}`);
+      }
+    }
+    expect(off).toEqual([]);
   });
 
   it('(q) leaves copy and share to share.ts (AR2-15)', () => {

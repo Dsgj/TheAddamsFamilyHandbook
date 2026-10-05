@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Before-paint scripts (theme, view transition type, text size, manual fit,
+  map zoom) ship from one tested source, stripped of comments; the header
+  collapse and tab reselect move to a cached module. Pages get smaller.
 - Design system: list separators start at the text, rows and Diagnose tiles
   show a hover tint, every touch size reads --touch, the detail page's name
   matches its card, and the dead toggle styles are gone.

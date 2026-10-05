@@ -1,3 +1,4 @@
+import { REDUCED } from '~/lib/bp';
 import { listen } from '~/lib/events';
 import { TABS } from '~/lib/nav';
 import {
@@ -32,7 +33,7 @@ const tab = html.dataset.tab ?? '';
 const depth = Number(html.dataset.depth ?? 0);
 const here = () => location.pathname + location.search;
 const url = here();
-const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+const reduce = matchMedia(REDUCED);
 const TAB_LABEL: Record<string, string> = Object.fromEntries(TABS.map((t) => [t.key, t.label]));
 /** The Navigation API, when the browser has it (tested by truthiness, so a test can hide it). */
 const navApi = () =>
