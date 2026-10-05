@@ -21,7 +21,7 @@ export interface BuildInputs {
 /** What the site is built from: sources, the public files, the kit's docs, the config, the lock. */
 export const BUILD_INPUTS: BuildInputs = {
   dirs: ['src', 'public', 'kit-docs'],
-  files: ['astro.config.ts', 'package.json', 'pnpm-lock.yaml'],
+  files: ['astro.config.ts', 'svelte.config.js', 'package.json', 'pnpm-lock.yaml'],
   skip: /^public\/assets\/pages(?:\/|$)/,
 };
 

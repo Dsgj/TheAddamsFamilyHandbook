@@ -1,47 +1,16 @@
 import { expect, test, type Page } from '@playwright/test';
 import { AxeBuilder } from '@axe-core/playwright';
 import { gotoHydrated } from './helpers';
+import { gotoState, ROUTES, STATES } from './routes';
 
-/* An axe-core scan of one page per template (TT-13). It is the automatic floor under the hand-written
-   a11y checks: the WCAG 2.x A/AA rules plus axe's best practices, on the same routes a11y.spec.ts
-   walks, on every project. A violation fails with its rule and the nodes it hit. Rules an app bug
+/* An axe-core scan of every route and of the states a search or a tap opens (TT-13, AY3-03). It is
+   the automatic floor under the hand-written a11y checks: the WCAG 2.x A/AA rules plus axe's best
+   practices, on the routes and states of tests/e2e/routes.ts (the lists the 44 px sweep in
+   a11y.spec.ts walks too), on every project. A violation fails with its rule and the nodes it hit. Rules an app bug
    outside this change trips are named in KNOWN, per project and route, so the gate is green and the
    next change to those routes sees them; nothing else is excluded, and an entry whose rule no
    longer fires fails too, so a fix takes its entry out. The one carve-out is the fold under the
    sticky Diagnose field, below. */
-
-const ROUTES = [
-  '/',
-  '/?q=flipper',
-  '/?q=12%2013',
-  '/switches',
-  '/switch/12',
-  '/coil/01',
-  '/flipper/ULF',
-  '/lamp/11',
-  '/lamps',
-  '/coils',
-  '/fuses',
-  '/verify',
-  '/handbook',
-  '/handbook/quick',
-  '/handbook/menus',
-  '/handbook/rules',
-  '/handbook/appendix',
-  '/handbook/setup',
-  '/handbook/adjustments',
-  '/handbook/presets',
-  '/manual',
-  '/manual/ops/5',
-  '/parts',
-  '/tables',
-  '/workshop',
-  '/setup',
-  '/shopping',
-  '/care',
-  '/map',
-  '/404',
-];
 
 type Result = Awaited<ReturnType<AxeBuilder['analyze']>>['violations'][number];
 type NodeResult = Result['nodes'][number];
@@ -85,20 +54,32 @@ async function belowTheFold(page: Page, violations: Result[]): Promise<Result[]>
   return out;
 }
 
+/** The scan of what the page shows now, against KNOWN for this project and url. */
+async function nothingNew(page: Page, url: string) {
+  const result = await new AxeBuilder({ page }).withTags(TAGS).analyze();
+  result.violations = await belowTheFold(page, result.violations);
+  const known = KNOWN[`${test.info().project.name} ${url}`] ?? [];
+  const fresh = result.violations
+    .filter((v) => !known.includes(v.id))
+    .map((v) => `${v.id} [${v.impact}]: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`);
+  expect(fresh).toEqual([]);
+  expect(
+    result.violations.map((v) => v.id),
+    'a KNOWN entry no longer fires',
+  ).toEqual(expect.arrayContaining(known));
+}
+
 for (const url of ROUTES) {
   test(`axe finds nothing new on ${url}`, async ({ page }) => {
     await gotoHydrated(page, url);
-    const result = await new AxeBuilder({ page }).withTags(TAGS).analyze();
-    result.violations = await belowTheFold(page, result.violations);
-    const known = KNOWN[`${test.info().project.name} ${url}`] ?? [];
-    const fresh = result.violations
-      .filter((v) => !known.includes(v.id))
-      .map((v) => `${v.id} [${v.impact}]: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`);
-    expect(fresh).toEqual([]);
-    expect(
-      result.violations.map((v) => v.id),
-      'a KNOWN entry no longer fires',
-    ).toEqual(expect.arrayContaining(known));
+    await nothingNew(page, url);
+  });
+}
+
+for (const state of STATES) {
+  test(`axe finds nothing new with ${state.name} (${state.url})`, async ({ page, browserName }) => {
+    await gotoState(page, state, browserName);
+    await nothingNew(page, state.url);
   });
 }
 

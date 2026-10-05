@@ -57,9 +57,14 @@ describe('buildId', () => {
     expect(buildId(root, inputs)).toBe(a);
   });
 
-  it('reads the sources, the public files, the kit docs, the config and the lock for the site', () => {
+  it('reads the sources, the public files, the kit docs, the two configs and the lock for the site', () => {
     expect(BUILD_INPUTS.dirs).toEqual(['src', 'public', 'kit-docs']);
-    expect(BUILD_INPUTS.files).toEqual(['astro.config.ts', 'package.json', 'pnpm-lock.yaml']);
+    expect(BUILD_INPUTS.files).toEqual([
+      'astro.config.ts',
+      'svelte.config.js',
+      'package.json',
+      'pnpm-lock.yaml',
+    ]);
     expect(BUILD_INPUTS.skip.test('public/assets/pages/ops/1.png')).toBe(true);
     expect(BUILD_INPUTS.skip.test('public/assets/figures/a.jpg')).toBe(false);
   });

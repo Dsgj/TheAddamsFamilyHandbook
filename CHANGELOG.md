@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- The test gates reach further: the accessibility scans walk every page and
+  the sheets and results a tap opens, the typed lint covers the Svelte
+  islands, an end-to-end run refuses a build older than its sources, and the
+  CI summary lists a test that retried inside itself.
 - The app installs in about a hundred requests instead of 465 (2 MB instead of
   16): the handbook, manual and component pages are saved in the background
   after the first install, and the body font no longer shifts the page when

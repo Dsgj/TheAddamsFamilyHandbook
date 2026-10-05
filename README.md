@@ -114,14 +114,14 @@ pnpm preview
 
 ### Gates
 
-| Command             | Checks                                                                                                                                                                                               |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm check`        | `astro check` + `tsc --noEmit`                                                                                                                                                                       |
-| `pnpm svelte-check` | svelte-check after astro sync                                                                                                                                                                        |
-| `pnpm lint`         | ESLint (Astro, Svelte, the Playwright specs; type-aware on `src/`), no warnings allowed                                                                                                              |
-| `pnpm format:check` | Prettier, LF everywhere                                                                                                                                                                              |
-| `pnpm test`         | Vitest: codes, shared cause, handbook build, copy rules, map zoom, built links and payload, workflow shape (the last two read `dist/`, which must be newer than the sources: run `pnpm build` first) |
-| `pnpm test:e2e`     | Playwright: phone-dark, desktop-light and phone-webkit (390×844), incl. axe on 26 routes; with `BASE_PATH` set also `subpath`, the `@subpath` specs under that base; run `pnpm build` first          |
+| Command             | Checks                                                                                                                                                                                                                                                                                                 |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `pnpm check`        | `astro check` + `tsc --noEmit`                                                                                                                                                                                                                                                                         |
+| `pnpm svelte-check` | svelte-check after astro sync                                                                                                                                                                                                                                                                          |
+| `pnpm lint`         | ESLint (Astro, Svelte, the Playwright specs; type-aware on `src/`, the islands' scripts included), no warnings allowed                                                                                                                                                                                 |
+| `pnpm format:check` | Prettier, LF everywhere                                                                                                                                                                                                                                                                                |
+| `pnpm test`         | Vitest: codes, shared cause, handbook build, copy rules, map zoom, built links and payload, workflow shape, the gates' own tests (CI summary, stale-dist guard, typed lint on a Svelte fixture); the link and payload tests read `dist/`, which must be newer than the sources: run `pnpm build` first |
+| `pnpm test:e2e`     | Playwright: phone-dark, desktop-light and phone-webkit (390×844), incl. axe and the 44 px sweep on every route and five opened states; with `BASE_PATH` set also `subpath`, the `@subpath` specs under that base; run `pnpm build` first                                                               |
 
 ## Deploy
 

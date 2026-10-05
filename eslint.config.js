@@ -30,7 +30,11 @@ export default tseslint.config(
     rules: {
       ...playwright.configs['flat/recommended'].rules,
       'playwright/no-wait-for-timeout': 'error',
-      'playwright/expect-expect': ['warn', { assertFunctionNames: ['expect', 'home'] }],
+      // the shared asserting helpers: `home` (hubs), the axe scan and the 44 px sweep (P4 item 1)
+      'playwright/expect-expect': [
+        'warn',
+        { assertFunctionNames: ['expect', 'home', 'nothingNew', 'targets'] },
+      ],
       // One spec serves three projects: a skip that gives its reason, and a branch on the viewport
       // or the browser, are how it does that.
       'playwright/no-skipped-test': 'off',
@@ -38,11 +42,18 @@ export default tseslint.config(
       'playwright/no-conditional-expect': 'off',
     },
   },
-  // Type-aware where a dropped promise hides a failure: the app's modules (TT2-13).
+  // Type-aware where a dropped promise hides a failure: the app's modules (TT2-13) and its
+  // islands' scripts (TT3-07). The Svelte parser hands the script to typescript-eslint, which
+  // needs to know `.svelte` is a file of the project; tests/unit/lint.test.ts proves the rule
+  // fires in a .svelte file.
   {
-    files: ['src/**/*.ts'],
+    files: ['src/**/*.ts', 'src/**/*.svelte', 'src/**/*.svelte.ts'],
     languageOptions: {
-      parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname },
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+        extraFileExtensions: ['.svelte'],
+      },
     },
     rules: { '@typescript-eslint/no-floating-promises': 'error' },
   },

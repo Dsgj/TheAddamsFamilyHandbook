@@ -100,8 +100,8 @@
     line-height: 16px;
   }
   /* Spec §12: a fuse or page link (20 tall) gets a 44 box centred on it. On the card it reaches
-     12 of the 14 gap below the list, where no other target sits; on the detail page, the card's
-     padding. */
+     12 of the 14 gap below the list, where no other target sits (ComponentCard moves a status row
+     that follows directly 4 further down); on the detail page, the card's padding. */
   .wiring :global(dd a) {
     position: relative;
   }

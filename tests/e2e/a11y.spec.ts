@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { barCovered, gotoHydrated, twoFrames } from './helpers';
+import { gotoState, ROUTES, STATES } from './routes';
 
 /*
  * P2 item 5 of the app audit: accessibility (AY-01, AY-02, AY-05, AY-06, AY-07, AY-09, AY-10,
@@ -1028,105 +1029,91 @@ test.describe('page viewer keys (AY-11, spec §9.12)', () => {
 });
 
 test.describe('targets are 44 or carved out (AY-12, spec §12)', () => {
-  for (const url of [
-    '/',
-    '/?q=flipper',
-    '/?q=12%2013',
-    '/switches',
-    '/switch/12',
-    '/coil/01',
-    '/flipper/ULF',
-    '/lamp/11',
-    '/lamps',
-    '/coils',
-    '/fuses',
-    '/verify',
-    '/handbook',
-    '/handbook/quick',
-    '/handbook/menus',
-    '/handbook/rules',
-    '/handbook/appendix',
-    '/manual',
-    '/manual/ops/5',
-    '/parts',
-    '/tables',
-    '/workshop',
-    '/setup',
-    '/shopping',
-    '/care',
-    '/map',
-    '/404',
-  ]) {
+  // Every route, and the states a search or a tap opens (AY3-03): a sheet's own controls are
+  // measured, the page it made inert is not.
+  for (const url of ROUTES) {
     test(url, async ({ page, isMobile }) => {
       test.setTimeout(120_000);
       await gotoHydrated(page, url);
-      // The fonts and the first layout, before measuring.
-      await page.evaluate(() => document.fonts.ready.then(() => undefined));
-      await twoFrames(page);
-      const out = await page.evaluate(
-        ([phone]) => {
-          const k = (window as unknown as KitWindow).__a11y;
-          const SEL =
-            'a[href], button, input:not([type=hidden]), select, textarea, summary, [tabindex="0"]';
-          const fails: string[] = [];
-          let checked = 0;
-          for (const el of document.querySelectorAll<HTMLElement>(SEL)) {
-            if (!el.checkVisibility({ visibilityProperty: true })) continue;
-            if (el.closest('.sr-only')) continue; // the skip link, until focused (its own test)
-            el.scrollIntoView({ block: 'center', inline: 'center' });
-            const r = el.getBoundingClientRect();
-            if (r.width < 2 && r.height < 2) continue;
-            checked++;
-            if (r.width >= 43.5 && r.height >= 43.5) continue;
-            // A label is part of its control's target: a 22 checkbox in a 44 label.tick passes.
-            const cx = r.left + r.width / 2;
-            const cy = r.top + r.height / 2;
-            const big = (b: DOMRect) =>
-              b.width >= 43.5 &&
-              b.height >= 43.5 &&
-              b.left <= cx &&
-              cx <= b.right &&
-              b.top <= cy &&
-              cy <= b.bottom;
-            const labels = [...((el as HTMLInputElement).labels ?? [])];
-            if (labels.some((l) => l.contains(el) && big(l.getBoundingClientRect()))) continue;
-            // Otherwise rect ∪ ::after: a 44 box round it hits it at all four corners. The box is
-            // centred on it, or flush with one of its edges (a key-column id link starts at its
-            // table scroller's clipping edge, so its box runs right from it).
-            const box = (x: number, y: number) =>
-              [x + 0.5, x + 43.5].every((px) =>
-                [y + 0.5, y + 43.5].every((py) => k.owns(el, px, py)),
-              );
-            const xs = [cx - 22, r.left, r.right - 44];
-            const ys = [cy - 22, r.top, r.bottom - 44];
-            if (xs.some((x) => ys.some((y) => box(x, y)))) continue;
-            // The allow-list (spec §12), asserted exhaustively: every other miss fails. A link in a
-            // handbook table (a page ref, "1-2, 3" in a 33-tall row, or "see A6 Flippers") meets
-            // WCAG 2.5.8 instead: 24 wide at least, and no other target in its table has a centre
-            // nearer than 24.
-            const spaced = () =>
-              r.width >= 23.5 &&
-              [...el.closest('table')!.querySelectorAll<HTMLElement>(SEL)].every((o) => {
-                if (o === el || !o.checkVisibility()) return true;
-                const b = o.getBoundingClientRect();
-                return Math.hypot(b.left + b.width / 2 - cx, b.top + b.height / 2 - cy) >= 24;
-              });
-            const allowed =
-              el.matches('button.marker') ||
-              (el.matches('a[href]') && k.inline(el)) ||
-              (el.matches('.prose td > a[href]') && spaced()) ||
-              (phone && el.matches('table.matrix td a') && r.height >= 43.5);
-            if (!allowed)
-              fails.push(`${k.describe(el)} ${r.width.toFixed(0)}x${r.height.toFixed(0)}`);
-          }
-          scrollTo(0, 0);
-          return { checked, fails };
-        },
-        [isMobile] as const,
-      );
-      expect(out.checked).toBeGreaterThan(3);
-      expect(out.fails).toEqual([]);
+      await targets(page, isMobile);
     });
+  }
+  for (const state of STATES) {
+    test(`${state.name} (${state.url})`, async ({ page, isMobile, browserName }) => {
+      test.setTimeout(120_000);
+      await gotoState(page, state, browserName);
+      await targets(page, isMobile);
+    });
+  }
+
+  async function targets(page: Page, isMobile: boolean) {
+    // The fonts and the first layout, before measuring.
+    await page.evaluate(() => document.fonts.ready.then(() => undefined));
+    await twoFrames(page);
+    const out = await page.evaluate(
+      ([phone]) => {
+        const k = (window as unknown as KitWindow).__a11y;
+        const SEL =
+          'a[href], button, input:not([type=hidden]), select, textarea, summary, [tabindex="0"]';
+        const fails: string[] = [];
+        let checked = 0;
+        for (const el of document.querySelectorAll<HTMLElement>(SEL)) {
+          if (!el.checkVisibility({ visibilityProperty: true })) continue;
+          if (el.closest('.sr-only')) continue; // the skip link, until focused (its own test)
+          if (el.closest('[inert]')) continue; // behind an open sheet (STATES): no target now
+          el.scrollIntoView({ block: 'center', inline: 'center' });
+          const r = el.getBoundingClientRect();
+          if (r.width < 2 && r.height < 2) continue;
+          checked++;
+          if (r.width >= 43.5 && r.height >= 43.5) continue;
+          // A label is part of its control's target: a 22 checkbox in a 44 label.tick passes.
+          const cx = r.left + r.width / 2;
+          const cy = r.top + r.height / 2;
+          const big = (b: DOMRect) =>
+            b.width >= 43.5 &&
+            b.height >= 43.5 &&
+            b.left <= cx &&
+            cx <= b.right &&
+            b.top <= cy &&
+            cy <= b.bottom;
+          const labels = [...((el as HTMLInputElement).labels ?? [])];
+          if (labels.some((l) => l.contains(el) && big(l.getBoundingClientRect()))) continue;
+          // Otherwise rect ∪ ::after: a 44 box round it hits it at all four corners. The box is
+          // centred on it, or flush with one of its edges (a key-column id link starts at its
+          // table scroller's clipping edge, so its box runs right from it).
+          const box = (x: number, y: number) =>
+            [x + 0.5, x + 43.5].every((px) =>
+              [y + 0.5, y + 43.5].every((py) => k.owns(el, px, py)),
+            );
+          const xs = [cx - 22, r.left, r.right - 44];
+          const ys = [cy - 22, r.top, r.bottom - 44];
+          if (xs.some((x) => ys.some((y) => box(x, y)))) continue;
+          // The allow-list (spec §12), asserted exhaustively: every other miss fails. A link in a
+          // handbook table (a page ref, "1-2, 3" in a 33-tall row, or "see A6 Flippers") meets
+          // WCAG 2.5.8 instead: 24 wide at least, and no other target in its table has a centre
+          // nearer than 24.
+          const spaced = () =>
+            r.width >= 23.5 &&
+            [...el.closest('table')!.querySelectorAll<HTMLElement>(SEL)].every((o) => {
+              if (o === el || !o.checkVisibility()) return true;
+              const b = o.getBoundingClientRect();
+              return Math.hypot(b.left + b.width / 2 - cx, b.top + b.height / 2 - cy) >= 24;
+            });
+          const allowed =
+            el.matches('button.marker') ||
+            (el.matches('a[href]') && k.inline(el)) ||
+            (el.matches('.prose td > a[href]') && spaced()) ||
+            (phone && el.matches('table.matrix td a') && r.height >= 43.5);
+          if (!allowed)
+            fails.push(`${k.describe(el)} ${r.width.toFixed(0)}x${r.height.toFixed(0)}`);
+        }
+        scrollTo(0, 0);
+        return { checked, fails };
+      },
+      [isMobile] as const,
+    );
+    expect(out.checked).toBeGreaterThan(3);
+    expect(out.fails).toEqual([]);
   }
 });
 

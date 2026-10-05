@@ -13,7 +13,7 @@ import { freshDist } from './dist';
    `x/index.html`; the base is the manifest's scope. */
 
 // a missing build, or one older than its sources, fails here (TT2-14)
-const DIST = freshDist('dist');
+const DIST = freshDist();
 
 type Ref = { page: string; attr: string; raw: string; target: string };
 

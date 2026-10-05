@@ -158,6 +158,12 @@
   .off {
     margin: 0;
   }
+  /* Spec §12: the Callout link's 44 box reaches 12 below the list (WiringList) and a status
+     segment's 6 above its row (controls.css): 18, so where the row follows the list directly,
+     the mini-map not between them (the map's panel), the row steps 4 further down the 14 gap. */
+  .comp > :global(.wiring) + :global(.status) {
+    margin-top: 4px;
+  }
   /* A gap of 8 each way: the small buttons' 44 hit areas meet and never overlap (spec §8.7). */
   .acts {
     display: flex;

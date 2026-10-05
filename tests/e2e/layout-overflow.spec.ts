@@ -1,67 +1,13 @@
-import { readFileSync } from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { gotoHydrated, hydrated } from './helpers';
-import { TABS } from '~/lib/nav';
-import { SECTIONS } from '~/lib/handbook/sections';
+import { ROUTES } from './routes';
 import { SETUP_STEPS } from '~/data/setup';
 
 /* P0 item 3 of the app audit (VP-01, VP-02, VL-02, AY-03, DS-12): `.hb` and `.grid-2` used a plain
    `1fr` track, which is `minmax(auto,1fr)`, so a wide table set the column's minimum and the whole
-   page grew past the viewport, pushing the tab bar and reader bar off-screen. The route list below
-   comes from the nav model and the handbook section list rather than being hand-typed, so a new
-   route is covered automatically. */
-
-const here = path.dirname(fileURLToPath(import.meta.url));
-const components = JSON.parse(
-  readFileSync(path.resolve(here, '../../src/data/kit/components.json'), 'utf-8'),
-) as {
-  switches: { id: string }[];
-  lamps: { id: string }[];
-  coils: { id: string }[];
-  flippers: { id: string }[];
-};
-
-// `~/lib/pages` imports `pages.json` as a module, which the plain Node ESM loader Playwright runs
-// under (unlike Vite/Astro) can't do without an import attribute; read the JSON directly instead,
-// same as `components.json` above.
-const pages = JSON.parse(
-  readFileSync(path.resolve(here, '../../src/data/kit/pages.json'), 'utf-8'),
-) as Record<string, [number, ...unknown[]][]>;
-
-function topLevelRoutes(): string[] {
-  const routes = new Set<string>();
-  for (const tab of TABS) {
-    routes.add(tab.path);
-    for (const sub of tab.subs) routes.add(sub.path.split('#')[0]!);
-  }
-  return [...routes].map((r) => `/${r}`);
-}
-
-const handbookSectionRoutes = SECTIONS.map((s) => `/handbook/${s.key}`);
-
-// One page per component detail template (src/pages/{switch,lamp,coil,flipper}/[id].astro); the
-// ids come from the kit data, not a hand-typed list.
-const componentKindRoutes = [
-  `/switch/${components.switches[0]!.id}`,
-  `/lamp/${components.lamps[0]!.id}`,
-  `/coil/${components.coils[0]!.id}`,
-  `/flipper/${components.flippers[0]!.id}`,
-];
-
-// One manual page (src/pages/manual/[doc]/[page].astro), doc and page number from the same kit
-// data getStaticPaths reads (~/lib/pages), not a hand-typed doc id or page number.
-const manualDoc = Object.keys(pages)[0]!;
-const manualPageRoute = `/manual/${manualDoc}/${pages[manualDoc]![0]![0]}`;
-
-const routes = [
-  ...topLevelRoutes(),
-  ...handbookSectionRoutes,
-  ...componentKindRoutes,
-  manualPageRoute,
-  '/404',
-];
+   page grew past the viewport, pushing the tab bar and reader bar off-screen. The route list
+   (tests/e2e/routes.ts) comes from the nav model, the handbook section list and the kit data
+   rather than being hand-typed, so a new route is covered automatically. */
 
 // What the user sees after a search or a tap, not just each route's empty state. The Diagnose
 // results overflowed a 320px phone while every route above fitted: the result card's implicit
@@ -89,7 +35,7 @@ async function scrollWidthOf(page: Page) {
 }
 
 test.describe('no route overflows the viewport horizontally', () => {
-  for (const route of routes) {
+  for (const route of ROUTES) {
     test(`${route} fits the viewport width`, async ({ page }) => {
       await gotoHydrated(page, route);
       const { width } = page.viewportSize()!;
@@ -109,7 +55,7 @@ test.describe('no route overflows the viewport horizontally', () => {
 // project viewport (412) hid a /setup overflow at both: U.5's long suggested value did not wrap.
 test.describe('no route overflows a narrow phone', () => {
   test.skip(({ isMobile }) => !isMobile, 'phone widths');
-  for (const route of routes) {
+  for (const route of ROUTES) {
     test(`${route} fits 320 and 360px`, async ({ page }) => {
       for (const width of [320, 360]) {
         await page.setViewportSize({ width, height: 800 });

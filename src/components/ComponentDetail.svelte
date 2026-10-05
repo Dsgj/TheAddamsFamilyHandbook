@@ -34,6 +34,7 @@
    * under Location (`hint`) and the Related section (`related`), so the island ships none of their
    * code.
    */
+  // eslint-disable-next-line svelte/no-unused-props -- `children` is for Astro's typing, see below
   let {
     item,
     mapMeta,
@@ -49,7 +50,8 @@
     wiring?: Snippet;
     hint?: Snippet;
     related?: Snippet;
-    /** Never rendered: declared so Astro's typing lets the layout pass the named slots above. */
+    /** Never rendered: declared so Astro's typing lets the layout pass the named slots above
+        (astro check fails on ComponentPage.astro without it). */
     children?: Snippet;
   } = $props();
 

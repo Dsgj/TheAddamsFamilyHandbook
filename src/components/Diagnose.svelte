@@ -100,7 +100,7 @@
     void tick().then(() => emit('content'));
     canPaste = typeof navigator !== 'undefined' && !!navigator.clipboard?.readText;
     const offBar = listen('diag', (what) => {
-      if (what === 'recent') showRecent();
+      if (what === 'recent') void showRecent();
     });
     // Reselecting the Diagnose tab while on results/search pops to the home (spec §6.1); Base.astro
     // dispatches this once its own scroll-and-focus handling for the reselect is done.
