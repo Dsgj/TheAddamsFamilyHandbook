@@ -8,7 +8,7 @@
   import { isTypingTarget, zoomKey } from '~/lib/keys';
   import { media } from '~/lib/media';
   import { liveText } from '~/lib/live.svelte';
-  import type { CalibrationApi, Item, MapLayer, OverlayImage } from '~/lib/map/items';
+  import type { Item, MapLayer, OverlayImage } from '~/lib/map/items';
   import {
     DEFAULT,
     fullName,
@@ -32,7 +32,7 @@
   // Type only (erased): the tool itself is import()ed under `?calib=1` (design §3.7).
   import type MapCalibration from './MapCalibration.svelte';
   import { deselectBtn, emptyCard, partBody, partHead, shotCard, srcLink } from './MapCard.svelte';
-  import MapControls from './MapControls.svelte';
+  import MapControls, { type ControlsView } from './MapControls.svelte';
   import MapParts from './MapParts.svelte';
 
   /** A tap that lands on no marker selects the nearest visible marker within this many screen px. */
@@ -80,7 +80,6 @@
   let calib = $state(false);
   /** The calibration tool (`?calib=1`): its component once imported, then its instance. */
   let CalibCard = $state<typeof MapCalibration>();
-  let calibCtl = $state<CalibrationApi>();
   let draft = $state<Record<string, Loc[]>>({});
   /** The manual page the calibration tool lays over the drawing (MapCalibration publishes it). */
   let overlayImg = $state<OverlayImage>();
@@ -220,10 +219,11 @@
   const visible = $derived(LAYERS.filter((l) => on.has(l)));
   /** The one layer that is on, if only one is (the source link names its manual page). */
   const only = $derived(visible.length === 1 ? visible[0] : undefined);
-  const current = $derived.by(() => {
-    if (!selKey) return undefined;
-    return LAYERS.flatMap(itemsIn).find((c) => componentKey(c.kind, c.id) === selKey);
-  });
+  /** Every part and shot by its positions key: the selection, and the calibration tool's asks. */
+  const BY_KEY = new Map(
+    LAYERS.flatMap(itemsIn).map((i) => [componentKey(i.kind, i.id), i] as const),
+  );
+  const current = $derived(selKey ? BY_KEY.get(selKey) : undefined);
   const currentShot = $derived(current?.kind === 'shot' ? shot(current.id) : undefined);
   /** Component layers that are on (shots always carry their own letter). */
   const compLayers = $derived(visible.filter((l) => l !== 'shot'));
@@ -238,10 +238,31 @@
   function posOf(item: Item): Loc[] {
     return draft[componentKey(item.kind, item.id)] ?? positions(item.kind, item.id);
   }
+  /** The calibration tool asks by key (a marker's `data-key`). */
+  function posOfKey(key: string): Loc[] {
+    const item = BY_KEY.get(key);
+    return item ? posOf(item) : [];
+  }
   /** The selection sheet: below 1000 on /map, with a part selected (spec §7.6). */
   const sheetOpen = $derived(!embed && !wide && !calib && !!current);
   /** Px the sheet takes from the fit at 1×: phones only (Q29 open; tablets keep the overlap). */
   const inset = $derived(sheetOpen && phone ? SHEET_PEEK : 0);
+  /** The controls over the drawing and in the panel: one typed state each (SV3-07). */
+  const stageView = $derived<ControlsView>({
+    place: 'stage',
+    compact,
+    glassInPanel,
+    embed,
+    wide,
+    legend: desktop && floatLegend,
+    sheet: sheetOpen,
+    gone: sheetOpen && expanded,
+  });
+  const sideView = $derived<ControlsView>({
+    place: 'side',
+    layers: true,
+    keys: desktop && !floatLegend,
+  });
   /** The scroller's padding above and below the drawing (`EDGE`; the embed has none). */
   const edge = $derived(embed ? 0 : EDGE);
   /** Px of the stage the sheet covers now; centring above 1× uses the band left (spec §7.1). */
@@ -468,14 +489,12 @@
   <p class="sr-only" aria-live="polite" aria-atomic="true">{findLive.text}</p>
   {#if calib && CalibCard}
     <CalibCard
-      bind:this={calibCtl}
       bind:el={calibEl}
       bind:draft
       bind:overlayImg
       layer={LAYERS.find((x) => on.has(x))}
       {canvas}
-      {posOf}
-      keyOf={(i) => componentKey(i.kind, i.id)}
+      posOf={posOfKey}
       snapshot={() => ({ image: PLAYFIELD, pos: allPositions() })}
     />
   {/if}
@@ -543,6 +562,8 @@
               draggable="false"
             />
           {/if}
+          <!-- Calibration (?calib=1) listens on the canvas and finds a marker by data-key and data-li
+               from the event (SV3-08): the markers carry no wiring for the users who never calibrate. -->
           {#each visible as l (l)}
             {#each itemsIn(l) as item (item.id)}
               {@const key = componentKey(item.kind, item.id)}
@@ -558,17 +579,13 @@
                   aria-pressed={selKey === key}
                   tabindex={calib ? 0 : -1}
                   data-key={key}
+                  data-li={li}
                   data-x={p.x}
                   data-y={p.y}
                   onclick={(e) => {
                     pick(item);
                     if (e.detail === 0) void focusSelection();
                   }}
-                  onpointerdown={(e) => calibCtl?.dragStart(e, item, li)}
-                  onpointermove={(e) => calibCtl?.dragMove(e, item)}
-                  onpointerup={() => calibCtl?.dragEnd()}
-                  onpointercancel={() => calibCtl?.dragEnd()}
-                  onkeydown={(e) => calibCtl?.nudge(e, item, li)}
                 >
                   <i aria-hidden="true">{l === 'shot' ? p.l : ''}</i>
                   {#if l !== 'shot'}<span aria-hidden="true">{p.l}</span>{/if}
@@ -579,20 +596,7 @@
         </div>
       </div>
 
-      <MapControls
-        place="stage"
-        {on}
-        {counts}
-        {toggle}
-        {zm}
-        {compact}
-        {glassInPanel}
-        {embed}
-        {wide}
-        legend={desktop && floatLegend}
-        sheet={sheetOpen}
-        gone={sheetOpen && expanded}
-      />
+      <MapControls view={stageView} {on} {counts} ontoggle={toggle} {zm} />
 
       {#if sheetOpen && current}
         <BottomSheet
@@ -620,15 +624,7 @@
         <div class="panel-top">
           {@render srcLink(only)}
           {#if glassInPanel}
-            <MapControls
-              place="side"
-              {on}
-              {counts}
-              {toggle}
-              {zm}
-              layers
-              keys={desktop && !floatLegend}
-            />
+            <MapControls view={sideView} {on} {counts} ontoggle={toggle} {zm} />
           {/if}
         </div>
         <section
@@ -663,7 +659,13 @@
       <aside class="side" aria-label="Selected component and components on the map">
         {@render srcLink(only)}
         {#if desktop && !floatLegend}
-          <MapControls place="side" {on} {counts} {toggle} {zm} keys />
+          <MapControls
+            view={{ place: 'side', layers: false, keys: true }}
+            {on}
+            {counts}
+            ontoggle={toggle}
+            {zm}
+          />
         {/if}
         {@render selection()}
         <MapParts embed {visible} {counts} {selKey} {only} {posOf} onpick={pick} />

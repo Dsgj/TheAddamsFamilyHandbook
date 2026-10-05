@@ -11,17 +11,18 @@
     recentEntries,
     recordRecent,
   } from '~/lib/model/recent.svelte';
-  import { later } from '~/lib/later';
   import { liveText } from '~/lib/live.svelte';
   import { media } from '~/lib/media';
+  import { createQueryState } from '~/lib/query-state';
   import { shareText } from '~/lib/share';
   import { shopKeys } from '~/lib/shop-keys';
   import { whenLabel } from '~/lib/status-io';
   import { allStatuses, getStatus } from '~/lib/model/status.svelte';
   import { lampSharedCauses, sharedCauses } from '~/lib/shared-cause';
   import { href, replaceUrl, tableHref } from '~/lib/url';
-  import { onDestroy, onMount, tick } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import ComponentCard from './ComponentCard.svelte';
+  import ConfirmButton from './ConfirmButton.svelte';
   import DiagnoseSearch from './DiagnoseSearch.svelte';
 
   /**
@@ -57,60 +58,25 @@
   let root: HTMLElement | undefined = $state();
 
   // The body names this view and its URL (`?q=`) for motion.ts, so a back link from a page opened
-  // here reads "Results" and lands on them (spec §10), even before the address says so.
-  //
-  // The address itself follows the field once results or a search are committed (audit P1 item
-  // 7): Enter or Diagnose, the field losing focus, a link followed from the view, a Recent or Try
-  // row, or a `?q=` the page loaded with. It is rewritten in place, never pushed, so system Back
-  // from a card and a reload return to the results. Emptying the field (Clear, Recent,
-  // reselecting the tab, backspace) returns it to the clean home; typing before a commit leaves it
-  // alone. The string is exactly `?q=` + encodeURIComponent, the same as `body[data-url]`.
-  let committed = false;
-  let pending: ReturnType<typeof setTimeout> | undefined;
-  const query = () => {
-    const q = input.trim();
-    return q ? `?q=${encodeURIComponent(q)}` : '';
-  };
-  function writeUrl() {
-    clearTimeout(pending);
-    pending = undefined;
-    const next = location.pathname + (committed ? query() : '') + location.hash;
-    if (next !== location.pathname + location.search + location.hash) replaceUrl(next);
-  }
-  function commit() {
-    if (!input.trim()) return;
-    committed = true;
-    writeUrl();
-  }
-  function uncommit() {
-    committed = false;
-    writeUrl();
-  }
+  // here reads "Results" and lands on them (spec §10), even before the address says so. The
+  // address itself is query-state.ts's (audit P1 item 7, AR3-07): it follows the field once
+  // results or a search are committed, and this view only says when (a commit, an emptied field,
+  // the page hidden or left).
+  const address = createQueryState({ query: () => input.trim(), replace: replaceUrl });
   $effect(() => {
     if (!hydrated) return;
-    const want = query();
-    document.body.dataset.url = location.pathname + want;
+    document.body.dataset.url = location.pathname + address.changed();
     document.body.dataset.view = mode === 'results' ? 'Results' : mode === 'search' ? 'Search' : '';
-    if (!want) {
-      if (committed || location.search) uncommit();
-    } else if (committed) {
-      // Typing while committed: one write per pause, well under the browsers' replaceState limits.
-      clearTimeout(pending);
-      pending = setTimeout(writeUrl, 250);
-    }
   });
   onMount(() => {
     // Read once, on load: this is a fresh document every time (no client router), so a later
     // change to `?q=` – a tab link motion.ts rewrites, back/forward, a shared link – already gets
     // here as a new mount. Reacting to `input` instead would refill it after Clear,
     // backspace-to-empty or Recent, since those set `input` to the very state this reads past.
-    const q = new URLSearchParams(location.search).get('q');
-    if (q && !input) input = q;
+    address.start((q) => {
+      if (!input) input = q;
+    });
     live.rebase();
-    // A `?q=` on load is committed (a cold link, a tab link, a reload); the address is normalised
-    // to the one form either way.
-    committed = !!q && !!input.trim();
-    writeUrl();
     known = shopKeys();
     hydrated = true;
     // Once the results are in the page, motion.ts can put back the scroll offset this entry had:
@@ -129,34 +95,28 @@
     // A link followed from the view commits first (capture phase, so the entry holds `?q=` before
     // the link navigates away from it; keyboard activation clicks too).
     const onFollow = (e: Event) => {
-      if ((e.target as Element | null)?.closest?.('a[href]')) commit();
+      if ((e.target as Element | null)?.closest?.('a[href]')) address.commit();
     };
     root?.addEventListener('click', onFollow, true);
     // An edit still waiting for its pause is written before the page is hidden or left (an app
     // switch the system may end in a discard, Back, a link), so the entry holds what the field says.
     // Not while the page enters the back/forward cache: a replaceState there makes Chromium evict
     // it, so the write waits for the restore (the visibilitychange after that pagehide is covered).
-    let frozen = false;
-    const flush = () => {
-      if (pending !== undefined && !frozen) writeUrl();
-    };
     const onPageHide = (e: PageTransitionEvent) => {
-      if (e.persisted) frozen = true;
-      else flush();
+      if (e.persisted) address.freeze(true);
+      else address.flush();
     };
     const onPageShow = (e: PageTransitionEvent) => {
-      if (!e.persisted) return;
-      frozen = false;
-      flush();
+      if (e.persisted) address.freeze(false);
     };
     const onVisibility = () => {
-      if (document.visibilityState === 'hidden') flush();
+      if (document.visibilityState === 'hidden') address.flush();
     };
     addEventListener('pagehide', onPageHide);
     addEventListener('pageshow', onPageShow);
     document.addEventListener('visibilitychange', onVisibility);
     return () => {
-      clearTimeout(pending);
+      address.dispose();
       offBar();
       offReselect();
       root?.removeEventListener('click', onFollow, true);
@@ -316,10 +276,10 @@
   }
   function onBlur() {
     record();
-    commit();
+    address.commit();
   }
   async function diagnose() {
-    commit();
+    address.commit();
     record();
     await tick();
     // Search too: on a phone Enter brings the first hits under the header (UX2-03).
@@ -347,34 +307,24 @@
   }
   function clear() {
     input = '';
-    uncommit();
+    address.uncommit();
     field?.focus();
   }
-  // Clear asks once more, as Device data does (UX2-08, CR-11): a second tap within 4 s clears.
-  let clearArmed = $state(false);
-  const disarm = later();
-  onDestroy(disarm.clear);
+  /** Clear (Recent), confirmed (ConfirmButton asks): the button goes with the list, so the heading,
+   *  now Try, takes the focus. */
   function clearAll() {
-    disarm.clear();
-    if (!clearArmed) {
-      clearArmed = true;
-      disarm.set(() => (clearArmed = false), 4000);
-      return;
-    }
-    clearArmed = false;
     clearRecent();
-    // The button goes with the list: the heading, now Try, takes the focus.
     recentHead?.focus();
   }
   async function showRecent() {
     input = '';
-    uncommit();
+    address.uncommit();
     await tick();
     recentHead?.focus();
   }
   function refill(text: string) {
     input = text;
-    commit();
+    address.commit();
     field?.focus();
   }
   async function share() {
@@ -465,9 +415,12 @@
     <div class="lst-h rec-h">
       <h2 bind:this={recentHead} tabindex="-1">{recent.length ? 'Recent' : 'Try'}</h2>
       {#if recent.length}
-        <button type="button" class="tlink sm" class:armed={clearArmed} onclick={clearAll}
-          >{clearArmed ? 'Really clear?' : 'Clear'}</button
-        >
+        <ConfirmButton
+          class="tlink sm"
+          label="Clear"
+          confirm="Really clear?"
+          onconfirm={clearAll}
+        />
       {/if}
     </div>
     <ul class="lst recent">
@@ -649,22 +602,6 @@
   .rec-h h2:focus-visible {
     outline: 2px solid var(--amber);
     outline-offset: 2px;
-  }
-  .tlink.sm {
-    height: 32px;
-    padding: 0 6px;
-    margin-right: -6px;
-    border: 0;
-    background: none;
-    color: var(--amber-ink);
-    font: var(--t-foot);
-    font-weight: 600;
-    text-transform: none;
-    letter-spacing: var(--track-0);
-    cursor: pointer;
-  }
-  .tlink.sm.armed {
-    color: var(--bad);
   }
   .recent {
     margin: 0;

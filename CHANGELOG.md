@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- The Diagnose address (`?q=`) is one tested module, the two "Really clear?"
+  confirms are one button, the map's calibration tool wires itself to the
+  drawing only while open, and a component page's Wiring and Related
+  sections are built once instead of shipped with the island.
 - The switch, lamp, solenoid, flipper and GI tables are one component, so
   flipper and GI fuse cells now link to the fuse's row. The map's shot note
   reads the same in the card and the sheet; page spans come from the pages.

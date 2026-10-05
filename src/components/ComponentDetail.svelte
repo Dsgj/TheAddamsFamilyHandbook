@@ -1,17 +1,7 @@
-<script module lang="ts">
-  /** A row under "Related": the lamp and coil of the same jet bumper, or the same assembly. */
-  export interface Related {
-    href: string;
-    code: string;
-    name: string;
-    sub: string;
-  }
-</script>
-
 <script lang="ts">
   import Icon from './Icon.svelte';
   import type { IconName } from '~/lib/icons';
-  import { onMount } from 'svelte';
+  import { onMount, type Snippet } from 'svelte';
   import {
     capitalise,
     componentCode,
@@ -28,33 +18,46 @@
   import { shortDate } from '~/lib/status-io';
   import type { AnyComponent, MapMeta, StatusValue } from '~/lib/model/types';
   import { pageTitleText } from '~/lib/pages';
-  import { calloutLabels, callouts as calloutsOf, offMap, wiring, wiringRows } from '~/lib/present';
+  import { calloutLabels, callouts as calloutsOf, offMap } from '~/lib/present';
   import { href, manualHref, mapHref } from '~/lib/url';
   import BottomSheet from './BottomSheet.svelte';
   import MiniMap from './MiniMap.svelte';
   import PartNo from './PartNo.svelte';
   import StatusRow from './StatusRow.svelte';
-  import OwnerHint from './OwnerHint.svelte';
-  import WiringList from './WiringList.svelte';
 
   /**
-   * The component detail page (spec §9.7): header with the code, the status control and a note,
-   * then Wiring, Parts, Location (with the Show-on-map sheet, §9.8), the related components, the
-   * hint and the Service log. "Add to list" marks Fault (Q6 default: the list is derived from
-   * Fault status). The visit is recorded for "Recently viewed" on the Tables hub.
+   * The live half of the component detail page (spec §9.7): the header with the status word, the
+   * status control, Parts with "Add to list" (Q6 default: the list is derived from Fault status),
+   * Location with the Show-on-map sheet (§9.8) and the Service log; the visit is recorded for
+   * "Recently viewed" on the Tables hub. What never changes on a device is rendered once at build
+   * by ComponentPage.astro and handed in as slots (SV3-12): the Wiring section (`wiring`), the hint
+   * under Location (`hint`) and the Related section (`related`), so the island ships none of their
+   * code.
    */
   let {
     item,
     mapMeta,
-    related = [],
-  }: { item: AnyComponent; mapMeta: MapMeta; related?: Related[] } = $props();
+    led,
+    wiring,
+    hint,
+    related,
+  }: {
+    item: AnyComponent;
+    mapMeta: MapMeta;
+    /** The LED fitted in this machine (what to order when a lamp dies); '' for non-lamps. */
+    led: string;
+    wiring?: Snippet;
+    hint?: Snippet;
+    related?: Snippet;
+    /** Never rendered: declared so Astro's typing lets the layout pass the named slots above. */
+    children?: Snippet;
+  } = $props();
 
   const kind = $derived(item.kind);
   const sw = $derived(item.kind === 'switch' ? item : undefined);
   const lamp = $derived(item.kind === 'lamp' ? item : undefined);
   const coil = $derived(item.kind === 'coil' ? item : undefined);
   const flip = $derived(item.kind === 'flipper' ? item : undefined);
-  const w = $derived(wiring(item));
   const layer = $derived(MAP_LAYER[kind]);
   const callouts = $derived(calloutsOf(item));
   const mapPage = $derived(mapMeta.page);
@@ -70,7 +73,7 @@
   const status = $derived<StatusValue | ''>(current?.status ?? '');
   /** Blank until mounted: the server cannot know this device's status (SV3-01). */
   let hydrated = $state(false);
-  const statusLabel = $derived(!hydrated ? '\u00a0' : status ? STATUS_LABEL[status] : 'Not tested');
+  const statusLabel = $derived(!hydrated ? ' ' : status ? STATUS_LABEL[status] : 'Not tested');
   const history = $derived((current?.history ?? []).slice().reverse());
   const eventLabel = (st: StatusValue | '') => (st ? STATUS_LABEL[st] : 'Cleared');
 
@@ -78,8 +81,6 @@
   const partLabel = $derived(
     sw ? 'Switch' : lamp ? `Bulb ${lamp.bulb}` : coil || flip ? 'Coil' : 'Part',
   );
-  /** The LED fitted in this machine (what to order when a lamp dies); '' for non-lamps. */
-  const led = $derived(w.kind === 'lamp' ? w.led : '');
 
   let mapOpen = $state(false);
   let mapW = $state(340);
@@ -112,10 +113,7 @@
   </header>
   <StatusRow {kind} id={item.id} log={false} />
 
-  <section>
-    <h3 class="lst-h">Wiring</h3>
-    <WiringList rows={wiringRows(w, { parts: false, assembly: false })} variant="dl" card />
-  </section>
+  {@render wiring?.()}
 
   {#if part || item.assy}
     <section>
@@ -196,28 +194,10 @@
         {/if}
       </li>
     </ul>
-    <OwnerHint hint={sw?.hint} note={coil?.note} at="detail" />
+    {@render hint?.()}
   </section>
 
-  {#if related.length}
-    <section>
-      <h3 class="lst-h">Related</h3>
-      <ul class="lst">
-        {#each related as r (r.href)}
-          <li>
-            <a class="lrow two" href={r.href}>
-              <span class="code dmd">{r.code}</span>
-              <span class="txt">
-                <span class="ttl">{r.name}</span>
-                <span class="sub">{r.sub}</span>
-              </span>
-              <Icon name="chevron" class="chev" />
-            </a>
-          </li>
-        {/each}
-      </ul>
-    </section>
-  {/if}
+  {@render related?.()}
 
   <section>
     <h3 class="lst-h">Service log</h3>
@@ -234,7 +214,7 @@
         {/each}
       </ol>
     {:else}
-      <p class="gf">{hydrated ? 'No status changes yet.' : '\u00a0'}</p>
+      <p class="gf">{hydrated ? 'No status changes yet.' : ' '}</p>
     {/if}
     <p class="gf">Everything you record stays on this device.</p>
   </section>

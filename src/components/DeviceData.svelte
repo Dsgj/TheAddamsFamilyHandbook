@@ -1,5 +1,6 @@
 <script lang="ts">
   import Icon from './Icon.svelte';
+  import ConfirmButton from './ConfirmButton.svelte';
   import { onDestroy, onMount, tick } from 'svelte';
   import { clearReading, READING_KEY, readReading } from '~/lib/model/reading';
   import {
@@ -29,7 +30,6 @@
   const checks = $derived(Object.keys(verifyTicks()).length);
   let msg = $state('');
   let error = $state(false);
-  let armed = $state(false);
   let mode = $state<'merge' | 'replace'>('merge');
   let file = $state<HTMLInputElement | undefined>();
   const empty = $derived(!count && !settings && !checks);
@@ -57,13 +57,9 @@
     hydrated = true;
   });
 
-  // One handle each, so a message said 3 s after another still gets its full 4 s.
+  // One handle, so a message said 3 s after another still gets its full 4 s.
   const msgTimer = later();
-  const armTimer = later();
-  onDestroy(() => {
-    msgTimer.clear();
-    armTimer.clear();
-  });
+  onDestroy(msgTimer.clear);
 
   function say(text: string, bad = false) {
     msg = text;
@@ -153,20 +149,14 @@
     restore(text, name, 'replace');
   }
 
+  /** Clear all, confirmed (ConfirmButton asks once more). */
   function clear() {
-    if (!armed) {
-      armed = true;
-      armTimer.set(() => (armed = false), 4000);
-      return;
-    }
-    armTimer.clear();
     clearStatuses();
     clearSetup();
     clearVerify();
     clearRecent();
     clearViewed();
     clearReading();
-    armed = false;
     say('Cleared');
   }
 </script>
@@ -239,10 +229,17 @@
       </li>
     {/if}
     <li>
-      <button type="button" class="lrow danger" onclick={clear} disabled={!clearable}>
-        <span class="txt"><span class="ttl">{armed ? 'Really clear all?' : 'Clear all'}</span></span
-        >
-      </button>
+      <ConfirmButton
+        class="lrow danger"
+        label="Clear all"
+        confirm="Really clear all?"
+        onconfirm={clear}
+        disabled={!clearable}
+      >
+        {#snippet children(text)}
+          <span class="txt"><span class="ttl">{text}</span></span>
+        {/snippet}
+      </ConfirmButton>
     </li>
   </ul>
   <p class="gf">

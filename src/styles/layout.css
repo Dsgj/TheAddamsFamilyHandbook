@@ -156,6 +156,21 @@ main.fullbleed {
   font-size: 17px;
   line-height: 22px;
 }
+/* The small one in a list heading (Diagnose's Clear beside "Recent", a ConfirmButton): 32 tall in
+   the foot font, flush with the heading's right edge. */
+.tlink.sm {
+  height: 32px;
+  padding: 0 6px;
+  margin-right: -6px;
+  border: 0;
+  background: none;
+  color: var(--amber-ink);
+  font: var(--t-foot);
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: var(--track-0);
+  cursor: pointer;
+}
 @media (max-width: 599px) {
   .top .ct .full.has-short {
     position: absolute;

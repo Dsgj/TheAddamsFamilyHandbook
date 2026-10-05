@@ -116,11 +116,3 @@ export interface OverlayImage {
   height: number;
   opacity: number;
 }
-
-/** What the coordinator's markers call on the lazily loaded calibration card. */
-export interface CalibrationApi {
-  dragStart(e: PointerEvent, item: Item, li: number): void;
-  dragMove(e: PointerEvent, item: Item): void;
-  dragEnd(): void;
-  nudge(e: KeyboardEvent, item: Item, li: number): void;
-}

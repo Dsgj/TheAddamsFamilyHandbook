@@ -393,8 +393,41 @@ describe('structure lint', () => {
     expectNone(hits(/class="fault-check"/, only('src/components/ComponentTable.astro')));
   });
 
+  it('(x) src/data holds facts: it reaches lib only for types, data and the spec §13 homes, and lib reads it only where the kit, the positions and the map items are typed (AR3-12)', () => {
+    // A data file may import the model types and the vocabulary, page and link homes (spec §13),
+    // plus the overlaid kit data and the handbook's section list, which are data too; never state,
+    // storage, search or rendering.
+    const DATA_MAY = [
+      'copy',
+      'pages',
+      'url',
+      'model/types',
+      'data/components',
+      'handbook/sections',
+    ];
+    const crossing = FILES.filter((f) => f.path.startsWith('src/data/')).flatMap((f) =>
+      f.text.split('\n').flatMap((line, i) => {
+        const m = /from '~\/lib\/([^']+)'/.exec(line);
+        return m && !DATA_MAY.includes(m[1]!) ? [`${f.path}:${i + 1}: ${line.trim()}`] : [];
+      }),
+    );
+    expectNone(crossing);
+    // The other way: lib types the kit JSON, the positions and the shots, and nothing else in lib
+    // reads src/data (components, layouts and pages may).
+    const LIB_READERS = [
+      'src/lib/data/positions.ts',
+      'src/lib/kit/components.ts',
+      'src/lib/kit/ocr.ts',
+      'src/lib/kit/pages.ts',
+      'src/lib/map/items.ts',
+    ];
+    expectNone(
+      hits(/from '~\/data\//, (path) => !path.startsWith('src/lib/') || LIB_READERS.includes(path)),
+    );
+  });
+
   it('(control) every rule above still matches inside its home, so none passes vacuously', () => {
-    expect(RULES.length).toBe(22);
+    expect(RULES.length).toBe(23);
     for (const [pattern, allowed] of RULES) {
       if (pattern === KIND_TERNARY) continue;
       const home = FILES.filter((f) => allowed(f.path));

@@ -1,3 +1,33 @@
+<script module lang="ts">
+  /**
+   * Where the controls sit and which of their parts show (SV3-07): PlayfieldMap builds one. On the
+   * stage the flags are the drawing's state; in the side panel they name the panel's two parts.
+   */
+  export type ControlsView =
+    | {
+        place: 'stage';
+        /** Phones, tablets and a narrow embed (no glass list, no readout). */
+        compact: boolean;
+        /** The layers sit in the panel, so the readout drops clear of the drawing. */
+        glassInPanel: boolean;
+        /** The handbook's embed, where the readout is no live region. */
+        embed: boolean;
+        /** The floating keyboard legend. */
+        legend: boolean;
+        wide: boolean;
+        /** The selection sheet is up (the column moves above it) or expanded (it fades). */
+        sheet: boolean;
+        gone: boolean;
+      }
+    | {
+        place: 'side';
+        /** The row of layer toggles. */
+        layers: boolean;
+        /** The keyboard shortcuts line. */
+        keys: boolean;
+      };
+</script>
+
 <script lang="ts">
   import Icon from './Icon.svelte';
   import { KIND_PLURAL, LAYER_KIND } from '~/lib/copy';
@@ -7,9 +37,10 @@
   /**
    * The map's controls (spec §7.3–7.4, AR2-02): the layer toggles in their three forms, the zoom
    * readout and capsule and the keyboard legend. PlayfieldMap owns the state and says where they
-   * go. `stage` floats over the drawing: the glass layers list, the readout and the capsule in the
-   * corner from 1000, or one column of the layers capsule over the zoom capsule (`compact`).
-   * `side` is the wide panel's row of toggles (`layers`) and the keys line (`keys`).
+   * go and what shows (`view`). `stage` floats over the drawing: the glass layers list, the readout
+   * and the capsule in the corner from 1000, or one column of the layers capsule over the zoom
+   * capsule (`compact`). `side` is the wide panel's row of toggles (`layers`) and the keys line
+   * (`keys`).
    */
   type Zoom = {
     readonly zoom: number;
@@ -19,43 +50,18 @@
     fitAll: () => void;
   };
   let {
-    place,
+    view,
     on,
     counts,
-    toggle,
+    ontoggle,
     zm,
-    compact = false,
-    glassInPanel = false,
-    embed = false,
-    legend = false,
-    layers = false,
-    keys = false,
-    wide = false,
-    sheet = false,
-    gone = false,
   }: {
-    place: 'stage' | 'side';
+    view: ControlsView;
     on: ReadonlySet<MapLayer>;
     /** Parts per layer that have a position on the drawing. */
     counts: Record<MapLayer, number>;
-    toggle: (l: MapLayer) => void;
+    ontoggle: (l: MapLayer) => void;
     zm: Zoom;
-    /** Stage: phones, tablets and a narrow embed (no glass list, no readout). */
-    compact?: boolean;
-    /** Stage: the layers sit in the panel, so the readout drops clear of the drawing. */
-    glassInPanel?: boolean;
-    /** Stage: the handbook's embed, where the readout is no live region. */
-    embed?: boolean;
-    /** Stage: the floating keyboard legend. */
-    legend?: boolean;
-    /** Side: the row of layer toggles. */
-    layers?: boolean;
-    /** Side: the keyboard shortcuts line. */
-    keys?: boolean;
-    wide?: boolean;
-    /** Stage: the selection sheet is up (the column moves above it) or expanded (it fades). */
-    sheet?: boolean;
-    gone?: boolean;
   } = $props();
 
   /** Short labels for the wide layers list (ShellDesktop). LABEL names the layer buttons. */
@@ -106,10 +112,10 @@
   <span><kbd>0</kbd> fit</span>
 {/snippet}
 
-{#if place === 'stage'}
-  <div class="map-controls" class:wide class:sheet class:gone>
-    {#if !compact}
-      {#if !glassInPanel}
+{#if view.place === 'stage'}
+  <div class="map-controls" class:wide={view.wide} class:sheet={view.sheet} class:gone={view.gone}>
+    {#if !view.compact}
+      {#if !view.glassInPanel}
         <div class="glass layers-list" role="group" aria-label="Layers">
           {#each LAYERS as l (l)}
             <button
@@ -118,7 +124,7 @@
               type="button"
               aria-pressed={on.has(l)}
               aria-label="{LABEL[l]}, {counts[l]} on the map"
-              onclick={() => toggle(l)}
+              onclick={() => ontoggle(l)}
             >
               <span class="tile" aria-hidden="true">{@render layerIcon(l)}</span>
               <span class="lbl" aria-hidden="true">{shortName(l)}</span>
@@ -127,13 +133,17 @@
           {/each}
         </div>
       {/if}
-      <div class="glass mono readout" class:low={glassInPanel} role={embed ? undefined : 'status'}>
+      <div
+        class="glass mono readout"
+        class:low={view.glassInPanel}
+        role={view.embed ? undefined : 'status'}
+      >
         <span class="sr-only">Zoom level</span>{zm.zoomLabel}
       </div>
       <div class="corner">
         {@render zoomCapsule()}
       </div>
-      {#if legend}
+      {#if view.legend}
         <div class="glass legend" role="note" aria-label="Keyboard shortcuts">
           {@render keyHints()}
         </div>
@@ -148,7 +158,7 @@
               type="button"
               aria-pressed={on.has(l)}
               aria-label={LABEL[l]}
-              onclick={() => toggle(l)}
+              onclick={() => ontoggle(l)}
             >
               {@render layerIcon(l)}
             </button>
@@ -159,7 +169,7 @@
     {/if}
   </div>
 {:else}
-  {#if layers}
+  {#if view.layers}
     <div class="layers-row" role="group" aria-label="Layers">
       {#each LAYERS as l (l)}
         <button
@@ -168,14 +178,14 @@
           type="button"
           aria-pressed={on.has(l)}
           aria-label="{LABEL[l]}, {counts[l]} on the map"
-          onclick={() => toggle(l)}
+          onclick={() => ontoggle(l)}
         >
           {@render layerIcon(l)}<span class="lname" aria-hidden="true">{shortName(l)}</span>
         </button>
       {/each}
     </div>
   {/if}
-  {#if keys}
+  {#if view.keys}
     <p class="keys" role="note" aria-label="Keyboard shortcuts">{@render keyHints()}</p>
   {/if}
 {/if}

@@ -1,21 +1,34 @@
 ---
 import Icon from '~/components/Icon.astro';
 import Base from './Base.astro';
-import ComponentDetail, { type Related } from '~/components/ComponentDetail.svelte';
+import ComponentDetail from '~/components/ComponentDetail.svelte';
+import OwnerHint from '~/components/OwnerHint.svelte';
+import WiringList from '~/components/WiringList.svelte';
 import { DATA, listOf, mapOf } from '~/lib/data/components';
 import type { AnyComponent } from '~/lib/model/types';
 import { componentCode, componentLabel, componentName, KIND_PLURAL, kindLine } from '~/lib/copy';
+import { wiring, wiringRows } from '~/lib/present';
 import { componentHref, handbookHref, tablePath, verifyHref } from '~/lib/url';
 import { appendixFor, APPENDICES, serviceNotes } from '~/data/appendix';
 import { findHeading } from '~/lib/handbook/render';
 import { handbookIndex } from '~/lib/handbook/toc';
 
 /**
- * The component detail page (spec §9.7). The island draws the anatomy; this layout adds the
- * owner's service notes and appendix links (read by the tests) and the prev/next pager (Q18).
+ * The component detail page (spec §9.7). The island (ComponentDetail) draws what this device
+ * changes: the status, Parts, Location and the Service log. This layout renders the rest once at
+ * build and hands the island its Wiring section, the hint and the Related section as slots
+ * (SV3-12), then adds the owner's service notes and appendix links (read by the tests) and the
+ * prev/next pager (Q18).
  */
 interface Props {
   item: AnyComponent;
+}
+/** A row under "Related": the lamp and coil of the same jet bumper, or the same assembly. */
+interface Related {
+  href: string;
+  code: string;
+  name: string;
+  sub: string;
 }
 const { item } = Astro.props;
 /** The kind and the list the pager walks come from the item itself (AR3-19). */
@@ -30,6 +43,11 @@ const listPath = tablePath(kind);
 const listLabel = KIND_PLURAL[kind === 'flipper' ? 'coil' : kind];
 /** "Switch 32": the page's heading, and the start of its title and description. */
 const compName = componentName(kind, item.id);
+const w = wiring(item);
+/** The LED fitted in this machine (what to order when a lamp dies); '' for non-lamps. */
+const led = w.kind === 'lamp' ? w.led : '';
+const sw = item.kind === 'switch' ? item : undefined;
+const coil = item.kind === 'coil' ? item : undefined;
 
 /** Related components: the same name (the lamp and coil of a jet bumper) or the same assembly. */
 const name = item.name.trim().toLowerCase();
@@ -70,7 +88,40 @@ const svc = serviceNotes(item)
   h1="bar"
   back={{ path: listPath, label: listLabel }}
 >
-  <ComponentDetail client:load {item} mapMeta={mapOf(kind)} {related} />
+  <ComponentDetail client:load {item} mapMeta={mapOf(kind)} {led}>
+    <Fragment slot="wiring">
+      <section>
+        <h3 class="lst-h">Wiring</h3>
+        <WiringList rows={wiringRows(w, { parts: false, assembly: false })} variant="dl" card />
+      </section>
+    </Fragment>
+    <Fragment slot="hint">
+      <OwnerHint hint={sw?.hint} note={coil?.note} at="detail" />
+    </Fragment>
+    <Fragment slot="related">
+      {
+        related.length > 0 && (
+          <section>
+            <h3 class="lst-h">Related</h3>
+            <ul class="lst">
+              {related.map((r) => (
+                <li>
+                  <a class="lrow two" href={r.href}>
+                    <span class="code dmd">{r.code}</span>
+                    <span class="txt">
+                      <span class="ttl">{r.name}</span>
+                      <span class="sub">{r.sub}</span>
+                    </span>
+                    <Icon name="chevron" class="chev" />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )
+      }
+    </Fragment>
+  </ComponentDetail>
   {
     notes.length > 0 && (
       <div class="notes small">
