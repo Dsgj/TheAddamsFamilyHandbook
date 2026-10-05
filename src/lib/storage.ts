@@ -62,6 +62,8 @@ export const SESSION_KEYS = {
   prev: 'tafh:prev',
   nav: 'tafh:nav',
   install: 'tafh:install',
+  /** pwa.ts found the pages cache complete in this tab; later pages skip the check. */
+  warm: 'tafh:warm',
 } as const;
 
 /** A per-tab flag in sessionStorage. False, and a write dropped, when the storage is blocked. */

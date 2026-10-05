@@ -10,18 +10,22 @@ import textSrc from '~/inline/text.js?raw';
 import themeSrc from '~/inline/theme.js?raw';
 import { inlineScript } from '~/lib/inline-script';
 import { jsonScript } from '~/lib/json-script';
+import { buildId } from '~/build/build-id';
 import { precacheKeys } from '~/lib/precache';
 import { freshDist } from './dist';
 
 /**
  * Payload (audit P4 item 5): the built `dist/` is what the design says it is.
  * - the service worker's precache list equals the build's expectation computed from `dist/` and
- *   the workbox options in astro.config.ts (glob patterns, ignores, the size cap, the
- *   includeAssets duplicates, precacheKeys). Both sides read `dist/`, so a file that lands in
- *   `public/` joins both; the reference check below is what catches it (PF-09);
+ *   the workbox options in astro.config.ts (glob patterns, ignores, the size cap, precacheKeys,
+ *   which keeps each url once). Both sides read `dist/`, so a file that lands in `public/` joins
+ *   both; the reference check below is what catches it (PF-09). The precache is the shell and
+ *   the hubs, under 120 entries; the pages it leaves out are the ones data/warm.json lists for
+ *   pwa.ts to warm into the build's pages cache, named from the same build id on both sides
+ *   (P3 item 5, PF3-02);
  * - the drawing that left `public/` is not precached and the shell logo is;
  * - every file in `_astro/`, `assets/figures/`, `assets/maps/`, `brand/`, `data/`, `fonts/` and
- *   `icons/` (every precached file but the pages and the manifest) is referenced by its full path
+ *   `icons/` (every precached or warmed file but the pages and the manifest) is referenced by its full path
  *   from a page, a chunk or a stylesheet (G4; `assets/figures/ops17.png` is the allowed,
  *   documented exception). The service worker's own files are not referrers: its precache
  *   manifest names every precached file, so counting it would let an orphaned figure pass;
@@ -80,10 +84,9 @@ describe('the precache list', () => {
       !ignores.some((p) => p.test(f)) &&
       statSync(join(DIST, f)).size <= cap,
   );
-  // includeAssets: vite-pwa adds them to the manifest once more (the duplicates the audit measured)
-  const included = list('includeAssets').flatMap((g) => files.filter((f) => globRe(g).test(f)));
+  // vite-pwa adds the manifest; precacheKeys keeps each url once, so the expectation does too
   const expected = precacheKeys(scope)(
-    [...globbed, ...included, 'manifest.webmanifest'].map((url) => ({
+    [...globbed, 'manifest.webmanifest'].map((url) => ({
       url,
       revision: null,
       size: 0,
@@ -94,8 +97,37 @@ describe('the precache list', () => {
   const sw = readFileSync(join(DIST, 'sw.js'), 'utf8');
   const entries = [...sw.matchAll(/\{url:"([^"]+)",revision:/g)].map((m) => m[1]).sort();
 
-  it('equals the build expectation (globs, ignores, size cap, includeAssets, precacheKeys)', () => {
+  it('equals the build expectation (globs, ignores, size cap, precacheKeys)', () => {
     expect(entries).toEqual(expected);
+  });
+
+  const warmed = /^(?:handbook|manual|switch|lamp|coil|flipper)\/.|^assets\/figures\//;
+  it('precaches the shell and the hubs only: under 120 entries, each once (PF3-02)', () => {
+    expect(entries.length).toBeLessThan(120);
+    expect(new Set(entries).size).toBe(entries.length);
+    expect(entries).toEqual(expect.arrayContaining([scope, 'map', 'handbook', 'manual', '404']));
+    expect(entries.filter((e) => warmed.test(e ?? ''))).toEqual([]);
+  });
+
+  it('lists every page it leaves out, and the figures, in data/warm.json as built files', () => {
+    const list = JSON.parse(readFileSync(join(DIST, 'data/warm.json'), 'utf8')) as string[];
+    expect(list.every((u) => u.startsWith(scope))).toBe(true);
+    expect(new Set(list).size).toBe(list.length);
+    const asFile = (u: string) => {
+      const p = u.slice(scope.length);
+      return /\.\w+$/.test(p) ? p : `${p}.html`;
+    };
+    expect(list.map(asFile).filter((f) => !files.includes(f))).toEqual([]);
+    const pages = files.filter((f) => f.endsWith('.html') && warmed.test(f));
+    expect(pages.filter((f) => !list.includes(scope + f.replace(/\.html$/, '')))).toEqual([]);
+    expect(list.filter((u) => u.includes('/assets/figures/')).length).toBeGreaterThan(10);
+  });
+
+  it('names the pages cache from the build id, in the worker and in the client', () => {
+    const name = `tafh-pages-${buildId(process.cwd())}`;
+    expect(sw).toContain(name);
+    const chunks = files.filter((f) => /^_astro\/.*\.js$/.test(f));
+    expect(chunks.some((f) => readFileSync(join(DIST, f), 'utf8').includes(name))).toBe(true);
   });
 
   // Offline in WebKit is the one path Playwright cannot drive (pwa.spec.ts skips it), so the rule

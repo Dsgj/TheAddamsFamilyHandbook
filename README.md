@@ -97,9 +97,11 @@ switches between System, Dark and Light._
   restore it on another phone, merging or replacing what is there.
 - **Workshop.** The hub for the shopping list, Verify, care, machine setup,
   device data, the appearance setting, installing the app and About the app.
-- **Offline.** Manifest, icons, precached shell, data, the playfield drawing
-  and figures. Manual pages (and the calibration overlays) are saved on the
-  device on first view.
+- **Offline.** Manifest, icons, precached shell and hubs, data and the
+  playfield drawing; the handbook, manual and component pages and the
+  handbook's figures are saved in the background after the first install.
+  Manual pages (and the calibration overlays) are saved on the device on
+  first view.
 
 ## Quick start
 

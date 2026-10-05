@@ -2,6 +2,7 @@ import { registerSW } from 'virtual:pwa-register';
 import { listen, toast } from '~/lib/events';
 import { armInstall } from '~/lib/install';
 import { SESSION_KEYS, sessionFlag, setSessionFlag } from '~/lib/storage';
+import { href } from '~/lib/url';
 
 /**
  * The service worker's events become toasts (spec §8.8), which Toast.svelte (mounted once in
@@ -90,5 +91,60 @@ listen('check-update', () => {
     capped,
   ]).then(() => setTimeout(settle, needsRefresh ? 0 : 1200));
 });
+
+/**
+ * The worker precaches the shell and the hubs (about a hundred entries); the handbook sections,
+ * manual pages, component pages and the handbook's figures are warmed here instead, into the
+ * build's pages cache (`tafh-pages-<id>`, the name astro.config.ts gives the worker's
+ * StaleWhileRevalidate route), once the worker is active, six at a time, from the page's idle
+ * time (audit P3 item 5, PF3-02). The list is data/warm.json, precached. An older build's pages
+ * cache is deleted first, so stale pages never serve beside the new build's assets. Skipped on
+ * Save-Data; resumed by the next page while entries are missing; complete, noted for the tab.
+ * `html[data-warm]` says `done`, `partial` or `skip` (pwa.spec waits on it).
+ */
+const PAGES_CACHE = `tafh-pages-${__BUILD_ID__}`;
+const WARM_AT_ONCE = 6;
+
+async function warm(): Promise<void> {
+  const html = document.documentElement;
+  if ((navigator as { connection?: { saveData?: boolean } }).connection?.saveData) {
+    html.dataset.warm = 'skip';
+    return;
+  }
+  await sw.ready;
+  for (const name of await caches.keys())
+    if (name.startsWith('tafh-pages-') && name !== PAGES_CACHE) await caches.delete(name);
+  const cache = await caches.open(PAGES_CACHE);
+  const have = new Set((await cache.keys()).map((r) => r.url));
+  const list = (await (await fetch(href('data/warm.json'))).json()) as string[];
+  const queue = list.map((u) => new URL(u, location.href).href).filter((u) => !have.has(u));
+  // On a page the worker controls, a fetch that fails offline comes back as the precached 404
+  // (`precacheFallback`): its url is the 404's, so it is not stored under the page's.
+  const one = async (url: string) => {
+    if (!navigator.onLine) return false;
+    const res = await fetch(url, { priority: 'low' });
+    if (!res.ok || new URL(res.url).pathname !== new URL(url).pathname) return false;
+    await cache.put(url, res);
+    return true;
+  };
+  let complete = true;
+  const next = async () => {
+    for (let url = queue.shift(); url; url = queue.shift())
+      if (!(await one(url).catch(() => false))) complete = false;
+  };
+  await Promise.all(Array.from({ length: WARM_AT_ONCE }, next));
+  if (complete) setSessionFlag(SESSION_KEYS.warm, true);
+  html.dataset.warm = complete ? 'done' : 'partial';
+}
+
+if (sw && 'caches' in window && !sessionFlag(SESSION_KEYS.warm)) {
+  const start = () => void warm().catch(() => undefined);
+  const idle = () =>
+    'requestIdleCallback' in window
+      ? requestIdleCallback(start, { timeout: 4000 })
+      : setTimeout(start, 1500);
+  if (document.readyState === 'complete') idle();
+  else addEventListener('load', idle, { once: true });
+}
 
 armInstall();

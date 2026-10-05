@@ -48,6 +48,28 @@
   font-display: swap;
   src: url('/fonts/ibm-plex-mono-latin-500-normal.woff2') format('woff2');
 }
+/* The fallback faces size the local font to Plex (audit PF3-08, 2026-10-05; @capsizecss/unpack on
+   the woff2 and the local face: size-adjust from the average glyph width, the overrides from Plex's
+   metrics over that), so the swap when Plex arrives moves no line and no row. Plex keeps `swap`
+   rather than `optional`: optional kept the fallback for a first visit's whole page and showed
+   Plex from the next page on, a face change between two pages, and the layouts tuned to Plex's
+   widths tipped on it (app-redesign.md, P3 item 5). Fell has no local stand-in. */
+@font-face {
+  font-family: 'IBM Plex Sans Fallback';
+  src: local('Arial');
+  size-adjust: 101.1663%;
+  ascent-override: 101.3184%;
+  descent-override: 27.183%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'IBM Plex Mono Fallback';
+  src: local('Courier New');
+  size-adjust: 99.9837%;
+  ascent-override: 102.5167%;
+  descent-override: 27.5045%;
+  line-gap-override: 0%;
+}
 
 :root {
   --ground: #0e0b10;
@@ -104,8 +126,8 @@
   --shadow-sheet: 0 -10px 40px rgba(0, 0, 0, 0.5);
 
   --font-display: 'IM Fell English SC', 'Times New Roman', serif;
-  --font-body: 'IBM Plex Sans', system-ui, sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+  --font-body: 'IBM Plex Sans', 'IBM Plex Sans Fallback', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'IBM Plex Mono Fallback', ui-monospace, Menlo, monospace;
 
   /* Spec §2: type. Each token is a `font` shorthand value (weight, size/line height, family);
      a rule that needs another face or weight overrides font-family or font-weight after it.

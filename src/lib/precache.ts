@@ -7,6 +7,9 @@
  * which keys the home under Astro's `base`. On a sub-path deploy that is `/valvet`, with no slash,
  * while `href('')` and the manifest's `start_url` are `/valvet/`, so the home and every
  * `/valvet/?q=…` link missed the precache and fell through to the offline 404 page.
+ *
+ * A url listed twice is kept once (audit PF3-02: `includeAssets` once repeated the fonts, the icon
+ * and the manifest the glob had matched, nine entries the worker installed twice).
  */
 interface PrecacheEntry {
   url: string;
@@ -15,12 +18,20 @@ interface PrecacheEntry {
 }
 
 export function precacheKeys(scope: string) {
-  return <E extends PrecacheEntry>(entries: E[]) => ({
-    manifest: entries.map((e): E => {
-      if (!e.url.endsWith('.html')) return e;
+  return <E extends PrecacheEntry>(entries: E[]) => {
+    const seen = new Set<string>();
+    const manifest: E[] = [];
+    for (const e of entries) {
       const path = e.url.replace(/^\//, '');
-      return { ...e, url: path === 'index.html' ? scope : path.replace(/\.html$/, '') };
-    }),
-    warnings: [] as string[],
-  });
+      const url = !e.url.endsWith('.html')
+        ? e.url
+        : path === 'index.html'
+          ? scope
+          : path.replace(/\.html$/, '');
+      if (seen.has(url)) continue;
+      seen.add(url);
+      manifest.push(url === e.url ? e : { ...e, url });
+    }
+    return { manifest, warnings: [] as string[] };
+  };
 }

@@ -127,9 +127,16 @@ test('a passive component view with storage blocked raises no toast; a note stil
       },
     });
   });
-  // Opening the page writes the Viewed list: the app's bookkeeping, so no warning.
+  // Opening the page writes the Viewed list: the app's bookkeeping, so no warning. The first
+  // install ends on this page (a 2 MB precache, P3 item 5) and its toast is the one allowed.
   await gotoHydrated(page, '/switch/32');
-  await expect(page.locator('.toast')).toHaveCount(0);
+  await expect(page.locator('.toast[data-kind="offline"]')).toContainText(
+    'Ready to work offline.',
+    {
+      timeout: 20_000,
+    },
+  );
+  await expect(page.locator('.toast:not([data-kind="offline"])')).toHaveCount(0);
   // The user's own note is the first write that warns, and the page's one warning was unspent.
   await page.getByRole('textbox', { name: 'Note' }).fill('wire loose at the lug');
   await expect(page.locator('.toast')).toContainText('This device is not saving changes.');
@@ -311,8 +318,13 @@ test(
       "offline navigation is an internal error in Playwright's WebKit",
     );
     await gotoHydrated(page, './');
-    // The SW only becomes active once install (which precaches everything) has finished.
+    // The SW only becomes active once install (which precaches the shell and the hubs) has
+    // finished; pwa.ts then warms the handbook, manual and component pages and the handbook's
+    // figures into the pages cache and marks html[data-warm] (P3 item 5 of the audit, round 3).
     await page.evaluate(() => navigator.serviceWorker.ready.then(() => undefined));
+    await page.waitForFunction(() => document.documentElement.dataset.warm === 'done', null, {
+      timeout: 60_000,
+    });
     await context.setOffline(true);
 
     // motion.ts writes the Diagnose tab's href as `/?q=…` once a search has been made.
@@ -336,6 +348,13 @@ test(
     await expect
       .poll(() => photo.evaluate((img: HTMLImageElement) => img.naturalWidth))
       .toBeGreaterThan(0);
+
+    // A component page and a manual page come from the pages cache, not the precache; the
+    // query string is dropped from the key the way the precache ignores it.
+    await gotoHydrated(page, './switch/32?x=1');
+    await expect(page).toHaveTitle(/^Switch 32, Upper Right Jet/);
+    await gotoHydrated(page, './manual/wpc/10');
+    await expect(page).toHaveTitle(/^WPC Schematic Manual PDF page 10/);
 
     // PF-12: a route the precache doesn't know (a typo, a section removed since this SW was built)
     // gets the branded 404 page offline, not the browser's error page.

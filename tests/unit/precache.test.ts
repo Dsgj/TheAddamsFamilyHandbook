@@ -29,4 +29,13 @@ describe('precache keys', () => {
       size: 1,
     });
   });
+
+  it('keeps each url once, the first entry (PF3-02)', () => {
+    const twice = [entry('fonts/a.woff2'), entry('fonts/a.woff2'), entry('index.html')];
+    expect(keys('/', [...twice.map((e) => e.url), 'index.html'])).toEqual(['fonts/a.woff2', '/']);
+    const second = { url: 'fonts/a.woff2', revision: 'later', size: 2 };
+    expect(precacheKeys('/')([entry('fonts/a.woff2'), second]).manifest).toEqual([
+      entry('fonts/a.woff2'),
+    ]);
+  });
 });

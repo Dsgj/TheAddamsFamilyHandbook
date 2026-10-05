@@ -2,6 +2,7 @@ import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'astro/config';
 import svelte from '@astrojs/svelte';
 import AstroPWA from '@vite-pwa/astro';
+import { buildId } from './src/build/build-id';
 import { kitPlugin } from './src/build/kit-plugin';
 import { precacheKeys } from './src/lib/precache';
 
@@ -9,6 +10,10 @@ import { precacheKeys } from './src/lib/precache';
 const rawBase = process.env.BASE_PATH ?? '/';
 const base = '/' + rawBase.replace(/^\/+|\/+$/g, '');
 const scope = base === '/' ? '/' : base + '/';
+// The build's fingerprint names the pages cache in the worker and in pwa.ts (`tafh-pages-<id>`),
+// so a new build's pages are never served beside an old build's (P3 item 5 of the audit, PF3-02).
+const id = buildId(fileURLToPath(new URL('.', import.meta.url)));
+const pagesCache = `tafh-pages-${id}`;
 
 export default defineConfig({
   site: process.env.SITE_URL ?? 'https://example.github.io',
@@ -23,7 +28,6 @@ export default defineConfig({
       injectRegister: false,
       base: scope,
       scope,
-      includeAssets: ['fonts/*.woff2', 'icons/*.svg'],
       manifest: {
         // The id keeps the installed app the same app if start_url ever changes (CR3-10).
         id: scope,
@@ -71,16 +75,28 @@ export default defineConfig({
         // NetworkOnly + precacheFallback rule, which only serves the cached 404 when the network
         // actually fails.
         navigateFallback: null,
+        // The shell and the hubs (about a hundred entries, PF3-02): every top-level page, the
+        // chunks, styles, fonts and icon, the data files, the logo and the map drawing; vite-pwa
+        // adds the manifest itself. Handbook sections, manual pages, component pages and the
+        // handbook's figures are warmed into the pages cache below instead (pwa.ts, data/warm.json).
         globPatterns: [
-          '**/*.{html,js,css,woff2,svg,webmanifest}',
+          '**/*.{html,js,css,woff2,svg}',
           'data/*.json',
           'assets/maps/playfield.png',
-          'assets/figures/*.{png,jpg,jpeg}',
           'brand/*.webp',
         ],
-        globIgnores: ['**/node_modules/**', 'assets/pages/**'],
+        globIgnores: [
+          '**/node_modules/**',
+          'assets/pages/**',
+          'handbook/*.html',
+          'manual/**/*.html',
+          'switch/*.html',
+          'lamp/*.html',
+          'coil/*.html',
+          'flipper/*.html',
+        ],
         // Keys the home as `scope` (`/valvet/`, the URL every link and start_url use) instead of
-        // Astro's slash-less `base`; see src/lib/precache.ts.
+        // Astro's slash-less `base`, and keeps each url once; see src/lib/precache.ts.
         manifestTransforms: [precacheKeys(scope)],
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         runtimeCaching: [
@@ -91,6 +107,40 @@ export default defineConfig({
               cacheName: 'tafh-scans',
               expiration: { maxEntries: 600, maxAgeSeconds: 60 * 60 * 24 * 365 },
               cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
+            // The handbook's figures: warmed with the pages (data/warm.json), kept per build.
+            urlPattern: ({ url }) =>
+              url.origin === self.location.origin && url.pathname.includes('/assets/figures/'),
+            handler: 'CacheFirst',
+            options: { cacheName: pagesCache, cacheableResponse: { statuses: [200] } },
+          },
+          {
+            // Handbook sections, manual pages and component pages: pwa.ts warms them into the
+            // build's pages cache after the first install; a visit serves the copy and
+            // revalidates behind it. Offline with no copy, the precached 404 answers, as for any
+            // unknown route (below). The key drops the query and hash (`?mark=`, `#c21`), the way
+            // ignoreURLParametersMatching does for the precache.
+            urlPattern: ({ url }) =>
+              url.origin === self.location.origin &&
+              /\/(?:handbook|manual|switch|lamp|coil|flipper)\/./.test(url.pathname),
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: pagesCache,
+              cacheableResponse: { statuses: [200] },
+              matchOptions: { ignoreVary: true },
+              precacheFallback: { fallbackURL: '404' },
+              plugins: [
+                {
+                  cacheKeyWillBeUsed: async ({ request }) => {
+                    const u = new URL(request.url);
+                    u.search = '';
+                    u.hash = '';
+                    return u.href;
+                  },
+                },
+              ],
             },
           },
           {
@@ -114,6 +164,7 @@ export default defineConfig({
   ],
   vite: {
     plugins: [kitPlugin()],
+    define: { __BUILD_ID__: JSON.stringify(id) },
     resolve: { alias: { '~': fileURLToPath(new URL('./src', import.meta.url)) } },
     build: {
       rollupOptions: {
