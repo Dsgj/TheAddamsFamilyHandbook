@@ -21,6 +21,11 @@ updates:
     directory: /
     schedule:
       interval: monthly
+    # One Node major, the one .nvmrc names: a new major is a decision across .nvmrc, engines and
+    # the image, not a bump (its first run proposed node 26-alpine).
+    ignore:
+      - dependency-name: node
+        update-types: ['version-update:semver-major']
     groups:
       images:
         patterns: ['*']
