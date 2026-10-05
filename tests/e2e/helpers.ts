@@ -1,5 +1,25 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
+/** The page's runtime errors from here on. WebKit logs every fetch a navigation cancels as a page
+ * error (Playwright splits the text at its first colon: name 'Fetch API cannot load http',
+ * message '//<host>/<path> due to access control checks.'). The warm-up (pwa.ts) aborts its
+ * fetches on a cross-document navigate event and on pagehide, which covers a link and back; a
+ * page.goto is the address bar, whose load cancels them before either event fires. Gated by name
+ * on WebKit, for the page's own host only (spec, Playwright projects). */
+export function pageErrors(page: Page): string[] {
+  const errors: string[] = [];
+  const webkit = page.context().browser()?.browserType().name() === 'webkit';
+  page.on('pageerror', (e) => {
+    const m =
+      webkit && e.name === 'Fetch API cannot load http'
+        ? /^\/*([^/\s]+)\/\S* due to access control checks\.$/.exec(e.message)
+        : null;
+    if (m && m[1] === new URL(page.url()).host) return;
+    errors.push(String(e));
+  });
+  return errors;
+}
+
 /**
  * Navigates and waits until every Astro island that hydrates on its own is live, and the
  * `client:visible` ones named in `visible` (component file names) too. Island markup is

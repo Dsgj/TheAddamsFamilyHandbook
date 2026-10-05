@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { activate, gotoHydrated, swReady } from './helpers';
+import { activate, gotoHydrated, pageErrors, swReady } from './helpers';
 
 /* Phase 11 of the app redesign: the toasts, the Install sheet, the scan-not-cached state and the
    Workshop's pull-to-refresh. The tests raise toasts with the same `tafh:toast` event pwa.ts uses. */
@@ -118,8 +118,7 @@ test('a first install that ends on the next page still says "Ready to work offli
 test('a passive component view with storage blocked raises no toast; a note still does (CO3-04)', async ({
   page,
 }) => {
-  const errors: string[] = [];
-  page.on('pageerror', (e) => errors.push(e.message));
+  const errors = pageErrors(page);
   await page.addInitScript(() => {
     Object.defineProperty(window, 'localStorage', {
       get() {
@@ -197,8 +196,7 @@ test.describe('data files that do not load (AR2-03, CO2-06, SV2-02)', () => {
   test('the manuals search survives a ?q that is no escape, and a text that did not load', async ({
     page,
   }) => {
-    const errors: string[] = [];
-    page.on('pageerror', (e) => errors.push(e.message));
+    const errors = pageErrors(page);
     let fail = true;
     await page.route('**/data/ocr-text.json', (r) => (fail ? r.abort() : r.fallback()));
     await gotoHydrated(page, '/manual?q=100%');

@@ -100,7 +100,13 @@ listen('check-update', () => {
  * time (audit P3 item 5, PF3-02). The list is data/warm.json, precached. An older build's pages
  * cache is deleted first, so stale pages never serve beside the new build's assets. Skipped on
  * Save-Data; resumed by the next page while entries are missing; complete, noted for the tab.
- * `html[data-warm]` says `done`, `partial` or `skip` (pwa.spec waits on it).
+ * `html[data-warm]` says `done`, `partial` or `skip` (pwa.spec waits on it). It ends with the
+ * document: a cross-document `navigate` event (the Navigation API: a link, back) or pagehide
+ * aborts the fetches in flight and ends the loop, so none is started for a document that is
+ * gone and none is in flight when a navigation the page started cancels its loads. WebKit logs
+ * every fetch a navigation cancels as a page error ('Fetch API cannot load … due to access
+ * control checks'); one the address bar starts fires no navigate event and pagehide after the
+ * loads are gone, so tests/e2e/helpers.ts gates that message on WebKit.
  */
 const PAGES_CACHE = `tafh-pages-${__BUILD_ID__}`;
 const WARM_AT_ONCE = 6;
@@ -120,16 +126,24 @@ async function warm(): Promise<void> {
   const queue = list.map((u) => new URL(u, location.href).href).filter((u) => !have.has(u));
   // On a page the worker controls, a fetch that fails offline comes back as the precached 404
   // (`precacheFallback`): its url is the 404's, so it is not stored under the page's.
+  const gone = new AbortController();
+  // The Navigation API is not in TS 5.9's lib.dom; a same-document navigate (Diagnose's `?q=`,
+  // a hash) keeps the page and its warm-up.
+  (window as { navigation?: EventTarget }).navigation?.addEventListener('navigate', (e) => {
+    if (!(e as { destination?: { sameDocument?: boolean } }).destination?.sameDocument)
+      gone.abort();
+  });
+  addEventListener('pagehide', () => gone.abort(), { once: true });
   const one = async (url: string) => {
     if (!navigator.onLine) return false;
-    const res = await fetch(url, { priority: 'low' });
+    const res = await fetch(url, { priority: 'low', signal: gone.signal });
     if (!res.ok || new URL(res.url).pathname !== new URL(url).pathname) return false;
     await cache.put(url, res);
     return true;
   };
   let complete = true;
   const next = async () => {
-    for (let url = queue.shift(); url; url = queue.shift())
+    for (let url = queue.shift(); url && !gone.signal.aborted; url = queue.shift())
       if (!(await one(url).catch(() => false))) complete = false;
   };
   await Promise.all(Array.from({ length: WARM_AT_ONCE }, next));

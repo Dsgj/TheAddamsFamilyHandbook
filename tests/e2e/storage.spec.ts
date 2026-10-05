@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
-import { dayLabel, gotoHydrated } from './helpers';
+import { dayLabel, gotoHydrated, pageErrors } from './helpers';
 
 // Dates show in the device's local time (spec §13); pin the zone so they are predictable.
 test.use({ timezoneId: 'Europe/Stockholm' });
@@ -376,8 +376,7 @@ test('Verify ticks travel in the backup and go with Clear all', async ({ page })
 });
 
 test('marks stay on screen when storage is full', async ({ page }) => {
-  const errors: string[] = [];
-  page.on('pageerror', (e) => errors.push(e.message));
+  const errors = pageErrors(page);
   await page.addInitScript(() => {
     const set = Storage.prototype.setItem;
     Storage.prototype.setItem = function (k: string, v: string) {
@@ -405,8 +404,7 @@ test('marks stay on screen when storage is full', async ({ page }) => {
 test('a log that repeats a moment still opens, and an import keeps one of each (CO2-03)', async ({
   page,
 }) => {
-  const errors: string[] = [];
-  page.on('pageerror', (e) => errors.push(e.message));
+  const errors = pageErrors(page);
   const at = '2026-09-23T10:00:00Z';
   const twice = {
     ...fault('switch:32'),
@@ -486,8 +484,7 @@ test('the service log and Verify date in local time, with the year', async ({ pa
 test('a damaged entry on the device breaks no page, and Clear all still clears (CO3-01)', async ({
   page,
 }) => {
-  const errors: string[] = [];
-  page.on('pageerror', (e) => errors.push(String(e)));
+  const errors = pageErrors(page);
   await seed(page, { 'switch:32': null, 'lamp:11': fault('lamp:11') });
   await page.evaluate(() => {
     const at = '2026-09-23T00:00:00Z';

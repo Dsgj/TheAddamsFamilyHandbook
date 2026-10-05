@@ -12,8 +12,8 @@
   CI summary lists a test that retried inside itself.
 - The app installs in about a hundred requests instead of 465 (2 MB instead of
   16): the handbook, manual and component pages are saved in the background
-  after the first install, and the body font no longer shifts the page when
-  it arrives.
+  after the first install (and stop when you leave the page), and the body
+  font no longer shifts the page when it arrives.
 - The Workshop page no longer ships the whole shopping list to count faults
   (80 KB to 27 KB), a toast lifted over the map sheet or the Diagnose dock no
   longer restyles the page, and Back no longer logs a view-transition error.

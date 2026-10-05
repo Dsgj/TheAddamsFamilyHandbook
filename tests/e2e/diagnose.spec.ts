@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { gotoHydrated, twoFrames } from './helpers';
+import { gotoHydrated, pageErrors, twoFrames } from './helpers';
 
 /* Phase 6 of the app redesign: the Diagnose home, its results and its search state. */
 
@@ -276,11 +276,10 @@ test.describe('search', () => {
   test('a search with duplicate part rows still renders the Parts group, without a console error', async ({
     page,
   }) => {
-    const errors: string[] = [];
+    const errors = pageErrors(page);
     page.on('console', (msg) => {
       if (msg.type() === 'error') errors.push(msg.text());
     });
-    page.on('pageerror', (err) => errors.push(String(err)));
     await gotoHydrated(page, '/');
     await field(page).fill('post');
     await expect(page.getByRole('heading', { level: 3, name: /^Parts/ })).toBeVisible();

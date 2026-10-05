@@ -26,8 +26,10 @@ const KNOWN: Record<string, string[]> = {};
 /** A row the sticky Diagnose field passes over (P2 item 3 of the app audit, round 2): axe counts the
  * strip of it left between the field's buttons and the tab bar as the whole target, so a hit fails
  * or passes by where the fold cuts the list (WebKit on Windows, /?q=flipper). The row scrolls clear
- * of the field. A target-size node only obscured by controls inside `.dock` is dropped; any other
- * still fails. */
+ * of the field. The handbook's reader bar (`.rbar`, fixed at the bottom) is the same case: CI's
+ * desktop-light cut /handbook/menus so its sixth list link lay under the bar's buttons (round 3,
+ * P4 item 2's push). A target-size node only obscured by controls inside `.dock` or `.rbar` is
+ * dropped; any other still fails. */
 async function belowTheFold(page: Page, violations: Result[]): Promise<Result[]> {
   const out: Result[] = [];
   for (const v of violations) {
@@ -44,7 +46,7 @@ async function belowTheFold(page: Page, violations: Result[]): Promise<Result[]>
         key.startsWith('partiallyObscured') &&
         by.length > 0 &&
         (await page.evaluate(
-          (sels) => sels.every((s) => !!document.querySelector(s)?.closest('.dock')),
+          (sels) => sels.every((s) => !!document.querySelector(s)?.closest('.dock, .rbar')),
           by,
         ));
       if (!docked) nodes.push(n);

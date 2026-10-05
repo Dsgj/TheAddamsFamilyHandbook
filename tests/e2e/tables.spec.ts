@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { activate, gotoHydrated } from './helpers';
+import { activate, gotoHydrated, pageErrors } from './helpers';
 
 /* Phase 7 of the app redesign: the switch matrix tabs, the matrix cell card, the component detail
    page with its Show-on-map sheet, and Recently viewed on the Tables hub. */
@@ -86,8 +86,7 @@ test.describe('the switch matrix tabs', () => {
   });
 
   test('a hash that is no URI escape is no cell, not a page error (CO3-06)', async ({ page }) => {
-    const errors: string[] = [];
-    page.on('pageerror', (e) => errors.push(String(e)));
+    const errors = pageErrors(page);
     await gotoHydrated(page, '/switches#c%E0');
     await expect(page.locator('[data-cell="32"]')).toBeVisible();
     await expect(page.locator('[data-cell="32"]')).not.toHaveClass(/target/);

@@ -1,5 +1,13 @@
 import { expect, test, type Page } from '@playwright/test';
-import { activate, barCovered, gotoHydrated, settle, touchDrag, twoFrames } from './helpers';
+import {
+  activate,
+  barCovered,
+  gotoHydrated,
+  pageErrors,
+  settle,
+  touchDrag,
+  twoFrames,
+} from './helpers';
 
 /** Playfield map, Phases 1–2 of the app redesign: fit, zoom, keys, markers, the sheets, the panel. */
 
@@ -128,8 +136,7 @@ test('zoom in, fit and the 0 key', async ({ page }) => {
 });
 
 test('a zoomed deep link lands without a runtime error (SV-03)', async ({ page }) => {
-  const errors: string[] = [];
-  page.on('pageerror', (e) => errors.push(String(e)));
+  const errors = pageErrors(page);
   await gotoHydrated(page, '/map?layer=sw');
   await expect.poll(() => fitted(page)).toBe(true);
   const w1 = await canvasWidth(page);
@@ -148,8 +155,7 @@ test('card to map and back logs no runtime error (UX3-12)', async ({ page }) => 
   // Headless Chromium aborted every inbound view transition ("ViewTransition opt-in disabled",
   // an unhandled rejection) while the opt-in rode in the stylesheet linked after the head's
   // scripts; it is the head's first style now (Base.astro).
-  const errors: string[] = [];
-  page.on('pageerror', (e) => errors.push(String(e)));
+  const errors = pageErrors(page);
   await gotoHydrated(page, '/switch/32');
   await page.getByRole('button', { name: 'Show on map' }).click();
   await page.getByRole('dialog').getByRole('link', { name: 'Show on map' }).click();
@@ -160,8 +166,7 @@ test('card to map and back logs no runtime error (UX3-12)', async ({ page }) => 
 });
 
 test('z just above 1 reads as the fit (two decimals, as the URL is written)', async ({ page }) => {
-  const errors: string[] = [];
-  page.on('pageerror', (e) => errors.push(String(e)));
+  const errors = pageErrors(page);
   await gotoHydrated(page, '/map?layer=sw&z=1.0001');
   await expect.poll(() => fitted(page)).toBe(true);
   await expect(page.locator('.scroller')).not.toHaveClass(/zoomed/);
