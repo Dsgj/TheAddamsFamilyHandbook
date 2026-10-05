@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Design system: list separators start at the text, rows and Diagnose tiles
+  show a hover tint, every touch size reads --touch, the detail page's name
+  matches its card, and the dead toggle styles are gone.
 - Map sheet: Details and the manual stay pinned at its foot, and wiring rows
   read label first everywhere. Cards: the mini-map fills its column. Map parts
   list: the layer headers match the other list headers, with the layer's dot.

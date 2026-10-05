@@ -172,7 +172,7 @@
     font-weight: 600;
     color: var(--muted);
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: var(--track-4);
   }
   .more {
     display: grid;
@@ -190,7 +190,7 @@
     background: var(--sheet);
   }
   .more .btn {
-    min-height: 44px;
+    min-height: var(--touch);
     text-align: center;
   }
   .shot-note {

@@ -18,7 +18,7 @@ const items = allShoppingItems();
     Parts to order for every component marked Fault on this device, grouped by part number.
   </p>
   <ShoppingList client:load items={items} />
-  <section class="kit">
+  <section class="kit flush">
     <h2 class="lst-h">Service kit</h2>
     <ul class="lst">
       <li class="lrow static">
@@ -85,12 +85,6 @@ const items = allShoppingItems();
 <style>
   .kit {
     margin-top: 24px;
-  }
-  .lst,
-  .lst-h,
-  .gf {
-    margin-left: 0;
-    margin-right: 0;
   }
   .kit .lrow {
     align-items: flex-start;

@@ -132,7 +132,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    min-height: 44px;
+    min-height: var(--touch);
     gap: 8px;
     padding: 4px 8px;
     border-radius: var(--r-xs);
@@ -142,7 +142,7 @@
   .home li a {
     padding: 10px 12px;
     border-radius: var(--r-sm);
-    min-height: 44px;
+    min-height: var(--touch);
     align-items: center;
   }
   li.none {

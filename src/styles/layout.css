@@ -64,7 +64,7 @@ main.fullbleed {
   white-space: nowrap;
   text-align: center;
   font: var(--t-head);
-  letter-spacing: 0;
+  letter-spacing: var(--track-0);
   color: var(--ink);
 }
 .top .ct .short {
@@ -90,7 +90,7 @@ main.fullbleed {
 .lt h1 {
   margin: 0;
   font: var(--t-lt);
-  letter-spacing: 0.01em;
+  letter-spacing: var(--track-1);
   opacity: var(--lt, 1);
 }
 .back {
@@ -115,8 +115,8 @@ main.fullbleed {
 .ibtn {
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: var(--touch);
+  height: var(--touch);
   padding: 0;
   border: 0;
   border-radius: var(--r-full);
@@ -150,7 +150,7 @@ main.fullbleed {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 44px;
+  height: var(--touch);
   min-width: var(--touch);
   padding: 0 8px;
   font-size: 17px;
@@ -239,7 +239,7 @@ main.fullbleed {
     max-width: none;
     text-align: left;
     font: var(--t-h1-wide);
-    letter-spacing: 0.02em;
+    letter-spacing: var(--track-2);
   }
   .top .lead:empty {
     display: none;

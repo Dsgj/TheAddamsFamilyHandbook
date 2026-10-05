@@ -11,6 +11,7 @@
     background: var(--ground);
     color: var(--ink);
     font-size: 12px;
+    line-height: 16px;
   }
   /* Paper does not scroll (CR3-05): the scroller shows its whole table, and the table shrinks to
      the page: the body's 12px instead of --t-sub's 15, tighter cells, so the coil tables' Location

@@ -84,7 +84,7 @@
   /* 44 tall, the field's target (audit AY-12); the field's own radius (DS2-09). */
   .note {
     flex: 1 1 160px;
-    min-height: 44px;
+    min-height: var(--touch);
     padding: 4px 10px;
   }
   .seg {

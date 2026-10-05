@@ -520,7 +520,7 @@
           style:width={fit ? `${zm.canvasW}px` : undefined}
           style:height={fit ? `${zm.canvasH}px` : undefined}
           style:--canvas-w={fit ? `${zm.canvasW}px` : undefined}
-          style:--r={PLAYFIELD.w / PLAYFIELD.h}
+          style:--ratio={PLAYFIELD.w / PLAYFIELD.h}
           bind:this={canvas}
         >
           <img
@@ -756,15 +756,18 @@
     padding-block: 12px;
   }
   .map-ui:not(.embed) .canvas {
-    --fit: min(100cqw - 58px, (100cqh - var(--map-inset, 0px)) * var(--r));
+    --fit: min(100cqw - 58px, (100cqh - var(--map-inset, 0px)) * var(--ratio));
     --w: var(--canvas-w, calc(var(--map-z, 1) * var(--fit)));
     width: calc(var(--map-z, 1) * var(--fit));
-    aspect-ratio: var(--r);
+    aspect-ratio: var(--ratio);
     margin-inline: max(0px, min((100cqw - var(--w)) / 2, 100cqw - var(--w) - 58px)) 0;
   }
   @media (min-width: 1000px) {
     .map-ui:not(.embed) .canvas {
-      --fit: max(min(100cqw - 128px, 100cqh * var(--r)), min(100cqw, (100cqh - 188px) * var(--r)));
+      --fit: max(
+        min(100cqw - 128px, 100cqh * var(--ratio)),
+        min(100cqw, (100cqh - 188px) * var(--ratio))
+      );
       margin-inline: auto;
     }
   }
@@ -912,7 +915,7 @@
     border-radius: inherit;
     border: 2px solid var(--amber);
     pointer-events: none;
-    animation: pulse 1.6s var(--ease-standard) forwards;
+    animation: pulse var(--dur-pulse) var(--ease-standard) forwards;
   }
   /* The selected label sits on an opaque chip: over the photo the 80% one fell under 4.5. */
   .marker.sel span {

@@ -459,7 +459,7 @@
       min-width: 0;
     }
     td {
-      height: 44px;
+      height: var(--touch);
       vertical-align: middle;
     }
     /* 44 tall at least (audit AY-12); the 38 width is the spec's ≥24×44 phone cell (§9.6). */
@@ -468,7 +468,7 @@
       display: grid;
       place-items: center;
       padding: 0;
-      min-height: 44px;
+      min-height: var(--touch);
     }
     .mk {
       top: 3px;
@@ -577,6 +577,7 @@
     }
     .nm {
       font-size: 10px;
+      line-height: 12px;
       overflow-wrap: anywhere;
     }
     /* The headers' wire labels and pins wrap instead of widening their column. */

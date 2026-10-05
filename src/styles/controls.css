@@ -68,38 +68,6 @@
   font-size: 1.16rem;
 }
 
-/* ---- Toggle (spec §8.4) ---- */
-.toggle {
-  position: relative;
-  flex: 0 0 auto;
-  width: 51px;
-  height: 31px;
-  padding: 0;
-  border: 0;
-  border-radius: var(--r-chip);
-  background: var(--sunk);
-  cursor: pointer;
-  transition: background var(--dur-2) var(--ease-standard);
-}
-.toggle::after {
-  content: '';
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 27px;
-  height: 27px;
-  border-radius: 50%;
-  background: #f4efe6;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-  transition: transform var(--dur-2) var(--ease-standard);
-}
-.toggle[aria-checked='true'] {
-  background: var(--amber-fill);
-}
-.toggle[aria-checked='true']::after {
-  transform: translateX(20px);
-}
-
 /* ---- Map layers (spec §7.5): the switch, lamp, coil and shot colours ----
    One home for the map's markers and list, MapControls' toggles and MapParts' headings (audit
    AR2-02). --k is a layer's ring and dot colour; a heading in the layer colour reads --k-ink,
@@ -190,7 +158,7 @@
   padding: 0 6px;
   border-radius: var(--r-xs);
   font: var(--t-code);
-  letter-spacing: 0.06em;
+  letter-spacing: var(--track-6);
   text-transform: uppercase;
   /* Spec §8.6: a code is one token; `SOL 01` never wraps (VP-06). */
   white-space: nowrap;
@@ -245,7 +213,7 @@
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
-  height: 44px;
+  height: var(--touch);
   padding: 0 12px;
   border: 4px solid transparent;
   border-radius: calc(var(--r-sm) + 4px);

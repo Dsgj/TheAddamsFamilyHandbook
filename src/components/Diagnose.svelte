@@ -629,6 +629,12 @@
   .tile:active {
     background: var(--press);
   }
+  /* The press tint over the tile's surface for a pointer that hovers (audit VL3-07). */
+  @media (hover: hover) {
+    .tile:hover {
+      background: linear-gradient(var(--press), var(--press)), var(--surface);
+    }
+  }
   .rec-h {
     display: flex;
     align-items: baseline;
@@ -654,7 +660,7 @@
     font: var(--t-foot);
     font-weight: 600;
     text-transform: none;
-    letter-spacing: 0;
+    letter-spacing: var(--track-0);
     cursor: pointer;
   }
   .tlink.sm.armed {
@@ -664,7 +670,7 @@
     margin: 0;
   }
   .recent .ttl {
-    letter-spacing: 0.04em;
+    letter-spacing: var(--track-4);
   }
 
   /* The results and search bars (spec §9.2, §9.3). */
@@ -673,7 +679,7 @@
     grid-template-columns: 1fr auto 1fr;
     align-items: center;
     gap: 8px;
-    min-height: 44px;
+    min-height: var(--touch);
   }
   .rbar .rh {
     grid-column: 2;
@@ -804,7 +810,7 @@
   }
   /* On a short view (a phone on its side, 200% zoom) the stuck dock took half the height (AY2-10):
      there the field heads the results in flow, as from 1000. */
-  @media (max-width: 999px) and (max-height: 499px) {
+  @media (max-width: 999px) and (max-height: 559px) {
     .diag:not([data-mode='home']) .dock {
       order: 0;
       position: static;
@@ -858,7 +864,7 @@
       inset 0 2px 12px rgba(0, 0, 0, 0.5);
     color: var(--dmd-ink);
     font: 500 26px/32px var(--font-mono);
-    letter-spacing: 0.06em;
+    letter-spacing: var(--track-6);
     text-transform: uppercase;
     text-shadow: 0 0 10px rgba(255, 138, 61, 0.45);
   }
@@ -873,7 +879,7 @@
   }
   /* Once the results scroll, the stuck dock folds to the field alone until the field is focused
      (audit P2 item 11, VP3-13): 72 tall over the results, not 130. */
-  @media (max-width: 999px) and (min-height: 500px) {
+  @media (max-width: 999px) and (min-height: 560px) {
     .diag:not([data-mode='home']) .dock.compact .acts {
       display: none;
     }

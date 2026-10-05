@@ -124,9 +124,10 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    min-height: 44px;
+    min-height: var(--touch);
     padding: 6px 12px;
     font-size: 15px;
+    line-height: 20px;
   }
   .wires li + li {
     border-top: 1px solid var(--sep);
@@ -137,6 +138,7 @@
   .wires .mono {
     margin-left: auto;
     font-size: 13px;
+    line-height: 18px;
     text-align: right;
   }
   /* A wire's value: its chip and its colour, together at the right. */

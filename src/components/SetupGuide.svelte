@@ -196,7 +196,7 @@
     align-items: center;
     gap: 6px;
     flex: 1 1 180px;
-    min-height: 44px;
+    min-height: var(--touch);
   }
   /* Paper has no target: the row is a line of text. */
   @media print {

@@ -200,7 +200,7 @@
     flex-direction: row;
     justify-content: flex-start;
     width: auto;
-    height: 44px;
+    height: var(--touch);
     padding: 0 12px;
     gap: 12px;
     border-radius: var(--r-sm);
@@ -237,7 +237,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    min-height: 44px;
+    min-height: var(--touch);
     padding: 0 12px 0 46px;
     border-radius: var(--r-sm);
     font-size: 15px;

@@ -567,7 +567,7 @@
     margin-bottom: 4px;
   }
   .pgno {
-    min-height: 44px;
+    min-height: var(--touch);
     padding: 0 12px;
     border: 0;
     border-radius: var(--r-sm);
@@ -674,7 +674,7 @@
     inset: -4px;
     border-radius: inherit;
     border: 2px solid var(--amber);
-    animation: pulse 1.6s var(--ease-standard) 3 forwards;
+    animation: pulse var(--dur-pulse) var(--ease-standard) 3 forwards;
   }
   @keyframes pulse {
     from {

@@ -207,7 +207,7 @@
   .chip {
     position: relative;
     flex: none;
-    min-width: 44px;
+    min-width: var(--touch);
   }
   .chip::after {
     content: '';
@@ -220,7 +220,7 @@
   .lst-h .n {
     font-weight: 400;
     text-transform: none;
-    letter-spacing: 0;
+    letter-spacing: var(--track-0);
     margin-left: 4px;
   }
   .lst {

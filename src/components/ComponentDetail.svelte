@@ -100,7 +100,7 @@
   <span class="tile" aria-hidden="true"><Icon {name} /></span>
 {/snippet}
 
-<div class="detail" data-kind={kind} data-id={item.id}>
+<div class="detail flush" data-kind={kind} data-id={item.id}>
   <header class="dh">
     <span class="code lg dmd">{code}</span>
     <div class="head">
@@ -291,9 +291,10 @@
   .head {
     min-width: 0;
   }
+  /* The card's size (spec §2 t-title), so the name reads the same on the card and here (DS3-07). */
   .head h2 {
     margin: 0;
-    font: var(--t-h1-wide);
+    font: var(--t-title);
   }
   .kind {
     margin: 0;
@@ -305,15 +306,6 @@
   }
   .cur.st-fault {
     color: var(--bad);
-  }
-  .lst,
-  .gf {
-    margin-left: 0;
-    margin-right: 0;
-  }
-  .lst-h {
-    margin-left: 0;
-    margin-right: 0;
   }
   .lrow .btn {
     flex: 0 0 auto;
@@ -331,7 +323,7 @@
   .when {
     flex: 0 0 auto;
     min-width: 64px;
-    font-size: 13px;
+    font: var(--t-foot);
     color: var(--muted);
   }
   /* minmax(0,1fr), not the implicit auto track: the map crop starts at 340 before it measures

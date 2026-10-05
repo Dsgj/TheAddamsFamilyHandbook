@@ -41,7 +41,7 @@
   position: relative;
   min-height: 36px;
   /* 44 wide at least, so a one-glyph value ("3", "YES") keeps the 44 target (audit AY-12). */
-  min-width: 44px;
+  min-width: var(--touch);
   padding: 0 14px;
   border-radius: var(--r-sm);
   font: var(--t-sub);
@@ -111,7 +111,7 @@ textarea.field {
   font-family: var(--font-mono);
   font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.14em;
+  letter-spacing: var(--track-14);
   color: var(--dmd-ink);
   background:
     radial-gradient(circle at 2px 2px, var(--dmd-dot) 0.6px, transparent 1px) 0 0 / 4px 4px,

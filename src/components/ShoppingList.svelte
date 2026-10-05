@@ -117,11 +117,11 @@
     <textarea class="field text mono" readonly rows={Math.min(14, text.split('\n').length + 1)}
       >{text}</textarea
     >
-    {#if fallback}<p class="gf">Select all and copy.</p>{/if}
+    {#if fallback}<p class="gf flush">Select all and copy.</p>{/if}
   {/if}
 
   {#each kinds as kind (kind)}
-    <section class="grp">
+    <section class="grp flush">
       <h2 class="lst-h">{KIND_PLURAL[kind]}</h2>
       <ul class="lst">
         {#each groups.filter((g) => g.kind === kind) as g (g.label + g.part)}
@@ -164,7 +164,7 @@
       </ul>
     </section>
   {/each}
-  <p class="gf">Mark a component Fault and it lands here. Fixed clears the fault.</p>
+  <p class="gf flush">Mark a component Fault and it lands here. Fixed clears the fault.</p>
 {/if}
 
 <style>
@@ -185,6 +185,7 @@
   .total {
     margin: 0;
     font-size: 17px;
+    line-height: 22px;
   }
   .total .dmd {
     font-size: 1.3em;
@@ -205,12 +206,6 @@
   .grp {
     margin-top: var(--gap);
   }
-  .lst,
-  .lst-h,
-  .gf {
-    margin-left: 0;
-    margin-right: 0;
-  }
   .part {
     min-height: 36px;
     padding-top: 8px;
@@ -218,6 +213,7 @@
     gap: 6px;
     color: var(--muted);
     font-size: 15px;
+    line-height: 20px;
   }
   .part .count {
     color: var(--ink);

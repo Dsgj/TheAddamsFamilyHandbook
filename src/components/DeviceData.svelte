@@ -172,7 +172,7 @@
 </script>
 
 <!-- no-print: a backup and restore panel is for the device, never for paper (CR3-07). -->
-<section class="device no-print" id="device-data">
+<section class="device no-print flush" id="device-data">
   <h2 class="lst-h">Device data</h2>
   <ul class="lst">
     <li class="lrow static recorded">
@@ -257,12 +257,6 @@
   .device {
     margin-top: 24px;
   }
-  .lst,
-  .lst-h,
-  .gf {
-    margin-left: 0;
-    margin-right: 0;
-  }
   .recorded {
     min-height: 60px;
   }
@@ -277,7 +271,7 @@
   .file {
     position: relative;
     overflow: hidden;
-    min-height: 44px;
+    min-height: var(--touch);
   }
   .file input {
     position: absolute;
@@ -294,7 +288,7 @@
     flex: 0 1 auto;
     width: auto;
     max-width: 58%;
-    min-height: 44px;
+    min-height: var(--touch);
     /* 32 on the right: the chevron select.field draws (VP3-10). */
     padding: 2px 32px 2px 8px;
   }

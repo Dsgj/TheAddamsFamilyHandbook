@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { BREAKPOINTS, DESKTOP, PHONE, WIDE } from '~/lib/bp';
+import { BREAKPOINTS, DESKTOP, HEIGHTS, PHONE, SHORT, WIDE } from '~/lib/bp';
 
 /* The design system's source rules (spec §1, §2, §4, §7.5, §8.6, §8.7, §9.12, §12; audit P2 items
    2, 3 and 5): the z-index scale, hover styles behind @media (hover: hover), type on the px scale,
@@ -145,10 +145,12 @@ const RADIUS_ALLOWED: [string, string][] = [
 ];
 /* Type pairs off the --t-* scale on purpose (spec §2 "Exceptions"), keyed by file and selector. */
 const TYPE_ALLOWED: [string, string, string][] = [
-  // The DMD field's code (spec §9.1), and the print matrix's wire labels and pins (spec §1.4).
+  // The DMD field's code (spec §9.1), and the print matrix's wire labels, pins and cell names
+  // (spec §1.4).
   ['src/components/Diagnose.svelte', '.well', '26/32'],
   ['src/components/Matrix.svelte', '.hd :global(.wire)', '9/12'],
   ['src/components/Matrix.svelte', '.pin', '9/12'],
+  ['src/components/Matrix.svelte', '.nm', '10/12'],
 ];
 /* Font shorthands written in px on purpose: the body's 16/1.5 (spec §2, Q14), the DMD field, the
    map markers' 10 px (spec §7.5) and the ?calib=1 textarea. */
@@ -158,6 +160,11 @@ const FONT_LITERAL_ALLOWED: [string, string][] = [
   ['src/components/PlayfieldMap.svelte', '.marker'],
   ['src/components/PlayfieldMap.svelte', '.marker span'],
   ['src/components/PlayfieldMap.svelte', '.map-ui :global(.calib textarea)'],
+];
+/* Size-only font rules on purpose: the Go to page field keeps .field's line under its 20 px
+   figure, because test (w) lets .field alone set a field's line. */
+const SIZE_ONLY_ALLOWED: [string, string][] = [
+  ['src/components/PageViewer.svelte', '.goto .field'],
 ];
 /* Spec §3: the spacing scale. Padding, margin and gap literals take one of these steps. */
 const SPACE_STEPS = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 24, 32];
@@ -792,14 +799,16 @@ describe('design system source rules', () => {
     expect(stale).toEqual([]);
   });
 
-  it('(y) queries the width at the breakpoints of the scale, and scripts take them from bp.ts', () => {
+  it('(y) queries width and height at the breakpoints of the scale, and scripts take them from bp.ts', () => {
     // Spec §5, audit DS2-05: CSS @media, matchMedia and client:media all name 599/600, 999/1000 or
-    // 1279/1280. Container queries size a component to its own box and are not read.
+    // 1279/1280, and a height query 559/560 (DS3-10). Container queries size a component to its
+    // own box and are not read.
     const off: string[] = [];
     for (const file of sources(SCOPE).concat(['src/lib/bp.ts'])) {
       const text = readFileSync(join(ROOT, file), 'utf8');
-      for (const m of text.matchAll(/\((min|max)-width:\s*(\d+)px\)/g)) {
-        if (!(BREAKPOINTS as readonly number[]).includes(Number(m[2]))) off.push(`${file} ${m[0]}`);
+      for (const m of text.matchAll(/\((min|max)-(width|height):\s*(\d+)px\)/g)) {
+        const scale: readonly number[] = m[2] === 'width' ? BREAKPOINTS : HEIGHTS;
+        if (!scale.includes(Number(m[3]))) off.push(`${file} ${m[0]}`);
       }
       // A module script imports the query; only an inline script (which cannot) writes one.
       for (const m of text.matchAll(/(matchMedia|client:media=)\(?['"]\((min|max)-width/g)) {
@@ -809,10 +818,11 @@ describe('design system source rules', () => {
       }
     }
     expect(off).toEqual([]);
-    expect([PHONE, WIDE, DESKTOP]).toEqual([
+    expect([PHONE, WIDE, DESKTOP, SHORT]).toEqual([
       '(max-width: 599px)',
       '(min-width: 1000px)',
       '(min-width: 1280px)',
+      '(max-height: 559px)',
     ]);
   });
 
@@ -850,6 +860,41 @@ describe('design system source rules', () => {
     expect(literal).toEqual([]);
   });
 
+  it('(aa) sizes every touch target from --touch: no 44px literal outside tokens.css', () => {
+    // Audit DS3-05. The 44 touch target (spec §3, §11) lives in the token alone.
+    const off = RULES.filter((r) => r.file !== 'src/styles/tokens.css').flatMap((r) =>
+      r.decls.filter(([, v]) => /(?<![\d.])44px/.test(v)).map(([p, v]) => `${where(r)} ${p}: ${v}`),
+    );
+    expect(off).toEqual([]);
+  });
+
+  it('(ab) pairs every px font-size with a line height in its rule, or sets a font shorthand', () => {
+    // Audit DS3-09: a size-only rule inherits the body's 1.5 and lands off the type pairs of (z).
+    const off = RULES.filter((r) => {
+      const d = new Map(r.decls);
+      return (
+        /^\d+(\.\d+)?px$/.test(d.get('font-size') ?? '') && !d.has('line-height') && !d.has('font')
+      );
+    })
+      .filter((r) => !allowed(SIZE_ONLY_ALLOWED, r))
+      .map(where);
+    expect(off).toEqual([]);
+  });
+
+  it('(ac) tracks type from the --track-* tokens, and pulses for --dur-pulse', () => {
+    // Audit DS3-13, DS3-14: every letter-spacing reads a token; the selection pulse reads its token.
+    const off = RULES.filter((r) => r.file !== 'src/styles/tokens.css').flatMap((r) =>
+      r.decls
+        .filter(
+          ([p, v]) =>
+            (p === 'letter-spacing' && !/^var\(--track-\d+\)$/.test(v)) ||
+            (p === 'animation' && v.includes('pulse') && !v.includes('var(--dur-pulse)')),
+        )
+        .map(([p, v]) => `${where(r)} ${p}: ${v}`),
+    );
+    expect(off).toEqual([]);
+  });
+
   it('defines the tokens and classes the components build on', () => {
     const tokens = readFileSync(join(ROOT, 'src/styles/tokens.css'), 'utf8');
     const names = [
@@ -861,47 +906,31 @@ describe('design system source rules', () => {
         .concat(['full'])
         .map((r) => `--r-${r}`),
       '--dur-0',
+      '--dur-pulse',
+      ...['0', '1', '2', '4', '6', '14'].map((t) => `--track-${t}`),
     ];
     for (const name of names) expect(tokens, name).toMatch(new RegExp(`${name}:`));
-    const base = new Set(
+    // Every class the global sheet styles has a user in markup (audit DS2-06, DS3-03, AR2-10): a
+    // class nothing writes is deleted, not kept. A class is used when a class attribute, a class:
+    // directive or a string (a script's toggle, a markdown page's attribute) has it, and a class
+    // written from a stem and a variable (`k-{kind}`, `st-{status}`) counts by its stem.
+    const styled = new Set(
       RULES.filter((r) => isGlobal(r.file)).flatMap((r) =>
-        r.selector.split(',').map((s) => s.trim()),
+        [...r.selector.matchAll(/\.(-?[_a-zA-Z][\w-]*)/g)].map((m) => m[1]!),
       ),
     );
-    const classes = [
-      '.btn',
-      '.btn.primary',
-      '.btn.tinted',
-      '.btn.plain',
-      '.btn.sm',
-      '.btn.mono',
-      ".btn[aria-pressed='true']",
-      '.search',
-      'select.search',
-      '.srch',
-      '.srch .search:not(:placeholder-shown)',
-      '.srch .clear',
-      '.hub > .srch',
-      '.field',
-      '.wire',
-      '.wire i',
-      '.code',
-      '.code.lg',
-      '.dmd',
-      '.ibtn',
-      '.ibtn.sq',
-      '.pill',
-    ];
-    expect(classes.filter((c) => !base.has(c))).toEqual([]);
-    // And markup uses each of them (audit DS2-06, AR2-10): a class nothing writes is deleted, not
-    // pinned here. A class is used when a class attribute, a class: directive or a string has it.
-    const markup = sources(SCOPE)
-      .filter((f) => /\.(svelte|astro|ts)$/.test(f))
-      .map((f) => readFileSync(join(ROOT, f), 'utf8'))
+    const markup = walk(join(ROOT, 'src'))
+      .filter((f) => /\.(svelte|astro|ts|md|mdx)$/.test(f))
+      .map((f) => readFileSync(f, 'utf8'))
       .join('\n');
-    const unused = classes
-      .flatMap((c) => [...c.matchAll(/\.([a-z][\w-]*)/g)].map((m) => m[1]!))
-      .filter((c) => !new RegExp(`(class="[^"]*|class:|['" ])${c}(?![\\w-])`).test(markup));
-    expect([...new Set(unused)]).toEqual([]);
+    const used = (c: string) => {
+      const parts = c.split('-');
+      const stems = parts.slice(0, -1).map((_, i) => parts.slice(0, i + 1).join('-'));
+      const forms = [`${c}(?![\\w-])`, ...stems.map((s) => `${s}-[{$]`)];
+      return new RegExp(`(class="[^"]*|class:|['" \`])(${forms.join('|')})`).test(markup);
+    };
+    const unused = [...styled].filter((c) => !used(c));
+    expect(unused.sort()).toEqual([]);
+    expect(styled.has('toggle'), 'the dead .toggle block (DS3-03)').toBe(false);
   });
 });

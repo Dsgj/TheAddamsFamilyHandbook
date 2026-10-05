@@ -199,7 +199,7 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    width: 44px;
+    width: var(--touch);
     transition:
       bottom var(--dur-3) var(--ease-emphasized),
       opacity var(--dur-1) var(--ease-standard),
@@ -218,7 +218,7 @@
   }
   /* A phone on its side: the stage is too short for the column above the sheet at peek, which
      rose over the top bar, so the layers and the zoom capsule sit side by side (CR2-02). */
-  @media (max-height: 560px) {
+  @media (max-height: 559px) {
     .column {
       flex-direction: row;
       align-items: flex-end;
@@ -290,7 +290,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    height: 44px;
+    height: var(--touch);
     padding: 0 12px 0 6px;
     border: 0;
     background: none;
@@ -337,7 +337,7 @@
   .readout.low {
     right: 16px;
     bottom: 156px;
-    width: 44px;
+    width: var(--touch);
     padding: 0;
   }
   .readout {

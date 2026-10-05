@@ -48,12 +48,12 @@ h1,
 h2,
 h3,
 h4 {
-  letter-spacing: 0.02em;
+  letter-spacing: var(--track-2);
   margin: 0 0 0.5em;
 }
 h1 {
   font: var(--t-lt);
-  letter-spacing: 0.01em;
+  letter-spacing: var(--track-1);
 }
 h2 {
   font: var(--t-title);
@@ -107,11 +107,11 @@ textarea {
    pill fills the 44 bar from the viewport's top edge, which would clip a ring outside it. */
 .skip:focus {
   position: fixed;
-  top: calc(var(--safe-top) + (var(--topbar-h) - 44px) / 2);
+  top: calc(var(--safe-top) + (var(--topbar-h) - var(--touch)) / 2);
   left: calc(var(--shell-w) + 16px);
   z-index: var(--z-toast);
   width: auto;
-  height: 44px;
+  height: var(--touch);
   padding: 0 16px;
   margin: 0;
   clip: auto;

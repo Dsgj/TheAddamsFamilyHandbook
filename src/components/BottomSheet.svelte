@@ -451,7 +451,7 @@
     flex: 0 0 auto;
     position: relative;
     display: grid;
-    grid-template-columns: 44px 1fr 44px;
+    grid-template-columns: var(--touch) 1fr var(--touch);
     align-items: center;
     height: 52px;
     padding: 6px 4px 0;
@@ -473,8 +473,8 @@
     grid-column: 3;
     display: grid;
     place-items: center;
-    width: 44px;
-    height: 44px;
+    width: var(--touch);
+    height: var(--touch);
     padding: 0;
     border: 0;
     border-radius: 50%;

@@ -352,3 +352,27 @@ test.describe('on a 320 phone', () => {
     expect(c!.right).toBeGreaterThanOrEqual(15.5);
   });
 });
+
+test('a hovered list row shows the press tint, from a pointer that hovers (VL3-07)', async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(isMobile, 'a touch pointer has no hover');
+  await gotoHydrated(page, '/tables');
+  const row = page.locator('ul.lst > li > a.lrow').first();
+  const bg = () => row.evaluate((el) => getComputedStyle(el).backgroundColor);
+  const rest = await bg();
+  expect(rest).toBe('rgba(0, 0, 0, 0)');
+  await row.hover();
+  // The token as a painted colour: the build writes it as hex, the computed style as rgba.
+  const press = await page.evaluate(() => {
+    const probe = document.body.appendChild(document.createElement('div'));
+    probe.style.backgroundColor = 'var(--press)';
+    const c = getComputedStyle(probe).backgroundColor;
+    probe.remove();
+    return c;
+  });
+  await expect.poll(bg).toBe(press);
+  await page.mouse.move(0, 0);
+  await expect.poll(bg).toBe(rest);
+});

@@ -34,7 +34,7 @@ table.t th {
   color: var(--muted);
   font: var(--t-cap);
   font-weight: 500;
-  letter-spacing: 0.04em;
+  letter-spacing: var(--track-4);
   text-transform: uppercase;
 }
 @media (hover: hover) {
@@ -69,8 +69,8 @@ details.source > summary {
   cursor: pointer;
   font: var(--t-sub);
   color: var(--muted);
-  min-height: 44px;
-  line-height: 44px;
+  min-height: var(--touch);
+  line-height: var(--touch);
 }
 details.source > .prov {
   margin-top: 0;
@@ -231,10 +231,10 @@ details.source > .prov {
   min-height: var(--touch);
 }
 .mcard .mc {
+  margin-right: 6px;
+  font: var(--t-foot);
   font-family: var(--font-mono);
   color: var(--muted);
-  margin-right: 6px;
-  font-size: 13px;
 }
 
 /* The Broken tick (spec §8.9): an 18 box in a 44 × 44 label, which is the whole cell, so rows
@@ -242,15 +242,15 @@ details.source > .prov {
 table.t td.chk {
   text-align: center;
   width: 1%;
-  height: 44px;
+  height: var(--touch);
   padding: 0;
   vertical-align: middle;
 }
 .chk-hit {
   display: inline-grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: var(--touch);
+  height: var(--touch);
   vertical-align: middle;
   cursor: pointer;
 }

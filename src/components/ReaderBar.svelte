@@ -189,8 +189,8 @@
     align-items: center;
     justify-content: center;
     gap: 2px;
-    min-width: 44px;
-    min-height: 44px;
+    min-width: var(--touch);
+    min-height: var(--touch);
     padding: 0 12px;
     border: 0;
     border-radius: var(--r-btn);
@@ -258,7 +258,7 @@
   /* 285 rows: those off screen skip style and layout, so Contents opens faster (PF2-06). */
   .sheet-toc :global(li) {
     content-visibility: auto;
-    contain-intrinsic-size: auto 44px;
+    contain-intrinsic-size: auto var(--touch);
   }
   .sheet-toc,
   .sheet-size {
@@ -270,9 +270,11 @@
   }
   .sz-sm {
     font-size: 13px;
+    line-height: 18px;
   }
   .sz-lg {
     font-size: 17px;
+    line-height: 22px;
   }
   .sheet-size .gf {
     margin: 12px 0 0;

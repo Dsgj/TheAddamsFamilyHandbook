@@ -21,7 +21,7 @@ import { manualHref } from '~/lib/url';
     searching.
   </p>
   <ManualSearch client:load />
-  <div class="docs">
+  <div class="docs flush">
     {
       DOCS.map((d) => (
         <section>
@@ -63,12 +63,6 @@ import { manualHref } from '~/lib/url';
       align-items: start;
     }
   }
-  .lst,
-  .lst-h,
-  .gf {
-    margin-left: 0;
-    margin-right: 0;
-  }
   /* Spec §12: the document link is a 44 target. Its box rises into the heading's top margin, so
      the text keeps its place just over the list and the box never reaches the first row. */
   .lst-h {
@@ -86,10 +80,10 @@ import { manualHref } from '~/lib/url';
   }
   .lst-h .n {
     text-transform: none;
-    letter-spacing: 0;
+    letter-spacing: var(--track-0);
     font-weight: 500;
   }
   .lrow {
-    min-height: 44px;
+    min-height: var(--touch);
   }
 </style>

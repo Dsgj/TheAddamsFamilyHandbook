@@ -126,6 +126,14 @@
   --t-mono: 500 15px/20px var(--font-mono);
   --t-code: 500 14px/18px var(--font-mono);
   --t-code-lg: 500 22px/26px var(--font-mono);
+  /* Tracking, in hundredths of an em (audit DS3-14): a token cannot carry letter-spacing, so a
+     rule sets one of these after its font shorthand. --track-0 is the explicit reset. */
+  --track-0: 0;
+  --track-1: 0.01em;
+  --track-2: 0.02em;
+  --track-4: 0.04em;
+  --track-6: 0.06em;
+  --track-14: 0.14em;
 
   /* Spec §3: spacing literals take a step of 0 2 4 6 8 10 12 14 16 18 20 24 32, or a listed
      exception (design-system test (x)); a touch-target length is var(--touch). */
@@ -197,6 +205,8 @@
   --dur-3: 300ms;
   --dur-4: 350ms;
   --dur-5: 420ms;
+  /* The selection pulse (spec §10): once on the map, three times on a page; never looped. */
+  --dur-pulse: 1.6s;
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --ease-emphasized: cubic-bezier(0.32, 0.72, 0, 1);
   --ease-exit: cubic-bezier(0.3, 0, 1, 1);

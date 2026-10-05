@@ -105,7 +105,7 @@ const around = toc.slice(from, from + 7).map(([p, name], i) => ({
     })();
   </script>
 
-  <div class="below">
+  <div class="below flush">
     <section>
       <h2 class="lst-h">Contents</h2>
       <ul class="lst">
@@ -174,12 +174,6 @@ const around = toc.slice(from, from + 7).map(([p, name], i) => ({
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
       align-items: start;
     }
-  }
-  .lst,
-  .lst-h,
-  .gf {
-    margin-left: 0;
-    margin-right: 0;
   }
   .lrow[aria-current] .ttl {
     color: var(--amber-ink);

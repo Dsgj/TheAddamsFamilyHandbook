@@ -173,7 +173,7 @@
     border-top: 1px solid var(--sep);
   }
   .rows .row {
-    min-height: 44px;
+    min-height: var(--touch);
     padding: 6px 12px;
     border-radius: 0;
     gap: 12px;
