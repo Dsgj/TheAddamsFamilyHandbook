@@ -700,12 +700,17 @@ describe('design system source rules', () => {
   });
 
   it('(v) scrolls a focused row clear of the toast lift, from the page and not the matrix', () => {
-    // Spec §12, audit AY-02: the page's scroll padding counts what sits on the tab bar (the Diagnose
-    // dock, the reader bar); a per-cell scroll margin in the matrix doubled it.
+    // Spec §12, audit AY-02: the page's scroll padding counts what sits on the tab bar (the reader
+    // bar's --toast-lift on the root; the Diagnose dock and the map sheet write the same formula
+    // plus their lift inline, toast-lift.ts); a per-cell scroll margin in the matrix doubled it.
     const html = RULES.find(
       (r) => r.file === 'src/styles/base.css' && r.selector === 'html' && !r.at.length,
     );
-    expect(new Map(html?.decls).get('scroll-padding-bottom')).toMatch(/var\(--toast-lift\b/);
+    const padding = new Map(html?.decls).get('scroll-padding-bottom');
+    expect(padding).toMatch(/var\(--toast-lift\b/);
+    expect(readFileSync(join(ROOT, 'src/lib/toast-lift.ts'), 'utf8')).toContain(
+      `${padding?.replace(/ \+ var\(--toast-lift, 0px\)\)$/, '')} + ${'${lift}'})`,
+    );
     expect(styleText(join(ROOT, 'src/components/Matrix.svelte'))).not.toMatch(
       /scroll-margin-bottom/,
     );

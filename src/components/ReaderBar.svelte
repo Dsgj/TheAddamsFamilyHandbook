@@ -40,7 +40,7 @@
    * The contents rows, read from the page's #tafh-toc script on the first Contents open (audit P4
    * item 5, PF-05): nothing is fetched, so the sheet opens offline on an uncontrolled page too.
    */
-  let items = $state<TocItem[]>();
+  let items = $state.raw<TocItem[]>(); // read whole, never mutated (SV3-05)
   function openToc() {
     items ??= readToc();
     open = 'toc';

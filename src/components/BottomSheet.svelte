@@ -1,8 +1,9 @@
 <script lang="ts">
   import Icon from './Icon.svelte';
-  import type { Snippet } from 'svelte';
+  import { untrack, type Snippet } from 'svelte';
   import type { HTMLAttributes } from 'svelte/elements';
   import { media } from '~/lib/media';
+  import { setToastLift } from '~/lib/toast-lift';
 
   /**
    * Bottom sheet, spec §8.2. Two kinds:
@@ -150,15 +151,15 @@
     expanded = !expanded;
   }
   // The toast sits 10 above the map sheet (spec §8.8): publish the sheet's height at its detent as
-  // --toast-lift. That height is the detent plus the safe-bot the sheet pads its body with (see
-  // style:height below), so the lift carries that safe-bot too: dropping it would sink the toast
-  // into the sheet on a phone with a home indicator. Keyed on the detent, never on the live drag
-  // height: a custom property written on the root at every pointermove would restyle the document.
+  // the toast lift (toast-lift.ts: the host's --toast-lift and html's scroll padding, PF3-04). That
+  // height is the detent plus the safe-bot the sheet pads its body with (see style:height below),
+  // so the lift carries that safe-bot too: dropping it would sink the toast into the sheet on a
+  // phone with a home indicator. Keyed on the detent, never on the live drag height: a lift
+  // written at every pointermove would restyle the toast and the scroll padding at every frame.
   $effect(() => {
     if (kind !== 'map') return;
-    const html = document.documentElement;
-    html.style.setProperty('--toast-lift', `calc(${expanded ? full : peek}px + var(--safe-bot))`);
-    return () => html.style.removeProperty('--toast-lift');
+    setToastLift(`calc(${expanded ? full : peek}px + var(--safe-bot))`);
+    return () => setToastLift('');
   });
   // A page left with the map sheet up goes without the cross-fade: that view transition crashed
   // WebKit (Playwright's, a selected part to another tab). map.astro skips the one into it.
@@ -238,7 +239,8 @@
     html.style.overflow = 'hidden';
     // The parent recedes (spec §8.2): scale .94, down 10, dim to .62; no scale under reduced motion.
     const receded = recede ? [...document.querySelectorAll<HTMLElement>(recede)] : [];
-    const r = reduced();
+    // Read once, untracked: the open is not redone when the motion preference flips (SV3-03).
+    const r = untrack(() => reduced());
     for (const p of receded) {
       p.style.transition = r
         ? 'opacity var(--dur-0) var(--ease-standard)'

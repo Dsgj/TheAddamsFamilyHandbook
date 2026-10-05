@@ -191,3 +191,10 @@ describe('references', () => {
     }
   });
 });
+
+describe('island props (SV3-02)', () => {
+  it('the Workshop page carries no shopping rows: its count comes from #tafh-shop', () => {
+    // 79 819 bytes with the list's rows as the hub's props; the shell's JSON script names them.
+    expect(statSync(join(DIST, 'workshop.html')).size).toBeLessThan(35_000);
+  });
+});

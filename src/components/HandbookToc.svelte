@@ -46,7 +46,7 @@
     home?: boolean;
     children?: Snippet;
   } = $props();
-  let loaded = $state<TocItem[]>([]);
+  let loaded = $state.raw<TocItem[]>([]); // read whole, never mutated (SV3-05)
   const items = $derived(given ?? loaded);
   onMount(() => {
     if (!given) loaded = readToc();

@@ -8,7 +8,8 @@
   box-sizing: border-box;
 }
 /* Focus and in-page jumps never land under a bar (spec §12, audit AY-02): the top bar above; the
-   tab bar below, plus whatever --toast-lift says sits on it (the Diagnose dock, the reader bar). */
+   tab bar below, plus the reader bar's --toast-lift (ReaderBar's rule on the root). The Diagnose
+   dock and the map sheet write this padding inline instead (toast-lift.ts, PF3-04). */
 html {
   -webkit-text-size-adjust: 100%;
   scroll-padding-top: calc(var(--safe-top) + var(--topbar-h) + 12px);

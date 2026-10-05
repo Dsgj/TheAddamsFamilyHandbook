@@ -74,10 +74,12 @@
   /** The JSON to copy by hand when the clipboard refused it. */
   let copied = $state('');
   draft = readEntries<Loc[]>(DRAFT_KEY);
-  $effect(() => {
+  /** Hands the chosen overlay to the map: once here, then from the two controls (SV3-03). */
+  function publish() {
     const o = OVERLAYS[overlay];
     overlayImg = o ? { ...o, opacity: overlayOpacity } : undefined;
-  });
+  }
+  publish();
 
   // ---- calibration mode (`?calib=1`): drag or arrow-key a marker, then copy the JSON. The
   // handlers sit on the canvas while this card is mounted and find the marker from the event.
@@ -168,7 +170,14 @@
   <div class="actions overlay-row" style="align-items: center">
     <label class="small"
       >Overlay
-      <select bind:value={overlay} style="margin-left: 4px">
+      <select
+        value={overlay}
+        onchange={(e) => {
+          overlay = e.currentTarget.value;
+          publish();
+        }}
+        style="margin-left: 4px"
+      >
         <option value="">none</option>
         {#each Object.keys(OVERLAYS) as k (k)}
           <option value={k}>{OVERLAY_LABEL[k] ?? k}</option>
@@ -182,7 +191,11 @@
         min="0.1"
         max="0.9"
         step="0.05"
-        bind:value={overlayOpacity}
+        value={overlayOpacity}
+        oninput={(e) => {
+          overlayOpacity = e.currentTarget.valueAsNumber;
+          publish();
+        }}
         style="vertical-align: middle; width: 120px"
       /></label
     >

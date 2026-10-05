@@ -4,11 +4,13 @@
   /**
    * The Workshop hub's rows (spec §9.14). The counts are read on the device after hydration, so
    * they render empty on the server and never as a build-time 0. No count uses `role=status`.
+   * The shopping count is the status store against the shell's #tafh-shop keys (shop-keys.ts),
+   * not the list's rows as props: those were 50 kB of the page (SV3-02).
    */
   import { onMount } from 'svelte';
   import { allStatuses } from '~/lib/model/status.svelte';
   import { doneCount } from '~/lib/model/setup.svelte';
-  import { groupFaults, type ShoppingItem } from '~/lib/shopping';
+  import { faultCount, shopKeys } from '~/lib/shop-keys';
   import { verifiedCount } from '~/lib/model/verify.svelte';
   import BottomSheet from './BottomSheet.svelte';
   import InstallSheet from './InstallSheet.svelte';
@@ -17,14 +19,12 @@
   import { plural } from '~/lib/copy';
 
   let {
-    items,
     version,
     setupSteps,
     setupIds,
     verifyIds,
     links,
   }: {
-    items: ShoppingItem[];
     version: string;
     setupSteps: number;
     setupIds: string[];
@@ -46,13 +46,14 @@
   let install = $state(false);
   let standalone = $state(false);
 
-  const faults = $derived(
-    hydrated ? groupFaults(items, allStatuses()).reduce((n, g) => n + g.items.length, 0) : 0,
-  );
+  /** `kind:id` of every component the list can show, read on mount. */
+  let known = $state(new Set<string>());
+  const faults = $derived(hydrated ? faultCount(known, allStatuses()) : 0);
   const setupDone = $derived(hydrated ? doneCount(setupIds) : 0);
   const verified = $derived(hydrated ? verifiedCount(verifyIds) : 0);
 
   onMount(() => {
+    known = shopKeys();
     hydrated = true;
     standalone = isStandalone();
     const t = readPref('theme');

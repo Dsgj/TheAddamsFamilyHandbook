@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { activate, barCovered, gotoHydrated, touchDrag, twoFrames } from './helpers';
+import { activate, barCovered, gotoHydrated, settle, touchDrag, twoFrames } from './helpers';
 
 /** Playfield map, Phases 1–2 of the app redesign: fit, zoom, keys, markers, the sheets, the panel. */
 
@@ -141,6 +141,21 @@ test('a zoomed deep link lands without a runtime error (SV-03)', async ({ page }
     .getByRole('group', { name: 'Zoom' })
     .getByRole('button', { name: 'Fit whole playfield' });
   await expect(fit).not.toHaveAttribute('aria-disabled', 'true');
+  expect(errors).toEqual([]);
+});
+
+test('card to map and back logs no runtime error (UX3-12)', async ({ page }) => {
+  // Headless Chromium aborted every inbound view transition ("ViewTransition opt-in disabled",
+  // an unhandled rejection) while the opt-in rode in the stylesheet linked after the head's
+  // scripts; it is the head's first style now (Base.astro).
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(String(e)));
+  await gotoHydrated(page, '/switch/32');
+  await page.getByRole('button', { name: 'Show on map' }).click();
+  await page.getByRole('dialog').getByRole('link', { name: 'Show on map' }).click();
+  await settle(page, /\/map\?layer=sw&id=32$/);
+  await page.goBack();
+  await settle(page, /\/switch\/32$/);
   expect(errors).toEqual([]);
 });
 

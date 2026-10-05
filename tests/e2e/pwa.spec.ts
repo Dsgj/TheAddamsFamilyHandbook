@@ -119,9 +119,7 @@ test('a passive component view with storage blocked raises no toast; a note stil
   page,
 }) => {
   const errors: string[] = [];
-  page.on('pageerror', (e) => {
-    if (!/^Transition was aborted/.test(e.message)) errors.push(e.message);
-  });
+  page.on('pageerror', (e) => errors.push(e.message));
   await page.addInitScript(() => {
     Object.defineProperty(window, 'localStorage', {
       get() {

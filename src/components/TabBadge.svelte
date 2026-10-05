@@ -10,7 +10,7 @@
   import { onMount } from 'svelte';
   import { agree } from '~/lib/copy';
   import { allStatuses } from '~/lib/model/status.svelte';
-  import { shopKeys } from '~/lib/shop-keys';
+  import { faultCount, shopKeys } from '~/lib/shop-keys';
 
   let { pill = false }: { pill?: boolean } = $props();
 
@@ -19,9 +19,7 @@
 
   /** `kind:id` of every component the list can show, from the shell's JSON script (shop-keys.ts). */
   let known = $state(new Set<string>());
-  const count = $derived(
-    hydrated ? allStatuses().filter((s) => s.status === 'fault' && known.has(s.id)).length : 0,
-  );
+  const count = $derived(hydrated ? faultCount(known, allStatuses()) : 0);
 
   onMount(() => {
     known = shopKeys();

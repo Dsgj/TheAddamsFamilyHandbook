@@ -144,6 +144,8 @@ test.describe('the reader', () => {
     expect(parseFloat(after)).toBeGreaterThan(parseFloat(before));
     await page.reload();
     await expect(page.locator('html')).toHaveAttribute('data-text', 'lg');
+    // ReaderBar is client:idle: a tap before it hydrates opens nothing (see helpers.ts hydrated).
+    await hydrated(page);
     await page.getByRole('button', { name: 'Text size' }).click();
     await page
       .getByRole('dialog', { name: 'Text size' })

@@ -64,9 +64,7 @@ test.describe('the header back link', { tag: '@subpath' }, () => {
 
   test('still steps back with site data blocked (CO2-11)', async ({ page }) => {
     const errors: string[] = [];
-    page.on('pageerror', (e) => {
-      if (!/^Transition was aborted/.test(e.message)) errors.push(e.message);
-    });
+    page.on('pageerror', (e) => errors.push(e.message));
     await page.addInitScript(() => {
       Object.defineProperty(window, 'sessionStorage', {
         get() {
@@ -592,9 +590,7 @@ test.describe('without the Navigation API', () => {
     const errors: string[] = [];
     // Chromium reports an aborted transition it never handed to the page (no `viewTransition` on
     // pagereveal) as an unhandled rejection in the new page; that is not this page's code.
-    page.on('pageerror', (e) => {
-      if (!/^Transition was aborted/.test(e.message)) errors.push(e.message);
-    });
+    page.on('pageerror', (e) => errors.push(e.message));
     await gotoHydrated(page, 'switches');
     expect(
       await page.evaluate(() => !(window as unknown as { navigation?: unknown }).navigation),

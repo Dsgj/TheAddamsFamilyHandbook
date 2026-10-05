@@ -60,6 +60,9 @@
   // One handle, so a message said 3 s after another still gets its full 4 s.
   const msgTimer = later();
   onDestroy(msgTimer.clear);
+  /** The replace confirm's 8 s, dropped with the island (SV3-09). */
+  const pendTimer = later();
+  onDestroy(pendTimer.clear);
 
   function say(text: string, bad = false) {
     msg = text;
@@ -126,7 +129,7 @@
     const p = { text, name: f.name, lost };
     pending = p;
     lapsed = false;
-    setTimeout(() => {
+    pendTimer.set(() => {
       if (pending !== p) return;
       if (document.activeElement === confirm) lapsed = true;
       else cancelReplace();

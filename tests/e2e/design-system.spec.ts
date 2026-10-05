@@ -86,7 +86,8 @@ test('the /tables search is 16 px text in a 44 tall box, so iOS does not zoom', 
 });
 
 test.describe('the toast clears the bottom chrome', () => {
-  // The toast host reads --toast-lift, set by the reader toolbar and the map sheet.
+  // The toast host reads --toast-lift: the reader toolbar's on the root, the map sheet's and the
+  // Diagnose dock's on the host itself (toast-lift.ts, PF3-04).
   test('on a handbook section it sits above the reader toolbar', async ({ page }) => {
     await gotoHydrated(page, '/handbook/menus');
     await expect(page.getByRole('navigation', { name: 'Reader' })).toBeVisible();
@@ -142,6 +143,15 @@ test.describe('the toast clears the bottom chrome', () => {
     await showToast(page);
     const stuck = await box(page, '.dock');
     expectGap(stuck.y - bottom(await box(page, '.toast')), 'toast above the stuck dock');
+    // The lift sits on the host, and html's inline scroll padding carries it (never the root).
+    const lifted = await page.evaluate(() => [
+      document.querySelector<HTMLElement>('.toast-host')!.style.getPropertyValue('--toast-lift'),
+      document.documentElement.style.scrollPaddingBottom,
+      document.documentElement.style.getPropertyValue('--toast-lift'),
+    ]);
+    expect(lifted[0]).toMatch(/^\d+px$/);
+    expect(lifted[1]).toContain(lifted[0]!);
+    expect(lifted[2]).toBe('');
     // Scrolled to the end, the dock sits higher than the toast's usual place, 10 above the tab bar
     // (where the stuck dock ended): the toast drops back there and still misses the dock.
     const bar = bottom(stuck);
@@ -157,10 +167,11 @@ test.describe('the toast clears the bottom chrome', () => {
     await gotoHydrated(page, '/?q=zzqx');
     await expect(page.locator('.diag')).toHaveAttribute('data-mode', 'search');
     await showToast(page);
-    const lift = await page.evaluate(() =>
-      document.documentElement.style.getPropertyValue('--toast-lift'),
-    );
-    expect(lift).toBe('');
+    const lift = await page.evaluate(() => [
+      document.querySelector<HTMLElement>('.toast-host')!.style.getPropertyValue('--toast-lift'),
+      document.documentElement.style.scrollPaddingBottom,
+    ]);
+    expect(lift).toEqual(['', '']);
   });
 
   test('on phone Home it clears the field and its buttons at the foot (VP2-02)', async ({
@@ -190,10 +201,11 @@ test.describe('the toast clears the bottom chrome', () => {
     const first = await box(page, '.diag article.card');
     expect(field.y + field.height, 'the field above the results').toBeLessThanOrEqual(first.y);
     await showToast(page);
-    const lift = await page.evaluate(() =>
-      document.documentElement.style.getPropertyValue('--toast-lift'),
-    );
-    expect(lift).toBe('');
+    const lift = await page.evaluate(() => [
+      document.querySelector<HTMLElement>('.toast-host')!.style.getPropertyValue('--toast-lift'),
+      document.documentElement.style.scrollPaddingBottom,
+    ]);
+    expect(lift).toEqual(['', '']);
   });
 });
 

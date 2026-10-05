@@ -3,7 +3,6 @@ import Base from '~/layouts/Base.astro';
 import WorkshopHub from '~/components/WorkshopHub.svelte';
 import { SETUP_STEPS } from '~/data/setup';
 import { VERIFY_ITEMS } from '~/data/verify';
-import { allShoppingItems } from '~/lib/data/shopping';
 import { href } from '~/lib/url';
 import pkg from '../../package.json';
 
@@ -25,7 +24,6 @@ const setupIds = SETUP_STEPS.flatMap((s) => s.items.map((i) => i.id));
   <div class="hub" data-hub="workshop">
     <WorkshopHub
       client:load
-      items={allShoppingItems()}
       version={pkg.version}
       setupSteps={SETUP_STEPS.length}
       setupIds={setupIds}

@@ -10,9 +10,10 @@
    * back after it, so "not saving changes" is never lost to an update (CO3-04).
    * The host is a plain aria-live region (never `role=status`: /care, /setup and /shopping run a
    * strict `getByRole('status')`) and passes pointer events through; only Reload takes them.
-   * It sits 10 above the tab bar, lifted by --toast-lift over a reader toolbar (ReaderBar), the
-   * map's sheet (BottomSheet) or the Diagnose dock, and under a modal sheet, which makes it inert
-   * (spec §4, §8.8).
+   * It sits 10 above the tab bar, lifted by --toast-lift over a reader toolbar (ReaderBar's static
+   * rule on the root), the map's sheet or the Diagnose dock (both through toast-lift.ts, on this
+   * host: written on the root the property restyled the whole page, PF3-04), and under a modal
+   * sheet, which makes it inert (spec §4, §8.8).
    */
   const DWELL = 4000;
   let toast = $state<ToastDetail | null>(null);

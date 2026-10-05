@@ -286,7 +286,9 @@ export const motion = (page: Page) =>
    (a back, or after a back that went through history a forward) and makes the same navigation
    again, up to 20 times, and records each drop as an annotation in the report. Each step settles
    (load, then the islands): motion.ts must have run before the next click, since its back-link
-   and pagehide handlers decide pop against fade. */
+   and pagehide handlers decide pop against fade. Most of those drops were Chromium aborting the
+   inbound transition before the stylesheet with the opt-in had loaded (UX3-12, P3 item 4: the
+   opt-in is the head's first style now); the retry stays for a real drop under load. */
 export async function transition(
   page: Page,
   go: () => Promise<unknown>,

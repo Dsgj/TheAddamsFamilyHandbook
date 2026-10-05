@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- The Workshop page no longer ships the whole shopping list to count faults
+  (80 KB to 27 KB), a toast lifted over the map sheet or the Diagnose dock no
+  longer restyles the page, and Back no longer logs a view-transition error.
 - The Diagnose address (`?q=`) is one tested module, the two "Really clear?"
   confirms are one button, the map's calibration tool wires itself to the
   drawing only while open, and a component page's Wiring and Related

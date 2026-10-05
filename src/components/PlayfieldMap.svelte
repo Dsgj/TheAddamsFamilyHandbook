@@ -382,10 +382,13 @@
     });
   }
   $effect(() => {
-    // re-centre a new selection, or a new detent, when zoomed in (at 1× the whole drawing shows)
+    // re-centre a new selection, or a new detent, when zoomed in (at 1× the whole drawing shows);
+    // the frame is cancelled by the next change or with the island (SV3-10)
     void selKey;
     void expanded;
-    if (current && untrack(() => zm.zoom) > 1) requestAnimationFrame(centre);
+    if (!current || untrack(() => zm.zoom) <= 1) return;
+    const frame = requestAnimationFrame(centre);
+    return () => cancelAnimationFrame(frame);
   });
   /** The "Search components" filter: id or name (Q28). */
   const findLive = liveText(

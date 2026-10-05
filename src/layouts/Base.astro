@@ -92,6 +92,15 @@ const hasActions = Astro.slots.has('actions');
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- The view-transition opt-in is the document's first style (UX3-12). In the stylesheet, which
+         Astro links after the head's scripts, it arrived too late: headless Chromium aborted the
+         inbound transition on every navigation ("ViewTransition opt-in disabled", an unhandled
+         rejection in the console) when the new document's first style update found no rule. -->
+    <style is:inline>
+      @view-transition {
+        navigation: auto;
+      }
+    </style>
     <title>{title} · The Addams Family Handbook</title>
     <meta name="description" content={description} />
     <!-- data-own keeps each colour: the head script and Appearance point both at the chosen theme. -->

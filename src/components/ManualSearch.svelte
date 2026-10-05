@@ -11,7 +11,7 @@
   /** Full-text search over the page text of all three documents (fetched on first use). */
   let { doc = '' }: { doc?: DocId | '' } = $props();
   let q = $state('');
-  let data = $state<OcrText | null>(null);
+  let data = $state.raw<OcrText | null>(null); // loaded whole, never mutated (SV3-05)
   let loading = $state(false);
   let failed = $state(false);
   let only = $state<DocId | ''>(untrack(() => doc));

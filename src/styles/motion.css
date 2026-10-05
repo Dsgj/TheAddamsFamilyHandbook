@@ -3,12 +3,11 @@
 
 /* ---- Page transitions (spec §10) ------------------------------------------------------------
    Cross-document view transitions (Q11: no ClientRouter, so the worker, hydration and every page
-   script stay as they are). The bar, the shell and the toast host are captured on their own and
-   cross-fade in place; the root (the page) slides on push and pop and cross-fades on a tab tap.
-   Base.astro's pagereveal script sets the type. */
-@view-transition {
-  navigation: auto;
-}
+   script stay as they are). The opt-in, `@view-transition { navigation: auto }`, is the first
+   style in Base.astro's head, inline: in this sheet it loaded too late for Chromium (UX3-12). The
+   bar, the shell and the toast host are captured on their own and cross-fade in place; the root
+   (the page) slides on push and pop and cross-fades on a tab tap. Base.astro's pagereveal script
+   sets the type. */
 header.top {
   view-transition-name: topbar;
 }

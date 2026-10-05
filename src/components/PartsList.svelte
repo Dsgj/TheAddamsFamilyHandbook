@@ -15,7 +15,8 @@
    * (CO-12, DA-10). Any other in-page anchor (the skip link's `#main`, say) must not hijack the
    * search, so a hash is only ever adopted once it names an actual part number.
    */
-  let rows = $state<PartRow[]>([]);
+  /** Replaced whole when loaded, never mutated: raw, so 2 562 rows are not proxied (SV3-05). */
+  let rows = $state.raw<PartRow[]>([]);
   let q = $state('');
   let loading = $state(true);
   let failed = $state(false);
@@ -23,7 +24,7 @@
   let root: HTMLDivElement | undefined = $state();
   let highlight = $state('');
   /** A hash read from the URL, not yet confirmed against a loaded part number. */
-  let pendingHash = $state<string | null>(null);
+  let pendingHash: string | null = null;
   /** The part number, if any, that `q` currently reflects because of the hash. */
   let appliedHash = '';
 
@@ -35,6 +36,7 @@
       (j) => {
         rows = j;
         loading = false;
+        adoptHash();
       },
       () => {
         failed = true;
@@ -56,27 +58,26 @@
       highlight = '';
       appliedHash = '';
     }
+    adoptHash();
   }
 
-  onMount(() => {
-    // A fresh document every time (no client router), same as Diagnose's `?q` (CO-01): read the
-    // hash on load, and again if it only changes (no reload) while this page stays open.
-    applyHash();
-    addEventListener('hashchange', applyHash);
-    return () => removeEventListener('hashchange', applyHash);
-  });
+  // A fresh document every time (no client router), same as Diagnose's `?q` (CO-01): read the
+  // hash on load, and again if it only changes (no reload) while this page stays open
+  // (svelte:window onhashchange below, SV3-11).
+  onMount(applyHash);
 
   // Only once `rows` is loaded do we know whether the hash names a part; adopting it earlier (or
   // for a hash that turns out to name something else on the page) would search for the wrong
   // thing, so an unmatched hash — `#main` from the skip link, an unknown part number — just leaves
-  // the search field alone instead of forcing a search.
-  $effect(() => {
+  // the search field alone instead of forcing a search. Called when the hash or the rows change
+  // (SV3-03), not from an effect.
+  function adoptHash() {
     const target = pendingHash;
     if (!target || !rows.some((r) => r[2] === target)) return;
     q = target;
     highlight = target;
     appliedHash = target;
-  });
+  }
 
   /** Drops a stale hash from the URL once the field no longer reflects it. */
   function stripHash() {
@@ -137,6 +138,8 @@
     row?.scrollIntoView({ block: 'center' });
   });
 </script>
+
+<svelte:window onhashchange={applyHash} />
 
 <div class="parts" bind:this={root}>
   <SearchField

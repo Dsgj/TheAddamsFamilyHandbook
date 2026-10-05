@@ -22,18 +22,17 @@
    * come from the bundled data; the handbook headings, the manuals' page text and the parts list
    * are fetched the first time they are needed (Q20 default: parts and the manuals are in). The
    * indexes, the match, the rank and the snippet live in lib/search.ts (CR3-06).
-   * `oncount` reports the result count to Diagnose, which owns the search's announcer (spec §12);
-   * `onfilter` tells it a chip changed the results, which is announced even for a pre-filled query.
+   * `hits()` is the result count, which Diagnose reads through `bind:this` into a derived of its
+   * own for the announcer it owns (spec §12, SV3-03); `onfilter` tells it a chip changed the
+   * results, which is announced even for a pre-filled query.
    * `filters={false}` drops the chips, for the look-up under Diagnose's Not recognised line.
    */
   let {
     q,
-    oncount,
     onfilter,
     filters = true,
   }: {
     q: string;
-    oncount?: (n: number) => void;
     onfilter?: () => void;
     filters?: boolean;
   } = $props();
@@ -66,11 +65,13 @@
 
   let group = $state<Group | 'all'>('all');
   let expanded = $state<Group | null>(null);
-  let handbook = $state<Hit[] | null>(null);
-  let manuals = $state<Hit[] | null>(null);
-  let parts = $state<Hit[] | null>(null);
+  // Loaded whole and replaced whole, never mutated: raw state, so thousands of hits are not
+  // proxied (SV3-05).
+  let handbook = $state.raw<Hit[] | null>(null);
+  let manuals = $state.raw<Hit[] | null>(null);
+  let parts = $state.raw<Hit[] | null>(null);
   /** Groups whose file did not load: said under the results, with Retry (AR2-03). */
-  let failed = $state<Group[]>([]);
+  let failed = $state.raw<Group[]>([]);
   const fail = (g: Group) => {
     if (!failed.includes(g)) failed = [...failed, g];
   };
@@ -121,7 +122,8 @@
     return all.filter((g) => g.hits.length && (group === 'all' || group === g.group));
   });
   const total = $derived(results.reduce((n, g) => n + g.hits.length, 0));
-  $effect(() => oncount?.(total));
+  /** The result count, for Diagnose's announcer (read through `bind:this`). */
+  export const hits = () => total;
   const shown = (g: { group: Group; hits: Hit[] }) =>
     group === 'all' && expanded !== g.group ? preview(g.hits, TOP, PER_KIND) : g.hits.slice(0, CAP);
 </script>

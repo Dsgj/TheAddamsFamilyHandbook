@@ -15,12 +15,13 @@
   import { media } from '~/lib/media';
   import { createQueryState } from '~/lib/query-state';
   import { shareText } from '~/lib/share';
-  import { shopKeys } from '~/lib/shop-keys';
+  import { faultCount, shopKeys } from '~/lib/shop-keys';
+  import { setToastLift } from '~/lib/toast-lift';
   import { whenLabel } from '~/lib/status-io';
   import { allStatuses, getStatus } from '~/lib/model/status.svelte';
   import { lampSharedCauses, sharedCauses } from '~/lib/shared-cause';
   import { href, replaceUrl, tableHref } from '~/lib/url';
-  import { onMount, tick } from 'svelte';
+  import { onMount, tick, untrack } from 'svelte';
   import ComponentCard from './ComponentCard.svelte';
   import ConfirmButton from './ConfirmButton.svelte';
   import DiagnoseSearch from './DiagnoseSearch.svelte';
@@ -30,9 +31,10 @@
    * live on input; "Diagnose" and Enter record the entry in Recent and move focus to the results.
    */
   let input = $state('');
-  /** DiagnoseSearch's result count (it mounts only in search mode; this component owns the
-   *  announcer, spec §12). */
-  let searchCount = $state(0);
+  /** The search view's DiagnoseSearch (it mounts only in search mode): its result count feeds the
+   *  announcer this component owns (spec §12), read from its `hits()` export (SV3-03). */
+  let search = $state<ReturnType<typeof DiagnoseSearch> | null>(null);
+  const searchCount = $derived(search?.hits() ?? 0);
   /** Spec §12, audit AY-09: the search count, or the codes' summary, announced politely 400 ms
    *  after the field last changed; never for the entry the page loaded with. */
   const live = liveText(
@@ -63,6 +65,20 @@
   // results or a search are committed, and this view only says when (a commit, an emptied field,
   // the page hidden or left).
   const address = createQueryState({ query: () => input.trim(), replace: replaceUrl });
+  // An edit still waiting for its pause is written before the page is hidden or left; in the
+  // back/forward cache the write waits (a replaceState there makes Chromium evict the page) and
+  // the thaw writes it (query-state.ts). Static for the island's life, so they ride on
+  // svelte:window and svelte:document below (SV3-11).
+  const onPageHide = (e: PageTransitionEvent) => {
+    if (e.persisted) address.freeze(true);
+    else address.flush();
+  };
+  const onPageShow = (e: PageTransitionEvent) => {
+    if (e.persisted) address.freeze(false);
+  };
+  const onVisibility = () => {
+    if (document.visibilityState === 'hidden') address.flush();
+  };
   $effect(() => {
     if (!hydrated) return;
     document.body.dataset.url = location.pathname + address.changed();
@@ -98,31 +114,11 @@
       if ((e.target as Element | null)?.closest?.('a[href]')) address.commit();
     };
     root?.addEventListener('click', onFollow, true);
-    // An edit still waiting for its pause is written before the page is hidden or left (an app
-    // switch the system may end in a discard, Back, a link), so the entry holds what the field says.
-    // Not while the page enters the back/forward cache: a replaceState there makes Chromium evict
-    // it, so the write waits for the restore (the visibilitychange after that pagehide is covered).
-    const onPageHide = (e: PageTransitionEvent) => {
-      if (e.persisted) address.freeze(true);
-      else address.flush();
-    };
-    const onPageShow = (e: PageTransitionEvent) => {
-      if (e.persisted) address.freeze(false);
-    };
-    const onVisibility = () => {
-      if (document.visibilityState === 'hidden') address.flush();
-    };
-    addEventListener('pagehide', onPageHide);
-    addEventListener('pageshow', onPageShow);
-    document.addEventListener('visibilitychange', onVisibility);
     return () => {
       address.dispose();
       offBar();
       offReselect();
       root?.removeEventListener('click', onFollow, true);
-      removeEventListener('pagehide', onPageHide);
-      removeEventListener('pageshow', onPageShow);
-      document.removeEventListener('visibilitychange', onVisibility);
     };
   });
 
@@ -155,8 +151,9 @@
       .map((m) => m.raw),
   );
   const lookup = $derived(lookupTokens.join(' '));
-  /** How many hits that search has, reported by its DiagnoseSearch. */
-  let lookupHits = $state(0);
+  /** That search's DiagnoseSearch, for how many hits it has (`hits()`, SV3-03). */
+  let lookupSearch = $state<ReturnType<typeof DiagnoseSearch> | null>(null);
+  const lookupHits = $derived(lookupSearch?.hits() ?? 0);
   /** The tokens the search found: "Found below", not "Not recognised" (UX3-02). */
   const foundBelow = $derived(lookup && lookupHits ? lookupTokens : []);
   const notRecognised = $derived(missing.filter((m) => !foundBelow.includes(m.raw)));
@@ -167,9 +164,7 @@
    * counts them, so a key the catalogue lacks (a hand-made backup) is not a row the list will not
    * show (CO3-02).
    */
-  const openFaults = $derived(
-    hydrated ? allStatuses().filter((s) => s.status === 'fault' && known.has(s.id)).length : 0,
-  );
+  const openFaults = $derived(hydrated ? faultCount(known, allStatuses()) : 0);
 
   const EXAMPLES = ['32 68 F1 F3', 'Check Switch 32', 'L11 L12 L13', 'SOL 7'];
   const RANGES =
@@ -207,17 +202,19 @@
     if (mode === 'results' && found.length) recordRecent(input, summary());
   }
   // Marking a card Fault after the entry was recorded (the field blurs on the tap) updates its
-  // counts while the same input is still in the field.
+  // counts while the same input is still in the field. The summary is read first, so the effect
+  // follows the statuses even while no entry matches yet; the entries are read untracked, since the
+  // write below would otherwise re-run this effect on its own store (SV3-03).
   $effect(() => {
     if (mode !== 'results' || !found.length) return;
-    const top = recentEntries()[0];
-    if (!top || normalizeInput(top.input) !== normalizeInput(input)) return;
     const s = summary();
+    const top = untrack(() => recentEntries()[0]);
+    if (!top || normalizeInput(top.input) !== normalizeInput(input)) return;
     if (top.summary !== s) recordRecent(input, s, top.at);
   });
   // The toast rests 10 above the tab bar (spec §8.8), where the dock sticks over results and a
   // search, and where the field ends Home (VP2-02). While the dock reaches into that band, lift the
-  // toast above the dock's top through --toast-lift; when the dock sits higher (short results, or
+  // toast above the dock's top (toast-lift.ts, PF3-04); when the dock sits higher (short results, or
   // scrolled to the end) or below the fold the toast stays put, since lifting it by the dock's
   // height would land it on the dock. Measured on scroll, resize and a resize of the dock or the
   // view, and written only when the value changes.
@@ -228,7 +225,6 @@
   $effect(() => {
     if (!docked || !dock || !root) return;
     const el = dock;
-    const html = document.documentElement;
     let frame = 0;
     let lift = '';
     const measure = () => {
@@ -240,8 +236,7 @@
         r.bottom > line - TOAST_BAND && r.top < line ? `${Math.ceil(line - r.top)}px` : '';
       if (next === lift) return;
       lift = next;
-      if (lift) html.style.setProperty('--toast-lift', lift);
-      else html.style.removeProperty('--toast-lift');
+      setToastLift(lift);
     };
     const schedule = () => {
       if (!frame) frame = requestAnimationFrame(measure);
@@ -257,7 +252,7 @@
       ro.disconnect();
       removeEventListener('scroll', schedule);
       removeEventListener('resize', schedule);
-      if (lift) html.style.removeProperty('--toast-lift');
+      if (lift) setToastLift('');
     };
   });
   /**
@@ -340,7 +335,8 @@
   }
 </script>
 
-<svelte:window onscroll={fold} />
+<svelte:window onscroll={fold} onpagehide={onPageHide} onpageshow={onPageShow} />
+<svelte:document onvisibilitychange={onVisibility} />
 
 <section class="diag" data-mode={mode} bind:this={root}>
   <p class="sr-only" aria-live="polite" aria-atomic="true">{live.text}</p>
@@ -450,7 +446,7 @@
       <h2 class="rh" bind:this={resultsHead} tabindex="-1">Search</h2>
       <button type="button" class="tlink" onclick={clear}>Clear search</button>
     </div>
-    <DiagnoseSearch q={input} oncount={(n) => (searchCount = n)} onfilter={live.arm} />
+    <DiagnoseSearch q={input} bind:this={search} onfilter={live.arm} />
   {:else}
     <div class="rbar">
       <button type="button" class="tlink" onclick={clear}>Clear</button>
@@ -483,7 +479,7 @@
     {:else if missing.length}
       <p class="prov">{provText}</p>
       {#if lookup}
-        <DiagnoseSearch q={lookup} filters={false} oncount={(n) => (lookupHits = n)} />
+        <DiagnoseSearch q={lookup} filters={false} bind:this={lookupSearch} />
       {/if}
     {/if}
 
