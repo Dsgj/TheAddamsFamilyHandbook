@@ -105,6 +105,9 @@ switches between System, Dark and Light._
 
 ## Quick start
 
+Node 24 ([`.nvmrc`](.nvmrc) names it and `engines` refuses another major; CI
+and the Docker image build with the same) and pnpm.
+
 ```sh
 pnpm install
 pnpm dev            # http://localhost:4321
@@ -134,13 +137,16 @@ summary.
 - **GitHub Pages** (chosen target).
   [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) builds with
   `BASE_PATH=/<repo name>/` and publishes `dist/`. In the repo settings, set
-  Pages → Source to "GitHub Actions".
+  Pages → Source to "GitHub Actions". Every Action is pinned to a commit and
+  [`.github/dependabot.yml`](.github/dependabot.yml) proposes the monthly bumps
+  for npm, the Actions and the base images.
 - **Docker**. `docker compose up --build` serves on <http://localhost:8080>.
   Pass `--build-arg BASE_PATH=/TheAddamsFamilyHandbook/` to serve under a
   sub-path. CI builds the image under `/sub/` and runs
   [`scripts/docker-smoke.sh`](scripts/docker-smoke.sh) on it (pages, the 404,
   the cache headers, gzip); `sh scripts/docker-smoke.sh podman` runs the same
-  check locally.
+  check locally. Both base images are pinned by digest, and `.dockerignore`
+  keeps the context to what the build reads (18 MB).
 - `BASE_PATH` must start and end with `/`. In Git Bash prefix
   `MSYS_NO_PATHCONV=1`, otherwise MSYS rewrites the path into a Windows path.
 

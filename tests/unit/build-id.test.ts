@@ -57,8 +57,8 @@ describe('buildId', () => {
     expect(buildId(root, inputs)).toBe(a);
   });
 
-  it('reads the sources, the public files, the kit docs, the two configs and the lock for the site', () => {
-    expect(BUILD_INPUTS.dirs).toEqual(['src', 'public', 'kit-docs']);
+  it('reads the sources, the public files, the two configs and the lock for the site', () => {
+    expect(BUILD_INPUTS.dirs).toEqual(['src', 'public']);
     expect(BUILD_INPUTS.files).toEqual([
       'astro.config.ts',
       'svelte.config.js',

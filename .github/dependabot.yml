@@ -1,0 +1,26 @@
+# Dependabot proposes the bumps the pins need (audit TT3-12): the npm packages, the Actions pinned
+# to commits in workflows/deploy.yml and the base images pinned by digest in the Dockerfile. Monthly,
+# one pull request per ecosystem.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      npm:
+        patterns: ['*']
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ['*']
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      images:
+        patterns: ['*']

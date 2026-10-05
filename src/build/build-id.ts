@@ -18,9 +18,10 @@ export interface BuildInputs {
   skip: RegExp;
 }
 
-/** What the site is built from: sources, the public files, the kit's docs, the config, the lock. */
+/** What the site is built from: sources, the public files, the configs, the lock. Not the kit docs:
+ *  the build reads the synced data under src/data/kit, and the Docker context leaves them out. */
 export const BUILD_INPUTS: BuildInputs = {
-  dirs: ['src', 'public', 'kit-docs'],
+  dirs: ['src', 'public'],
   files: ['astro.config.ts', 'svelte.config.js', 'package.json', 'pnpm-lock.yaml'],
   skip: /^public\/assets\/pages(?:\/|$)/,
 };

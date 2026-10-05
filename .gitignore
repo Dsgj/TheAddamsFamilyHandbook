@@ -15,3 +15,6 @@ __pycache__/
 
 # Claude Code task notes and local worktrees (kept out of the repo)
 .claude/
+
+# A redirect to NUL from a Git Bash shell leaves a file by that name (audit TT3-13)
+/NUL

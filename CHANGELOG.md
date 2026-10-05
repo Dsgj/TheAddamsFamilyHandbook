@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- One Node major, 24, for a checkout, CI and the Docker image; the Actions
+  are pinned to commits and the base images by digest, with Dependabot
+  proposing the bumps, and the Docker build leaves the Python environments,
+  tests and docs out of its context (18 MB, not 225).
 - The test gates reach further: the accessibility scans walk every page and
   the sheets and results a tap opens, the typed lint covers the Svelte
   islands, an end-to-end run refuses a build older than its sources, and the

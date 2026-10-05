@@ -6,3 +6,9 @@ playwright-report
 .git
 kit-docs
 .claude
+# Not read by the build (audit TT3-11): the Python tools' environments, the tests and the docs.
+# With them the context was 225 MB; without, 18.
+**/.venv
+**/__pycache__
+tests
+docs
