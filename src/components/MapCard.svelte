@@ -8,17 +8,22 @@
    * panel's shot and empty cards, the deselect button and the source link, as snippets that
    * PlayfieldMap renders. No instance state: what a snippet shows comes in as an argument.
    */
-  import { SHOTS } from '~/data/shots';
+  import { SHOT_PAGES, shot } from '~/data/shots';
+  import type { Shot } from '~/data/shots';
   import { DATA, mapOf } from '~/lib/data/components';
   import { componentCode, MAP_TITLE, STATUS_LABEL, TABLE_LABEL } from '~/lib/copy';
   import type { Item, MapLayer } from '~/lib/map/items';
   import { fullName, kindLine, statusOf } from '~/lib/map/items';
-  import { pageTitleText } from '~/lib/pages';
+  import { DOC_NAME, pageSpanText, pageTitleText } from '~/lib/pages';
   import { calloutLabels, wiring, wiringRows } from '~/lib/present';
   import { componentHref, href, manualHref, tableSpotHref } from '~/lib/url';
   import Icon from './Icon.svelte';
   import OwnerHint from './OwnerHint.svelte';
   import WiringList from './WiringList.svelte';
+
+  /** The location maps' pages, first and last, for the provenance line (AR3-17). */
+  const mapPages = Object.values(DATA.maps).map((m) => m.page);
+  const MAP_PAGES = { from: Math.min(...mapPages), to: Math.max(...mapPages) };
 
   export { deselectBtn, emptyCard, partBody, partHead, prov, shotCard, srcLink };
 </script>
@@ -37,28 +42,39 @@
       >{MAP_TITLE[only]}, {pageTitleText('ops', DATA.maps[only].page)}</a
     >
   {:else if only === 'shot'}
-    <a class="small src" href={manualHref('ops', 9)}>Playfield Shots, Operations Manual p. E–F</a>
+    <a class="small src" href={manualHref('ops', SHOT_PAGES.from)}
+      >Playfield Shots, {DOC_NAME.ops} {pageSpanText('ops', SHOT_PAGES.from, SHOT_PAGES.to)}</a
+    >
   {/if}
 {/snippet}
 
 {#snippet prov()}
   <p class="prov">
-    Positions were remapped from the manual's location maps (p. 2-39 to 2-41) and shot maps (p.
-    E–F), then placed by hand over the manual pages. Off-playfield components (Start button, THING
-    and credit lamps) sit on the nearest edge.
+    Positions were remapped from the manual's location maps ({pageSpanText(
+      'ops',
+      MAP_PAGES.from,
+      MAP_PAGES.to,
+    )}) and shot maps ({pageSpanText('ops', SHOT_PAGES.from, SHOT_PAGES.to)}), then placed by hand
+    over the manual pages. Off-playfield components (Start button, THING and credit lamps) sit on
+    the nearest edge.
   </p>
 {/snippet}
 
-{#snippet shotCard(shot: { id: string; name: string; page: number })}
-  <article class="card comp shot-card" data-kind="shot" data-id={shot.id}>
-    <header><span class="dmd">{shot.id}</span></header>
-    <h2>{shot.name}</h2>
-    <p class="small">
-      Shot {shot.id} on the manual's shot map,
-      <a href={manualHref('ops', shot.page)}>{pageTitleText('ops', shot.page)}</a>. Turn on the
-      other layers to see the switches, lamps and solenoids under it.
-    </p>
+{#snippet shotCard(s: Shot)}
+  <article class="card comp shot-card" data-kind="shot" data-id={s.id}>
+    <header><span class="dmd">{s.id}</span></header>
+    <h2>{s.name}</h2>
+    {@render shotNote(s, false)}
   </article>
+{/snippet}
+
+<!-- The note under a shot's letter: one text for the wide panel's card and the phone sheet (AR3-17). -->
+{#snippet shotNote(s: Shot, sheet: boolean)}
+  <p class="small" class:shot-note={sheet}>
+    Shot {s.id} on the manual's shot map,
+    <a href={manualHref('ops', s.page)}>{pageTitleText('ops', s.page)}</a>. Turn on the other layers
+    to see the switches, lamps and solenoids under it.
+  </p>
 {/snippet}
 
 {#snippet emptyCard()}
@@ -85,7 +101,7 @@
 
 <!-- The phone sheet's expanded content: wiring, the hint and the links (spec §7.6). -->
 {#snippet partBody(item: Item)}
-  {#if item.comp && item.kind !== 'shot'}
+  {#if item.kind !== 'shot'}
     {@const sw = item.comp.kind === 'switch' ? item.comp : undefined}
     {@const coil = item.comp.kind === 'coil' ? item.comp : undefined}
     {@const page = mapOf(item.kind).page}
@@ -106,15 +122,9 @@
         <a class="btn sm" href={href('shopping')}>On the shopping list</a>
       {/if}
     </nav>
-  {:else if item.kind === 'shot'}
-    {@const shot = SHOTS.find((x) => x.id === item.id)}
-    {#if shot}
-      <p class="small shot-note">
-        Shot {shot.id} on the manual's shot map,
-        <a href={manualHref('ops', shot.page)}>{pageTitleText('ops', shot.page)}</a>. Turn on the
-        other layers to see the switches, lamps and coils under it.
-      </p>
-    {/if}
+  {:else}
+    {@const s = shot(item.id)}
+    {#if s}{@render shotNote(s, true)}{/if}
   {/if}
 {/snippet}
 

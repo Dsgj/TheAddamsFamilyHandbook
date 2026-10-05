@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- The switch, lamp, solenoid, flipper and GI tables are one component, so
+  flipper and GI fuse cells now link to the fuse's row. The map's shot note
+  reads the same in the card and the sheet; page spans come from the pages.
 - Before-paint scripts (theme, view transition type, text size, manual fit,
   map zoom) ship from one tested source, stripped of comments; the header
   collapse and tab reselect move to a cached module. Pages get smaller.

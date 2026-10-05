@@ -2,10 +2,10 @@
 import Icon from '~/components/Icon.astro';
 import Base from './Base.astro';
 import ComponentDetail, { type Related } from '~/components/ComponentDetail.svelte';
-import { DATA, mapOf } from '~/lib/data/components';
-import type { AnyComponent, Kind } from '~/lib/model/types';
+import { DATA, listOf, mapOf } from '~/lib/data/components';
+import type { AnyComponent } from '~/lib/model/types';
 import { componentCode, componentLabel, componentName, KIND_PLURAL, kindLine } from '~/lib/copy';
-import { componentHref, handbookHref, href, tablePath } from '~/lib/url';
+import { componentHref, handbookHref, tablePath, verifyHref } from '~/lib/url';
 import { appendixFor, APPENDICES, serviceNotes } from '~/data/appendix';
 import { findHeading } from '~/lib/handbook/render';
 import { handbookIndex } from '~/lib/handbook/toc';
@@ -15,11 +15,12 @@ import { handbookIndex } from '~/lib/handbook/toc';
  * owner's service notes and appendix links (read by the tests) and the prev/next pager (Q18).
  */
 interface Props {
-  kind: Kind;
   item: AnyComponent;
-  list: AnyComponent[];
 }
-const { kind, item, list } = Astro.props;
+const { item } = Astro.props;
+/** The kind and the list the pager walks come from the item itself (AR3-19). */
+const kind = item.kind;
+const list = listOf(kind);
 const i = list.findIndex((x) => x.id === item.id);
 const prev = list[i - 1];
 const next = list[i + 1];
@@ -76,7 +77,7 @@ const svc = serviceNotes(item)
         {svc.map((n) => (
           <p class="svc">
             <span class="muted">Service notes:</span> {n.text}{' '}
-            {n.verify && <a href={href(`verify#verify-${n.verify}`)}>Verify</a>}
+            {n.verify && <a href={verifyHref(n.verify)}>Verify</a>}
             {n.verify && ' · '}
             <a href={handbookHref('appendix', n.h!.id)}>
               {n.code} {APPENDICES[n.code]}

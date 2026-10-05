@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, tick, untrack } from 'svelte';
   import { SvelteSet } from 'svelte/reactivity';
-  import { SHOTS } from '~/data/shots';
+  import { shot } from '~/data/shots';
   import { mapOf } from '~/lib/data/components';
   import { agree, plural } from '~/lib/copy';
   import { listen } from '~/lib/events';
@@ -224,9 +224,7 @@
     if (!selKey) return undefined;
     return LAYERS.flatMap(itemsIn).find((c) => componentKey(c.kind, c.id) === selKey);
   });
-  const currentShot = $derived(
-    current?.kind === 'shot' ? SHOTS.find((s) => s.id === current.id) : undefined,
-  );
+  const currentShot = $derived(current?.kind === 'shot' ? shot(current.id) : undefined);
   /** Component layers that are on (shots always carry their own letter). */
   const compLayers = $derived(visible.filter((l) => l !== 'shot'));
   const showLabels = $derived((zm.zoom >= 1.6 && compLayers.length === 1) || calib);
@@ -455,7 +453,7 @@
 
 <!-- The selected part in the wide panel and the embed: its card, a shot's or the empty one. -->
 {#snippet selection()}
-  {#if current?.comp && current.kind !== 'shot'}
+  {#if current && current.kind !== 'shot'}
     <ComponentCard item={current.comp} mapMeta={mapOf(current.kind)} inMap />
   {:else if currentShot}
     {@render shotCard(currentShot)}

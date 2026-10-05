@@ -1,10 +1,8 @@
 import { parseComponentKey } from '~/lib/model/key';
 import type { Kind, Layer, MapKind } from '~/lib/model/types';
 
-export type { MapKind };
-
 /** Prefixes an app-relative path with the configured base path (BASE_PATH env → Astro `base`). */
-export const base = (import.meta.env.BASE_URL ?? '/').replace(/\/$/, '');
+const base = (import.meta.env.BASE_URL ?? '/').replace(/\/$/, '');
 
 export function href(path: string): string {
   if (/^https?:/.test(path)) return path;
@@ -79,11 +77,46 @@ export function tableHref(kind: Kind, anchor?: string): string {
  * Dedicated or Flippers panel for a switch outside the matrix, or its coil row (`coils#coil-01`).
  */
 export function tableSpotHref(kind: Kind, part: { id: string; circuit?: 'ded' | 'flip' }): string {
-  if (kind === 'coil') return tableHref('coil', `coil-${part.id}`);
-  if (kind === 'flipper') return tableHref(kind, `flipper-${part.id}`);
+  if (kind === 'coil' || kind === 'flipper') return tableHref(kind, rowAnchor(kind, part.id));
   if (part.circuit === 'ded') return tableHref(kind, 'j205');
   if (part.circuit === 'flip') return tableHref(kind, 'j806');
   return tableHref(kind, `c${part.id}`);
+}
+
+/**
+ * A coil or flipper row's element id on the Solenoids page (`coil-01`, `flipper-ULF`): the page
+ * writes it and tableSpotHref links to it (AR3-05).
+ */
+export function rowAnchor(kind: 'coil' | 'flipper', id: string): string {
+  return `${kind}-${id}`;
+}
+
+/** The Fuses page at a fuse's row (`fuses#f114`) or a section (`fuses#leds`, `fuses#jumpers`). */
+export function fuseHref(key: string): string {
+  return href(`fuses#${key}`);
+}
+
+/** The parts list at one part number's row (`parts#A-15017`), which PartsList reveals. */
+export function partHref(no: string): string {
+  return href('parts') + '#' + encodeURIComponent(no);
+}
+
+/** A Verify item's element id (`verify-flasher-count`): verify.astro writes it. */
+export function verifyAnchor(id: string): string {
+  return `verify-${id}`;
+}
+
+/**
+ * The Verify page at one item as a path under the base (`verify#verify-flasher-count`): the
+ * Handbook's `#verify:` links (render.ts) put their own base before it.
+ */
+export function verifyPath(id: string): string {
+  return `verify#${verifyAnchor(id)}`;
+}
+
+/** The Verify page at one item. */
+export function verifyHref(id: string): string {
+  return href(verifyPath(id));
 }
 
 /**

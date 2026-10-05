@@ -41,6 +41,8 @@ describe('search', () => {
         'llf q9z rr1k x7y a1b2 kq7p 9zz',
         '',
       ],
+      hb: [],
+      wpc: [],
     });
     expect(pages).toHaveLength(3);
     const words = queryWords('LLF');

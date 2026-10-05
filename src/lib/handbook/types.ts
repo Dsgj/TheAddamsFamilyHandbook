@@ -7,3 +7,9 @@ export interface TocItem {
   label: string;
   section: string;
 }
+
+/** The data/handbook.json payload: the TOC and the text under each heading, for the Diagnose search. */
+export interface HandbookFile {
+  toc: TocItem[];
+  text: Record<string, string>;
+}

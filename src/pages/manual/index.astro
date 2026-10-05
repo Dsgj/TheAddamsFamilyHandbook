@@ -3,7 +3,8 @@ import Icon from '~/components/Icon.astro';
 import Base from '~/layouts/Base.astro';
 import DocSeg from '~/components/DocSeg.astro';
 import ManualSearch from '~/components/ManualSearch.svelte';
-import { DOCS, DOC_NAME, DOC_UNIT, pageCellText, pageCount, TOC } from '~/lib/pages';
+import { plural } from '~/lib/copy';
+import { DOCS, DOC_NAME, pageCellText, pageCount, TOC } from '~/lib/pages';
 import { manualHref } from '~/lib/url';
 
 /** The Manuals index: the segmented links, the page-text search and each document's contents. */
@@ -27,9 +28,7 @@ import { manualHref } from '~/lib/url';
         <section>
           <h2 class="lst-h">
             <a href={manualHref(d, 1)}>{DOC_NAME[d]}</a>
-            <span class="n">
-              {pageCount(d)} {DOC_UNIT[d]}
-            </span>
+            <span class="n">{plural(pageCount(d), 'page')}</span>
           </h2>
           <ul class="lst">
             {TOC[d].map(([p, name]) => (

@@ -54,6 +54,29 @@ const CONSUMERS = [
   ),
 ];
 
+/**
+ * The names a file imports or re-exports by name (`import { a, type B }`, `import X, { a }`,
+ * `export { a } from`), and a JSDoc `import('x').Name`: what rule (r) counts as using an export.
+ * Read from the file as written, since the JSDoc form is a comment that CONSUMERS strip.
+ */
+function imported(text: string): Set<string> {
+  const names = new Set<string>();
+  const lists = text.matchAll(
+    /(?:import|export)\s+(?:type\s+)?(?:[\w$]+\s*,\s*)?\{([^}]*)\}\s*from\s*['"]/g,
+  );
+  for (const [, list] of lists)
+    for (const spec of list!.split(',')) {
+      const m = spec.trim().match(/^(?:type\s+)?([\w$]+)/);
+      if (m) names.add(m[1]!);
+    }
+  for (const [, name] of text.matchAll(/import\(\s*['"][^'"]+['"]\s*\)\.([\w$]+)/g))
+    names.add(name!);
+  return names;
+}
+const IMPORTED = new Map(
+  CONSUMERS.map((c) => [c.path, imported(readFileSync(join(c.path), 'utf8'))]),
+);
+
 /** Every rule that went through hits(), so the control test can prove each one matches in its home. */
 const RULES: [RegExp, (path: string) => boolean][] = [];
 
@@ -307,16 +330,20 @@ describe('structure lint', () => {
     );
     const declared =
       /^export\s+(?:async\s+)?(?:const|let|function\*?|class|type|interface|enum)\s+([A-Za-z_$][\w$]*)/gm;
+    // A consumer imports the name (AR3-02): a bare-word match let `shot` and `base` through on
+    // the strength of other files' own words.
     const dead: string[] = [];
     for (const m of modules) {
       for (const [, name] of m.text.matchAll(declared)) {
-        const used = new RegExp(`\\b${name!.replace(/\$/g, '\\$')}\\b`);
-        if (!CONSUMERS.some((c) => c.path !== m.path && used.test(c.text)))
+        if (!CONSUMERS.some((c) => c.path !== m.path && IMPORTED.get(c.path)!.has(name!)))
           dead.push(`${m.path}: ${name}`);
       }
     }
     expect(dead).toEqual([]);
     expect(modules.length).toBeGreaterThan(40);
+    expect(IMPORTED.get('src/lib/nav-state.ts')!.has('classify')).toBe(true);
+    expect(IMPORTED.get('src/inline/classify.js')!.has('Visit')).toBe(true);
+    expect(IMPORTED.get('src/components/MapCard.svelte')!.has('Shot')).toBe(true);
   });
 
   it('(s) narrows a component on its kind, never with a cast (AR2-06)', () => {
@@ -352,8 +379,22 @@ describe('structure lint', () => {
     expect(paths.filter((p) => !existsSync(p))).toEqual([]);
   });
 
+  it('(v) builds the fuse, part, Verify and table-row anchors only in url.ts (AR3-05)', () => {
+    // nav.ts names the Fuses page's sections as paths, which Base turns into links through href().
+    expectNone(
+      hits(
+        /fuses#|parts#|verify#|verify-\$\{|coil-\$\{|flipper-\$\{/,
+        only('src/lib/url.ts', 'src/lib/nav.ts'),
+      ),
+    );
+  });
+
+  it('(w) writes the component tables and their Fault tick once (AR3-04)', () => {
+    expectNone(hits(/class="fault-check"/, only('src/components/ComponentTable.astro')));
+  });
+
   it('(control) every rule above still matches inside its home, so none passes vacuously', () => {
-    expect(RULES.length).toBe(20);
+    expect(RULES.length).toBe(22);
     for (const [pattern, allowed] of RULES) {
       if (pattern === KIND_TERNARY) continue;
       const home = FILES.filter((f) => allowed(f.path));

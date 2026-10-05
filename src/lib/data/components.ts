@@ -43,3 +43,12 @@ export function mapOf(kind: Kind): MapMeta {
 export function itemsOf(layer: Layer): AnyComponent[] {
   return layer === 'sw' ? DATA.switches : layer === 'lamp' ? DATA.lamps : DATA.coils;
 }
+
+/** Every component of a kind, in source order: the list a detail page's pager walks (AR3-19). */
+const LIST: Record<Kind, AnyComponent[]> = {
+  switch: DATA.switches,
+  lamp: DATA.lamps,
+  coil: DATA.coils,
+  flipper: DATA.flippers,
+};
+export const listOf = (kind: Kind): AnyComponent[] => LIST[kind];

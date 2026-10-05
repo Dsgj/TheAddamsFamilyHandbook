@@ -31,4 +31,10 @@ export const SHOTS: Shot[] = [
   { id: 'S', name: 'Cousin It', page: 10 },
 ];
 
+/** A shot by its letter. */
 export const shot = (id: string) => SHOTS.find((s) => s.id === id);
+/** The first and last of the figures' pages, for a page span (`p. E–F`). */
+export const SHOT_PAGES = {
+  from: Math.min(...SHOTS.map((s) => s.page)),
+  to: Math.max(...SHOTS.map((s) => s.page)),
+};

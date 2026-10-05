@@ -2,7 +2,7 @@
  * Reading sections of the transcribed Operations Manual (PDF pages 2–58), in reading order, then
  * the owner's appendices (pages 101+, no scan behind them).
  */
-export interface Section {
+interface Section {
   key: string;
   title: string;
   /** The phone bar's title where `title` would crowd the back label (Base's `short`). */

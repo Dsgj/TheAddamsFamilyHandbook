@@ -1,8 +1,9 @@
 import { componentCode, kindLine } from '~/lib/copy';
 import { DATA } from '~/lib/data/components';
-import type { DocId } from '~/lib/model/types';
+import type { HandbookFile } from '~/lib/handbook/types';
+import type { DocId, OcrText, PartRow } from '~/lib/model/types';
 import { pageRefText, printedPageText } from '~/lib/pages';
-import { componentHref, handbookHref, href, manualHref, tableHref } from '~/lib/url';
+import { componentHref, fuseHref, handbookHref, manualHref, partHref, tableHref } from '~/lib/url';
 
 /*
  * The word search behind the Diagnose field (spec §9.3): the four indexes, the match, the rank,
@@ -28,21 +29,6 @@ export interface Hit {
   /** A component's kind, what the All preview spreads over (`preview`); the group otherwise. */
   kind?: string;
 }
-
-export interface TocItem {
-  id: string;
-  text: string;
-  section: string;
-  level: number;
-  label: string;
-  page: number;
-}
-export interface HandbookFile {
-  toc: TocItem[];
-  text: Record<string, string>;
-}
-/** A row of parts.json: assembly, position, part number, description, source, quantity. */
-export type PartRow = [number, number, string, string, string, number | null];
 
 /** The components from the bundled data, in source order: switches, lamps, coils, flippers, GI
    strings, fuses. */
@@ -97,8 +83,7 @@ export function componentHits(): Hit[] {
     );
   for (const g of DATA.gi)
     hit('gi', g.id, g.name, `General illumination · ${g.driver}`, tableHref('coil', 'gi'));
-  for (const f of DATA.fuses)
-    hit('fuse', f.id, f.circuit, `Fuse · ${f.rating}`, href(`fuses#${f.key}`));
+  for (const f of DATA.fuses) hit('fuse', f.id, f.circuit, `Fuse · ${f.rating}`, fuseHref(f.key));
   return out;
 }
 
@@ -127,7 +112,7 @@ export function handbookHits(h: HandbookFile): Hit[] {
 }
 
 /** Every manual page with OCR text, one hit per page. */
-export function manualHits(ocr: Record<string, string[]>): Hit[] {
+export function manualHits(ocr: OcrText): Hit[] {
   const out: Hit[] = [];
   for (const [doc, pages] of Object.entries(ocr)) {
     pages.forEach((text, i) => {
@@ -168,7 +153,7 @@ export function partHits(rows: PartRow[]): Hit[] {
       code: '',
       label: desc,
       sub: no,
-      url: href('parts') + '#' + encodeURIComponent(no),
+      url: partHref(no),
       text: `${desc} ${no}`.toLowerCase(),
     });
   }

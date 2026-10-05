@@ -476,7 +476,7 @@ describe('copy rules (spec §13)', () => {
     expect(has('src/pages/404.astro', 'Back to Diagnose', 'text')).toBe(true);
     expect(has('src/components/StatusRow.svelte', 'Note', 'attr')).toBe(true);
     expect(has('src/pwa.ts', 'Ready to work offline', 'string')).toBe(true);
-    expect(has('src/pages/switches.astro', 'Fault: ', 'string')).toBe(true);
+    expect(has('src/components/ComponentTable.astro', 'Fault: ', 'string')).toBe(true);
     expect(has('src/content/handbook/app101.md', 'Multimeter basics', 'text')).toBe(true);
   });
 

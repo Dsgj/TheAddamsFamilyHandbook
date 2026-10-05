@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, untrack } from 'svelte';
-  import type { DocId } from '~/lib/model/types';
+  import type { DocId, OcrText } from '~/lib/model/types';
   import { liveText } from '~/lib/live.svelte';
   import { plural } from '~/lib/copy';
   import { DOC_NAME, DOCS, pageTitleText, tocTitle } from '~/lib/pages';
@@ -11,7 +11,7 @@
   /** Full-text search over the page text of all three documents (fetched on first use). */
   let { doc = '' }: { doc?: DocId | '' } = $props();
   let q = $state('');
-  let data = $state<Record<DocId, string[]> | null>(null);
+  let data = $state<OcrText | null>(null);
   let loading = $state(false);
   let failed = $state(false);
   let only = $state<DocId | ''>(untrack(() => doc));
@@ -31,7 +31,7 @@
     loading = true;
     failed = false;
     try {
-      data = await loadJson<Record<DocId, string[]>>('data/ocr-text.json');
+      data = await loadJson<OcrText>('data/ocr-text.json');
     } catch {
       failed = true;
     } finally {

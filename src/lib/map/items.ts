@@ -4,13 +4,12 @@
  * `statusOf` and `statusClass` read the status store, so call them inside a template or a
  * `$derived` as before.
  */
-import { SHOTS } from '~/data/shots';
+import { shot, SHOTS } from '~/data/shots';
 import { itemsOf } from '~/lib/data/components';
 import {
   capitalise,
   componentName,
   inMatrix,
-  KIND_LABEL,
   kindLine as kindLineOf,
   LAYER_KIND,
   LAYER_LABEL,
@@ -20,17 +19,15 @@ import {
 } from '~/lib/copy';
 import type { PosKind } from '~/lib/data/positions';
 import { getStatus } from '~/lib/model/status.svelte';
-import type { AnyComponent, Layer } from '~/lib/model/types';
+import type { AnyComponent, Kind, Layer } from '~/lib/model/types';
 import { pageTitleText } from '~/lib/pages';
 
 /** Component layers plus the manual's lettered shots. Any combination can be shown. */
 export type MapLayer = Layer | 'shot';
-export interface Item {
-  kind: PosKind;
-  id: string;
-  name: string;
-  comp?: AnyComponent;
-}
+/** A part on a component layer, with its data, or one of the manual's lettered shots (AR3-13). */
+export type Item =
+  | { kind: Kind; id: string; name: string; comp: AnyComponent }
+  | { kind: 'shot'; id: string; name: string };
 export const LAYERS: MapLayer[] = ['sw', 'lamp', 'coil', 'shot'];
 export const LABEL: Record<MapLayer, string> = { ...LAYER_LABEL, shot: 'Shots' };
 export const DEFAULT: MapLayer[] = ['sw', 'lamp', 'coil'];
@@ -47,8 +44,7 @@ export const kindOf = (l: MapLayer): PosKind => (l === 'shot' ? 'shot' : LAYER_K
 
 export function itemsIn(l: MapLayer): Item[] {
   if (l === 'shot') return SHOTS.map((s) => ({ kind: 'shot', id: s.id, name: s.name }));
-  const kind = LAYER_KIND[l];
-  return itemsOf(l).map((c) => ({ kind, id: c.id, name: c.name, comp: c }));
+  return itemsOf(l).map((c) => ({ kind: c.kind, id: c.id, name: c.name, comp: c }));
 }
 
 export function statusOf(item: Item) {
@@ -71,15 +67,15 @@ export function markerName(item: Item, selected: boolean, place = 0, places = 1)
 /** "Switch · matrix column 3, row 2": the kind line under a name (spec §13). */
 export function kindLine(item: Item) {
   if (item.kind === 'shot') {
-    const page = SHOTS.find((x) => x.id === item.id)?.page;
+    const page = shot(item.id)?.page;
     return page ? `Shot · ${pageTitleText('ops', page)}` : 'Shot';
   }
-  return item.comp ? kindLineOf(item.kind, item.comp) : KIND_LABEL[item.kind];
+  return kindLineOf(item.kind, item.comp);
 }
 /** The second line of a list row: where it sits, on the rows that carry one (matrix, coils). */
 export function subtitle(item: Item) {
+  if (item.kind === 'shot') return '';
   const c = item.comp;
-  if (!c || item.kind === 'shot') return '';
   // A flipper coil never reaches a map list (no callout), so the matrix check is for the others.
   if (c.kind !== 'coil' && c.kind !== 'flipper' && !inMatrix(c)) return '';
   // The row's name already says "Not Used" and the row says "not on map": no third "not used".

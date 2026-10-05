@@ -12,11 +12,12 @@ import { inlineScript } from '~/lib/inline-script';
 import textSrc from '~/inline/text.js?raw';
 import { PREF_KEYS } from '~/lib/storage';
 import HandbookTocList from '~/components/HandbookTocList.svelte';
-import { pageLabel, pageTitleText, printedPageText } from '~/lib/pages';
-import { handbookHref, href, manualHref } from '~/lib/url';
+import { pageLabel, pageSpanText, pageTitleText, printedPageText } from '~/lib/pages';
+import { handbookHref, manualHref, verifyHref } from '~/lib/url';
 import { WIDE } from '~/lib/bp';
 import { APPENDICES, appendixHref } from '~/data/appendix';
 import { OWNER_NOTES } from '~/data/ownerNotes';
+import { SHOT_PAGES } from '~/data/shots';
 
 /**
  * The Handbook reader (spec §9.11): one section per page, the back link "Handbook", "View the
@@ -124,8 +125,9 @@ const description =
               {e.data.page === 9 && (
                 <div class="shot-map">
                   <p class="small muted">
-                    Both shot maps (p. E–F) on one drawing. Choose a letter; switch on the other
-                    layers to see the switches, lamps and solenoids under each shot.
+                    Both shot maps ({pageSpanText('ops', SHOT_PAGES.from, SHOT_PAGES.to)}) on one
+                    drawing. Choose a letter; switch on the other layers to see the switches, lamps
+                    and solenoids under each shot.
                   </p>
                   <PlayfieldMap client:visible layer="shot" embed />
                 </div>
@@ -134,7 +136,7 @@ const description =
                 OWNER_NOTES[e.data.page]?.map((n) => (
                   <aside class="owner-note small" role="note" aria-label="Owner's note">
                     <span class="muted">Owner's note:</span> {n.text}{' '}
-                    {n.verify && <a href={href(`verify#verify-${n.verify}`)}>Verify</a>}
+                    {n.verify && <a href={verifyHref(n.verify)}>Verify</a>}
                     {n.verify && ' · '}
                     <a href={appendixHref(n.code)}>
                       {n.code} {APPENDICES[n.code]}

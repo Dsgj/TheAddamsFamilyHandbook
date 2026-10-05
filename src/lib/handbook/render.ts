@@ -1,5 +1,6 @@
 import { marked } from 'marked';
 import { HANDBOOK_ATTR } from '~/lib/data/en';
+import { verifyPath } from '~/lib/url';
 import { sectionOfPage } from './sections';
 import type { ImageSize } from './image-size';
 
@@ -208,7 +209,7 @@ export function finish(
     return `href="${base}/manual/${doc}/${page}"`;
   });
   html = html.replace(/href="#verify:([a-z0-9-]+)"/g, (_m, id: string) => {
-    return `href="${base}/verify#verify-${id}"`;
+    return `href="${base}/${verifyPath(id)}"`;
   });
   html = html.replace(/src="assets\//g, `src="${base}/assets/`);
   html = html.replace(/title="([^"]*)"/g, (m, s: string) =>

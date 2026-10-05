@@ -1,15 +1,37 @@
 import { describe, expect, it } from 'vitest';
 import {
+  fuseHref,
   handbookHref,
   href,
   manualHref,
   mapHref,
   markLabels,
   parseMapId,
+  partHref,
+  rowAnchor,
   tableHref,
   tablePath,
   tableSpotHref,
+  verifyAnchor,
+  verifyHref,
+  verifyPath,
 } from '~/lib/url';
+
+describe('anchor links (AR3-05)', () => {
+  it('builds the fuse, part, Verify and table-row anchors in one place', () => {
+    expect(fuseHref('f114')).toBe(href('fuses#f114'));
+    expect(fuseHref('leds')).toBe(href('fuses#leds'));
+    expect(partHref('A-15017')).toBe(href('parts') + '#A-15017');
+    expect(partHref('20-9247 12V')).toBe(href('parts') + '#20-9247%2012V');
+    expect(verifyAnchor('flasher-count')).toBe('verify-flasher-count');
+    expect(verifyPath('flasher-count')).toBe('verify#verify-flasher-count');
+    expect(verifyHref('flasher-count')).toBe(href('verify#verify-flasher-count'));
+    expect(rowAnchor('coil', '01')).toBe('coil-01');
+    expect(tableSpotHref('flipper', { id: 'ULF' })).toBe(
+      href(`coils#${rowAnchor('flipper', 'ULF')}`),
+    );
+  });
+});
 
 describe('parseMapId', () => {
   it('reads every kind-qualified id exactly', () => {

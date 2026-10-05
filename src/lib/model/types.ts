@@ -167,6 +167,8 @@ export interface Components {
 export type PartRow = [number, number, string, string, string, number | null];
 
 export type DocId = 'ops' | 'hb' | 'wpc';
+/** The data/ocr-text.json payload: every manual page's OCR text by document, page 1 at index 0. */
+export type OcrText = Record<DocId, string[]>;
 /** [page, widthPx, heightPx, tiled] */
 export type PageMeta = [number, number, number, boolean];
 export type Pages = Record<DocId, PageMeta[]>;

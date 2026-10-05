@@ -1,4 +1,4 @@
-import { href } from '~/lib/url';
+import { partHref } from '~/lib/url';
 
 /**
  * Part and assembly numbers the component pages, map sheets and the Coils page show that the
@@ -48,5 +48,5 @@ export function partNo(piece: string): string {
 export function partsHref(piece: string): string | undefined {
   const no = partNo(piece);
   if (!no || no.startsWith('#') || NOT_IN_PARTS.has(no)) return undefined;
-  return `${href('parts')}#${encodeURIComponent(no)}`;
+  return partHref(no);
 }

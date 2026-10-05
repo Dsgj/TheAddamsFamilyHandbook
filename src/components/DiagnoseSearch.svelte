@@ -13,7 +13,9 @@
     snippet,
     unique,
   } from '~/lib/search';
-  import type { Group, HandbookFile, Hit, PartRow } from '~/lib/search';
+  import type { Group, Hit } from '~/lib/search';
+  import type { HandbookFile } from '~/lib/handbook/types';
+  import type { OcrText, PartRow } from '~/lib/model/types';
 
   /**
    * The search state of the Diagnose field (spec §9.3): one word or more, no digits. Components
@@ -85,7 +87,7 @@
   async function loadManuals() {
     if (manuals) return;
     try {
-      manuals = manualHits(await loadJson<Record<string, string[]>>('data/ocr-text.json'));
+      manuals = manualHits(await loadJson<OcrText>('data/ocr-text.json'));
     } catch {
       fail('manuals');
     }

@@ -4,31 +4,27 @@ import Base from '~/layouts/Base.astro';
 // keeps the .tabs style after Matrix.css (the dist diff of audit P4 item 1 proves the output).
 import { KIND_PLURAL, TABLE_LABEL } from '~/lib/copy';
 import { pageTitleText } from '~/lib/pages';
-import { positions } from '~/lib/data/positions';
-import { offMap } from '~/lib/present';
+import { matrixCells } from '~/lib/matrix';
+import type { Switch } from '~/lib/model/types';
+import { mono, wire } from '~/lib/table';
+import type { Column, Row } from '~/lib/table';
 import Matrix from '~/components/Matrix.svelte';
-import WireChip from '~/components/WireChip.svelte';
+import ComponentTable from '~/components/ComponentTable.astro';
 import { DATA } from '~/lib/data/components';
-import { componentHref, manualHref } from '~/lib/url';
+import { manualHref } from '~/lib/url';
 
 /**
  * The switch matrix (spec §9.6): a tablist "Switch matrix view" with Matrix / Dedicated /
  * Flippers; each panel heading carries the connectors. All three panels render at build time; the inactive ones carry `hidden`, so the
  * "Fault" ticks in every panel load their stored state on import.
  */
-const matrix = DATA.switches
-  .filter((s) => s.col !== null && s.row !== null)
-  .map((s) => ({
-    id: s.id,
-    name: s.name,
-    col: s.col!,
-    row: s.row!,
-    unused: s.unused,
-    // The card's line in place of Show on map, for a switch the map does not draw (UX2-05).
-    off: positions('switch', s.id).length ? undefined : offMap(s),
-  }));
+const matrix = matrixCells(DATA.switches);
 const ded = DATA.switches.filter((s) => s.circuit === 'ded');
 const flip = DATA.switches.filter((s) => s.circuit === 'flip');
+/** The dedicated and flipper switch tables: the wire and the pin beside the name. */
+const SW_COLUMNS: Column[] = [{ head: 'Wire' }, { head: 'Pin' }];
+const swRows = (list: Switch[]): Row[] =>
+  list.map((s) => ({ id: s.id, name: s.name, cells: [wire(s.wire), mono(s.pin)] }));
 
 const TABS = [
   { id: 'matrix', label: 'Matrix' },
@@ -75,104 +71,14 @@ const TABS = [
   <div id="panel-j205" role="tabpanel" aria-labelledby="tab-j205" class="panel" hidden>
     <section class="card">
       <h2>Dedicated switches (J205)</h2>
-      <div class="scroll-x">
-        <table class="t two" role="table">
-          <thead role="rowgroup">
-            <tr role="row">
-              <th role="columnheader" class="key">#</th>
-              <th role="columnheader">Name</th>
-              <th role="columnheader">Wire</th>
-              <th role="columnheader">Pin</th>
-              <th role="columnheader" class="chk">Fault</th>
-            </tr>
-          </thead>
-          <tbody role="rowgroup">
-            {
-              ded.map((s) => (
-                <tr role="row">
-                  <td role="cell" class="key">
-                    <a class="mono" href={componentHref('switch', s.id)}>
-                      {s.id}
-                    </a>
-                  </td>
-                  <td role="cell" class="nm">
-                    {s.name}
-                  </td>
-                  <td role="cell" data-h="Wire">
-                    <WireChip colour={s.wire ?? ''} />
-                  </td>
-                  <td role="cell" class="mono" data-h="Pin">
-                    {s.pin}
-                  </td>
-                  <td role="cell" class="chk">
-                    <label class="chk-hit">
-                      <input
-                        type="checkbox"
-                        class="fault-check"
-                        data-kind="switch"
-                        data-id={s.id}
-                        aria-label={`Fault: ${s.name}`}
-                      />
-                    </label>
-                  </td>
-                </tr>
-              ))
-            }
-          </tbody>
-        </table>
-      </div>
+      <ComponentTable kind="switch" columns={SW_COLUMNS} rows={swRows(ded)} />
     </section>
   </div>
 
   <div id="panel-j806" role="tabpanel" aria-labelledby="tab-j806" class="panel" hidden>
     <section class="card">
       <h2>Flipper switches (Fliptronics J805/J806)</h2>
-      <div class="scroll-x">
-        <table class="t two" role="table">
-          <thead role="rowgroup">
-            <tr role="row">
-              <th role="columnheader" class="key">#</th>
-              <th role="columnheader">Name</th>
-              <th role="columnheader">Wire</th>
-              <th role="columnheader">Pin</th>
-              <th role="columnheader" class="chk">Fault</th>
-            </tr>
-          </thead>
-          <tbody role="rowgroup">
-            {
-              flip.map((s) => (
-                <tr role="row">
-                  <td role="cell" class="key">
-                    <a class="mono" href={componentHref('switch', s.id)}>
-                      {s.id}
-                    </a>
-                  </td>
-                  <td role="cell" class="nm">
-                    {s.name}
-                  </td>
-                  <td role="cell" data-h="Wire">
-                    <WireChip colour={s.wire ?? ''} />
-                  </td>
-                  <td role="cell" class="mono" data-h="Pin">
-                    {s.pin}
-                  </td>
-                  <td role="cell" class="chk">
-                    <label class="chk-hit">
-                      <input
-                        type="checkbox"
-                        class="fault-check"
-                        data-kind="switch"
-                        data-id={s.id}
-                        aria-label={`Fault: ${s.name}`}
-                      />
-                    </label>
-                  </td>
-                </tr>
-              ))
-            }
-          </tbody>
-        </table>
-      </div>
+      <ComponentTable kind="switch" columns={SW_COLUMNS} rows={swRows(flip)} />
       <p class="prov">
         EOS switch part numbers differ between the flipper page and the parts list (SW-1A-193 vs
         SW-1A-194). Both are recorded on each switch.

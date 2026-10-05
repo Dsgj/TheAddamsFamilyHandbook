@@ -29,7 +29,7 @@ export function inlineScript(...sources: string[]): string {
 }
 
 /** The source without its comments; every newline kept, so the lines stay apart. */
-export function stripComments(src: string): string {
+function stripComments(src: string): string {
   let out = '';
   for (let i = 0; i < src.length;) {
     const c = src[i]!;

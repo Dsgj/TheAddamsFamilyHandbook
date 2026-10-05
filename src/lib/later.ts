@@ -2,7 +2,7 @@
  * One pending timeout. Setting it again drops the one before, so an older timer never clears a
  * newer message or disarms a newer confirm early (CO2-12, SV2-07).
  */
-export interface Later {
+interface Later {
   set(fn: () => void, ms: number): void;
   clear(): void;
 }

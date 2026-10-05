@@ -17,7 +17,7 @@ interface SubRow {
   count?: boolean;
 }
 
-export interface Tab {
+interface Tab {
   key: TabKey;
   label: string;
   path: string;

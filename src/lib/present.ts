@@ -10,11 +10,11 @@ import { inMatrix } from '~/lib/copy';
 import type { AnyComponent } from '~/lib/model/types';
 
 /** A wire: its colour (for WireChip) and the text beside it ("J206-3 · U20-16"). */
-export type Wire = { colour: string; text: string };
+type Wire = { colour: string; text: string };
 /** A matrix column or row: its number and its wire. */
 type Axis = Wire & { n: number | null };
 type SwitchBase = { kind: 'switch'; part: string; assy: string };
-export type Wiring =
+type Wiring =
   | (SwitchBase & { matrix: { column: Axis; row: Axis }; wire: null })
   | (SwitchBase & { matrix: null; wire: Wire })
   | {

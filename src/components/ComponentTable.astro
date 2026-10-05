@@ -1,0 +1,128 @@
+---
+import Phrase from './Phrase.astro';
+import WireChip from './WireChip.svelte';
+import type { Kind } from '~/lib/model/types';
+import type { Column, Row } from '~/lib/table';
+import { componentHref, fuseHref } from '~/lib/url';
+
+/**
+ * A component table (spec §8.9, audit AR3-04): the `t two` skeleton with its roles, the id column
+ * (a link to the part's page), Name with its aside, the page's own columns and the Fault tick that
+ * fault-check.ts wires, written once for the switch, lamp, solenoid, flipper and GI tables. Without
+ * `kind` (the GI strings, which have no page and no Fault) the id is plain text and the Fault
+ * column is left out. A row's cells follow `columns` in order; a cell's `data-h` is its column's
+ * heading, which the phone layout shows beside it.
+ */
+interface Props {
+  kind?: Kind;
+  /** The id column's heading: `#`, or `String` for GI. */
+  idHead?: string;
+  columns: Column[];
+  rows: Row[];
+}
+const { kind, idHead = '#', columns, rows } = Astro.props;
+for (const r of rows)
+  if (r.cells.length !== columns.length)
+    throw new Error(
+      `ComponentTable: row ${r.id} has ${r.cells.length} cells for ${columns.length} columns`,
+    );
+/** Each cell beside its column's heading. */
+const body = rows.map((r) => ({
+  ...r,
+  cells: r.cells.map((c, i) => ({ ...c, h: columns[i]!.head })),
+}));
+---
+
+<div class="scroll-x">
+  <table class="t two" role="table">
+    <thead role="rowgroup">
+      <tr role="row">
+        <th role="columnheader" class="key">{idHead}</th>
+        <th role="columnheader">Name</th>
+        {
+          columns.map((c) => (
+            <th role="columnheader">{c.sr ? <span class="sr-only">{c.head}</span> : c.head}</th>
+          ))
+        }
+        {
+          kind && (
+            <th role="columnheader" class="chk">
+              Fault
+            </th>
+          )
+        }
+      </tr>
+    </thead>
+    <tbody role="rowgroup">
+      {
+        body.map((r) => (
+          <tr role="row" id={r.anchor} class:list={[{ muted: r.muted }]}>
+            <td role="cell" class:list={['key', { mono: !kind }]}>
+              {kind ? (
+                <a class="mono" href={componentHref(kind, r.id)}>
+                  {r.id}
+                </a>
+              ) : (
+                r.id
+              )}
+            </td>
+            <td role="cell" class="nm">
+              {r.name}
+              {r.note && (
+                <span class="note muted small">
+                  <span class="sep"> · </span>
+                  {r.note}
+                </span>
+              )}
+            </td>
+            {r.cells.map((c) =>
+              c.t === 'wire' ? (
+                <td role="cell" data-h={c.h}>
+                  <WireChip colour={c.colour} />
+                </td>
+              ) : c.t === 'phrase' ? (
+                <td role="cell" class="mono phrase" data-h={c.h}>
+                  <Phrase text={c.v} />
+                </td>
+              ) : c.t === 'fuse' ? (
+                <td role="cell" class="mono small phrase fuse" data-h={c.h}>
+                  <a href={fuseHref(c.key)}>
+                    <Phrase text={c.text} />
+                  </a>
+                </td>
+              ) : c.t === 'muted' ? (
+                <td role="cell" class="muted small" data-h={c.h}>
+                  {c.v}
+                </td>
+              ) : (
+                <td role="cell" class="mono" data-h={c.h}>
+                  {c.v}
+                </td>
+              ),
+            )}
+            {kind && (
+              <td role="cell" class="chk">
+                <label class="chk-hit">
+                  <input
+                    type="checkbox"
+                    class="fault-check"
+                    data-kind={kind}
+                    data-id={r.id}
+                    aria-label={`Fault: ${r.name}`}
+                  />
+                </label>
+              </td>
+            )}
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+</div>
+
+<style>
+  /* The row a link names (`/coils#coil-01`, UX2-07). */
+  tr:target > td {
+    background: color-mix(in srgb, var(--amber) 16%, transparent);
+  }
+</style>

@@ -8,7 +8,6 @@ export const DOC_NAME: Record<DocId, string> = {
   hb: "Operator's Handbook",
   wpc: 'WPC Schematic Manual',
 };
-export const DOC_UNIT: Record<DocId, string> = { ops: 'pages', hb: 'pages', wpc: 'pages' };
 
 export function pageCount(doc: DocId): number {
   return PAGES[doc].length;
@@ -46,6 +45,17 @@ export function pdfPageFromLabel(doc: DocId, label: string): number | undefined 
  */
 export function pageTitleText(doc: DocId, p: number): string {
   return printedPageText(pageLabel(doc, p), p);
+}
+
+/**
+ * A run of pages as one reference: `p. E–F`; `p. 2-39 to 2-41` where a dash would read as one more
+ * hyphen; `PDF pages 3–4` where an end has no printed label.
+ */
+export function pageSpanText(doc: DocId, from: number, to: number): string {
+  const a = pageLabel(doc, from);
+  const b = pageLabel(doc, to);
+  if (!a || !b) return `PDF pages ${from}–${to}`;
+  return a.includes('-') || b.includes('-') ? `p. ${a} to ${b}` : `p. ${a}–${b}`;
 }
 
 /**

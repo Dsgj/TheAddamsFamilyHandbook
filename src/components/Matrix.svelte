@@ -2,19 +2,11 @@
   import { onMount, tick, untrack } from 'svelte';
   import { componentCode, kindLine, MAP_LAYER, STATUS_LABEL, TABLE_LABEL } from '~/lib/copy';
   import { getStatus } from '~/lib/model/status.svelte';
+  import type { MatrixCell as Cell } from '~/lib/matrix';
   import type { Kind, MatrixHeaders } from '~/lib/model/types';
   import { componentHref, mapHref, safeDecode } from '~/lib/url';
   import WireChip from './WireChip.svelte';
 
-  interface Cell {
-    id: string;
-    name: string;
-    col: number;
-    row: number;
-    unused?: boolean;
-    /** Where it is, for a part the playfield map does not draw: the card says so (UX2-05). */
-    off?: string | undefined;
-  }
   let {
     kind,
     cells,

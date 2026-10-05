@@ -27,7 +27,7 @@ import type {
 
 type Raw = Record<string, unknown>;
 /** An owner overlay from src/data/ownerNotes.ts, keyed `kind:id`. */
-export type Overlay = Record<string, string>;
+type Overlay = Record<string, string>;
 
 const SV = /[åäöÅÄÖ]/;
 

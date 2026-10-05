@@ -27,6 +27,7 @@ import {
   pageCount,
   pageImage,
   pageLabel,
+  pageSpanText,
   pdfPageFromLabel,
   pageRefText,
   pageTitleText,
@@ -91,6 +92,11 @@ describe('copy helpers', () => {
     expect(pageRefText('ops', 2)).toBe('Operations Manual PDF page 2');
     expect(pageTitleText('ops', 9)).toBe('p. E');
     expect(pageTitleText('hb', 1)).toBe('PDF page 1');
+  });
+  it('spans pages as one reference (AR3-17)', () => {
+    expect(pageSpanText('ops', 9, 10)).toBe('p. E–F');
+    expect(pageSpanText('ops', 97, 99)).toBe('p. 2-39 to 2-41');
+    expect(pageSpanText('wpc', 3, 4)).toBe('PDF pages 3–4');
   });
 
   it('spells wire colours out, in UK spelling', () => {

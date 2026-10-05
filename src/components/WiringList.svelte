@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import type { WiringRow } from '~/lib/present';
-  import { href } from '~/lib/url';
+  import { fuseHref } from '~/lib/url';
   import PartNo from './PartNo.svelte';
   import WireChip from './WireChip.svelte';
 
@@ -45,7 +45,7 @@
         <dd class="mono">{r.text}</dd>
       {:else}
         <dd>
-          <a href={href(`fuses#${r.key}`)}>{r.text}</a>
+          <a href={fuseHref(r.key)}>{r.text}</a>
           {#if r.derived}<span class="muted small">{DERIVED}</span>{/if}
         </dd>
       {/if}
@@ -65,11 +65,11 @@
           <span class="mono muted">{r.text}</span>
         {:else if r.derived}
           <span class="val">
-            <a class="mono" href={href(`fuses#${r.key}`)}>{r.text}</a>
+            <a class="mono" href={fuseHref(r.key)}>{r.text}</a>
             <span class="muted small">{DERIVED}</span>
           </span>
         {:else}
-          <a class="mono" href={href(`fuses#${r.key}`)}>{r.text}</a>
+          <a class="mono" href={fuseHref(r.key)}>{r.text}</a>
         {/if}
       </li>
     {/each}
