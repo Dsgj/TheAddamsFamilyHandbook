@@ -273,6 +273,7 @@
 {#if kind === 'map'}
   <section
     class="sheet map"
+    class:expanded
     class:dragging
     class:still
     aria-label={label}

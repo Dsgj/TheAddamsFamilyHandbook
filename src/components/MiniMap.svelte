@@ -4,7 +4,8 @@
   import { href } from '~/lib/url';
 
   /**
-   * Crops a w×h window (132×168 by default) of the playfield drawing around the first position.
+   * Crops a w×h window (132×168 by default) of the playfield drawing around the first position;
+   * with `fluid` the window is as wide as its container, still centred on the part (VP3-08).
    * With `others`, the neighbours of that kind inside the window are drawn as labelled dots
    * (the Show-on-map sheet, spec §9.8); `ring` is the marker's diameter.
    */
@@ -15,6 +16,7 @@
     h: H = 168,
     ring = 18,
     others,
+    fluid = false,
   }: {
     pos: Loc[];
     size?: number;
@@ -23,6 +25,8 @@
     ring?: number;
     /** Draw the other components of this kind that fall inside the crop. */
     others?: { kind: PosKind; except: string };
+    /** Fill the container's width; `w` then only bounds the neighbours drawn. */
+    fluid?: boolean;
   } = $props();
   const scale = $derived(size / PLAYFIELD.w);
   const mapH = $derived(PLAYFIELD.h * scale);
@@ -33,6 +37,8 @@
   // clamped to the drawing showed an edge part as a blank corner with its ring cut (VL2-08).
   const ox = $derived(cx - W / 2);
   const oy = $derived(cy - H / 2);
+  /** A crop x as a left offset: from the window's centre when the width is the container's. */
+  const at = (x: number) => (fluid ? `calc(50% + ${x - W / 2}px)` : `${x}px`);
   const src = href('assets/maps/playfield.png');
   const neighbours = $derived.by(() => {
     if (!others) return [];
@@ -53,23 +59,29 @@
 </script>
 
 {#if first}
-  <div class="mini" style:width="{W}px" style:height="{H}px" aria-hidden="true">
+  <div
+    class="mini"
+    class:fluid
+    style:width={fluid ? null : `${W}px`}
+    style:height="{H}px"
+    aria-hidden="true"
+  >
     <img
       class="scan"
       {src}
       alt=""
       style:width="{size}px"
-      style:left="{-ox}px"
+      style:left={at(-ox)}
       style:top="{-oy}px"
       loading="lazy"
     />
     {#each neighbours as n (n.id + n.x)}
-      <span class="dot mono" style:left="{n.x}px" style:top="{n.y}px">{n.id}</span>
+      <span class="dot mono" style:left={at(n.x)} style:top="{n.y}px">{n.id}</span>
     {/each}
     {#each pos as l, li (li)}
       <span
         class="ring"
-        style:left="{l.x * size - ox}px"
+        style:left={at(l.x * size - ox)}
         style:top="{l.y * mapH - oy}px"
         style:width="{ring}px"
         style:height="{ring}px"
@@ -78,7 +90,7 @@
     {/each}
   </div>
 {:else}
-  <div class="mini none" style:width="{W}px" style:height="{H}px">
+  <div class="mini none" class:fluid style:width={fluid ? null : `${W}px`} style:height="{H}px">
     <span class="muted small">Not on map</span>
   </div>
 {/if}
@@ -92,6 +104,9 @@
     background: var(--sunk);
     box-shadow: inset 0 0 0 1px var(--sep);
     flex: 0 0 auto;
+  }
+  .mini.fluid {
+    width: 100%;
   }
   .mini.none {
     display: grid;

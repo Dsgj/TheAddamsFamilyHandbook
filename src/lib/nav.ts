@@ -51,7 +51,9 @@ export const TABS: Tab[] = [
       { label: 'Lamp matrix', path: 'lamps', nav: 'lamps' },
       { label: 'Solenoids and flashers', path: 'coils', nav: 'coils' },
       { label: 'Fuses', path: 'fuses', nav: 'fuses' },
-      { label: 'LEDs and jumpers', path: 'fuses#leds' },
+      // The hub's row names and targets (VL3-13): a row the hub lacks reads as a page that is not there.
+      { label: 'Diagnostic LEDs', path: 'fuses#leds' },
+      { label: 'Jumper charts', path: 'fuses#jumpers' },
     ],
   },
   {

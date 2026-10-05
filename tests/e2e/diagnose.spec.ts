@@ -151,10 +151,12 @@ test.describe('the Diagnose home stays reachable after a ?q= URL', () => {
     await home(page);
   });
 
-  test('Cancel (from a search ?q=) reaches the home', async ({ page }) => {
+  test('Clear search (from a search ?q=) reaches the home', async ({ page }) => {
     await gotoHydrated(page, '/?q=flipper');
     await expect(field(page)).toHaveValue('flipper');
-    await page.getByRole('button', { name: 'Cancel' }).click();
+    // Cancel went (UX3-09): it did the same, and differed only in dropping focus.
+    await expect(page.getByRole('button', { name: 'Cancel' })).toHaveCount(0);
+    await page.getByRole('button', { name: 'Clear search' }).click();
     await home(page);
   });
 
@@ -230,7 +232,7 @@ test.describe('search', () => {
     await chips.filter({ hasText: 'Parts' }).click();
     await expect(page.getByRole('heading', { level: 3, name: /^Components/ })).toHaveCount(0);
     await expect(page.getByRole('heading', { level: 3, name: /^Parts/ })).toBeVisible();
-    await page.getByRole('button', { name: 'Cancel' }).click();
+    await page.getByRole('button', { name: 'Clear search' }).click();
     await expect(field(page)).toHaveValue('');
     await expect(page.getByRole('navigation', { name: 'Quick links' })).toBeVisible();
   });
@@ -430,6 +432,10 @@ test.describe('the result card', () => {
     // The mini-map is the same link as the Show on map button: hidden, not a tab stop (AY3-06).
     await expect(card.locator('a.map-link')).toHaveAttribute('aria-hidden', 'true');
     await expect(card.locator('a.map-link')).toHaveAttribute('tabindex', '-1');
+    // The mini-map fills the column: as wide as the status control under it (VP3-08).
+    const mini = (await card.locator('.mini').boundingBox())!;
+    const seg = (await card.locator('.status .seg').boundingBox())!;
+    expect(Math.abs(mini.width - seg.width)).toBeLessThan(1);
     await expect(card.getByRole('group', { name: 'Test status' }).getByRole('button')).toHaveText([
       'OK',
       'Fault',

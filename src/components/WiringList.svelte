@@ -56,23 +56,20 @@
   <ul class="wires">
     {#each rows as r (r.label)}
       <li>
+        <span class="lbl">{r.label}</span>
         {#if r.kind === 'wire'}
-          <WireChip colour={r.wire.colour} /><span>{r.label}</span>
-          <span class="mono muted">{r.wire.text}</span>
-        {:else}
-          <span class="lbl">{r.label}</span>
-          {#if r.kind === 'part'}
-            <span class="mono muted">{r.code ? `${r.code} · ` : ''}{@render partNo(r.no)}</span>
-          {:else if r.kind === 'led'}
-            <span class="mono muted">{r.text}</span>
-          {:else if r.derived}
-            <span class="val">
-              <a class="mono" href={href(`fuses#${r.key}`)}>{r.text}</a>
-              <span class="muted small">{DERIVED}</span>
-            </span>
-          {:else}
+          <span class="mono muted wire"><WireChip colour={r.wire.colour} />{r.wire.text}</span>
+        {:else if r.kind === 'part'}
+          <span class="mono muted">{r.code ? `${r.code} · ` : ''}{@render partNo(r.no)}</span>
+        {:else if r.kind === 'led'}
+          <span class="mono muted">{r.text}</span>
+        {:else if r.derived}
+          <span class="val">
             <a class="mono" href={href(`fuses#${r.key}`)}>{r.text}</a>
-          {/if}
+            <span class="muted small">{DERIVED}</span>
+          </span>
+        {:else}
+          <a class="mono" href={href(`fuses#${r.key}`)}>{r.text}</a>
         {/if}
       </li>
     {/each}
@@ -113,7 +110,8 @@
     position: absolute;
     inset: min(0px, (100% - var(--touch)) / 2);
   }
-  /* The map's phone sheet (spec §7.6): one 44 row per value, the value to the right. */
+  /* The map's phone sheet (spec §7.6): one 44 row per value, the label first and the value to
+     the right, the card's order (VP3-03). */
   .wires {
     list-style: none;
     margin: 0 16px;
@@ -140,6 +138,12 @@
     margin-left: auto;
     font-size: 13px;
     text-align: right;
+  }
+  /* A wire's value: its chip and its colour, together at the right. */
+  .wires .wire {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
   }
   /* A derived fuse: the link over its caption, both to the right. */
   .wires .val {

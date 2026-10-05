@@ -91,9 +91,9 @@
     {#each visible as l (l)}
       {@const rows = itemsIn(l).filter((i) => matchesQuery(q, i))}
       {#if rows.length}
-        <h3 class="lh k-{l}">
-          <span>{LABEL[l]}</span>
-          <span class="muted small">{counts[l]} on the map</span>
+        <h3 class="lst-h lh k-{l}">
+          <span><i class="dot" aria-hidden="true"></i>{LABEL[l]}</span>
+          <span>{counts[l]} on the map</span>
         </h3>
         <ul class="rows">
           {#each rows as item (item.id)}
@@ -152,15 +152,14 @@
   .parts :global(.prov) {
     margin: 0;
   }
+  /* The list header (.lst-h, lists.css) with the layer's colour as a dot (VP3-19); the wide
+     panel's sticky rules (PlayfieldMap) still apply. */
   .lh {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
     gap: 8px;
     margin: 16px 0 4px;
-    font: var(--t-sub);
-    font-weight: 600;
-    color: var(--k-ink, var(--k, var(--ink)));
   }
   .rows {
     list-style: none;

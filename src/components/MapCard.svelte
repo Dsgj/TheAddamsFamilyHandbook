@@ -178,7 +178,16 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 8px;
-    margin: 16px 16px 12px;
+    margin: 16px 0 0;
+    padding: 8px 16px 12px;
+  }
+  /* Pinned at the expanded sheet's foot (UX3-05): the body scrolls the wiring under it, so Details
+     and the manual are a tap away without a scroll. Not at the peek, where the sheet is the head
+     row and the pinned pair would cover it; above the sheet's safe-area padding. */
+  :global(.sheet.expanded) .more {
+    position: sticky;
+    bottom: var(--safe-bot);
+    background: var(--sheet);
   }
   .more .btn {
     min-height: 44px;

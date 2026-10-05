@@ -745,3 +745,28 @@ test.describe('swipe back', () => {
     expect(await where(page)).toEqual(s);
   });
 });
+
+/* Audit P2 item 12, UX3-07: the Map is a tab root with no static parent, so opened from a card it
+   had no back affordance in the installed app on iOS. It now shows one to the page it came from. */
+test.describe('the Map opened from a card', () => {
+  test('shows a Results back link that returns to the results', async ({ page }) => {
+    await gotoHydrated(page, '/?q=32');
+    await page
+      .locator('article.comp[data-id="32"]')
+      .getByRole('link', { name: 'Show on map' })
+      .click();
+    await settle(page, /\/map\?/);
+    await expect(backLink(page)).toHaveText('Results');
+    await expect(backLink(page)).toHaveAttribute('href', /\/\?q=32$/);
+    await backLink(page).click();
+    await settle(page, /\/\?q=32$/);
+    await expect(diag(page)).toHaveAttribute('data-mode', 'results');
+  });
+
+  test('from the tab bar it has none', async ({ page }) => {
+    await gotoHydrated(page, '/?q=32');
+    await page.locator('nav.shell a.tab[data-tab="map"]').click();
+    await settle(page, /\/map(\?.*)?$/);
+    await expect(backLink(page)).toHaveCount(0);
+  });
+});

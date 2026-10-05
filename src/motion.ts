@@ -122,12 +122,26 @@ if (saved && !location.hash) {
 }
 
 // The back link this entry was given when it was created, else the one this load decides.
-const back = document.querySelector<HTMLAnchorElement>('header.top a.back');
-const text = back?.querySelector('span');
+let back = document.querySelector<HTMLAnchorElement>('header.top a.back');
+const text = () => back?.querySelector('span');
 const setBack = (link: BackLink) => {
   if (!back) return;
   back.href = link.href;
-  if (text) text.textContent = link.label;
+  const t = text();
+  if (t) t.textContent = link.label;
+};
+/**
+ * A tab root without a static parent (the Map) shows a back link only when it was opened from
+ * elsewhere on the site, say a card's Show on map, which the installed app on iOS has no other
+ * way back from (UX3-07). Base.astro leaves the link as a template; it goes into the bar's lead.
+ */
+const contextBack = (): HTMLAnchorElement | null => {
+  const tpl = document.querySelector<HTMLTemplateElement>('#tafh-back');
+  const lead = document.querySelector('header.top .lead');
+  const a = tpl?.content.querySelector('a')?.cloneNode(true);
+  if (!(a instanceof HTMLAnchorElement) || !lead) return null;
+  lead.append(a);
+  return a;
 };
 const activation = navApi()?.currentEntry ? navApi()?.activation : undefined;
 const timing = performance.getEntriesByType('navigation')[0] as
@@ -144,7 +158,10 @@ const resolved = resolveBack({
     histLen: history.length,
   },
 });
-if (resolved.link) setBack(resolved.link);
+if (resolved.link) {
+  back ??= contextBack();
+  setBack(resolved.link);
+}
 if (resolved.entry) {
   try {
     // No URL argument: a component may already have rewritten it (Diagnose `?q=`, the Map).
@@ -197,7 +214,7 @@ const leave = () => {
     const from = readEntry(history.state)?.from;
     if (from) visit.from = from;
   }
-  if (back) visit.backLink = { href: pathOf(back.href), label: text?.textContent ?? '' };
+  if (back) visit.backLink = { href: pathOf(back.href), label: text()?.textContent ?? '' };
   writePrev(store, visit);
   // Read-modify-write: pages opened since this one loaded (or since a restore) wrote their tabs.
   state = readState(store);
@@ -215,7 +232,9 @@ addEventListener('pagehide', leave);
 const main = document.getElementById('main');
 let swipeTimer: ReturnType<typeof setTimeout> | undefined;
 let resetSwipe = () => {};
-if (back && main && (navigator as { standalone?: boolean }).standalone !== false) {
+// Not with a context link: the Map pans, and a drag from its left edge is not a swipe back.
+const swipes = back && !back.hasAttribute('data-ctx');
+if (swipes && back && main && (navigator as { standalone?: boolean }).standalone !== false) {
   const EDGE = 24;
   let x0 = -1;
   let y0 = 0;

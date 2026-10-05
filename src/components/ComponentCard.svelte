@@ -85,7 +85,7 @@
   {:else if !compact && !inMap}
     <!-- The same link as the Show on map button below: one tab stop, one name (AY3-06). -->
     <a class="map-link" href={mapHref(layer, item.id)} tabindex="-1" aria-hidden="true">
-      <MiniMap {pos} w={310} h={120} />
+      <MiniMap {pos} h={120} fluid />
     </a>
   {/if}
 
@@ -150,9 +150,10 @@
     font: var(--t-sub);
     color: var(--muted);
   }
+  /* As wide as the status control under it (StatusRow caps at 480), one column (VP3-08). */
   .map-link {
     display: block;
-    max-width: 100%;
+    max-width: 480px;
   }
   .off {
     margin: 0;

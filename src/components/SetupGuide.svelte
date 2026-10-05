@@ -97,9 +97,8 @@
               {#if i.alt}<p class="why small muted">{i.alt}</p>{/if}
               {#if links[i.id] || cur?.at}
                 <p class="links small">
-                  {#if links[i.id]}<a href={links[i.id]} aria-label="{ref} in the handbook"
-                      >handbook</a
-                    >{/if}
+                  <!-- The item in the text too (UX3-13): 47 links read "handbook". -->
+                  {#if links[i.id]}<a href={links[i.id]}>{ref} in the handbook</a>{/if}
                   {#if cur?.at}<span class="when muted"
                       >{cur.done ? 'done' : 'set'} {shortDate(cur.at)}</span
                     >{/if}

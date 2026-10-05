@@ -41,8 +41,12 @@ interface Props {
    * 'bar': the compact title is the h1.
    */
   h1?: 'large' | 'page' | 'bar';
-  /** The back link. Defaults to the nav key's static parent on pushed pages; `null` for none. */
-  back?: BackLink | null;
+  /**
+   * The back link. Defaults to the nav key's static parent on pushed pages; `null` for none.
+   * `'context'` (the Map, a tab root): none static, but motion.ts adds one to the page this one
+   * was opened from, when that was elsewhere on the site (audit UX3-07).
+   */
+  back?: BackLink | 'context' | null;
   /** Full-bleed page (the map): no gutter or max-width on main, and no footer. */
   fullbleed?: boolean;
 }
@@ -56,6 +60,8 @@ const {
   back = h1 === 'large' ? null : nav ? PARENT[nav] : null,
   fullbleed,
 } = Astro.props;
+/** The static back link; 'context' renders none and leaves motion.ts a template for one. */
+const parent: BackLink | null = back && back !== 'context' ? back : null;
 
 const tab = tabFor(nav);
 /**
@@ -63,7 +69,7 @@ const tab = tabFor(nav);
  * A page whose parent is a tab root is 1 (a Handbook section, Manuals), anything deeper 2.
  */
 const depth = depthOf(
-  back?.path,
+  parent?.path,
   TABS.map((t) => t.path),
 );
 /** What a back link to this page says (motion.ts): the phone's short title, else the heading. */
@@ -210,10 +216,10 @@ const hasActions = Astro.slots.has('actions');
       <div class="tb">
         <div class="lead">
           {
-            back && (
-              <a class="back" href={href(back.path)}>
+            parent && (
+              <a class="back" href={href(parent.path)}>
                 <Icon name="back" />
-                <span>{back.label}</span>
+                <span>{parent.label}</span>
               </a>
             )
           }
@@ -238,6 +244,18 @@ const hasActions = Astro.slots.has('actions');
         <div class="trail">{hasActions && <slot name="actions" />}</div>
       </div>
     </header>
+    {
+      /* A tab root opened from elsewhere on the site (the Map from a card's Show on map) gets a
+         back link there: motion.ts clones this into the lead when the record says so (UX3-07). */
+      back === 'context' && (
+        <template id="tafh-back">
+          <a class="back" href={href('')} data-ctx>
+            <Icon name="back" />
+            <span />
+          </a>
+        </template>
+      )
+    }
     <main id="main" class:list={[{ wrap: !fullbleed, fullbleed }]}>
       {
         h1 === 'large' && (

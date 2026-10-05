@@ -408,6 +408,15 @@ test.describe('phone selection sheet', () => {
     await expect(
       sheet.getByRole('navigation', { name: 'More about switch 32', exact: true }),
     ).toBeVisible();
+    // The actions are pinned at the sheet's foot: in view above the tab bar without a scroll
+    // (UX3-05), and the wiring rows read label first, value right, as the card's do (VP3-03).
+    const more = await box(page, `${SHEET} nav.more`);
+    const bar = await box(page, 'nav.shell');
+    expect(more.y + more.height).toBeLessThanOrEqual(bar.y + 0.5);
+    await expect(sheet.locator('.body')).toHaveJSProperty('scrollTop', 0);
+    await expect(sheet.locator('.wires li').first().locator(':scope > :first-child')).toHaveClass(
+      /\blbl\b/,
+    );
     await expect(page.locator('.map-controls .column')).toBeHidden();
     // The selected marker stays in the band above the sheet.
     await expect

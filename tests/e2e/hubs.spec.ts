@@ -131,3 +131,22 @@ test('the interim nav reaches both hubs and the theme button is gone', async ({ 
   await expect(nav.getByRole('link', { name: 'Workshop' })).toHaveAttribute('href', /workshop/);
   await expect(page.locator('#theme-toggle')).toHaveCount(0);
 });
+
+/* Audit P2 item 12, VL3-13: the sidebar's rows under Tables are the hub's rows, by name and target
+   ("LEDs and jumpers" matched no row on the hub). */
+test('the sidebar rows under Tables each match a Tables hub row', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'the sidebar shows from 1280');
+  await gotoHydrated(page, '/tables');
+  const hub = await page
+    .locator('ul.lst > li > a.lrow')
+    .evaluateAll((as) =>
+      as.map((a) => `${a.querySelector('.ttl')?.textContent?.trim()} ${a.getAttribute('href')}`),
+    );
+  const subs = await page
+    .locator('nav.shell li:has(> a.tab[data-tab="tables"]) a.sub')
+    .evaluateAll((as) =>
+      as.map((a) => `${a.querySelector('.lbl')?.textContent?.trim()} ${a.getAttribute('href')}`),
+    );
+  expect(subs.length).toBeGreaterThan(3);
+  for (const s of subs) expect(hub, s).toContain(s);
+});

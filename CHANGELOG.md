@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Map sheet: Details and the manual stay pinned at its foot, and wiring rows
+  read label first everywhere. Cards: the mini-map fills its column. Map parts
+  list: the layer headers match the other list headers, with the layer's dot.
+  The Map shows a back link when opened from a card. Diagnose's search bar
+  keeps Clear search alone. Setup's handbook links say which item they open.
+  The sidebar's Tables rows are the hub's rows (Diagnostic LEDs, Jumper charts).
 - Handbook reader: the bar's ends show a page label on a phone and the section
   title on a desktop, whole or not at all (no more one-letter stubs at 320),
   and Contents keeps its rows between opens. Diagnose: once results scroll the

@@ -62,7 +62,7 @@
   // The address itself follows the field once results or a search are committed (audit P1 item
   // 7): Enter or Diagnose, the field losing focus, a link followed from the view, a Recent or Try
   // row, or a `?q=` the page loaded with. It is rewritten in place, never pushed, so system Back
-  // from a card and a reload return to the results. Emptying the field (Clear, Cancel, Recent,
+  // from a card and a reload return to the results. Emptying the field (Clear, Recent,
   // reselecting the tab, backspace) returns it to the clean home; typing before a commit leaves it
   // alone. The string is exactly `?q=` + encodeURIComponent, the same as `body[data-url]`.
   let committed = false;
@@ -102,7 +102,7 @@
   onMount(() => {
     // Read once, on load: this is a fresh document every time (no client router), so a later
     // change to `?q=` – a tab link motion.ts rewrites, back/forward, a shared link – already gets
-    // here as a new mount. Reacting to `input` instead would refill it after Clear, Cancel,
+    // here as a new mount. Reacting to `input` instead would refill it after Clear,
     // backspace-to-empty or Recent, since those set `input` to the very state this reads past.
     const q = new URLSearchParams(location.search).get('q');
     if (q && !input) input = q;
@@ -350,11 +350,6 @@
     uncommit();
     field?.focus();
   }
-  function cancelSearch() {
-    input = '';
-    uncommit();
-    field?.blur();
-  }
   // Clear asks once more, as Device data does (UX2-08, CR-11): a second tap within 4 s clears.
   let clearArmed = $state(false);
   const disarm = later();
@@ -501,7 +496,6 @@
     <div class="rbar">
       <h2 class="rh" bind:this={resultsHead} tabindex="-1">Search</h2>
       <button type="button" class="tlink" onclick={clear}>Clear search</button>
-      <button type="button" class="tlink" onclick={cancelSearch}>Cancel</button>
     </div>
     <DiagnoseSearch q={input} oncount={(n) => (searchCount = n)} onfilter={live.arm} />
   {:else}
