@@ -50,6 +50,32 @@ undersök långa loopar av verkliga tangenttryckningar, ytterligare onödiga sid
 delning av den långsammaste sviten. Redovisa både väggtid, runner-tid och eventuell täckningsförändring.
 Ett mindre PR-urval med full releasekontroll kräver en uttrycklig täckningsmodell; använd inte godtyckliga skips.
 
+## Uppföljning: kombinera sidkontroller
+
+Den slutliga main-körningen 40345653675 tog 36 s för enhetstestjobbet inklusive installation.
+Browserjobben tog cirka 6,5–14 minuter inklusive installation. Antalet enhetstester är därför
+inte den huvudsakliga kostnaden. Även långsamma Ubuntu-paketinstallationer har orsakat väntan
+och timeout; färre assertions löser inte den delen.
+
+Sidornas standardbredd, axe och 44 px klickytor laddade samma 32 rutter var för sig.
+Axe och klickytor laddade dessutom samma fem interaktiva tillstånd separat. Nu körs dessa
+kontroller i namngivna test.step på en gemensam sidladdning per rutt/tillstånd i axe.spec.ts.
+Bredd mäts först, sedan axe, och sist klickytor eftersom den mätningen scrollar sidan.
+Varje rutt och tillstånd har fortsatt ett eget isolerat browser context.
+
+- Dessa svep går från 111 till 42 testfall per projekt, inklusive fem separata resultatbredder.
+- Det tar bort 69 separata sidladdningar/context per projekt, totalt 207 över tre projekt.
+- De tre berörda filerna går från 966 till 759 deklarerade testfall. Samtliga ursprungliga
+  rutter, tillstånd, assertions, klickyteundantag och webbläsarprojekt behålls.
+- Smala bredder, tangentbord, historik, lagring och PWA/offline behåller sina egna tester.
+  De kräver andra förutsättningar och ska inte dela förändrad state mellan tester.
+
+Lokalt passerade baslinjens 111 WebKit-fall och därefter alla 126 berörda fall över tre projekt.
+Baslinjens lokala serveravslut behövde avbrytas manuellt efter testkörningen, så dess väggtid
+används inte som jämförbar prestandamätning. Redovisa inte färre testfall som en uppmätt
+procentuell minskning av hela CI-tiden. Arbete har också flyttats från a11y.spec.ts och
+layout-overflow.spec.ts till axe.spec.ts; jämför svepens sammanlagda tid, inte bara en fil.
+
 ## Maskinspecifika instanser
 
 Framtida generisk OEM-referens, maskinprofiler och Docker-konfiguration beskrivs i

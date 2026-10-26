@@ -8,8 +8,9 @@ import { SECTIONS } from '~/lib/handbook/sections';
 
 /* Every route of the site, built from the models the pages are built from rather than typed by
    hand (P0 item 3 of the app audit, shared in round 3's P4 item 1, AY3-03): a new tab, handbook
-   section or component kind is covered the day it is added. layout-overflow.spec.ts, axe.spec.ts
-   and the 44 px sweep in a11y.spec.ts walk this list. STATES below is what a search or a tap opens
+   section or component kind is covered the day it is added. The combined page audits in
+   axe.spec.ts and the narrow-width checks in layout-overflow.spec.ts walk this list.
+   STATES below is what a search or a tap opens
    on top of a route, which a scan of the initial states never sees: the Diagnose results, a query
    that is no code, a selected marker, the Contents sheet and the Go to page sheet. */
 

@@ -2,15 +2,18 @@ import { expect, test, type Page } from '@playwright/test';
 import { AxeBuilder } from '@axe-core/playwright';
 import { gotoHydrated } from './helpers';
 import { gotoState, ROUTES, STATES } from './routes';
+import { assertTargets, installKit } from './a11y-kit';
 
 // UI scans do not need precaching or the hundreds of background offline requests.
 // Real service-worker coverage stays in pwa, payload, motion and back tests.
 test.use({ serviceWorkers: 'block' });
 
+test.beforeEach(({ page }) => page.addInitScript(installKit));
+
 /* An axe-core scan of every route and of the states a search or a tap opens (TT-13, AY3-03). It is
    the automatic floor under the hand-written a11y checks: the WCAG 2.x A/AA rules plus axe's best
-   practices, on the routes and states of tests/e2e/routes.ts (the lists the 44 px sweep in
-   a11y.spec.ts walks too), on every project. A violation fails with its rule and the nodes it hit. Rules an app bug
+   practices, on the routes and states of tests/e2e/routes.ts, shared with the 44 px target sweep
+   below, on every project. A violation fails with its rule and the nodes it hit. Rules an app bug
    outside this change trips are named in KNOWN, per project and route, so the gate is green and the
    next change to those routes sees them; nothing else is excluded, and an entry whose rule no
    longer fires fails too, so a fix takes its entry out. The one carve-out is the fold under the
@@ -75,17 +78,34 @@ async function nothingNew(page: Page, url: string) {
   ).toEqual(expect.arrayContaining(known));
 }
 
+// Keep each route/state isolated, but load it once for independent read-only checks.
+// Axe runs before the target sweep, which scrolls controls into view.
 for (const url of ROUTES) {
-  test(`axe finds nothing new on ${url}`, async ({ page }) => {
+  test(`page audit: ${url}`, async ({ page, isMobile }) => {
+    test.setTimeout(120_000);
     await gotoHydrated(page, url);
-    await nothingNew(page, url);
+
+    await test.step('viewport width', async () => {
+      const width = page.viewportSize()!.width;
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+        width,
+      );
+    });
+
+    await test.step('WCAG axe scan', () => nothingNew(page, url));
+
+    await test.step('44px targets and explicit exceptions', () => assertTargets(page, isMobile));
   });
 }
 
 for (const state of STATES) {
-  test(`axe finds nothing new with ${state.name} (${state.url})`, async ({ page, browserName }) => {
+  test(`page audit: ${state.name} (${state.url})`, async ({ page, isMobile, browserName }) => {
+    test.setTimeout(120_000);
     await gotoState(page, state, browserName);
-    await nothingNew(page, state.url);
+
+    await test.step('WCAG axe scan', () => nothingNew(page, state.url));
+
+    await test.step('44px targets and explicit exceptions', () => assertTargets(page, isMobile));
   });
 }
 
