@@ -30,7 +30,10 @@ test.describe('home on a phone', () => {
     expect(await page.evaluate(() => scrollY)).toBe(0);
     const f = await box(page, '#codes');
     expect(f.y + f.height).toBeLessThanOrEqual(bar.y);
-    await expect(page.getByText('Or type a word to search everything.')).toBeVisible();
+    await expect(page.locator('.dock .or')).toHaveText(
+      'Search by name, for example “flipper” or “Thing”.',
+    );
+    await expect(page.locator('.dock .or')).toBeVisible();
   });
 
   test('tapping an example diagnoses it with no button pressed', async ({ page }) => {

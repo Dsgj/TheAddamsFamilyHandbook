@@ -21,7 +21,7 @@ M2 med fotobilagor, ny fristående inköpsmodell och full interaktiv demontering
 
 ## Resultat
 
-Genomfört lokalt. Ingen publicering eller commit har gjorts.
+Genomfört och verifierat enligt nedan. Aktuell leveransstatus framgår av Git-historiken och GitHub Actions.
 
 - Historikbärande poster håller backup och rensning tillgängliga även när sista felmarkeringen är borta.
 - Import sparar alla backupsektioner och reset-räknare i en enda atomisk localStorage-post. Före första import läses äldre nycklar som tidigare; efter import är den gemensamma posten auktoritativ och äldre nycklar speglas när det går. Ett kvotfel vid huvudskrivningen ändrar inga importerade data. En misslyckad spegelskrivning gör inte den beständiga återställningen partiell. Testat efter omladdning och mellan öppna flikar med den nya versionen.
