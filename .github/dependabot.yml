@@ -1,14 +1,35 @@
 # Dependabot proposes the bumps the pins need (audit TT3-12): the npm packages, the Actions pinned
-# to commits in workflows/deploy.yml and the base images pinned by digest in the Dockerfile. Monthly,
-# one pull request per ecosystem.
+# to commits in workflows and the base images pinned by digest in the Dockerfile. Monthly,
+# one grouped patch/minor pull request per ecosystem; npm major upgrades are reviewed separately.
 version: 2
 updates:
+  - package-ecosystem: pip
+    directory: /tools
+    schedule:
+      interval: monthly
+    groups:
+      python:
+        patterns: ['*']
+        update-types: ['minor', 'patch']
+      python-security:
+        applies-to: security-updates
+        patterns: ['*']
   - package-ecosystem: npm
     directory: /
     schedule:
       interval: monthly
+    ignore:
+      # The type checker and the Node runtime are upgraded deliberately with their tooling.
+      - dependency-name: typescript
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
     groups:
       npm:
+        patterns: ['*']
+        update-types: ['minor', 'patch']
+      npm-security:
+        applies-to: security-updates
         patterns: ['*']
   - package-ecosystem: github-actions
     directory: /

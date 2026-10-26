@@ -9,11 +9,19 @@
  * `html` as its own inline value (base.css's formula plus the lift, about 2 ms), which only the
  * scroll container reads.
  */
+let currentLift = '';
+
 export function setToastLift(lift: string): void {
+  currentLift = lift;
   const host = document.querySelector<HTMLElement>('.toast-host');
   if (lift) host?.style.setProperty('--toast-lift', lift);
   else host?.style.removeProperty('--toast-lift');
   document.documentElement.style.scrollPaddingBottom = lift
     ? `calc(var(--tabbar-h) + var(--safe-bot) + 12px + ${lift})`
     : '';
+}
+
+/** A later-hydrating toast island can replace the host another island already positioned. */
+export function restoreToastLift(): void {
+  setToastLift(currentLift);
 }

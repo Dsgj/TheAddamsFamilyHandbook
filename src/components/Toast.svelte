@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { emit, listen, type ToastDetail } from '~/lib/events';
+  import { restoreToastLift } from '~/lib/toast-lift';
 
   /**
    * The toast host (spec §8.8), mounted once in Base.astro. pwa.ts, the app's actions (`toast`
@@ -39,6 +40,7 @@
     emit('reload');
   }
   onMount(() => {
+    restoreToastLift();
     // A spec or a stale page may raise it by hand, so the detail is checked.
     const off = listen('toast', (d?: Partial<ToastDetail>) => {
       if (d && typeof d.text === 'string')
