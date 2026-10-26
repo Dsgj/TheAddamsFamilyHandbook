@@ -99,74 +99,66 @@ const svc = serviceNotes(item)
       <OwnerHint hint={sw?.hint} note={coil?.note} at="detail" />
     </Fragment>
     <Fragment slot="related">
-      {
-        related.length > 0 && (
-          <section>
-            <h3 class="lst-h">Related</h3>
-            <ul class="lst">
-              {related.map((r) => (
-                <li>
-                  <a class="lrow two" href={r.href}>
-                    <span class="code dmd">{r.code}</span>
-                    <span class="txt">
-                      <span class="ttl">{r.name}</span>
-                      <span class="sub">{r.sub}</span>
-                    </span>
-                    <Icon name="chevron" class="chev" />
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )
-      }
+      {related.length > 0 && (
+        <section>
+          <h3 class="lst-h">Related</h3>
+          <ul class="lst">
+            {related.map((r) => (
+              <li>
+                <a class="lrow two" href={r.href}>
+                  <span class="code dmd">{r.code}</span>
+                  <span class="txt">
+                    <span class="ttl">{r.name}</span>
+                    <span class="sub">{r.sub}</span>
+                  </span>
+                  <Icon name="chevron" class="chev" />
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </Fragment>
   </ComponentDetail>
-  {
-    notes.length > 0 && (
-      <div class="notes small">
-        {svc.map((n) => (
-          <p class="svc">
-            <span class="muted">Service notes:</span> {n.text}{' '}
-            {n.verify && <a href={verifyHref(n.verify)}>Verify</a>}
-            {n.verify && ' · '}
-            <a href={handbookHref('appendix', n.h!.id)}>
-              {n.code} {APPENDICES[n.code]}
-            </a>
-          </p>
-        ))}
-        <p class="links">
-          <span class="muted">Appendices:</span>
-          {notes.map((n) => (
-            <a href={handbookHref('appendix', n.h!.id)}>
-              {n.code} {n.title}
-            </a>
-          ))}
+  {notes.length > 0 && (
+    <div class="notes small">
+      {svc.map((n) => (
+        <p class="svc">
+          <span class="muted">Service notes:</span> {n.text}{' '}
+          {n.verify && <a href={verifyHref(n.verify)}>Verify</a>}
+          {n.verify && ' · '}
+          <a href={handbookHref('appendix', n.h!.id)}>
+            {n.code} {APPENDICES[n.code]}
+          </a>
         </p>
-      </div>
-    )
-  }
+      ))}
+      <p class="links">
+        <span class="muted">Appendices:</span>
+        {notes.map((n) => (
+          <a href={handbookHref('appendix', n.h!.id)}>
+            {n.code} {n.title}
+          </a>
+        ))}
+      </p>
+    </div>
+  )}
   <nav class="pn" aria-label="Previous and next">
-    {
-      prev ? (
-        <a class="btn sm" href={componentHref(kind, prev.id)}>
-          <Icon name="chevronLeft" class="chev" />
-          {componentCode(kind, prev.id)} {prev.name}
-        </a>
-      ) : (
-        <span />
-      )
-    }
-    {
-      next ? (
-        <a class="btn sm" href={componentHref(kind, next.id)}>
-          {componentCode(kind, next.id)} {next.name}
-          <Icon name="chevron" class="chev" />
-        </a>
-      ) : (
-        <span />
-      )
-    }
+    {prev ? (
+      <a class="btn sm" href={componentHref(kind, prev.id)}>
+        <Icon name="chevronLeft" class="chev" />
+        {componentCode(kind, prev.id)} {prev.name}
+      </a>
+    ) : (
+      <span />
+    )}
+    {next ? (
+      <a class="btn sm" href={componentHref(kind, next.id)}>
+        {componentCode(kind, next.id)} {next.name}
+        <Icon name="chevron" class="chev" />
+      </a>
+    ) : (
+      <span />
+    )}
   </nav>
 </Base>
 

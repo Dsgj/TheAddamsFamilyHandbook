@@ -143,8 +143,21 @@ describe('kit data boundary', () => {
     for (const k of Object.keys(COMPONENT_WIRES)) expect(k).toMatch(/^gi:GI \d$/);
   });
 
-  it('keeps every synced kit file as the sync manifest recorded it (no hand edits)', () => {
+  it('keeps synced data exact and validates explicitly reviewed local Python-tool patches', () => {
     const manifest = JSON.parse(read('src/data/kit/kit-sync.json')) as Record<string, string>;
+    const patches = JSON.parse(read('tools/local-patches.json')) as Record<
+      string,
+      { upstreamSha256: string; sha256: string; reason: string }
+    >;
+    for (const [path, patch] of Object.entries(patches)) {
+      // Data, manual text and assets remain byte-identical. Only documented Python patches qualify.
+      expect(path).toMatch(/^tools\/[A-Za-z0-9_-]+\.py$/);
+      expect(patch.upstreamSha256, `${path}: upstream changed; review the patch`).toBe(
+        manifest[path],
+      );
+      expect(patch.sha256).toMatch(/^[a-f0-9]{64}$/);
+      expect(patch.reason.length).toBeGreaterThan(15);
+    }
     const paths = Object.keys(manifest);
     expect(paths).toContain(KIT);
     // Mirrors sha256() in scripts/sync-kit.mjs: text hashes with CRLF folded to LF, binary as is.
@@ -156,9 +169,12 @@ describe('kit data boundary', () => {
       (p) =>
         createHash('sha256')
           .update(hashable(readFileSync(p)))
-          .digest('hex') !== manifest[p],
+          .digest('hex') !== (patches[p]?.sha256 ?? manifest[p]),
     );
-    expect(edited, 'edit src/data/ownerNotes.ts instead').toEqual([]);
+    expect(
+      edited,
+      'use ownerNotes.ts for data; review and fingerprint Python patches explicitly',
+    ).toEqual([]);
   });
 
   it('places the boards of this machine right in appendix 101', () => {

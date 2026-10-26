@@ -19,7 +19,7 @@ type Test = {
   projectName: string;
   status: 'expected' | 'flaky' | 'unexpected' | 'skipped';
   annotations: { type: string; description?: string }[];
-  results: { status: string }[];
+  results: { status: string; duration?: number }[];
 };
 type Spec = { title: string; file: string; line: number; tests: Test[] };
 type Suite = { title: string; file?: string; specs: Spec[]; suites?: Suite[] };
@@ -116,6 +116,46 @@ describe('scripts/flaky.mjs', () => {
     expect(out).not.toContain('passes clean');
     expect(out).not.toContain('phone only');
     expect(rows).toHaveLength(3);
+  });
+
+  it('reports time in successful and retried attempts without counting zero-duration skips', () => {
+    const timed: Suite[] = [
+      {
+        title: 'a.spec.ts',
+        specs: [
+          {
+            title: 'passes',
+            file: 'a.spec.ts',
+            line: 1,
+            tests: [test({ results: [{ status: 'passed', duration: 1200 }] })],
+          },
+          {
+            title: 'retries',
+            file: 'a.spec.ts',
+            line: 2,
+            tests: [
+              test({
+                status: 'flaky',
+                results: [
+                  { status: 'failed', duration: 1800 },
+                  { status: 'passed', duration: 1000 },
+                ],
+              }),
+            ],
+          },
+          {
+            title: 'skips',
+            file: 'skip.spec.ts',
+            line: 3,
+            tests: [test({ status: 'skipped', results: [{ status: 'skipped', duration: 0 }] })],
+          },
+        ],
+      },
+    ];
+    const result = summary(timed, 'timed.json');
+    expect(result).toContain('### Slowest test files');
+    expect(result).toContain('| desktop-light | a.spec.ts | 3 | 4.0 |');
+    expect(result).not.toContain('skip.spec.ts');
   });
 
   it('says so when nothing is listed, and when there is no report', () => {

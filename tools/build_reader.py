@@ -20,7 +20,8 @@ for key, title, pages in SECTIONS:
     toc.append([sid, 1, title, pages[0]])
     parts = []
     for p in pages:
-        src = open(f"{S}/trans/ops{p}.md", encoding="utf-8").read()
+        with open(f"{S}/trans/ops{p}.md", encoding="utf-8") as source:
+            src = source.read()
         m = re.match(r"<!--\s*page\s*\d+\s*(?:\|\s*label\s*([^ ]+?))?\s*-->", src)
         label = m.group(1) if m and m.group(1) else ""
         body = re.sub(r"^<!--.*?-->\s*", "", src, flags=re.S)
@@ -40,7 +41,8 @@ for key, title, pages in SECTIONS:
         def fig(mm):
             from PIL import Image
             alt, src = mm.group(1), mm.group(2)
-            w, hh = Image.open(f"{S}/site/{src}").size
+            with Image.open(f"{S}/site/{src}") as image:
+                w, hh = image.size
             return (f'<figure class="rfig"><img src="{src}" alt="{alt}" loading="lazy" width="{w//2}" height="{hh//2}" '
                     f'style="width:{w//2}px;max-width:100%;height:auto"><figcaption>{alt}</figcaption></figure>')
         h = re.sub(r'<p><img alt="([^"]*)" src="([^"]+)"\s*/?></p>', fig, h)
@@ -50,6 +52,8 @@ for key, title, pages in SECTIONS:
                      f'<button data-page="ops:{p}">original</button></div>{h}</div>')
         plain[p] = re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", h))).strip()
     out.append(f'<section class="rs" id="{sid}"><h2 class="rs-h">{html.escape(title)}</h2>{"".join(parts)}</section>')
-open(f"{S}/reader.html", "w", encoding="utf-8").write("\n".join(out))
-json.dump({"toc": toc, "plain": plain}, open(f"{S}/reader.json", "w", encoding="utf-8"), ensure_ascii=False)
+with open(f"{S}/reader.html", "w", encoding="utf-8") as target:
+    target.write("\n".join(out))
+with open(f"{S}/reader.json", "w", encoding="utf-8") as target:
+    json.dump({"toc": toc, "plain": plain}, target, ensure_ascii=False)
 print(len(toc), "toc entries,", len(plain), "pages")

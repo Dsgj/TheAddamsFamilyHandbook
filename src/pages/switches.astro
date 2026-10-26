@@ -41,27 +41,23 @@ const TABS = [
 >
   <h1>Switch matrix</h1>
   <div class="seg tabs" role="tablist" aria-label="Switch matrix view">
-    {
-      TABS.map((t, i) => (
-        <button
-          type="button"
-          role="tab"
-          id={`tab-${t.id}`}
-          aria-selected={i === 0 ? 'true' : 'false'}
-          aria-controls={`panel-${t.id}`}
-          tabindex={i === 0 ? 0 : -1}
-        >
-          {t.label}
-        </button>
-      ))
-    }
+    {TABS.map((t, i) => (
+      <button
+        type="button"
+        role="tab"
+        id={`tab-${t.id}`}
+        aria-selected={i === 0 ? 'true' : 'false'}
+        aria-controls={`panel-${t.id}`}
+        tabindex={i === 0 ? 0 : -1}
+      >
+        {t.label}
+      </button>
+    ))}
   </div>
 
   <div id="panel-matrix" role="tabpanel" aria-labelledby="tab-matrix" class="panel">
     <p class="muted">
-      Columns are driven from CPU J206/J207 through U20, rows read on J208/J209 through U18. Source:{
-        ' '
-      }
+      Columns are driven from CPU J206/J207 through U20, rows read on J208/J209 through U18. Source:{' '}
       <a href={manualHref('ops', 106)}>Switch Matrix {pageTitleText('ops', 106)}</a>.{' '}
       <span class="kbd-only">Use the arrow keys to move between cells.</span>
     </p>

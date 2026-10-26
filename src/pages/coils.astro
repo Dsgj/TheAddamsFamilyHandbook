@@ -86,34 +86,31 @@ const giRows: Row[] = DATA.gi.map((g) => ({
   <details class="source">
     <summary>Source and notes</summary>
     <p class="prov">
-      Source: <a href={manualHref('ops', 108)}>Solenoid/Flasher Table {pageTitleText('ops', 108)}</a
-      > and{' '}
+      Source:{' '}
+      <a href={manualHref('ops', 108)}>Solenoid/Flasher Table {pageTitleText('ops', 108)}</a> and{' '}
       <a href={manualHref('ops', 2)}>{pageRefText('ops', 2)}</a>. The fuse column is derived from
       the fuse list on {pageTitleText('ops', 57)}, not printed per coil, except the magnets 16, 23
       and 24, whose 5A S.B. fuse is printed in a footnote on {pageTitleText('ops', 2)}. The table
       lists {FLASHERS.table} flasher bulbs; the parts list sums to {FLASHERS.parts}. The manual does
-      not say which count is right, so{' '}
-      <a href={verifyHref('flasher-count')}>Verify</a> asks you to count them in the machine.
+      not say which count is right, so <a href={verifyHref('flasher-count')}>Verify</a> asks you to
+      count them in the machine.
     </p>
   </details>
 
-  {
-    groups.map((g) => (
-      <section class="card grp">
-        <h2>{GROUP_HEADING[g]}</h2>
-        <ComponentTable kind="coil" columns={COIL_COLUMNS} rows={coilRows(g)} />
-      </section>
-    ))
-  }
+  {groups.map((g) => (
+    <section class="card grp">
+      <h2>{GROUP_HEADING[g]}</h2>
+      <ComponentTable kind="coil" columns={COIL_COLUMNS} rows={coilRows(g)} />
+    </section>
+  ))}
 
   <div class="pair">
     <section class="card">
       <h2 id="flippers">Flipper coils</h2>
       <ComponentTable kind="flipper" columns={FLIPPER_COLUMNS} rows={flipperRows} />
       <p class="prov">
-        Upper flippers are fed by the Extra Flipper Supply Board (F901/F902). Source: <a
-          href={manualHref('ops', 112)}>Flipper Circuits {pageTitleText('ops', 112)}</a
-        >.
+        Upper flippers are fed by the Extra Flipper Supply Board (F901/F902). Source:{' '}
+        <a href={manualHref('ops', 112)}>Flipper Circuits {pageTitleText('ops', 112)}</a>.
       </p>
     </section>
     <section class="card">

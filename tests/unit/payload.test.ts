@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
-import { join, posix } from 'node:path';
+import { join, matchesGlob, posix } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { allShoppingItems } from '~/lib/data/shopping';
 import classifySrc from '~/inline/classify.js?raw';
@@ -53,17 +53,6 @@ const list = (key: string) =>
   [
     ...(config.match(new RegExp(`${key}:\\s*\\[([^\\]]*)\\]`))?.[1] ?? '').matchAll(/'([^']+)'/g),
   ].map((m) => m[1] ?? '');
-const globRe = (g: string) => {
-  const re = g
-    .replace(/\{([^}]+)\}/g, (_m, a: string) => `(?:${a.split(',').join('|')})`)
-    .replace(/\*\*\//g, '\u0001')
-    .replace(/\*\*/g, '\u0002')
-    .replace(/\*/g, '[^/]*')
-    .replace(/\./g, '\\.')
-    .replace(/\u0001/g, '(?:.*/)?')
-    .replace(/\u0002/g, '.*');
-  return new RegExp(`^${re}$`);
-};
 // `4 * 1024 * 1024`: a product of integers in the config
 const cap = (config.match(/maximumFileSizeToCacheInBytes:\s*([\d\s*]+)/)?.[1] ?? '0')
   .split('*')
@@ -74,14 +63,14 @@ const scope = (
 ).scope.replace(/\/?$/, '/');
 
 describe('the precache list', () => {
-  const patterns = list('globPatterns').map(globRe);
-  const ignores = list('globIgnores').map(globRe);
+  const patterns = list('globPatterns');
+  const ignores = list('globIgnores');
   const globbed = files.filter(
     (f) =>
       f !== 'sw.js' &&
       !f.startsWith('workbox-') &&
-      patterns.some((p) => p.test(f)) &&
-      !ignores.some((p) => p.test(f)) &&
+      patterns.some((pattern) => matchesGlob(f, pattern)) &&
+      !ignores.some((pattern) => matchesGlob(f, pattern)) &&
       statSync(join(DIST, f)).size <= cap,
   );
   // vite-pwa adds the manifest; precacheKeys keeps each url once, so the expectation does too

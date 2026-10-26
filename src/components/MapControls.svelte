@@ -124,7 +124,9 @@
               class:off={!on.has(l)}
               type="button"
               aria-pressed={on.has(l)}
-              aria-label="{LABEL[l]}, {counts[l]} on the map"
+              aria-label="{shortName(l)} {counts[l]} on the map{l === 'coil'
+                ? ', including flashers'
+                : ''}"
               onclick={() => ontoggle(l)}
             >
               <span class="tile" aria-hidden="true">{@render layerIcon(l)}</span>
@@ -188,7 +190,9 @@
           class:off={!on.has(l)}
           type="button"
           aria-pressed={on.has(l)}
-          aria-label="{LABEL[l]}, {counts[l]} on the map"
+          aria-label="{shortName(l)} {counts[l]} on the map{l === 'coil'
+            ? ', including flashers'
+            : ''}"
           onclick={() => ontoggle(l)}
         >
           {@render layerIcon(l)}<span class="lname" aria-hidden="true">{shortName(l)}</span>

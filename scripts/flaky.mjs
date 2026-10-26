@@ -30,9 +30,18 @@ function* specs(suites, path = []) {
 
 const rows = [];
 const projects = new Set();
+const timings = new Map();
 for (const { spec, path } of specs(report.suites)) {
   for (const test of spec.tests ?? []) {
     projects.add(test.projectName);
+    const duration = (test.results ?? []).reduce((sum, result) => sum + (result.duration ?? 0), 0);
+    if (duration > 0) {
+      const key = `${test.projectName} | ${spec.file}`;
+      const entry = timings.get(key) ?? { duration: 0, attempts: 0 };
+      entry.duration += duration;
+      entry.attempts += test.results.length;
+      timings.set(key, entry);
+    }
     // the same note repeated (a transition dropped on every attempt) is counted, not listed
     const notes = new Map();
     for (const a of test.annotations ?? []) {
@@ -56,4 +65,17 @@ else {
   console.log('| Test | Where | Project | Status | Attempts | Notes |');
   console.log('| --- | --- | --- | --- | --- | --- |');
   for (const r of rows) console.log(r);
+}
+
+if (timings.size) {
+  console.log('\n### Slowest test files\n');
+  if (report.stats?.duration != null)
+    console.log(`Elapsed test run: ${(report.stats.duration / 1000).toFixed(1)} s.\n`);
+  console.log('Summed attempt time includes retries; parallel attempts overlap.\n');
+  console.log('| Project | File | Attempts | Summed seconds |');
+  console.log('| --- | --- | --- | --- |');
+  for (const [key, timing] of [...timings]
+    .sort((a, b) => b[1].duration - a[1].duration)
+    .slice(0, 10))
+    console.log(`| ${key} | ${timing.attempts} | ${(timing.duration / 1000).toFixed(1)} |`);
 }

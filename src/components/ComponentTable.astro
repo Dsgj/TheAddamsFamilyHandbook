@@ -37,85 +37,81 @@ const body = rows.map((r) => ({
   <table class="t two" role="table">
     <thead role="rowgroup">
       <tr role="row">
-        <th role="columnheader" class="key">{idHead}</th>
+        <th role="columnheader" class="key">
+          {idHead}
+        </th>
         <th role="columnheader">Name</th>
-        {
-          columns.map((c) => (
-            <th role="columnheader">{c.sr ? <span class="sr-only">{c.head}</span> : c.head}</th>
-          ))
-        }
-        {
-          kind && (
-            <th role="columnheader" class="chk">
-              Fault
-            </th>
-          )
-        }
+        {columns.map((c) => (
+          <th role="columnheader">{c.sr ? <span class="sr-only">{c.head}</span> : c.head}</th>
+        ))}
+        {kind && (
+          <th role="columnheader" class="chk">
+            Fault
+          </th>
+        )}
       </tr>
     </thead>
     <tbody role="rowgroup">
-      {
-        body.map((r) => (
-          <tr role="row" id={r.anchor} class:list={[{ muted: r.muted }]}>
-            <td role="cell" class:list={['key', { mono: !kind }]}>
-              {kind ? (
-                <a class="mono" href={componentHref(kind, r.id)}>
-                  {r.id}
-                </a>
-              ) : (
-                r.id
-              )}
-            </td>
-            <td role="cell" class="nm">
-              {r.name}
-              {r.note && (
-                <span class="note muted small">
-                  <span class="sep"> · </span>
-                  {r.note}
-                </span>
-              )}
-            </td>
-            {r.cells.map((c) =>
-              c.t === 'wire' ? (
-                <td role="cell" data-h={c.h}>
-                  <WireChip colour={c.colour} />
-                </td>
-              ) : c.t === 'phrase' ? (
-                <td role="cell" class="mono phrase" data-h={c.h}>
-                  <Phrase text={c.v} />
-                </td>
-              ) : c.t === 'fuse' ? (
-                <td role="cell" class="mono small phrase fuse" data-h={c.h}>
-                  <a href={fuseHref(c.key)}>
-                    <Phrase text={c.text} />
-                  </a>
-                </td>
-              ) : c.t === 'muted' ? (
-                <td role="cell" class="muted small" data-h={c.h}>
-                  {c.v}
-                </td>
-              ) : (
-                <td role="cell" class="mono" data-h={c.h}>
-                  {c.v}
-                </td>
-              ),
+      {body.map((r) => (
+        <tr role="row" id={r.anchor} class:list={[{ muted: r.muted }]}>
+          <td role="cell" class:list={['key', { mono: !kind }]}>
+            {kind ? (
+              <a class="mono" href={componentHref(kind, r.id)}>
+                {r.id}
+              </a>
+            ) : (
+              r.id
             )}
-            {kind && (
-              <td role="cell" class="chk">
-                <label class="chk-hit">
-                  <input
-                    type="checkbox"
-                    class="fault-check"
-                    data-kind={kind}
-                    data-id={r.id}
-                    aria-label={`Fault: ${r.name}`}
-                  />
-                </label>
+          </td>
+          <td role="cell" class="nm">
+            {r.name}
+            {r.note && (
+              <span class="note muted small">
+                <span class="sep"> · </span>
+                {r.note}
+              </span>
+            )}
+          </td>
+          {r.cells.map((c) =>
+            c.t === 'wire' ? (
+              <td role="cell" data-h={c.h}>
+                <WireChip colour={c.colour} />
               </td>
-            )}
-          </tr>
-        ))
-      }
+            ) : c.t === 'phrase' ? (
+              <td role="cell" class="mono phrase" data-h={c.h}>
+                <Phrase text={c.v} />
+              </td>
+            ) : c.t === 'fuse' ? (
+              <td role="cell" class="mono small phrase fuse" data-h={c.h}>
+                <a href={fuseHref(c.key)}>
+                  <Phrase text={c.text} />
+                </a>
+              </td>
+            ) : c.t === 'muted' ? (
+              <td role="cell" class="muted small" data-h={c.h}>
+                {c.v}
+              </td>
+            ) : (
+              <td role="cell" class="mono" data-h={c.h}>
+                {c.v}
+              </td>
+            ),
+          )}
+          {kind && (
+            <td role="cell" class="chk">
+              <label class="chk-hit">
+                <input
+                  type="checkbox"
+                  class="fault-check"
+                  data-kind={kind}
+                  data-id={r.id}
+                  aria-label={`Fault: ${r.name}`}
+                />
+              </label>
+            </td>
+          )}
+        </tr>
+      ))}
     </tbody>
   </table>
 </div>

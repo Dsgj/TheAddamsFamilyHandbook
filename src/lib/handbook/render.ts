@@ -32,11 +32,12 @@ export function parseHeader(src: string): { page?: number; label: string; body: 
 const stripTags = (h: string) =>
   h
     .replace(/<[^>]+>/g, ' ')
-    .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
+    // Decode ampersands last so an encoded entity is decoded only once.
+    .replace(/&amp;/g, '&')
     .replace(/\s+/g, ' ')
     .trim();
 

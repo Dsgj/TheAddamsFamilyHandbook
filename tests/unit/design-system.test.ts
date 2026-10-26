@@ -83,6 +83,7 @@ function sources(scope: string[]): string[] {
 
 const RULES = sources(SCOPE).flatMap((file) => parse(file, styleText(join(ROOT, file))));
 const where = (r: Rule) => `${r.file} ${r.selector}`;
+const escapePattern = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 /** The global sheet, in the order Base.astro imports its parts after tokens.css (audit AR2-08). */
 const GLOBAL = [
   ...readFileSync(join(ROOT, 'src/layouts/Base.astro'), 'utf8').matchAll(
@@ -740,7 +741,8 @@ describe('design system source rules', () => {
         .filter((c) => c && c !== 'field');
       if (!/class="[^"{]*\bfield\b/.test(text)) continue;
       const hit = (c: string) =>
-        /\.field\b/.test(c) || beside.some((b) => new RegExp(`\.${b}(?![\w-])`).test(c));
+        /\.field\b/.test(c) ||
+        beside.some((b) => new RegExp(`\\.${escapePattern(b)}(?![\\w-])`).test(c));
       off.push(
         ...RULES.filter((r) => r.file === file && subjects(r).some(hit))
           .filter(sets)

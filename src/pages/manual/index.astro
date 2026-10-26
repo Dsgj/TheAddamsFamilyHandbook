@@ -23,29 +23,27 @@ import { manualHref } from '~/lib/url';
   </p>
   <ManualSearch client:load />
   <div class="docs flush">
-    {
-      DOCS.map((d) => (
-        <section>
-          <h2 class="lst-h">
-            <a href={manualHref(d, 1)}>{DOC_NAME[d]}</a>
-            <span class="n">{plural(pageCount(d), 'page')}</span>
-          </h2>
-          <ul class="lst">
-            {TOC[d].map(([p, name]) => (
-              <li>
-                <a class="lrow" href={manualHref(d, p)}>
-                  <span class="txt">
-                    <span class="ttl">{name}</span>
-                  </span>
-                  <span class="val mono">{pageCellText(d, p)}</span>
-                  <Icon name="forward" class="chev" />
-                </a>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ))
-    }
+    {DOCS.map((d) => (
+      <section>
+        <h2 class="lst-h">
+          <a href={manualHref(d, 1)}>{DOC_NAME[d]}</a>
+          <span class="n">{plural(pageCount(d), 'page')}</span>
+        </h2>
+        <ul class="lst">
+          {TOC[d].map(([p, name]) => (
+            <li>
+              <a class="lrow" href={manualHref(d, p)}>
+                <span class="txt">
+                  <span class="ttl">{name}</span>
+                </span>
+                <span class="val mono">{pageCellText(d, p)}</span>
+                <Icon name="forward" class="chev" />
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))}
   </div>
   <p class="gf">Manual pages are saved on the device as you open them.</p>
 </Base>

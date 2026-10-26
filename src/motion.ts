@@ -219,7 +219,8 @@ const leave = () => {
   writePrev(store, visit);
   // Read-modify-write: pages opened since this one loaded (or since a restore) wrote their tabs.
   state = readState(store);
-  state.scroll[now] = Math.round(scrollY);
+  // Object.fromEntries defines own data properties even for special names such as __proto__.
+  state.scroll = Object.fromEntries([...Object.entries(state.scroll), [now, Math.round(scrollY)]]);
   if (tab) state.tabs[tab] = now;
   writeState(store, state);
 };

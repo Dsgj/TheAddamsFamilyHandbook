@@ -362,8 +362,7 @@
       bind:this={field}
       bind:value={input}
       onkeydown={onKey}
-      onblur={onBlur}
-    ></textarea>
+      onblur={onBlur}></textarea>
     <div class="acts">
       {#if canPaste}
         <button class="btn" type="button" onclick={paste}>Paste</button>

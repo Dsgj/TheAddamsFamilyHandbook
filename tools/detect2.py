@@ -26,4 +26,5 @@ for p in (97,98,99):
         res.append(dict(cx=round(float(cx)),cy=round(float(cy)),r=r,txt=txt))
     out[p]=dict(W=W,H=H,items=res)
     print(p,len(res),sorted(r['txt'] for r in res))
-json.dump(out,open(f"{S}/callouts_raw.json","w"))
+with open(f"{S}/callouts_raw.json","w") as target:
+    json.dump(out,target)

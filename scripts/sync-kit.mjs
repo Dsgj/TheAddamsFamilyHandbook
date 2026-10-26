@@ -1,5 +1,6 @@
 // Syncs the kit (KIT_PATH, default ../kit) into this repo: data, the handbook transcription, assets,
-// Python tools and docs. The kit stays the source of truth for these files.
+// Python tools and docs. Data/docs remain kit-owned; tools/local-patches.json records reviewed
+// Python fixes separately. Their original sync hashes stay intact, so they are never overwritten.
 //
 //   pnpm sync-kit               dry run: prints what each file would do, writes nothing
 //   pnpm sync-kit -- --write    copies the files marked `new` and `update`

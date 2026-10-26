@@ -430,7 +430,7 @@ test('the Map keeps the kind of the selected marker (CO-06)', async ({ page }) =
   await expect(lamp).toHaveAttribute('aria-pressed', 'true');
   await page
     .getByRole('group', { name: 'Layers' })
-    .getByRole('button', { name: /^Solenoids and flashers/ })
+    .getByRole('button', { name: /^Solenoids\b/ })
     .click();
   await expect(page).toHaveURL(/layer=sw,lamp,coil/);
   await expect(page).toHaveURL(/[?&]id=lamp:55(&|$)/);

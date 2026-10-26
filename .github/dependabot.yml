@@ -19,6 +19,9 @@ updates:
     schedule:
       interval: monthly
     ignore:
+      # 7.4.2 emits unreferenced CSS chunks; keep the artifact gate intact until a fixed release.
+      - dependency-name: astro
+        versions: ['7.4.2']
       # The type checker and the Node runtime are upgraded deliberately with their tooling.
       - dependency-name: typescript
         update-types: ['version-update:semver-major']

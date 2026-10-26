@@ -1,0 +1,32 @@
+{
+  "tools/assemble.py": {
+    "upstreamSha256": "4a2013020d0045d088724bf03840cd4c7b6cfe0ed4309d44b152cc0a5a3d3403",
+    "sha256": "dc1e62ee8dbe29c997c3f0e000dc74c930f393f6d53c3212aa9be987b5969d6f",
+    "reason": "Reviewed CodeQL fixes: close file/image handles; remove the unused assemble import."
+  },
+  "tools/build_data.py": {
+    "upstreamSha256": "af391ad1fd0b7842713d171a85162dc65c930ac929612fd35da9aa14564ef963",
+    "sha256": "bb989e0dc6b1ae4981524f4573b2c408b145bc4b9fb404f7e58ce293d29f2f17",
+    "reason": "Reviewed CodeQL fixes: close file/image handles; remove the unused assemble import."
+  },
+  "tools/build_reader.py": {
+    "upstreamSha256": "22371f018fe72bb1af9ea10bcbb155deaa57f061d85d96df30c0126935955471",
+    "sha256": "23162b49aac78006cdb36161932378a1be68b625ce4c62fff07532c6afb9edeb",
+    "reason": "Reviewed CodeQL fixes: close file/image handles; remove the unused assemble import."
+  },
+  "tools/detect2.py": {
+    "upstreamSha256": "859b6348734c08f5824418536c05576263cea0d955a47545eb07ffa818b1f43f",
+    "sha256": "1345c871c90543d0815a31d87b0cd9731034a35139c062cf3438d2b989ab2b00",
+    "reason": "Reviewed CodeQL fixes: close file/image handles; remove the unused assemble import."
+  },
+  "tools/match.py": {
+    "upstreamSha256": "9073dcdb0031c2fe388feec0e315b7a9dcacf475c995f0e4125db675b184d26d",
+    "sha256": "0a0ddaa7a5df827110e1b16a7e0195f007467a0d3cb69dbe15956ef7ceae6c57",
+    "reason": "Reviewed CodeQL fixes: close file/image handles; remove the unused assemble import."
+  },
+  "tools/pack.py": {
+    "upstreamSha256": "ccbf63eaf8a5d565412e8ef55773bf6e56b7826a14add07258bb3c08de373c80",
+    "sha256": "55f706f35f610fa5ed4d0e75d1ffdfe15c1bb82f95667ff20ce2a5177f21cb55",
+    "reason": "Reviewed CodeQL fixes: close file/image handles; remove the unused assemble import."
+  }
+}
