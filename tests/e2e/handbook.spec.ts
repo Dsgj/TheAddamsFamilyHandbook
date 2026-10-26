@@ -225,7 +225,7 @@ test.describe('the manual viewer', () => {
       page.getByText('Manual pages are saved on the device as you open them.'),
     ).toBeVisible();
 
-    const open = tb.getByRole('button', { name: 'Go to page (97 of 124)' });
+    const open = tb.getByRole('button', { name: 'Go to page 97 of 124' });
     await expect(open).toHaveText('97 of 124');
     await open.click();
     const dialog = page.getByRole('dialog', { name: 'Go to page' });

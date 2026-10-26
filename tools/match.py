@@ -1,7 +1,8 @@
 import json,sys,cv2,math
 from approx import A
 S=sys.argv[1]
-raw=json.load(open(f"{S}/callouts_raw.json"))
+with open(f"{S}/callouts_raw.json") as source:
+    raw=json.load(source)
 final={}
 for p,txt in A.items():
     det=raw[str(p)]["items"]; W=raw[str(p)]["W"]; H=raw[str(p)]["H"]
@@ -23,4 +24,5 @@ for p,txt in A.items():
     x0=max(0,min(xs)-120)
     small=cv2.resize(img[:, x0:],None,fx=0.5,fy=0.5)
     cv2.imwrite(f"{S}/ov{p}.png",small)
-json.dump(final,open(f"{S}/callouts.json","w"),indent=0)
+with open(f"{S}/callouts.json","w") as target:
+    json.dump(final,target,indent=0)

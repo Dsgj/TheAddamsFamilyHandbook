@@ -32,6 +32,11 @@ async function loadAll() {
 }
 
 describe('handbook rendering', () => {
+  it('decodes heading entities once, preserving literal encoded entity text', () => {
+    const page = renderPage(1, '## &amp;lt; &lt;tag&gt; &amp;quot; &quot;x&quot;', '1');
+    expect(page.headings[0]?.text).toBe('&lt; <tag> &quot; "x"');
+  });
+
   it('covers every transcribed page with a section and matching labels', async () => {
     const pages = await loadAll();
     expect(pages).toHaveLength(56);

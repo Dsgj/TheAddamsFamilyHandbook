@@ -317,7 +317,7 @@
       class="pgno"
       type="button"
       aria-haspopup="dialog"
-      aria-label="Go to page ({page} of {count})"
+      aria-label="Go to page {page} of {count}"
       onclick={() => {
         jump = String(page);
         bad = false;

@@ -1,6 +1,7 @@
 import json, re, sys
 S = sys.argv[1]
-callouts = json.load(open(f"{S}/callouts.json"))
+with open(f"{S}/callouts.json") as source:
+    callouts = json.load(source)
 
 # ---------- Switch matrix wiring (Operator's Handbook p.9 / Ops manual 3-4) ----------
 COLS = {1:("Grön-brun","Green-Brown","J206-1","U20-18"),2:("Grön-röd","Green-Red","J206-2","U20-17"),
@@ -331,7 +332,8 @@ leds = [dict(id=a, what=b, normal=c) for a, b, c in leds]
 data = dict(switches=switches, lamps=lamps, coils=coils, gi=gi, flippers=flippers, fuses=fuses, leds=leds,
             swCols={k: list(v) for k, v in COLS.items()}, swRows={k: list(v) for k, v in ROWS.items()},
             lCols={k: list(v) for k, v in LCOLS.items()}, lRows={k: list(v) for k, v in LROWS.items()})
-json.dump(data, open(f"{S}/site/data.json", "w"), ensure_ascii=False, separators=(",", ":"))
+with open(f"{S}/site/data.json", "w") as target:
+    json.dump(data, target, ensure_ascii=False, separators=(",", ":"))
 print(len(switches), len(lamps), len(coils), "missing loc:",
       [s["id"] for s in switches if not s["loc"] and not s["unused"] and not s["notShown"] and s.get("kind") is None],
       [l["id"] for l in lamps if not l["loc"] and not l["unused"]],
