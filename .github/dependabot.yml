@@ -1,8 +1,19 @@
 # Dependabot proposes the bumps the pins need (audit TT3-12): the npm packages, the Actions pinned
-# to commits in workflows/deploy.yml and the base images pinned by digest in the Dockerfile. Monthly,
+# to commits in workflows and the base images pinned by digest in the Dockerfile. Monthly,
 # one grouped patch/minor pull request per ecosystem; npm major upgrades are reviewed separately.
 version: 2
 updates:
+  - package-ecosystem: pip
+    directory: /tools
+    schedule:
+      interval: monthly
+    groups:
+      python:
+        patterns: ['*']
+        update-types: ['minor', 'patch']
+      python-security:
+        applies-to: security-updates
+        patterns: ['*']
   - package-ecosystem: npm
     directory: /
     schedule:
