@@ -21,37 +21,35 @@ const boards = [...new Set(DATA.fuses.map((f) => f.board))];
       Source: <a href={manualHref('ops', 57)}>Fuse List {pageTitleText('ops', 57)}</a>. Always
       replace with the same rating and type (S.B. = slow blow).
     </p>
-    {
-      boards.map((b) => (
-        <div class="board">
-          <h3>{b}</h3>
-          <div class="scroll-x">
-            <table class="t ids">
-              <thead>
-                <tr>
-                  <>
-                    <th>Fuse</th>
-                    <th>Circuit</th>
-                    <th class="rate">Rating</th>
-                  </>
-                </tr>
-              </thead>
-              <tbody>
-                {DATA.fuses
-                  .filter((f) => f.board === b)
-                  .map((f) => (
-                    <tr id={f.key}>
-                      <td class="mono">{f.id}</td>
-                      <td>{f.circuit}</td>
-                      <td class="mono">{f.rating}</td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
+    {boards.map((b) => (
+      <div class="board">
+        <h3>{b}</h3>
+        <div class="scroll-x">
+          <table class="t ids">
+            <thead>
+              <tr>
+                <>
+                  <th>Fuse</th>
+                  <th>Circuit</th>
+                  <th class="rate">Rating</th>
+                </>
+              </tr>
+            </thead>
+            <tbody>
+              {DATA.fuses
+                .filter((f) => f.board === b)
+                .map((f) => (
+                  <tr id={f.key}>
+                    <td class="mono">{f.id}</td>
+                    <td>{f.circuit}</td>
+                    <td class="mono">{f.rating}</td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
         </div>
-      ))
-    }
+      </div>
+    ))}
   </section>
 
   <section class="card">
@@ -63,17 +61,21 @@ const boards = [...new Set(DATA.fuses.map((f) => f.board))];
     </p>
     <div class="scroll-x">
       <table class="t ids">
-        <thead><tr><th>LED</th><th>What</th><th>Normal</th></tr></thead>
+        <thead>
+          <tr>
+            <th>LED</th>
+            <th>What</th>
+            <th>Normal</th>
+          </tr>
+        </thead>
         <tbody>
-          {
-            DATA.leds.map((l) => (
-              <tr>
-                <td class="mono">{l.id}</td>
-                <td>{l.what}</td>
-                <td>{l.normal}</td>
-              </tr>
-            ))
-          }
+          {DATA.leds.map((l) => (
+            <tr>
+              <td class="mono">{l.id}</td>
+              <td>{l.what}</td>
+              <td>{l.normal}</td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>

@@ -48,10 +48,9 @@ const rows = matrixSpan(DATA.lRows);
   <section class="card lamps">
     <h2>All lamps</h2>
     <p class="muted small">
-      Tick Fault to put the lamp on the <a href={href('shopping')}>shopping list</a> with the LED to order.
-      It turns red in the matrix and on the map. Installed is the LED fitted in this machine ({
-        LED_KIT_SOURCE
-      }); Bulb is the manual's socket type.
+      Tick Fault to put the lamp on the <a href={href('shopping')}>shopping list</a> with the LED to
+      order. It turns red in the matrix and on the map. Installed is the LED fitted in this machine
+      ({LED_KIT_SOURCE}); Bulb is the manual's socket type.
     </p>
     <ComponentTable kind="lamp" columns={LAMP_COLUMNS} rows={lampRows} />
   </section>
@@ -65,17 +64,18 @@ const rows = matrixSpan(DATA.lRows);
     <div class="scroll-x">
       <table class="t">
         <thead>
-          <tr><th>Where</th><th>Installed</th></tr>
+          <tr>
+            <th>Where</th>
+            <th>Installed</th>
+          </tr>
         </thead>
         <tbody>
-          {
-            INSTALLED_FLASHERS.map((f) => (
-              <tr>
-                <td>{f.where}</td>
-                <td class="mono">{f.led}</td>
-              </tr>
-            ))
-          }
+          {INSTALLED_FLASHERS.map((f) => (
+            <tr>
+              <td>{f.where}</td>
+              <td class="mono">{f.led}</td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>

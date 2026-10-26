@@ -126,10 +126,8 @@ const hasActions = Astro.slots.has('actions');
       media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
     />
     {pwaInfo && <Fragment set:html={pwaInfo.webManifest.linkTag} />}
-    {
-      /* Before the first paint, from src/inline through inlineScript: the chosen theme, then the
-        view transition's type from classify.js. Their keys ride as data attributes. */
-    }
+    {/* Before the first paint, from src/inline through inlineScript: the chosen theme, then the
+        view transition's type from classify.js. Their keys ride as data attributes. */}
     <script
       is:inline
       data-theme={PREF_KEYS.theme}
@@ -142,47 +140,43 @@ const hasActions = Astro.slots.has('actions');
       set:html={inlineScript(classifySrc, revealSrc)}
     />
     <link rel="expect" href="#main" blocking="render" />
-    {
-      /* The tab bar comes after the page now, so the first frame (and a view transition's new
-        snapshot) waits for it too. */
-    }
+    {/* The tab bar comes after the page now, so the first frame (and a view transition's new
+        snapshot) waits for it too. */}
     <link rel="expect" href="#sections" blocking="render" />
     <script src="~/pwa.ts"></script>
     <script src="~/motion.ts"></script>
     <script src="~/shell.ts"></script>
   </head>
   <body>
-    <a class="skip sr-only" href="#main">Skip to content</a>
+    <a class="skip sr-only" href="#main">
+      Skip to content
+    </a>
     <script is:inline type="application/json" id="tafh-shop" set:html={jsonScript(shopIds)} />
     <header class="top" data-h1={h1}>
       <div class="tb">
         <div class="lead">
-          {
-            parent && (
-              <a class="back" href={href(parent.path)}>
-                <Icon name="back" />
-                <span>{parent.label}</span>
-              </a>
-            )
-          }
+          {parent && (
+            <a class="back" href={href(parent.path)}>
+              <Icon name="back" />
+              <span>{parent.label}</span>
+            </a>
+          )}
         </div>
-        {
-          h1 === 'bar' ? (
-            <h1 class="ct">
-              <span class:list={['full', { 'has-short': !!short }]}>{heading}</span>
-              {short && (
-                <span class="short" aria-hidden="true">
-                  {short}
-                </span>
-              )}
-            </h1>
-          ) : (
-            <div class="ct" aria-hidden="true">
-              <span class:list={['full', { 'has-short': !!short }]}>{heading}</span>
-              {short && <span class="short">{short}</span>}
-            </div>
-          )
-        }
+        {h1 === 'bar' ? (
+          <h1 class="ct">
+            <span class:list={['full', { 'has-short': !!short }]}>{heading}</span>
+            {short && (
+              <span class="short" aria-hidden="true">
+                {short}
+              </span>
+            )}
+          </h1>
+        ) : (
+          <div class="ct" aria-hidden="true">
+            <span class:list={['full', { 'has-short': !!short }]}>{heading}</span>
+            {short && <span class="short">{short}</span>}
+          </div>
+        )}
         <div class="trail">{hasActions && <slot name="actions" />}</div>
       </div>
     </header>
@@ -199,20 +193,16 @@ const hasActions = Astro.slots.has('actions');
       )
     }
     <main id="main" class:list={[{ wrap: !fullbleed, fullbleed }]}>
-      {
-        h1 === 'large' && (
-          <div class="lt">
-            <h1>{heading}</h1>
-          </div>
-        )
-      }
+      {h1 === 'large' && (
+        <div class="lt">
+          <h1>{heading}</h1>
+        </div>
+      )}
       <slot />
     </main>
-    {
-      /* After the page, so a screen reader and the Tab key meet the header and the content
+    {/* After the page, so a screen reader and the Tab key meet the header and the content
         first, in the order a phone shows them (AY2-04); the shell is fixed, so its place in the
-        DOM moves nothing on screen. */
-    }
+        DOM moves nothing on screen. */}
     <nav id="sections" class="shell" aria-label="Sections">
       <a class="shell-logo" href={href('')} aria-label="The Addams Family Handbook home">
         <img
@@ -225,53 +215,49 @@ const hasActions = Astro.slots.has('actions');
         />
       </a>
       <ul class="tabs">
-        {
-          TABS.map((t) => (
-            <li>
-              <a
-                class="tab"
-                href={href(t.path)}
-                data-tab={t.key}
-                aria-current={tab === t.key ? 'page' : undefined}
-              >
-                <Icon name={t.icon} class="ico" />
-                <span class="lbl">{t.label}</span>
-                {/* At an idle moment, or after 200 ms, the wait Astro gives it anyway where there
+        {TABS.map((t) => (
+          <li>
+            <a
+              class="tab"
+              href={href(t.path)}
+              data-tab={t.key}
+              aria-current={tab === t.key ? 'page' : undefined}
+            >
+              <Icon name={t.icon} class="ico" />
+              <span class="lbl">{t.label}</span>
+              {/* At an idle moment, or after 200 ms, the wait Astro gives it anyway where there
                     is no requestIdleCallback (Safari): a CI Chromium once had none in 15 s. */}
-                {t.key === 'workshop' && <TabBadge client:idle={{ timeout: 200 }} />}
-              </a>
-              {t.subs.length > 0 && (
-                <ul class="subs">
-                  {t.subs.map((s) => (
-                    <li>
-                      <a
-                        class="sub"
-                        href={href(s.path)}
-                        aria-current={s.nav && nav === s.nav ? 'page' : undefined}
-                      >
-                        <span class="lbl">{s.label}</span>
-                        {s.count && <TabBadge client:media={DESKTOP} pill />}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </li>
-          ))
-        }
+              {t.key === 'workshop' && <TabBadge client:idle={{ timeout: 200 }} />}
+            </a>
+            {t.subs.length > 0 && (
+              <ul class="subs">
+                {t.subs.map((s) => (
+                  <li>
+                    <a
+                      class="sub"
+                      href={href(s.path)}
+                      aria-current={s.nav && nav === s.nav ? 'page' : undefined}
+                    >
+                      <span class="lbl">{s.label}</span>
+                      {s.count && <TabBadge client:media={DESKTOP} pill />}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </li>
+        ))}
       </ul>
     </nav>
-    {
-      !fullbleed && (
-        <footer class="foot wrap muted small">
-          <p>
-            The Addams Family Handbook is a private service tool for one machine. Manual text and
-            pages are © Williams Electronics Games / Midway; hints marked as such are the owner's
-            own experience.
-          </p>
-        </footer>
-      )
-    }
+    {!fullbleed && (
+      <footer class="foot wrap muted small">
+        <p>
+          The Addams Family Handbook is a private service tool for one machine. Manual text and
+          pages are © Williams Electronics Games / Midway; hints marked as such are the owner's own
+          experience.
+        </p>
+      </footer>
+    )}
     <Toast client:load />
   </body>
 </html>

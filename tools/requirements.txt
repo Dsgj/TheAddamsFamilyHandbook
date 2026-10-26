@@ -2,7 +2,7 @@
 # versions used by the pipeline (audit TT2-11). Review generated data before committing a rerun.
 # python -m venv .venv && .venv/Scripts/pip install -r tools/requirements.txt
 opencv-python==5.0.0.93
-numpy==2.5.3
+numpy==2.5.4
 pillow==13.0.0
 pytesseract==0.3.13
-markdown==3.10.3
+markdown==3.11.2

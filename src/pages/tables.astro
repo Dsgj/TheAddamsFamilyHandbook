@@ -115,40 +115,43 @@ const GROUPS: Group[] = [
         <li>
           <a class="lrow two">
             <span class="code dmd"></span>
-            <span class="txt"><span class="ttl"></span><span class="sub"></span></span>
+            <span class="txt">
+              <span class="ttl"></span>
+              <span class="sub"></span>
+            </span>
             <Icon name="chevron" class="chev" />
           </a>
         </li>
       </template>
     </section>
-    {
-      GROUPS.map((g) => (
-        <section data-group>
-          <h2 class="lst-h">{g.head}</h2>
-          <ul class="lst">
-            {g.rows.map((r) => (
-              <li>
-                <a class:list={['lrow', { two: !!r.sub }]} href={r.href}>
-                  <span class="tile" aria-hidden="true">
-                    <Icon name={r.icon} />
-                  </span>
-                  <span class="txt">
-                    <span class="ttl">{r.title}</span>
-                    {r.sub && <span class="sub">{r.sub}</span>}
-                  </span>
-                  {r.value && <span class="val">{r.value}</span>}
-                  <Icon name="chevron" class="chev" />
-                </a>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ))
-    }
+    {GROUPS.map((g) => (
+      <section data-group>
+        <h2 class="lst-h">{g.head}</h2>
+        <ul class="lst">
+          {g.rows.map((r) => (
+            <li>
+              <a class:list={['lrow', { two: !!r.sub }]} href={r.href}>
+                <span class="tile" aria-hidden="true">
+                  <Icon name={r.icon} />
+                </span>
+                <span class="txt">
+                  <span class="ttl">{r.title}</span>
+                  {r.sub && <span class="sub">{r.sub}</span>}
+                </span>
+                {r.value && <span class="val">{r.value}</span>}
+                <Icon name="chevron" class="chev" />
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))}
     <!-- No hub matches the typed text: the whole search is one tap away (AR3-08). -->
     <p class="gf" data-empty hidden>
       <span data-none>No tables match.</span>
-      <a data-all href={href('')}>Search everything</a>
+      <a data-all href={href('')}>
+        Search everything
+      </a>
     </p>
     <!-- Spec §12, audit AY-09: the filter's announcer, separate from the visible line above. -->
     <p class="sr-only" data-live aria-live="polite" aria-atomic="true"></p>

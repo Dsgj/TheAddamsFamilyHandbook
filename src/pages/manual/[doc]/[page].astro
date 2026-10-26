@@ -72,13 +72,11 @@ const around = toc.slice(from, from + 7).map(([p, name], i) => ({
   back={{ path: 'manual', label: 'Manuals' }}
 >
   <nav class="seg docseg" aria-label="Document">
-    {
-      DOCS.map((d) => (
-        <a href={manualHref(d, d === doc ? page : 1)} aria-current={d === doc ? 'page' : undefined}>
-          {SHORT[d]}
-        </a>
-      ))
-    }
+    {DOCS.map((d) => (
+      <a href={manualHref(d, d === doc ? page : 1)} aria-current={d === doc ? 'page' : undefined}>
+        {SHORT[d]}
+      </a>
+    ))}
   </nav>
   <PageViewer
     client:load
@@ -88,11 +86,9 @@ const around = toc.slice(from, from + 7).map(([p, name], i) => ({
     count={pageCount(doc)}
     {text}
     title={caption}
-    {...callouts.length ? { callouts } : {}}
+    {...(callouts.length ? { callouts } : {})}
   />
-  {
-    /* Before the first paint (PF2-02): src/inline/fit.js, its keys and the wide query on the tag. */
-  }
+  {/* Before the first paint (PF2-02): src/inline/fit.js, its keys and the wide query on the tag. */}
   <script
     is:inline
     data-fit={PREF_KEYS.fit}
@@ -100,42 +96,37 @@ const around = toc.slice(from, from + 7).map(([p, name], i) => ({
     data-wide={WIDE}
     set:html={inlineScript(fitSrc)}
   />
-
   <div class="below flush">
     <section>
       <h2 class="lst-h">Contents</h2>
       <ul class="lst">
-        {
-          sec && (
-            <li>
-              <a class="lrow" href={handbookHref(sec.key, `pg-${page}`)}>
-                <span class="txt">
-                  <span class="ttl">Read the transcription</span>
-                  <span class="sub">{sec.title}, in the handbook</span>
-                </span>
-                <Icon name="forward" class="chev" />
-              </a>
-            </li>
-          )
-        }
-        {
-          around.map((e) => (
-            <li>
-              <a
-                class="lrow"
-                href={manualHref(doc, e.p)}
-                data-replace
-                aria-current={e.current ? 'true' : undefined}
-              >
-                <span class="txt">
-                  <span class="ttl">{e.name}</span>
-                </span>
-                <span class="val mono">{pageCellText(doc, e.p)}</span>
-                <Icon name="forward" class="chev" />
-              </a>
-            </li>
-          ))
-        }
+        {sec && (
+          <li>
+            <a class="lrow" href={handbookHref(sec.key, `pg-${page}`)}>
+              <span class="txt">
+                <span class="ttl">Read the transcription</span>
+                <span class="sub">{sec.title}, in the handbook</span>
+              </span>
+              <Icon name="forward" class="chev" />
+            </a>
+          </li>
+        )}
+        {around.map((e) => (
+          <li>
+            <a
+              class="lrow"
+              href={manualHref(doc, e.p)}
+              data-replace
+              aria-current={e.current ? 'true' : undefined}
+            >
+              <span class="txt">
+                <span class="ttl">{e.name}</span>
+              </span>
+              <span class="val mono">{pageCellText(doc, e.p)}</span>
+              <Icon name="forward" class="chev" />
+            </a>
+          </li>
+        ))}
         <li>
           <a class="lrow" href={href('manual')}>
             <span class="txt">

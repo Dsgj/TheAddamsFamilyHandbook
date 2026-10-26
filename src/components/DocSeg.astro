@@ -17,13 +17,11 @@ const LINKS: [Props['current'], string][] = [
 ---
 
 <nav class="seg links" aria-label="Handbook, Manuals or Parts">
-  {
-    LINKS.map(([k, label]) => (
-      <a href={href(k)} aria-current={k === current ? 'page' : undefined}>
-        {label}
-      </a>
-    ))
-  }
+  {LINKS.map(([k, label]) => (
+    <a href={href(k)} aria-current={k === current ? 'page' : undefined}>
+      {label}
+    </a>
+  ))}
 </nav>
 
 <style>

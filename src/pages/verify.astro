@@ -20,38 +20,31 @@ const groups = [...new Set(ITEMS.map((i) => i.group))];
     hand. Tick an item once you have checked it on the machine; ticks stay on this device.
   </p>
   <Progress done={0} total={ITEMS.length} what="verified" data-verify-count="" />
-  {
-    groups.map((g) => (
-      <section class="card">
-        <h2>{g}</h2>
-        <ul class="checklist">
-          {ITEMS.filter((i) => i.group === g).map((i) => (
-            <li>
-              <label class="tick">
-                <input
-                  type="checkbox"
-                  class="verify-check"
-                  id={verifyAnchor(i.id)}
-                  data-id={i.id}
-                />
+  {groups.map((g) => (
+    <section class="card">
+      <h2>{g}</h2>
+      <ul class="checklist">
+        {ITEMS.filter((i) => i.group === g).map((i) => (
+          <li>
+            <label class="tick">
+              <input type="checkbox" class="verify-check" id={verifyAnchor(i.id)} data-id={i.id} />
+            </label>
+            <div class="body">
+              <label class="text title" for={verifyAnchor(i.id)}>
+                <Codes text={i.text} />
               </label>
-              <div class="body">
-                <label class="text title" for={verifyAnchor(i.id)}>
-                  <Codes text={i.text} />
-                </label>
-                <p class="links small">
-                  {i.links.map(([label, url]) => (
-                    <a href={url}>{label}</a>
-                  ))}
-                  <span class="when muted" />
-                </p>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </section>
-    ))
-  }
+              <p class="links small">
+                {i.links.map(([label, url]) => (
+                  <a href={url}>{label}</a>
+                ))}
+                <span class="when muted" />
+              </p>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
+  ))}
 </Base>
 
 <style>
