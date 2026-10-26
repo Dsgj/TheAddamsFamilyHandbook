@@ -743,11 +743,13 @@ test.describe('wide panel', () => {
     await gotoHydrated(page, '/map?layer=sw&id=32');
     await page
       .getByRole('group', { name: 'Test status' })
-      .getByRole('button', { name: 'Fault' })
+      .getByRole('button', { name: 'Fault', exact: true })
       .click();
     await page.reload();
     await expect(
-      page.getByRole('group', { name: 'Test status' }).getByRole('button', { name: 'Fault' }),
+      page
+        .getByRole('group', { name: 'Test status' })
+        .getByRole('button', { name: 'Fault', exact: true }),
     ).toHaveAttribute('aria-pressed', 'true');
     await expect(
       page.getByRole('button', { name: /^Switch 32, Upper Right Jet, Fault, selected$/ }),
@@ -760,7 +762,7 @@ test.describe('wide panel', () => {
     await gotoHydrated(page, '/map?layer=sw&id=32');
     const fault = page
       .getByRole('group', { name: 'Test status' })
-      .getByRole('button', { name: 'Fault' });
+      .getByRole('button', { name: 'Fault', exact: true });
     const sel = page.locator('.marker.sel');
     const paint = () =>
       sel.evaluate((el) => {

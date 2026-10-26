@@ -14,6 +14,12 @@ const scope = base === '/' ? '/' : base + '/';
 // so a new build's pages are never served beside an old build's (P3 item 5 of the audit, PF3-02).
 const id = buildId(fileURLToPath(new URL('.', import.meta.url)));
 const pagesCache = `tafh-pages-${id}`;
+// A scan correction changes only the scan cache, not on every UI release.
+const scansCache = `tafh-scans-${buildId(fileURLToPath(new URL('.', import.meta.url)), {
+  dirs: ['public/assets/pages'],
+  files: [],
+  skip: /$^/,
+})}`;
 
 export default defineConfig({
   site: process.env.SITE_URL ?? 'https://example.github.io',
@@ -104,7 +110,7 @@ export default defineConfig({
             urlPattern: ({ url }) => url.pathname.includes('/assets/pages/'),
             handler: 'CacheFirst',
             options: {
-              cacheName: 'tafh-scans',
+              cacheName: scansCache,
               expiration: { maxEntries: 600, maxAgeSeconds: 60 * 60 * 24 * 365 },
               cacheableResponse: { statuses: [0, 200] },
             },

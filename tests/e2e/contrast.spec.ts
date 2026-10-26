@@ -50,7 +50,7 @@ async function markSwitchFault(page: Page, id = 32) {
   await gotoHydrated(page, `/switch/${id}`);
   const fault = page
     .getByRole('group', { name: 'Test status' })
-    .getByRole('button', { name: 'Fault' });
+    .getByRole('button', { name: 'Fault', exact: true });
   await fault.click();
   await expect(fault).toHaveAttribute('aria-pressed', 'true');
 }
@@ -629,9 +629,9 @@ test.describe('print keeps the values, the note and the whole table', () => {
     expect(rows.length).toBeGreaterThan(30);
     for (const r of rows) {
       expect(r.controls, r.text).toBe(0);
-      expect(r.text).toMatch(/^Suggested \S.* Set to/);
+      expect(r.text).toMatch(/^Suggested: \S.* Recorded value/);
     }
-    expect(rows[0]!.text).toMatch(/ Set to 17$/);
+    expect(rows[0]!.text).toMatch(/ Recorded value 17$/);
   });
 
   test('a component page prints its note as text, no controls', async ({ page }) => {

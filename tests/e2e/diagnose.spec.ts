@@ -94,7 +94,7 @@ test.describe('home on a phone', () => {
   }) => {
     await gotoHydrated(page, '/');
     await field(page).fill('Check Switch 68');
-    await page.getByRole('button', { name: 'Fault' }).click();
+    await page.getByRole('button', { name: 'Fault', exact: true }).click();
     await page.getByRole('heading', { level: 2, name: '1 code' }).click();
     await gotoHydrated(page, '/');
     const row = page.locator('.recent .lrow').first();

@@ -6,6 +6,11 @@
  * `define:vars`.
  */
 type ToastKind = 'offline' | 'update' | 'info';
+export interface OfflineProgress {
+  state: 'idle' | 'loading' | 'done' | 'partial' | 'skip';
+  done: number;
+  total: number;
+}
 export type ToastDetail = { kind: ToastKind; text: string };
 
 interface AppEvents {
@@ -25,6 +30,8 @@ interface AppEvents {
   reload: undefined;
   /** The Workshop's pull-to-refresh: pwa.ts checks for a new worker and answers with a toast. */
   'check-update': undefined;
+  'offline-progress': OfflineProgress;
+  'download-offline': undefined;
 }
 type EventName = keyof AppEvents;
 

@@ -68,9 +68,9 @@ test.describe('smoke', { tag: '@subpath' }, () => {
 
   test('status persists on the device', async ({ page }) => {
     await gotoHydrated(page, 'switch/32');
-    await page.getByRole('button', { name: 'Fault' }).click();
+    await page.getByRole('button', { name: 'Fault', exact: true }).click();
     await page.reload();
-    await expect(page.getByRole('button', { name: 'Fault' })).toHaveAttribute(
+    await expect(page.getByRole('button', { name: 'Fault', exact: true })).toHaveAttribute(
       'aria-pressed',
       'true',
     );

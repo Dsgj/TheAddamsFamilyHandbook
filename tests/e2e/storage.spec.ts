@@ -73,8 +73,8 @@ test('two tabs both keep their marks and see each other', async ({ page, context
   const other = await context.newPage();
   await gotoHydrated(page, '/switch/32');
   await gotoHydrated(other, '/lamp/11');
-  await page.getByRole('button', { name: 'Fault' }).click();
-  await other.getByRole('button', { name: 'Fault' }).click();
+  await page.getByRole('button', { name: 'Fault', exact: true }).click();
+  await other.getByRole('button', { name: 'Fault', exact: true }).click();
   const items = (await stored(page)) as Stored;
   expect(items['switch:32']?.status).toBe('fault');
   expect(items['lamp:11']?.status).toBe('fault');
@@ -388,13 +388,13 @@ test('marks stay on screen when storage is full', async ({ page }) => {
   await page.getByLabel('Test report or display message').fill('SWITCH 32\nSWITCH 68');
   const cards = page.locator('.cards article');
   await expect(cards).toHaveCount(2);
-  await cards.nth(0).getByRole('button', { name: 'Fault' }).click();
-  await cards.nth(1).getByRole('button', { name: 'Fault' }).click();
-  await expect(cards.nth(0).getByRole('button', { name: 'Fault' })).toHaveAttribute(
+  await cards.nth(0).getByRole('button', { name: 'Fault', exact: true }).click();
+  await cards.nth(1).getByRole('button', { name: 'Fault', exact: true }).click();
+  await expect(cards.nth(0).getByRole('button', { name: 'Fault', exact: true })).toHaveAttribute(
     'aria-pressed',
     'true',
   );
-  await expect(cards.nth(1).getByRole('button', { name: 'Fault' })).toHaveAttribute(
+  await expect(cards.nth(1).getByRole('button', { name: 'Fault', exact: true })).toHaveAttribute(
     'aria-pressed',
     'true',
   );
@@ -449,7 +449,7 @@ test('asks once to keep storage, on the first mark and not on load', async ({ pa
   const calls = () =>
     page.evaluate(() => (window as unknown as { persistCalls: number }).persistCalls);
   expect(await calls()).toBe(0);
-  await page.getByRole('button', { name: 'Fault' }).click();
+  await page.getByRole('button', { name: 'Fault', exact: true }).click();
   await page.getByRole('button', { name: 'OK', exact: true }).click();
   await expect.poll(calls).toBe(1);
   // Nothing asks again later (a mark is written at once; no save is pending), on the fake clock.

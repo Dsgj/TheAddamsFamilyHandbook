@@ -22,7 +22,7 @@ test.describe('toasts', () => {
   }) => {
     await page.clock.install();
     await gotoHydrated(page, '/tables');
-    await raise(page, 'offline', 'Ready to work offline. Manual pages are saved as you open them.');
+    await raise(page, 'offline', 'App shell saved. Manual pages are saved as you open them.');
     await raise(page, 'update', 'A new version of the app is ready.');
     const toast = page.locator('.toast');
     await expect(toast).toHaveCount(1);
@@ -56,8 +56,8 @@ test.describe('toasts', () => {
     // counts only the fake time below. Flowing, a slow WebKit runner spent the last 100 ms of the
     // dwell between the raise and the first runFor (CI run 37188520290).
     await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
-    await raise(page, 'offline', 'Ready to work offline.');
-    const toast = page.locator('.toast', { hasText: 'Ready to work offline.' });
+    await raise(page, 'offline', 'App shell saved.');
+    const toast = page.locator('.toast', { hasText: 'App shell saved.' });
     await expect(toast).toBeVisible();
     // the 4 s dwell (Toast.svelte) on the fake clock: up just before it ends, gone just after
     await page.clock.runFor(3900);
@@ -108,7 +108,7 @@ test('a first install that ends on the next page still says "Ready to work offli
   // As pwa.ts leaves it on the page where the install began and the user moved on.
   await page.evaluate(() => sessionStorage.setItem('tafh:install', '1'));
   await gotoHydrated(page, '/workshop');
-  await expect(page.locator('.toast[data-kind="offline"]')).toContainText('Ready to work offline.');
+  await expect(page.locator('.toast[data-kind="offline"]')).toContainText('App shell saved.');
   expect(await page.evaluate(() => sessionStorage.getItem('tafh:install'))).toBeNull();
   // Said once: the page after it is quiet.
   await gotoHydrated(page, '/tables');
@@ -129,12 +129,9 @@ test('a passive component view with storage blocked raises no toast; a note stil
   // Opening the page writes the Viewed list: the app's bookkeeping, so no warning. The first
   // install ends on this page (a 2 MB precache, P3 item 5) and its toast is the one allowed.
   await gotoHydrated(page, '/switch/32');
-  await expect(page.locator('.toast[data-kind="offline"]')).toContainText(
-    'Ready to work offline.',
-    {
-      timeout: 20_000,
-    },
-  );
+  await expect(page.locator('.toast[data-kind="offline"]')).toContainText('App shell saved.', {
+    timeout: 20_000,
+  });
   await expect(page.locator('.toast:not([data-kind="offline"])')).toHaveCount(0);
   // The user's own note is the first write that warns, and the page's one warning was unspent.
   await page.getByRole('textbox', { name: 'Note' }).fill('wire loose at the lug');

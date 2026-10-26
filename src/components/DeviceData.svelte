@@ -25,7 +25,7 @@
    * also forgets Recent, the recently viewed list and Continue reading, whose summaries would
    * otherwise still name the cleared marks.
    */
-  const count = $derived(allStatuses().filter((s) => s.status || s.note).length);
+  const count = $derived(allStatuses().length);
   const settings = $derived(Object.keys(setupItems()).length);
   const checks = $derived(Object.keys(verifyTicks()).length);
   let msg = $state('');
@@ -166,7 +166,7 @@
 
 <!-- no-print: a backup and restore panel is for the device, never for paper (CR3-07). -->
 <section class="device no-print flush" id="device-data">
-  <h2 class="lst-h">Device data</h2>
+  <h2 class="lst-h">Backup and restore</h2>
   <ul class="lst">
     <li class="lrow static recorded">
       <span class="txt">

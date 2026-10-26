@@ -59,7 +59,7 @@ test('Fault tick on Switches, Solenoids and Flipper coils lands on the shopping 
 
 test('a note typed on a Fault rides along to the list and its text (CR2-03)', async ({ page }) => {
   await gotoHydrated(page, '/switch/32');
-  await page.getByRole('button', { name: 'Fault' }).click();
+  await page.getByRole('button', { name: 'Fault', exact: true }).click();
   await page.getByLabel('Note').fill('cap cracked');
   await page.getByLabel('Note').blur();
   await gotoHydrated(page, '/shopping');

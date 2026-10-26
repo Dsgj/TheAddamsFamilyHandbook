@@ -36,7 +36,26 @@ const range = (pages: number[]): string => {
 >
   <div class="hub" data-hub="handbook">
     <DocSeg current="handbook" />
+    <p class="gf">
+      Handbook: readable, searchable text. Manuals: scanned original pages. Parts: the parts
+      catalogue.
+    </p>
     <HandbookToc client:load items={toc} home />
+    <details class="terms">
+      <summary>Pinball terms</summary>
+      <dl>
+        <dt>GI — general illumination</dt><dd>
+          The lighting that illuminates the playfield and cabinet.
+        </dd>
+        <dt>EOS — end-of-stroke switch</dt><dd>
+          A switch that detects when a flipper reaches the end of its travel.
+        </dd>
+        <dt>Opto — optical switch</dt><dd>
+          A sensor that detects an object interrupting a beam of light.
+        </dd>
+        <dt>Callout</dt><dd>A numbered marker on a drawing in the original manual.</dd>
+      </dl>
+    </details>
 
     <section class="cont" hidden data-continue>
       <h2 class="lst-h">Continue reading</h2>
@@ -120,6 +139,14 @@ const range = (pages: number[]): string => {
 </script>
 
 <style>
+  .terms {
+    margin-block: 12px;
+  }
+  .terms summary {
+    min-height: var(--touch);
+    align-content: center;
+    cursor: pointer;
+  }
   /* Inside the hub (VL3-09) the lists, headings and footnote keep their 16 margins, like Workshop's. */
   .lrow .code {
     flex: 0 0 auto;

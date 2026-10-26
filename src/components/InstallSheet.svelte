@@ -24,8 +24,8 @@
   }
   const POINTS = [
     'Opens without the browser bar',
-    'Works with no signal',
-    'Updates itself when you are online',
+    'Saved pages work with no signal',
+    'Tells you when an update is ready',
   ];
 </script>
 
@@ -33,7 +33,7 @@
   <div class="body">
     <p>
       Adds it to your home screen. It opens full screen, like an app, and works offline in the
-      workshop.
+      workshop. Open manual images online once to save them for later.
     </p>
     <ul class="points">
       {#each POINTS as p (p)}

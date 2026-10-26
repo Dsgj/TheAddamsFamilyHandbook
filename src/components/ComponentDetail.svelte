@@ -141,7 +141,7 @@
               {#if status === 'fault'}
                 <a class="btn sm" href={href('shopping')}>On the list</a>
               {:else}
-                <button class="btn sm" type="button" onclick={addToList}>Add to list</button>
+                <button class="btn sm" type="button" onclick={addToList}>Mark Fault and add</button>
               {/if}
             </div>
           </li>

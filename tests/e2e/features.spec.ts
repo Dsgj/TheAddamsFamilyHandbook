@@ -31,7 +31,7 @@ test('a bare digit is not a solenoid', async ({ page }) => {
 
 test('component card keeps a service log of status changes', async ({ page }) => {
   await gotoHydrated(page, '/switch/32');
-  await page.getByRole('button', { name: 'Fault' }).click();
+  await page.getByRole('button', { name: 'Fault', exact: true }).click();
   await page.getByRole('button', { name: 'OK', exact: true }).click();
   const log = page.getByLabel('Service log');
   await expect(log.locator('li')).toHaveCount(2);
@@ -43,13 +43,13 @@ test('component card keeps a service log of status changes', async ({ page }) =>
 
 test('lamp, solenoid and flipper coil cards carry the status row', async ({ page }) => {
   await gotoHydrated(page, '/lamp/11');
-  await expect(page.getByRole('button', { name: 'Fault' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Fault', exact: true })).toBeVisible();
   await gotoHydrated(page, '/coil/07');
-  await expect(page.getByRole('button', { name: 'Fault' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Fault', exact: true })).toBeVisible();
   // A flipper coil is a component of its own since CR3-02: its page, its status row, its fuse.
   await gotoHydrated(page, '/flipper/ULF');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Flipper coil ULF');
-  await expect(page.getByRole('button', { name: 'Fault' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Fault', exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: /F901/ }).first()).toHaveAttribute('href', /fuses#/);
 });
 
@@ -74,7 +74,7 @@ test('the pager names the neighbours by their codes (CP3-05)', async ({ page }) 
 
 test('device data downloads a backup and restores it', async ({ page }) => {
   await gotoHydrated(page, '/switch/32');
-  await page.getByRole('button', { name: 'Fault' }).click();
+  await page.getByRole('button', { name: 'Fault', exact: true }).click();
   await gotoHydrated(page, '/shopping', ['DeviceData']);
   await expect(page.locator('.device')).toContainText('1 component recorded');
 
@@ -109,7 +109,7 @@ test('device data downloads a backup and restores it', async ({ page }) => {
 
 test('device data needs two taps to clear everything', async ({ page }) => {
   await gotoHydrated(page, '/switch/32');
-  await page.getByRole('button', { name: 'Fault' }).click();
+  await page.getByRole('button', { name: 'Fault', exact: true }).click();
   await gotoHydrated(page, '/shopping', ['DeviceData']);
   await page.getByRole('button', { name: 'Clear all' }).click();
   await expect(page.locator('.device')).toContainText('1 component recorded');

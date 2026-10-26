@@ -57,7 +57,7 @@ test('Workshop: rows and counts from the device', async ({ page }) => {
     '47 settings in 7 steps',
   );
   await expect(hub(page).getByRole('link', { name: /^Verify/ })).toContainText(
-    '16 data points to check on the machine',
+    '16 data points to check for accuracy',
   );
   await expect(hub(page).getByRole('link', { name: /^Care/ })).toContainText(
     'Every week to every year',
@@ -71,7 +71,7 @@ test('Workshop: rows and counts from the device', async ({ page }) => {
 
   // A Fault on switch 32 shows on the Shopping list row.
   await gotoHydrated(page, '/switch/32');
-  await page.getByRole('button', { name: 'Fault' }).click();
+  await page.getByRole('button', { name: 'Fault', exact: true }).click();
   await gotoHydrated(page, '/workshop');
   await expect(page.locator('[data-count="shopping"]')).toHaveText('1');
 

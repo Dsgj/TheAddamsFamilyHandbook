@@ -896,13 +896,13 @@ test('setup controls have unique names (AY-10)', async ({ page }) => {
 
   const fields = names('textbox');
   expect(fields).toHaveLength(await page.locator('.set input.field').count());
-  expect(fields).toHaveLength(38);
-  for (const n of fields) expect(n).toMatch(/^Set to .+/);
+  expect(fields).toHaveLength(36);
+  for (const n of fields) expect(n).toMatch(/^Recorded value .+/);
   unique(fields);
 
-  const suggest = names('button').filter((n) => n.includes(', suggested for '));
+  const suggest = names('button').filter((n) => n.startsWith('Record value for '));
   expect(suggest).toHaveLength(await page.locator('.vals > button').count());
-  for (const n of suggest) expect(n).toMatch(/^.+, suggested for .+$/);
+  for (const n of suggest) expect(n).toMatch(/^Record value for .+$/);
   unique(suggest);
 
   const links = names('link');

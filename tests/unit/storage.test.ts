@@ -552,3 +552,61 @@ describe('syncEntries', () => {
     expect(target.same).toBe(same);
   });
 });
+
+describe('atomic backup restore', () => {
+  const values = {
+    'tafh:status': { 'switch:32': { status: 'ok' } },
+    'tafh:setup': { a: 1 },
+    'tafh:verify': { b: '2026-10-26' },
+  };
+
+  it('leaves every section and watcher untouched when the atomic write fails', async () => {
+    const s = await load();
+    store.setItem('tafh:status', JSON.stringify({ original: true }));
+    const watcher = vi.fn();
+    s.watch('tafh:status', watcher);
+    store.failSet = true;
+    expect(s.writeBackupSnapshot(values, true)).toBe(false);
+    expect(s.readEntries('tafh:status')).toEqual({ original: true });
+    expect(s.readEntries('tafh:setup')).toEqual({});
+    expect(watcher).not.toHaveBeenCalled();
+    store.failSet = false;
+    const reloaded = await load();
+    expect(reloaded.readEntries('tafh:status')).toEqual({ original: true });
+  });
+
+  it('keeps the whole committed restore after reload even when a compatibility mirror fails', async () => {
+    const s = await load();
+    const put = store.setItem.bind(store);
+    vi.spyOn(store, 'setItem').mockImplementation((key, value) => {
+      if (key === 'tafh:setup') throw new DOMException('full', 'QuotaExceededError');
+      put(key, value);
+    });
+    expect(s.writeBackupSnapshot(values, false)).toBe(true);
+    const reloaded = await load();
+    for (const [key, value] of Object.entries(values))
+      expect(reloaded.readEntries(key)).toEqual(value);
+    reloaded.updateEntry('tafh:setup', 'a', () => 2);
+    const again = await load();
+    expect(again.readEntries('tafh:setup')).toEqual({ a: 2 });
+  });
+
+  it('drops queued edits when restore replaces their data', async () => {
+    const s = await load();
+    s.deferEntry('tafh:status', 'old', () => 1);
+    // The pending edit belongs to this document; a restore also clears it atomically.
+    expect(s.writeBackupSnapshot(values, true)).toBe(true);
+    vi.advanceTimersByTime(500);
+    expect(s.readEntries('tafh:status')).toEqual(values['tafh:status']);
+  });
+
+  it('a completed warm-up is specific to the build and survives reload', async () => {
+    vi.stubGlobal('sessionStorage', store);
+    const s = await load();
+    s.setSessionFlag(s.SESSION_KEYS.warm, true, 'build-a');
+    expect(s.sessionFlag(s.SESSION_KEYS.warm, 'build-a')).toBe(true);
+    expect(s.sessionFlag(s.SESSION_KEYS.warm, 'build-b')).toBe(false);
+    const reloaded = await load();
+    expect(reloaded.sessionFlag(s.SESSION_KEYS.warm, 'build-b')).toBe(false);
+  });
+});

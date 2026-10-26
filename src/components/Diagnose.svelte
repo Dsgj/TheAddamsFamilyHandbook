@@ -341,9 +341,7 @@
 <section class="diag" data-mode={mode} bind:this={root}>
   <p class="sr-only" aria-live="polite" aria-atomic="true">{live.text}</p>
   {#if mode === 'home'}
-    <p class="intro">
-      Type what the machine shows: a test report, a Check Switch message or single codes.
-    </p>
+    <p class="intro">Enter a code, paste a test report, or search by component name.</p>
   {/if}
 
   <!-- Spec §9.1: the field comes first in the DOM at every width. Below 1000 it is ordered to
@@ -375,7 +373,7 @@
       </button>
     </div>
     {#if mode === 'home'}
-      <p class="or">Or type a word to search everything.</p>
+      <p class="or">Search by name, for example “flipper” or “Thing”.</p>
     {/if}
   </div>
 

@@ -66,6 +66,7 @@
 
   /** Short labels for the wide layers list (ShellDesktop). LABEL names the layer buttons. */
   const shortName = (l: MapLayer) => (l === 'shot' ? 'Shots' : KIND_PLURAL[LAYER_KIND[l]]);
+  let showNames = $state(false);
 </script>
 
 {#snippet layerIcon(l: MapLayer)}
@@ -150,7 +151,16 @@
       {/if}
     {:else}
       <div class="column">
-        <div class="glass capsule layers" role="group" aria-label="Layers">
+        <button
+          class="btn sm legend-toggle"
+          type="button"
+          aria-pressed={showNames}
+          onclick={() => (showNames = !showNames)}>Layers</button
+        >
+        {#if showNames}<p class="glass layer-help">
+            Tap a marker to identify a component. Pinch to zoom.
+          </p>{/if}
+        <div class="glass capsule layers" class:named={showNames} role="group" aria-label="Layers">
           {#each LAYERS as l (l)}
             <button
               class="ibtn sq k-{l}"
@@ -161,6 +171,7 @@
               onclick={() => ontoggle(l)}
             >
               {@render layerIcon(l)}
+              {#if showNames}<span class="layer-name" aria-hidden="true">{shortName(l)}</span>{/if}
             </button>
           {/each}
         </div>
@@ -208,6 +219,7 @@
     bottom: 12px;
     display: flex;
     flex-direction: column;
+    align-items: flex-end;
     gap: 8px;
     width: var(--touch);
     transition:
@@ -264,6 +276,34 @@
   }
   .ibtn.off {
     color: var(--faint);
+  }
+  .legend-toggle {
+    min-width: 72px;
+  }
+  .layer-help {
+    width: 180px;
+    padding: 10px;
+    margin: 0;
+    font: var(--t-sub);
+  }
+  .layers.named {
+    width: 150px;
+  }
+  .layers.named .ibtn {
+    display: flex;
+    width: 100%;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 10px;
+    padding-inline: 12px;
+  }
+  .layer-name {
+    font: var(--t-sub);
+  }
+  @media (max-height: 559px) {
+    .layer-help {
+      display: none;
+    }
   }
   .ibtn.fit {
     color: var(--amber-ink);

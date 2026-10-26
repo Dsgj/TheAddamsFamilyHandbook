@@ -17,6 +17,8 @@
   import { isStandalone } from '~/lib/install';
   import { readPref, writePref } from '~/lib/storage';
   import { plural } from '~/lib/copy';
+  import { emit, listen } from '~/lib/events';
+  import { readOfflineProgress } from '~/lib/offline';
 
   let {
     version,
@@ -42,6 +44,9 @@
   let hydrated = $state(false);
   let theme = $state<Theme>('system');
   let offline = $state('');
+  let offlineAvailable = $state(false);
+  let download = $state(readOfflineProgress());
+  $effect(() => listen('offline-progress', (value) => (download = value)));
   let about = $state(false);
   let install = $state(false);
   let standalone = $state(false);
@@ -59,8 +64,13 @@
     const t = readPref('theme');
     theme = t === 'light' || t === 'dark' ? t : 'system';
     const sw = navigator.serviceWorker;
-    if (!sw) return undefined;
-    const mark = () => (offline = sw.controller ? 'Ready' : '');
+    download = readOfflineProgress();
+    offlineAvailable = !!sw && 'caches' in window;
+    if (!offlineAvailable) {
+      offline = 'Offline saving is unavailable in this browser';
+      return undefined;
+    }
+    const mark = () => (offline = sw.controller ? 'App shell saved' : 'Not saved yet');
     mark();
     sw.ready.then(mark).catch(() => {});
     sw.addEventListener('controllerchange', mark);
@@ -98,7 +108,7 @@
         {@render tile('cart')}
         <span class="txt">
           <span class="ttl">Shopping list</span>
-          <span class="sub">Parts for what you marked Fault</span>
+          <span class="sub">Parts linked to components marked Fault</span>
         </span>
         <span class="val" data-count="shopping">{faults || ''}</span>
         {@render chev()}
@@ -109,7 +119,7 @@
         {@render tile('check')}
         <span class="txt">
           <span class="ttl">Verify</span>
-          <span class="sub">{plural(verifyIds.length, 'data point')} to check on the machine</span>
+          <span class="sub">{plural(verifyIds.length, 'data point')} to check for accuracy</span>
         </span>
         <span class="val" data-count="verify"
           >{hydrated ? `${verified} of ${verifyIds.length}` : ''}</span
@@ -164,18 +174,37 @@
       <a class="lrow two" href={links.device}>
         {@render tile('data')}
         <span class="txt">
-          <span class="ttl">Device data</span>
+          <span class="ttl">Backup and restore</span>
           <span class="sub">Back up or restore this device</span>
         </span>
         {@render chev()}
       </a>
     </li>
     <li>
-      <div class="lrow static">
+      <div class="lrow two static">
         {@render tile('offline')}
-        <span class="txt"><span class="ttl">Offline</span></span>
-        <span class="val">{offline}</span>
+        <span class="txt"
+          ><span class="ttl">Offline</span>
+          <span class="sub"
+            >{download.state === 'done'
+              ? 'Handbook and component pages saved'
+              : download.state === 'loading'
+                ? `Saving pages: ${download.done} of ${download.total}`
+                : download.state === 'skip'
+                  ? 'Automatic download paused to save data'
+                  : download.state === 'partial'
+                    ? 'Some pages are still missing'
+                    : offline}</span
+          >
+          <span class="sub">Manual images are saved when opened.</span>
+        </span>
       </div>
+      {#if offlineAvailable && download.state !== 'loading' && download.state !== 'done'}
+        <button class="lrow" type="button" onclick={() => emit('download-offline')}
+          ><span class="txt"><span class="ttl">Download missing pages</span></span
+          >{@render chev()}</button
+        >
+      {/if}
     </li>
     <li>
       {#if standalone}

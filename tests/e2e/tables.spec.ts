@@ -151,7 +151,7 @@ test.describe('the component detail page', () => {
     await expect(d.locator('.kind')).toContainText('Matrix column 3, row 2');
     await expect(d.locator('.kind')).toContainText('Not tested');
     // Exactly one visible button containing "Fault" and one named "OK".
-    await expect(page.getByRole('button', { name: /Fault/ })).toHaveCount(1);
+    await expect(page.getByRole('button', { name: 'Fault', exact: true })).toHaveCount(1);
     await expect(page.getByRole('button', { name: 'OK', exact: true })).toHaveCount(1);
     await expect(page.getByLabel('Note')).toBeVisible();
     for (const h of ['Wiring', 'Parts', 'Location', 'Related', 'Service log'])
@@ -186,13 +186,13 @@ test.describe('the component detail page', () => {
     page,
   }) => {
     await gotoHydrated(page, '/switch/32');
-    await page.getByRole('button', { name: 'Fault' }).click();
+    await page.getByRole('button', { name: 'Fault', exact: true }).click();
     await expect(page.locator('.detail .kind .cur')).toHaveText('Fault');
     await expect(page.getByLabel('Service log').locator('li')).toHaveCount(1);
     await expect(page.getByLabel('Service log')).toContainText('Fault');
-    await page.getByRole('button', { name: 'Fault' }).click();
+    await page.getByRole('button', { name: 'Fault', exact: true }).click();
     await page.reload();
-    await expect(page.getByRole('button', { name: 'Fault' })).toHaveAttribute(
+    await expect(page.getByRole('button', { name: 'Fault', exact: true })).toHaveAttribute(
       'aria-pressed',
       'false',
     );
@@ -201,8 +201,8 @@ test.describe('the component detail page', () => {
 
   test('"Add to list" marks Fault and turns into a link to the list', async ({ page }) => {
     await gotoHydrated(page, '/switch/32');
-    await page.getByRole('button', { name: 'Add to list' }).click();
-    await expect(page.getByRole('button', { name: 'Fault' })).toHaveAttribute(
+    await page.getByRole('button', { name: 'Mark Fault and add' }).click();
+    await expect(page.getByRole('button', { name: 'Fault', exact: true })).toHaveAttribute(
       'aria-pressed',
       'true',
     );
@@ -210,7 +210,7 @@ test.describe('the component detail page', () => {
       'href',
       /shopping$/,
     );
-    await expect(page.getByRole('button', { name: 'Add to list' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Mark Fault and add' })).toHaveCount(0);
   });
 
   test('Show on map opens a modal sheet; Esc returns focus to its button', async ({

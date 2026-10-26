@@ -88,20 +88,25 @@ export function serialize(
   return JSON.stringify(out, null, 2);
 }
 
+const time = (at: string) => Date.parse(at);
+const validDate = (at: unknown): at is string =>
+  typeof at === 'string' && Number.isFinite(time(at));
+const storedDate = (at: unknown): string => (validDate(at) ? at : new Date(0).toISOString());
+
 function isEvent(e: unknown): e is StatusEvent {
   return (
     typeof e === 'object' &&
     e !== null &&
     VALUES.has((e as StatusEvent).status) &&
-    typeof (e as StatusEvent).at === 'string'
+    validDate((e as StatusEvent).at)
   );
 }
 
 /** One event per moment, oldest first, the last HISTORY_MAX: a hand-edited file can repeat an `at`. */
 function tidyHistory(events: StatusEvent[]): StatusEvent[] {
   const seen = new Map<string, StatusEvent>();
-  for (const e of events) seen.set(e.at, e);
-  return [...seen.values()].sort((a, b) => a.at.localeCompare(b.at)).slice(-HISTORY_MAX);
+  for (const e of events) seen.set(String(time(e.at)), e);
+  return [...seen.values()].sort((a, b) => time(a.at) - time(b.at)).slice(-HISTORY_MAX);
 }
 
 /**
@@ -124,7 +129,7 @@ export function cleanStatus(key: string, v: unknown): ComponentStatus | undefine
     id,
     status,
     note,
-    at: typeof o.at === 'string' ? o.at : new Date(0).toISOString(),
+    at: storedDate(o.at),
   };
   if (history.length) out.history = history;
   return out;
@@ -137,7 +142,7 @@ export function cleanSetup(key: string, v: unknown): SetupEntry | undefined {
   const value = typeof o.value === 'string' ? o.value : '';
   const done = o.done === true;
   if (!value && !done) return undefined;
-  return { value, done, at: typeof o.at === 'string' ? o.at : new Date(0).toISOString() };
+  return { value, done, at: storedDate(o.at) };
 }
 
 /** One Verify tick (an ISO date) or undefined when the value is none (the store reads through it too). */
@@ -264,7 +269,7 @@ export function mergeSetup(
   const out = { ...current };
   for (const [k, inc] of Object.entries(incoming)) {
     const cur = out[k];
-    if (!cur || inc.at > cur.at) out[k] = inc;
+    if (!cur || time(inc.at) > time(cur.at)) out[k] = inc;
   }
   return out;
 }
@@ -344,13 +349,14 @@ export function merge(
   const out = { ...current };
   for (const [k, inc] of Object.entries(incoming)) {
     const cur = out[k];
-    const newer = !cur || inc.at > cur.at ? inc : cur;
+    const newer = !cur || time(inc.at) > time(cur.at) ? inc : cur;
     let status = newer.status;
     if (cur) {
       const ia = statusAt(inc);
       const ca = statusAt(cur);
       if (ia !== ca)
-        status = ca === undefined || (ia !== undefined && ia > ca) ? inc.status : cur.status;
+        status =
+          ca === undefined || (ia !== undefined && time(ia) > time(ca)) ? inc.status : cur.status;
     }
     const history = tidyHistory([...(cur ? events(cur) : []), ...events(inc)]);
     const next: ComponentStatus = { id: newer.id, status, note: newer.note, at: newer.at };

@@ -233,7 +233,7 @@ test.describe('every field is 16 px text', () => {
       if (path === '/shopping') {
         // One part on the list, so the readonly text box can be shown and measured.
         await gotoHydrated(page, '/switch/32');
-        await page.getByRole('button', { name: 'Fault' }).click();
+        await page.getByRole('button', { name: 'Fault', exact: true }).click();
       }
       await gotoHydrated(page, path);
       if (path === '/shopping') {

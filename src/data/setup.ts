@@ -30,10 +30,10 @@ export interface SetupStep {
 }
 
 export const SETUP_INTRO =
-  'Navigate with Begin Test → Enter, Up/Down to scroll, Enter to change and save, Escape to back out. Presets overwrite individual adjustments, so take them first and adjust afterwards.';
+  'On the machine: press Begin Test, then Enter. Use Up/Down to scroll, Enter to change and save, and Escape to go back. Apply presets before individual adjustments.';
 
 export const FACTORY_RESET_WARNING =
-  'Avoid U.8 Factory Reset. It clears everything on this page, including the custom message and the high score table.';
+  'Avoid U.8 Factory Reset. It resets settings on the machine, including the custom message and high score table; the values recorded in this app are separate.';
 
 export const SETUP_STEPS: SetupStep[] = [
   {

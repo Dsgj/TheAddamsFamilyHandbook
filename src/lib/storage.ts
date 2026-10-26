@@ -67,9 +67,12 @@ export const SESSION_KEYS = {
 } as const;
 
 /** A per-tab flag in sessionStorage. False, and a write dropped, when the storage is blocked. */
-export function sessionFlag(key: (typeof SESSION_KEYS)[keyof typeof SESSION_KEYS]): boolean {
+export function sessionFlag(
+  key: (typeof SESSION_KEYS)[keyof typeof SESSION_KEYS],
+  version = '1',
+): boolean {
   try {
-    return sessionStorage.getItem(key) === '1';
+    return sessionStorage.getItem(key) === version;
   } catch {
     return false;
   }
@@ -77,9 +80,10 @@ export function sessionFlag(key: (typeof SESSION_KEYS)[keyof typeof SESSION_KEYS
 export function setSessionFlag(
   key: (typeof SESSION_KEYS)[keyof typeof SESSION_KEYS],
   on: boolean,
+  version = '1',
 ): void {
   try {
-    if (on) sessionStorage.setItem(key, '1');
+    if (on) sessionStorage.setItem(key, version);
     else sessionStorage.removeItem(key);
   } catch {
     /* blocked storage: the flag is not kept */
@@ -88,6 +92,19 @@ export function setSessionFlag(
 
 /** How many times each key was cleared or replaced whole, by any tab. Not backed up. */
 const RESET_KEY = 'tafh:reset';
+// Once a restore spans several sections, one atomic localStorage item is authoritative.
+// The original keys remain readable for devices that have never restored a backup.
+const SNAPSHOT_KEY = 'tafh:snapshot';
+const SNAPSHOT_KEYS = new Set<string>([...KEPT, RESET_KEY]);
+
+function storedSnapshot(s: Storage): Record<string, string> | null {
+  const raw = s.getItem(SNAPSHOT_KEY);
+  if (raw === null) return null;
+  const value: unknown = JSON.parse(raw);
+  if (!isRecord(value) || ![...SNAPSHOT_KEYS].every((k) => typeof value[k] === 'string'))
+    throw new Error('Invalid device snapshot');
+  return value as Record<string, string>;
+}
 
 const DEBOUNCE_MS = 400;
 
@@ -110,7 +127,13 @@ function getRaw(key: string): string | null {
   const kept = mem.get(key);
   if (kept !== undefined) return kept;
   try {
-    return backend()?.getItem(key) ?? null;
+    const s = backend();
+    if (!s) return null;
+    if (SNAPSHOT_KEYS.has(key)) {
+      const snapshot = storedSnapshot(s);
+      if (snapshot) return snapshot[key] ?? null;
+    }
+    return s.getItem(key);
   } catch {
     return null;
   }
@@ -137,7 +160,16 @@ function put(key: string, value: unknown, quiet = false): 'same' | 'written' | '
   const s = backend();
   if (s) {
     try {
-      s.setItem(key, raw);
+      const snapshot = SNAPSHOT_KEYS.has(key) ? storedSnapshot(s) : null;
+      if (snapshot) {
+        s.setItem(SNAPSHOT_KEY, JSON.stringify({ ...snapshot, [key]: raw }));
+        // Compatibility mirror only. A full disk must not undo an already committed snapshot.
+        try {
+          s.setItem(key, raw);
+        } catch {
+          /* snapshot is authoritative */
+        }
+      } else s.setItem(key, raw);
       mem.delete(key);
       return 'written';
     } catch {
@@ -256,7 +288,11 @@ function listen() {
     if (!s || storageArea !== s) return;
     // Another tab could write, so storage holds its value again, not this page's refused one.
     if (key === null) mem.clear();
-    else mem.delete(key);
+    else if (key === SNAPSHOT_KEY) {
+      for (const k of SNAPSHOT_KEYS) mem.delete(k);
+      resync();
+      return;
+    } else mem.delete(key);
     resync(key ?? undefined);
   });
   // Phones fire `hidden` before `pagehide`, and iOS fires it for the app switcher (swipe-kill).
@@ -430,6 +466,40 @@ export function writeJson(
   if (r === 'written') keep(key);
   notify(key);
   return r !== 'memory';
+}
+
+/** Commit every backup section and its reset counters with one atomic setItem.
+ * Failure leaves both persistent and reactive data untouched; no memory-only partial import.
+ * Subsequent edits keep using the snapshot, so a reload cannot resurrect a stale mirror.
+ */
+export function writeBackupSnapshot(values: Record<string, unknown>, reset: boolean): boolean {
+  const s = backend();
+  if (!s) return false;
+  try {
+    const all = readJson<Record<string, unknown>>(RESET_KEY, {}, { isShape: isRecord });
+    const next: Record<string, string> = {};
+    for (const key of KEPT) {
+      if (!Object.hasOwn(values, key)) throw new Error('Missing backup section');
+      next[key] = JSON.stringify(values[key]);
+      if (reset) all[key] = resetGen(key) + 1;
+    }
+    next[RESET_KEY] = JSON.stringify(all);
+    s.setItem(SNAPSHOT_KEY, JSON.stringify(next));
+    for (const [key, raw] of Object.entries(next)) {
+      take(key);
+      mem.delete(key);
+      try {
+        s.setItem(key, raw);
+      } catch {
+        /* compatibility mirror only */
+      }
+    }
+  } catch {
+    return false;
+  }
+  for (const key of KEPT) notify(key);
+  requestPersist();
+  return true;
 }
 
 // Preferences ---------------------------------------------------------------------------------

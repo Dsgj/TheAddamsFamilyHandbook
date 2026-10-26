@@ -77,7 +77,7 @@ export const TABS: Tab[] = [
       { label: 'Verify', path: 'verify', nav: 'verify' },
       { label: 'Care', path: 'care', nav: 'care' },
       { label: 'Machine setup', path: 'setup', nav: 'setup' },
-      { label: 'Device data', path: 'shopping#device-data' },
+      { label: 'Backup and restore', path: 'shopping#device-data' },
     ],
   },
 ];

@@ -61,7 +61,7 @@ test.describe('phone tab bar', () => {
     const workshop = tabs(page).filter({ hasText: 'Workshop' });
     await expect(workshop).toHaveAccessibleName('Workshop');
     await expect(workshop.locator('.badge')).toHaveCount(0);
-    await page.getByRole('button', { name: 'Fault' }).click();
+    await page.getByRole('button', { name: 'Fault', exact: true }).click();
     await expect(workshop).toHaveAccessibleName('Workshop, 1 on the shopping list');
     await expect(workshop.locator('.badge')).toHaveText('1');
     await expect(workshop.locator('.badge')).toHaveAttribute('aria-hidden', 'true');
@@ -194,7 +194,7 @@ test.describe('sidebar', () => {
       'Verify',
       'Care',
       'Machine setup',
-      'Device data',
+      'Backup and restore',
     ]);
     await expect(subs.and(page.locator('[aria-current="page"]'))).toHaveText('Lamp matrix');
     for (let i = 0; i < TAB_ORDER.length; i++) {
@@ -213,7 +213,7 @@ test.describe('sidebar', () => {
     await expect(shopping.locator('.cnt')).toHaveCount(0);
     await expect(page.getByRole('status')).toHaveCount(0);
     await gotoHydrated(page, '/switch/32');
-    await page.getByRole('button', { name: 'Fault' }).click();
+    await page.getByRole('button', { name: 'Fault', exact: true }).click();
     await expect(nav(page).locator('.subs a', { hasText: 'Shopping list' })).toHaveAccessibleName(
       'Shopping list 1 part to order',
     );

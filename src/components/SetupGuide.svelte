@@ -28,17 +28,62 @@
   const refOf = (i: { id: string; name: string }) => (isCode(i.id) ? `${i.id} ${i.name}` : i.name);
   /** A unique id fragment per item, for the field's aria-labelledby. */
   const keyOf = (id: string) => id.replace(/[^a-z0-9]+/gi, '-');
-  const isTask = (i: SetupItem) => !i.suggested;
+  const isTask = (i: SetupItem) => !i.suggested || i.suggested === 'Install';
   const stepDone = (s: SetupStep) => doneCount(s.items.map((i) => i.id));
+  let hideCompleted = $state(false);
+  let hiddenSteps = $state<string[]>([]);
+  const nextStep = $derived(steps.find((s) => stepDone(s) < s.items.length));
+  function continueGuide() {
+    if (!nextStep) return;
+    const section = document.getElementById(`step-${nextStep.id}`);
+    const checkbox = section?.querySelector<HTMLInputElement>(
+      'input[type="checkbox"]:not(:checked)',
+    );
+    checkbox?.focus({ preventScroll: true });
+    checkbox?.scrollIntoView({ block: 'center' });
+  }
 </script>
 
 <p class="muted intro">{intro}</p>
 <Progress {done} total={ids.length} what="{noun} done" />
-<p class="prov warn">{warning}</p>
+{#if noun === 'settings'}
+  <p class="guide-help">
+    Make each change on the machine, record the value here, then tick it off. This app does not
+    change machine settings.
+  </p>
+{/if}
+<ul class="prov warn">
+  {#each warning.split(/(?<=\.)\s+(?=[A-Z])/) as point (point)}<li>{point}</li>{/each}
+</ul>
+
+<details class="guide-outline">
+  <summary>Steps and progress</summary>
+  <nav class="guide-nav" aria-label="Guide steps">
+    {#each steps as s (s.id)}
+      <a href="#step-{s.id}" onclick={() => (hideCompleted = false)}
+        >{s.title} <span class="muted">{stepDone(s)}/{s.items.length}</span></a
+      >
+    {/each}
+  </nav>
+</details>
+<div class="guide-actions no-print">
+  <button class="btn primary" type="button" disabled={!nextStep} onclick={continueGuide}
+    >Continue with next unfinished {noun === 'tasks' ? 'task' : 'setting'}</button
+  >
+  <button
+    class="btn"
+    type="button"
+    aria-pressed={hideCompleted}
+    onclick={() => {
+      hideCompleted = !hideCompleted;
+      hiddenSteps = steps.filter((s) => stepDone(s) === s.items.length).map((s) => s.id);
+    }}>{hideCompleted ? 'Show all steps' : 'Hide completed steps'}</button
+  >
+</div>
 
 <ol class="steps">
   {#each steps as s, n (s.id)}
-    <li class="card step" id="step-{s.id}">
+    <li class="card step" id="step-{s.id}" hidden={hideCompleted && hiddenSteps.includes(s.id)}>
       <header>
         <h2><span class="n">{n + 1}</span> {s.title}</h2>
         <span class="mono small menu">{s.menu}</span>
@@ -66,18 +111,18 @@
               </div>
               {#if !isTask(i)}
                 <div class="vals">
-                  <span class="small muted">Suggested</span>
+                  <span class="small muted">Suggested: <span class="mono">{i.suggested}</span></span
+                  >
                   <button
                     type="button"
                     class="btn sm mono"
-                    title="Use suggested value"
-                    aria-label="{i.suggested}, suggested for {ref}"
-                    onclick={() => setValue(i.id, i.suggested)}>{i.suggested}</button
+                    title="Record the suggested value on this device"
+                    aria-label="Record value for {ref}"
+                    onclick={() => setValue(i.id, i.suggested)}>Record value</button
                   >
-                  <span class="print-only mono">{i.suggested}</span>
-                  <!-- The name keeps the visible "Set to" first (WCAG 2.5.3) and adds the item. -->
+                  <!-- The accessible name starts with the visible label and adds the item. -->
                   <label class="small muted set">
-                    <span id="sg-set-{key}">Set to</span>
+                    <span id="sg-set-{key}">Recorded value</span>
                     <span class="sr-only" id="sg-ref-{key}">{ref}</span>
                     <input
                       class="field mono"
@@ -94,13 +139,25 @@
                 </div>
               {/if}
               {#if i.why}<p class="why small">{i.why}</p>{/if}
-              {#if i.alt}<p class="why small muted">{i.alt}</p>{/if}
+              {#if i.alt}<details class="why">
+                  <summary>Other options</summary>
+                  <p class="muted">{i.alt}</p>
+                </details>{/if}
+              {#if noun === 'tasks'}
+                <button
+                  class="btn sm no-print repeat"
+                  type="button"
+                  aria-label="Done today: {ref}"
+                  disabled={cur?.done && shortDate(cur.at) === shortDate(new Date().toISOString())}
+                  onclick={() => setDone(i.id, true)}>Done today</button
+                >
+              {/if}
               {#if links[i.id] || cur?.at}
                 <p class="links small">
                   <!-- The item in the text too (UX3-13): 47 links read "handbook". -->
                   {#if links[i.id]}<a href={links[i.id]}>{ref} in the handbook</a>{/if}
                   {#if cur?.at}<span class="when muted"
-                      >{cur.done ? 'done' : 'set'} {shortDate(cur.at)}</span
+                      >{cur.done ? 'done' : 'recorded'} {shortDate(cur.at)}</span
                     >{/if}
                 </p>
               {/if}
@@ -125,6 +182,56 @@
   .warn {
     border-left: 3px solid var(--warn);
     padding-left: 10px;
+    list-style: none;
+  }
+  .warn li + li {
+    margin-top: 8px;
+  }
+  .guide-help {
+    max-width: var(--measure);
+  }
+  .guide-outline > summary {
+    min-height: var(--touch);
+    align-content: center;
+    cursor: pointer;
+  }
+  .guide-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    margin-block: 16px;
+    font: var(--t-sub);
+  }
+  .guide-nav a {
+    min-height: var(--touch);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .guide-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .guide-actions .btn {
+    max-width: 100%;
+    white-space: normal;
+  }
+  .step {
+    scroll-margin-top: calc(var(--topbar-h) + 16px);
+  }
+  .why {
+    font: var(--t-sub);
+    line-height: 1.6;
+  }
+  .why summary {
+    cursor: pointer;
+    min-height: var(--touch);
+    display: list-item;
+    align-content: center;
+  }
+  .repeat {
+    margin-top: 8px;
   }
   .steps {
     list-style: none;
@@ -208,6 +315,7 @@
     flex: 1;
     min-height: 34px;
     padding: 4px 10px;
+    max-width: 20rem;
   }
   .why {
     margin: 6px 0 0;

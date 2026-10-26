@@ -11,6 +11,7 @@ import {
   localIsoDate,
   lostEntries,
   merge,
+  mergeSetup,
   mergeVerify,
   nextStatus,
   serialize,
@@ -24,6 +25,32 @@ const st = (id: string, status: ComponentStatus['status'], at: string): Componen
   status,
   note: '',
   at,
+});
+
+describe('backup dates', () => {
+  it('uses chronological order across time zones for status, notes, settings and history', () => {
+    const earlier = st('switch:32', 'fault', '2026-10-26T10:00:00+02:00');
+    const later = st('switch:32', 'ok', '2026-10-26T09:00:00Z');
+    const result = merge({ 'switch:32': earlier }, { 'switch:32': later })['switch:32']!;
+    expect(result.status).toBe('ok');
+    expect(result.history?.map((e) => e.status)).toEqual(['fault', 'ok']);
+    expect(
+      mergeSetup(
+        { x: { value: 'old', done: true, at: earlier.at } },
+        { x: { value: 'new', done: true, at: later.at } },
+      ).x?.value,
+    ).toBe('new');
+  });
+
+  it('discards invalid event dates and makes invalid entry dates safely oldest', () => {
+    const cleaned = cleanStatus('switch:32', {
+      status: 'fault',
+      at: 'invalid',
+      history: [{ status: 'ok', at: 'invalid' }],
+    });
+    expect(cleaned?.at).toBe(new Date(0).toISOString());
+    expect(cleaned?.history).toBeUndefined();
+  });
 });
 
 describe('appendHistory', () => {
