@@ -16,6 +16,7 @@ type Job = {
   env?: Record<string, string>;
   steps: Step[];
   strategy?: { matrix: { include: { project: string }[] } };
+  'timeout-minutes'?: number;
 };
 type Workflow = { on: Record<string, unknown>; jobs: Record<string, Job> };
 
@@ -61,16 +62,20 @@ describe('deploy workflow', () => {
     expect(runs(wf.jobs.e2e!)).not.toContain('pnpm build');
   });
 
-  it('the static job runs every check, with the shared build before the unit tests', () => {
+  it('fails fast before building, installing browsers or building the Docker image', () => {
+    const build = wf.jobs.build!;
+    for (const run of ['pnpm check', 'pnpm svelte-check', 'pnpm lint', 'pnpm format:check']) {
+      expect(at(build, run), run).toBeGreaterThan(at(build, 'pnpm install --frozen-lockfile'));
+      expect(at(build, run), run).toBeLessThan(at(build, 'pnpm build'));
+    }
+    for (const id of ['static', 'e2e', 'pages', 'docker'])
+      expect(wf.jobs[id]!.needs).toContain('build');
+  });
+
+  it('runs unit and artifact checks on the same shared build, without repeating the fast checks', () => {
     const job = wf.jobs.static!;
-    for (const s of [
-      'pnpm check',
-      'pnpm svelte-check',
-      'pnpm lint',
-      'pnpm format:check',
-      'pnpm test',
-    ])
-      expect(runs(job), s).toContain(s);
+    expect(runs(job)).toContain('pnpm test');
+    expect(runs(job)).not.toContain('pnpm check');
     expect(job.needs).toEqual(['build']);
     expect(download(job)).toBeGreaterThan(-1);
     expect(download(job)).toBeLessThan(at(job, 'pnpm test'));
@@ -98,5 +103,28 @@ describe('deploy workflow', () => {
 
   it('the docker job smoke-tests the image', () => {
     expect(runs(wf.jobs.docker!)).toContain('sh scripts/docker-smoke.sh docker');
+  });
+
+  it('bounds every job and does not persist checkout credentials', () => {
+    for (const job of Object.values(wf.jobs)) {
+      expect(job['timeout-minutes']).toBeGreaterThan(0);
+      expect(job['timeout-minutes']).toBeLessThanOrEqual(30);
+      for (const step of job.steps.filter((step) => step.uses?.startsWith('actions/checkout@')))
+        expect(step.with?.['persist-credentials']).toBe(false);
+    }
+  });
+
+  it('stamps the tested Pages artifact before upload and verifies it only after deployment', () => {
+    const pages = wf.jobs.pages!;
+    const stamp = at(pages, 'node scripts/deploy-check.mjs stamp');
+    expect(stamp).toBeGreaterThan(at(pages, 'pnpm exec playwright test --project subpath'));
+    expect(stamp).toBeLessThan(pages.steps.length - 1);
+    const deploy = wf.jobs.deploy!;
+    const publish = deploy.steps.findIndex((step) =>
+      step.uses?.startsWith('actions/deploy-pages@'),
+    );
+    expect(at(deploy, 'node scripts/deploy-check.mjs check')).toBeGreaterThan(publish);
+    expect(runs(deploy)).not.toContain('pnpm build');
+    expect(runs(deploy)).not.toContain('pnpm install --frozen-lockfile');
   });
 });

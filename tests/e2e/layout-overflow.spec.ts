@@ -3,6 +3,9 @@ import { gotoHydrated, hydrated } from './helpers';
 import { ROUTES } from './routes';
 import { SETUP_STEPS } from '~/data/setup';
 
+// Measure layout without repeatedly precaching the app and warming the handbook in every context.
+test.use({ serviceWorkers: 'block' });
+
 /* P0 item 3 of the app audit (VP-01, VP-02, VL-02, AY-03, DS-12): `.hb` and `.grid-2` used a plain
    `1fr` track, which is `minmax(auto,1fr)`, so a wide table set the column's minimum and the whole
    page grew past the viewport, pushing the tab bar and reader bar off-screen. The route list

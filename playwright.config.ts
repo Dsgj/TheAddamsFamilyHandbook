@@ -28,7 +28,10 @@ export default defineConfig({
   globalSetup: './tests/e2e/global-setup.ts',
   use: {
     baseURL: `http://${host}:${port}${base.endsWith('/') ? base : base + '/'}`,
-    trace: 'retain-on-failure',
+    // Recording every passing test is expensive. CI keeps the first retry's trace and a failure
+    // screenshot; a local run without retries still records its first failure.
+    trace: process.env.CI ? 'on-first-retry' : 'retain-on-failure',
+    screenshot: 'only-on-failure',
   },
   projects: [
     { name: 'phone-dark', use: { ...devices['Pixel 7'], colorScheme: 'dark' } },

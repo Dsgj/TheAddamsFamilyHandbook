@@ -3,6 +3,10 @@ import { AxeBuilder } from '@axe-core/playwright';
 import { gotoHydrated } from './helpers';
 import { gotoState, ROUTES, STATES } from './routes';
 
+// UI scans do not need precaching or the hundreds of background offline requests.
+// Real service-worker coverage stays in pwa, payload, motion and back tests.
+test.use({ serviceWorkers: 'block' });
+
 /* An axe-core scan of every route and of the states a search or a tap opens (TT-13, AY3-03). It is
    the automatic floor under the hand-written a11y checks: the WCAG 2.x A/AA rules plus axe's best
    practices, on the routes and states of tests/e2e/routes.ts (the lists the 44 px sweep in

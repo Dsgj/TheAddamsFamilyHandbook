@@ -1,6 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
 import { gotoHydrated } from './helpers';
 
+// Contrast is independent of offline installation and its background downloads.
+test.use({ serviceWorkers: 'block' });
+
 /** P2 item 3 of the app audit (DS-03, DS-04, DS-05, DS-08, AY-04, AY-16; spec §1.1, §8.6, §12):
     every visible text node and placeholder meets WCAG AA over its composited backdrop, in both
     themes; the state rings meet 3:1; both DMD surfaces read the DMD tokens; and print is black on

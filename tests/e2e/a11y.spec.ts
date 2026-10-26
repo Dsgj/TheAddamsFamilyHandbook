@@ -2,6 +2,9 @@ import { expect, test, type Page } from '@playwright/test';
 import { barCovered, gotoHydrated, twoFrames } from './helpers';
 import { gotoState, ROUTES, STATES } from './routes';
 
+// These UI checks do not exercise offline installation; dedicated PWA tests keep it enabled.
+test.use({ serviceWorkers: 'block' });
+
 /*
  * P2 item 5 of the app audit: accessibility (AY-01, AY-02, AY-05, AY-06, AY-07, AY-09, AY-10,
  * AY-11, AY-12, AY-14, AY-15, FIELD-3-1). The rules live in spec §7.5 (map keys), §9.6 (matrix),
