@@ -287,7 +287,10 @@ test('the Install sheet opens from the Workshop, closes on Esc and returns focus
 test('pull-to-refresh lives on the Workshop only and ends in a toast', async ({ page }) => {
   await gotoHydrated(page, '/tables');
   await expect(page.locator('[data-ptr]')).toHaveCount(0);
+  // Finish the initial install before navigating away; hydration does not wait for registration.
+  await swReady(page);
   await gotoHydrated(page, '/workshop');
+  await swReady(page);
   await expect(page.locator('[data-ptr]')).toHaveCount(1);
   // A first visit may still be showing "Ready to work offline"; let it leave first.
   await expect(page.locator('.toast[data-kind="offline"]')).toHaveCount(0, { timeout: 8000 });
