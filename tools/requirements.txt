@@ -3,6 +3,6 @@
 # python -m venv .venv && .venv/Scripts/pip install -r tools/requirements.txt
 opencv-python==5.0.0.93
 numpy==2.5.3
-pillow==12.3.0
+pillow==13.0.0
 pytesseract==0.3.13
 markdown==3.10.3
