@@ -36,7 +36,7 @@
     "@fontsource/im-fell-english-sc": "^5.2.0",
     "@playwright/test": "^1.63.0",
     "@types/node": "^24.0.0",
-    "eslint": "^9.0.0",
+    "eslint": "^10.13.0",
     "eslint-plugin-astro": "^1.3.0",
     "eslint-plugin-playwright": "^2.12.0",
     "eslint-plugin-svelte": "^3.0.0",
