@@ -38,13 +38,7 @@ async function scrollWidthOf(page: Page) {
 }
 
 test.describe('no route overflows the viewport horizontally', () => {
-  for (const route of ROUTES) {
-    test(`${route} fits the viewport width`, async ({ page }) => {
-      await gotoHydrated(page, route);
-      const { width } = page.viewportSize()!;
-      expect(await scrollWidthOf(page)).toBeLessThanOrEqual(width);
-    });
-  }
+  // Initial-route widths are checked alongside axe and target sizes in axe.spec.ts.
   for (const [state, ready] of resultStates) {
     test(`${state} fits the viewport width`, async ({ page }) => {
       await gotoState(page, state, ready);
