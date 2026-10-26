@@ -1,7 +1,7 @@
 # Static build served by nginx. BASE_PATH lets the same image sit behind a sub-path. The base images
 # are pinned by digest (the multi-arch index; audit TT3-11) and Dependabot proposes the bumps; the
 # Node major is the one .nvmrc names.
-FROM node:24-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1 AS build
+FROM node:24-alpine@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53 AS build
 ARG BASE_PATH=/
 ENV BASE_PATH=$BASE_PATH
 RUN corepack enable && corepack prepare pnpm@12.5.1 --activate
@@ -11,7 +11,7 @@ RUN pnpm install --frozen-lockfile
 COPY . .
 RUN pnpm build
 
-FROM nginx:alpine@sha256:df221db836e1754089190208cee7eeda94f233197056426eda74a43ab1abeac2
+FROM nginx:alpine@sha256:a3554c0d0b48177b1413c26e01f695334428020d9df01243fbae3e11cfd17417
 ARG BASE_PATH=/
 COPY nginx.conf /etc/nginx/templates/default.conf.template
 ENV BASE_PATH=$BASE_PATH
