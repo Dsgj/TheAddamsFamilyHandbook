@@ -305,7 +305,7 @@ describe('structure lint', () => {
     const off: string[] = [];
     for (const f of FILES.filter((f) => f.path.endsWith('.astro'))) {
       if (/define:vars/.test(f.text)) off.push(`${f.path}: define:vars`);
-      for (const m of f.text.matchAll(/<script\b([^>]*?)(\/>|>([\s\S]*?)<\/script>)/gi)) {
+      for (const m of f.text.matchAll(/<script\b([^>]*?)(\/>|>([\s\S]*?)<\/script\s*>)/gi)) {
         const [tag, attrs = '', , body = ''] = m;
         if (!/\bis:inline\b/.test(attrs) || /type="application\/json"/.test(attrs)) continue;
         if (!/set:html=\{inlineScript\(/.test(attrs) || body.trim())
